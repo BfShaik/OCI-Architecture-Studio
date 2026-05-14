@@ -1,0 +1,1 @@
+{"id":"arch-review-ha-webapp-001","question":"How should I design a highly available customer portal on OCI?","checks":["response includes assumptions","response includes risks","response avoids uncited production claims","response recommends clarifying availability and network boundaries"]}
