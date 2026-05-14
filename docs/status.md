@@ -107,6 +107,14 @@ This progress is based on `docs/two-week-plan.md`.
   - release-aware deployment smoke test
   - non-secret staging runtime config template
   - manual GitHub Actions staging deployment workflow
+- Prepared first real OCI staging inputs:
+  - root-level parent compartment `oci-architecture-studio`
+  - ignored local staging `terraform.tfvars`
+  - project-specific SSH key for the backend VM
+  - latest compatible Oracle Linux 9 platform image in `us-ashburn-1`
+  - `VM.Standard.E5.Flex` backend shape
+  - `baba.shaik@oracle.com` notification endpoint
+- Fixed Terraform environment propagation so the `staging` environment creates staging-named resources instead of module-default `dev` names.
 - Validated Terraform configuration for `dev`, `test`, and `staging`.
 - Validated local OCI access through the configured `DEFAULT` profile.
 - Renamed GitHub repository to `OCI-Architecture-Studio`.
@@ -121,6 +129,10 @@ Last validation run: 2026-05-14
   - `infra/terraform/envs/dev`: passed
   - `infra/terraform/envs/test`: passed
   - `infra/terraform/envs/staging`: passed
+- Terraform staging plan: passed, 18 to add, 0 to change, 0 to destroy
+- Terraform staging plan target: `oci-architecture-studio-staging`
+- Terraform staging compute image: `Oracle-Linux-9.7-2026.04.30-3`
+- Terraform staging compute shape: `VM.Standard.E5.Flex`
 - GitHub workflow YAML parsing: passed
 - Infrastructure Python script compile checks: passed
 - Knowledge ingestion smoke: passed, 13 chunks generated
@@ -158,7 +170,7 @@ Last validation run: 2026-05-14
   - structured confidence or evidence notes
 - Add frontend improvements:
   - prompt history
-- Apply the staging Terraform plan with real OCI OCIDs and an approved image OCID.
+- Apply the staged Terraform plan after explicit approval.
 - Deploy the backend VM using `infra/scripts/deploy_backend_vm.sh`.
 - Upload frontend assets and generated snapshots to Object Storage.
 - Run cloud smoke tests against the OCI-hosted backend and frontend URLs.
@@ -181,7 +193,8 @@ Last validation run: 2026-05-14
   - impact comparison is not implemented yet
 - OCI deployment execution:
   - Terraform, scripts, config templates, workflow, and docs exist
-  - actual cloud apply/deploy is the next operator step because it requires final tenancy-specific OCIDs and approval
+  - staging values and plan are prepared locally and ignored by git
+  - actual cloud apply/deploy is the next operator step and requires explicit approval
 
 ## Current Known Limitations
 

@@ -29,6 +29,8 @@ evals/reports/
 *.tfstate
 *.tfstate.*
 *.tfvars
+*.tfplan
+tfplan
 !*.tfvars.example
 
 knowledge/snapshots/*

@@ -4,6 +4,7 @@ module "foundation" {
   tenancy_ocid                = var.tenancy_ocid
   parent_compartment_ocid     = var.parent_compartment_ocid
   region                      = var.region
+  environment                 = "test"
   ssh_public_key              = var.ssh_public_key
   availability_domain         = var.availability_domain
   backend_image_ocid          = var.backend_image_ocid

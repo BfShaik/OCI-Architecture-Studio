@@ -14,6 +14,20 @@ OCI demo/prod = promoted cloud environments later
 
 Do not fork or duplicate application code for cloud deployment. Environment differences belong in Terraform variables, environment variables, OCI Vault, and deployment workflow inputs.
 
+## Current Staging Defaults
+
+The first staging deployment uses:
+
+- parent compartment: `oci-architecture-studio`
+- child environment compartment: `oci-architecture-studio-staging`
+- region: `us-ashburn-1`
+- backend shape: `VM.Standard.E5.Flex`
+- backend image family: latest compatible Oracle Linux 9 platform image
+- notification endpoint: `baba.shaik@oracle.com`
+- SSH key path for local deployment: `~/.ssh/oci-architecture-studio-staging`
+
+The real `terraform.tfvars`, saved Terraform plan, and SSH private key are local-only and must not be committed.
+
 ## Exact Deployment Sequence
 
 ### 1. Validate Locally
@@ -67,11 +81,17 @@ region                   = "us-ashburn-1"
 ssh_public_key           = "ssh-rsa ..."
 backend_image_ocid       = "ocid1.image..."
 availability_domain      = ""
-backend_shape            = "VM.Standard.E4.Flex"
+backend_shape            = "VM.Standard.E5.Flex"
 backend_ocpus            = 1
 backend_memory_gbs       = 8
 frontend_bucket_access_type = "ObjectReadWithoutList"
-alarm_email              = "you@example.com"
+alarm_email              = "baba.shaik@oracle.com"
+```
+
+For the current staging setup, the selected image is:
+
+```text
+Oracle-Linux-9.7-2026.04.30-3
 ```
 
 Run:
@@ -83,6 +103,12 @@ terraform validate
 terraform plan
 terraform apply
 terraform output
+```
+
+If a saved plan exists after validation:
+
+```bash
+terraform apply tfplan
 ```
 
 Useful outputs for later validation:

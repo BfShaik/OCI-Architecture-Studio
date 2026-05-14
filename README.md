@@ -157,6 +157,16 @@ docs/oci-deployment-execution.md
 
 The scaffold includes Terraform environments, backend VM deployment, frontend Object Storage upload, snapshot upload, OCI access checks, and deployment smoke tests.
 
+Current staging defaults:
+
+- region: `us-ashburn-1`
+- backend shape: `VM.Standard.E5.Flex`
+- backend OS image family: Oracle Linux 9
+- notifications: `baba.shaik@oracle.com`
+- local SSH key path: `~/.ssh/oci-architecture-studio-staging`
+
+The real staging `terraform.tfvars`, saved plan files, and SSH keys are intentionally ignored by git.
+
 ## Rerun After Changes
 
 ```bash

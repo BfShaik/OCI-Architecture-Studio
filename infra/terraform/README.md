@@ -52,6 +52,7 @@ terraform apply
 ## Notes
 
 - Keep `terraform.tfvars` out of git.
+- Keep saved plan files such as `tfplan` out of git.
 - Commit `.terraform.lock.hcl` files when provider selections change.
 - Store production secrets in OCI Vault, not Terraform variables.
 - Use the generated Object Storage buckets for frontend assets, knowledge snapshots, release snapshots, and eval reports.

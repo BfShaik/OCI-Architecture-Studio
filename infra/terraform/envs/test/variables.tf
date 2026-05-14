@@ -32,7 +32,7 @@ variable "backend_image_ocid" {
 variable "backend_shape" {
   description = "Compute shape for the backend host."
   type        = string
-  default     = "VM.Standard.E4.Flex"
+  default     = "VM.Standard.E5.Flex"
 }
 
 variable "backend_ocpus" {
