@@ -9,5 +9,8 @@ The platform combines retrieval over curated OCI knowledge, structured prompt or
 - Architecture guidance with clear assumptions and tradeoffs
 - Migration advisory for service mapping and phased modernization
 - Cost optimization guidance tied to OCI service choices
+- Disaster recovery and resilience planning
+- Security guidance for identity, network isolation, encryption, logging, and auditability
 - Release intelligence for keeping recommendations current
 - Review-ready outputs with citations, risks, and next steps
+- Golden prompt regression to prevent quality drift

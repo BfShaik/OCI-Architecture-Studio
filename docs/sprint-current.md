@@ -2,7 +2,7 @@
 
 ## Sprint Goal
 
-Build the first working OCI Architecture Advisor vertical slice.
+Build the first working OCI Architecture Studio vertical slice with local RAG, intent-aware orchestration, golden prompt regression, and clear project tracking.
 
 ## Timebox
 
@@ -10,23 +10,26 @@ Build the first working OCI Architecture Advisor vertical slice.
 
 ## Current Priorities
 
-1. Repo setup
-2. Backend scaffold
-3. Frontend scaffold
-4. First prompt template
-5. First OCI ingestion prototype
+1. Convert golden prompts to structured evals
+2. Build local eval runner
+3. Improve ingestion cleanup
+4. Add source metadata
+5. Expand source registry
+6. Improve frontend result cards
+7. Add CI skeleton
 
 ## Sprint Scope
 
 In scope:
 - FastAPI backend with health and architecture review endpoints
 - React + Vite chat-style interface
-- Retrieval placeholder with source-shaped records
-- Prompt orchestration placeholder with structured response
-- Initial prompt and eval assets
+- Local RAG index with source-shaped records
+- Intent-aware orchestration with structured response
+- Prompt templates and golden prompt assets
+- Status and two-week tracking docs
 
 Out of scope:
-- full RAG implementation
+- production RAG/vector database
 - LangGraph
 - advanced memory systems
 - production ingestion jobs

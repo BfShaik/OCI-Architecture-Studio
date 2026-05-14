@@ -4,17 +4,18 @@ OCI Architecture Studio is an enterprise AI platform for OCI architecture guidan
 
 The project is monorepo-first, RAG-first, modular, and evaluation-driven. Prompts, retrieval code, evals, and application code are treated as first-class assets from the start.
 
-## First Vertical Slice
+## Current Vertical Slice
 
 The initial working flow is intentionally simple:
 
 1. User asks an OCI architecture question in the React UI.
 2. The frontend calls the FastAPI backend.
-3. The backend retrieves relevant chunks from a small local OCI RAG index.
-4. A prompt orchestration placeholder shapes a structured response from that context.
-5. The UI renders the recommendation, assumptions, risks, citations, and next steps.
+3. The backend classifies the request intent.
+4. The backend retrieves relevant chunks from a small local OCI RAG index.
+5. Intent-aware orchestration shapes a structured response from that context.
+6. The UI renders intent, prompt template, recommendations, assumptions, risks, citations, and next steps.
 
-LangGraph, advanced memory, release intelligence, and production ingestion are intentionally out of scope for this scaffold.
+LangGraph, advanced memory, production vector storage, full LLM synthesis, and production release intelligence are intentionally out of scope for this scaffold.
 
 ## Repository Layout
 
@@ -28,6 +29,23 @@ evals/                Regression prompts and expected behavior
 infra/                Deployment and CI/CD assets
 tests/                Backend and integration tests
 ```
+
+## Current Capabilities
+
+- Local OCI source registry and ingestion pipeline
+- Deterministic local embeddings for development
+- JSON vector index for local retrieval
+- Intent-aware orchestration for:
+  - product overview
+  - architecture
+  - migration
+  - disaster recovery
+  - cost
+  - security
+  - release awareness
+  - general questions
+- Golden prompt regression suite
+- Backend tests covering API, retrieval, and intent routing
 
 ## Run Locally
 
@@ -88,11 +106,12 @@ VITE_API_BASE_URL=http://localhost:8000 npm run dev
 
 ## Recommended Next Steps
 
-1. Expand the source registry with approved OCI architecture and service documents.
-2. Add source-grounded citation requirements to the first prompt template.
-3. Add eval cases for architecture quality, unsupported claims, and missing assumptions.
-4. Add CI for ingestion smoke tests, backend tests, frontend build, linting, and prompt/eval validation.
-5. Replace local hashing embeddings with the selected production embedding provider when the corpus grows.
+1. Convert the golden prompts into a structured machine-readable eval file.
+2. Add a local eval runner for golden prompts.
+3. Improve ingestion cleanup and source metadata.
+4. Expand the source registry with WAF/CDN, Object Storage, Vault, Cloud Guard, Logging, Monitoring, and Budgets sources.
+5. Add CI for ingestion smoke tests, backend tests, frontend build, linting, and prompt/eval validation.
+6. Replace local hashing embeddings with the selected production embedding provider when the corpus grows.
 
 ## Project Status
 
