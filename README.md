@@ -141,6 +141,22 @@ app/backend/.venv/bin/python evals/run_golden.py --cases evals/edge-cases.jsonl 
 
 Reports are written to `evals/reports/` and ignored by git.
 
+## OCI Deployment
+
+The first OCI deployment path keeps one codebase and uses environment-specific configuration:
+
+- local for development and testing
+- OCI staging for the first cloud-hosted slice
+- OCI demo/prod for later promoted environments
+
+Start with the execution runbook:
+
+```bash
+docs/oci-deployment-execution.md
+```
+
+The scaffold includes Terraform environments, backend VM deployment, frontend Object Storage upload, snapshot upload, OCI access checks, and deployment smoke tests.
+
 ## Rerun After Changes
 
 ```bash
@@ -161,3 +177,9 @@ See `docs/two-week-plan.md` for the active two-week execution plan.
 See `docs/demo-readiness.md` for the demo checklist, recommended demo prompts, Sprint 2 backlog, and closeout notes.
 
 See `docs/phase-2-architecture.md` for the productionization architecture and Sprint 2 roadmap.
+
+See `docs/oci-deployment-architecture.md` and `infra/terraform/` for the first OCI-native deployment architecture and Terraform scaffold.
+
+See `docs/oci-landing-zone-runbook.md` for the first OCI landing-zone deployment workflow and smoke tests.
+
+See `docs/oci-deployment-execution.md` for the command-by-command staging deployment sequence.

@@ -1,7 +1,7 @@
 # Roadmap
 
 ## Phase 1 — MVP Foundation
-Status: In Progress
+Status: Validated Complete
 
 Deliverables:
 - monorepo setup — Done
@@ -29,6 +29,8 @@ Exit criteria:
 Status: In Progress
 
 Architecture plan: `docs/phase-2-architecture.md`
+OCI deployment plan: `docs/oci-deployment-architecture.md`
+OCI deployment execution runbook: `docs/oci-deployment-execution.md`
 
 Deliverables:
 - curated seed corpus — In Progress
@@ -50,3 +52,20 @@ Deliverables:
 - change classification — MVP Done
 - release impact summaries — Pending
 - stale-knowledge warnings — MVP Done
+
+## Phase 4 — OCI Deployment Execution
+Status: Validated Scaffold
+
+Deliverables:
+- OCI-native deployment architecture — Done
+- Terraform foundation module — Done
+- `dev`, `test`, and `staging` Terraform environments — Done
+- staging deployment execution runbook — Done
+- backend Compute deployment script — Done
+- frontend Object Storage upload script — Done
+- knowledge snapshot Object Storage upload script — Done
+- OCI access validation helper — Done
+- deployment smoke test for health, retrieval, and release-aware path — Done
+- GitHub Actions staging deployment workflow — Done
+- first Terraform apply to OCI — Pending
+- first backend/frontend cloud smoke test — Pending

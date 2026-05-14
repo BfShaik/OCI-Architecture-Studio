@@ -1,0 +1,11 @@
+#cloud-config
+package_update: true
+packages:
+  - git
+  - python3
+  - python3-pip
+
+runcmd:
+  - mkdir -p /opt/oci-architecture-studio
+  - echo "OCI Architecture Studio backend host initialized" > /opt/oci-architecture-studio/README
+  - echo "Deploy application artifact or container here through CI/CD." >> /opt/oci-architecture-studio/README

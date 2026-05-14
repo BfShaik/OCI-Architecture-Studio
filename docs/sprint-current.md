@@ -2,7 +2,7 @@
 
 ## Sprint Goal
 
-Build the first working OCI Architecture Studio vertical slice with local RAG, intent-aware orchestration, golden/edge regression, release-awareness foundation, and a demo-ready UI.
+Build the first working OCI Architecture Studio vertical slice with local RAG, intent-aware orchestration, golden/edge regression, release-awareness foundation, demo-ready UI, and a validated first OCI deployment scaffold.
 
 ## Timebox
 
@@ -19,6 +19,7 @@ Build the first working OCI Architecture Studio vertical slice with local RAG, i
 7. Add CI skeleton
 8. Add release-awareness foundation
 9. Prepare demo readiness closeout
+10. Prepare first OCI deployment execution scaffold
 
 ## Sprint Scope
 
@@ -33,13 +34,16 @@ In scope:
 - edge-case evals and validation reports
 - demo prompt shortcuts and polished source cards
 - Status and two-week tracking docs
+- first OCI landing-zone Terraform scaffold
+- deployment scripts, smoke tests, and staging workflow
 
 Out of scope:
 - production RAG/vector database
 - LangGraph
 - advanced memory systems
 - production ingestion jobs beyond local CLI snapshots
-- cloud deployment
+- production-grade cloud deployment
+- HTTPS ingress and HA cloud runtime
 
 ## Demo Readiness
 

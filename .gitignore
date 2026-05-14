@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+infra/deploy/*.env
 
 __pycache__/
 *.py[cod]
@@ -23,6 +24,12 @@ pnpm-debug.log*
 coverage/
 .coverage
 evals/reports/
+
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
 
 knowledge/snapshots/*
 !knowledge/snapshots/.gitkeep

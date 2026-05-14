@@ -1,0 +1,247 @@
+name: Deploy OCI Staging
+
+on:
+  workflow_dispatch:
+    inputs:
+      apply_terraform:
+        description: "Apply Terraform after plan"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      deploy_app:
+        description: "Deploy backend/frontend after validation"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install backend dependencies
+        working-directory: app/backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Knowledge and release ingestion smoke
+        run: |
+          python knowledge/ingestion/ingest.py --no-fetch
+          python knowledge/refresh/ingest_releases.py --no-fetch
+
+      - name: Backend tests
+        working-directory: app/backend
+        env:
+          PYTHONPATH: src
+        run: pytest -q
+
+      - name: Golden evals
+        run: |
+          python evals/run_golden.py --output-dir evals/reports/golden
+          python evals/run_golden.py --cases evals/edge-cases.jsonl --output-dir evals/reports/edge-cases
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: app/frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: app/frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: app/frontend
+        run: npm run build
+
+      - name: Upload frontend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: app/frontend/dist/
+
+  terraform:
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: oci-staging
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Configure OCI CLI credentials
+        env:
+          OCI_CONFIG_FILE_CONTENT: ${{ secrets.OCI_CONFIG_FILE_CONTENT }}
+          OCI_PRIVATE_KEY: ${{ secrets.OCI_PRIVATE_KEY }}
+          OCI_PRIVATE_KEY_PATH: ${{ secrets.OCI_PRIVATE_KEY_PATH }}
+        run: |
+          mkdir -p ~/.oci
+          printf "%s" "$OCI_CONFIG_FILE_CONTENT" > ~/.oci/config
+          if [ -n "$OCI_PRIVATE_KEY_PATH" ]; then
+            mkdir -p "$(dirname "$OCI_PRIVATE_KEY_PATH")"
+            printf "%s" "$OCI_PRIVATE_KEY" > "$OCI_PRIVATE_KEY_PATH"
+            chmod 600 "$OCI_PRIVATE_KEY_PATH"
+          else
+            printf "%s" "$OCI_PRIVATE_KEY" > ~/.oci/oci_api_key.pem
+            chmod 600 ~/.oci/oci_api_key.pem
+          fi
+
+      - name: Write Terraform variables
+        working-directory: infra/terraform/envs/staging
+        env:
+          TFVARS_CONTENT: ${{ secrets.OCI_STAGING_TFVARS }}
+        run: |
+          printf "%s" "$TFVARS_CONTENT" > terraform.tfvars
+
+      - name: Terraform init
+        working-directory: infra/terraform/envs/staging
+        run: terraform init
+
+      - name: Terraform fmt
+        run: terraform fmt -check -recursive infra/terraform
+
+      - name: Terraform validate
+        working-directory: infra/terraform/envs/staging
+        run: terraform validate
+
+      - name: Terraform plan
+        working-directory: infra/terraform/envs/staging
+        run: terraform plan -out=tfplan
+
+      - name: Terraform apply
+        if: inputs.apply_terraform == 'true'
+        working-directory: infra/terraform/envs/staging
+        run: terraform apply -auto-approve tfplan
+
+  deploy_app:
+    needs: terraform
+    if: inputs.deploy_app == 'true'
+    runs-on: ubuntu-latest
+    environment: oci-staging
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: app/frontend/package-lock.json
+
+      - name: Install deploy dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rsync openssh-client
+          python -m pip install --upgrade pip
+          pip install oci-cli
+          pip install -r app/backend/requirements.txt
+
+      - name: Install frontend dependencies
+        working-directory: app/frontend
+        run: npm ci
+
+      - name: Configure OCI CLI credentials
+        env:
+          OCI_CONFIG_FILE_CONTENT: ${{ secrets.OCI_CONFIG_FILE_CONTENT }}
+          OCI_PRIVATE_KEY: ${{ secrets.OCI_PRIVATE_KEY }}
+          OCI_PRIVATE_KEY_PATH: ${{ secrets.OCI_PRIVATE_KEY_PATH }}
+        run: |
+          mkdir -p ~/.oci
+          printf "%s" "$OCI_CONFIG_FILE_CONTENT" > ~/.oci/config
+          if [ -n "$OCI_PRIVATE_KEY_PATH" ]; then
+            mkdir -p "$(dirname "$OCI_PRIVATE_KEY_PATH")"
+            printf "%s" "$OCI_PRIVATE_KEY" > "$OCI_PRIVATE_KEY_PATH"
+            chmod 600 "$OCI_PRIVATE_KEY_PATH"
+          else
+            printf "%s" "$OCI_PRIVATE_KEY" > ~/.oci/oci_api_key.pem
+            chmod 600 ~/.oci/oci_api_key.pem
+          fi
+
+      - name: Configure SSH key
+        env:
+          OCI_STAGING_SSH_PRIVATE_KEY: ${{ secrets.OCI_STAGING_SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf "%s" "$OCI_STAGING_SSH_PRIVATE_KEY" > ~/.ssh/oci_staging
+          chmod 600 ~/.ssh/oci_staging
+          printf "Host *\n  StrictHostKeyChecking accept-new\n" > ~/.ssh/config
+
+      - name: Deploy backend VM
+        env:
+          OCI_STAGING_BACKEND_HOST: ${{ secrets.OCI_STAGING_BACKEND_HOST }}
+          OCI_STAGING_SSH_USER: ${{ secrets.OCI_STAGING_SSH_USER }}
+        run: |
+          infra/scripts/deploy_backend_vm.sh \
+            "$OCI_STAGING_BACKEND_HOST" \
+            "${OCI_STAGING_SSH_USER:-opc}" \
+            ~/.ssh/oci_staging
+
+      - name: Upload frontend assets
+        env:
+          OCI_CLI_PROFILE: DEFAULT
+          OCI_OBJECT_STORAGE_NAMESPACE: ${{ secrets.OCI_OBJECT_STORAGE_NAMESPACE }}
+          OCI_STAGING_FRONTEND_BUCKET: ${{ secrets.OCI_STAGING_FRONTEND_BUCKET }}
+        run: |
+          infra/scripts/upload_frontend_to_object_storage.sh \
+            "$OCI_OBJECT_STORAGE_NAMESPACE" \
+            "$OCI_STAGING_FRONTEND_BUCKET"
+
+      - name: Upload knowledge snapshots
+        env:
+          OCI_CLI_PROFILE: DEFAULT
+          OCI_OBJECT_STORAGE_NAMESPACE: ${{ secrets.OCI_OBJECT_STORAGE_NAMESPACE }}
+          OCI_STAGING_SNAPSHOTS_BUCKET: ${{ secrets.OCI_STAGING_SNAPSHOTS_BUCKET }}
+        run: |
+          infra/scripts/sync_snapshots_to_object_storage.sh \
+            "$OCI_OBJECT_STORAGE_NAMESPACE" \
+            "$OCI_STAGING_SNAPSHOTS_BUCKET"
+
+  smoke:
+    needs: deploy_app
+    if: inputs.deploy_app == 'true'
+    runs-on: ubuntu-latest
+    environment: oci-staging
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run deployment smoke test
+        env:
+          OCI_STAGING_API_BASE_URL: ${{ secrets.OCI_STAGING_API_BASE_URL }}
+          OCI_STAGING_FRONTEND_URL: ${{ secrets.OCI_STAGING_FRONTEND_URL }}
+        run: |
+          python infra/scripts/smoke_oci_deployment.py \
+            --api-base-url "$OCI_STAGING_API_BASE_URL" \
+            --frontend-url "$OCI_STAGING_FRONTEND_URL"

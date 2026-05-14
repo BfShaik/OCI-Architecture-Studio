@@ -12,24 +12,24 @@ Current two-week task count:
 
 | Status | Count | Percent of total |
 |---|---:|---:|
-| Done | 9 | 82% |
+| Done | 10 | 91% |
 | In Progress | 1 | 9% |
-| Not Started | 1 | 9% |
+| Not Started | 0 | 0% |
 | Blocked | 0 | 0% |
 | Total | 11 | 100% |
 
 Strict completion:
-- 9 of 11 tasks completed
-- 82% complete
+- 10 of 11 tasks completed
+- 91% complete
 
 Started or partially complete:
-- 10 of 11 tasks touched
-- 91% started
+- 11 of 11 tasks touched
+- 100% started
 
 Weighted progress estimate:
 - Done tasks count as 100%
 - In-progress tasks count as 50%
-- Current weighted progress: 86%
+- Current weighted progress: 95%
 
 This progress is based on `docs/two-week-plan.md`.
 
@@ -97,8 +97,40 @@ This progress is based on `docs/two-week-plan.md`.
   - edge-case eval runner passes 8 of 8 cases
   - eval runner now checks retrieval support and stale or unverified guidance
 - Added demo readiness closeout under `docs/demo-readiness.md`.
+- Added OCI deployment architecture and Terraform scaffold under `docs/oci-deployment-architecture.md` and `infra/terraform/`.
+- Added OCI landing-zone runbook and deployment smoke test under `docs/oci-landing-zone-runbook.md` and `infra/scripts/`.
+- Added first OCI deployment execution slice:
+  - staging Terraform environment
+  - Compute-backed FastAPI deployment script
+  - Object Storage upload scripts for frontend assets and snapshots
+  - OCI access validation helper
+  - release-aware deployment smoke test
+  - non-secret staging runtime config template
+  - manual GitHub Actions staging deployment workflow
+- Validated Terraform configuration for `dev`, `test`, and `staging`.
+- Validated local OCI access through the configured `DEFAULT` profile.
 - Renamed GitHub repository to `OCI-Architecture-Studio`.
 - Pushed current implementation to GitHub.
+
+## Latest Validation
+
+Last validation run: 2026-05-14
+
+- Terraform formatting: passed
+- Terraform validation:
+  - `infra/terraform/envs/dev`: passed
+  - `infra/terraform/envs/test`: passed
+  - `infra/terraform/envs/staging`: passed
+- GitHub workflow YAML parsing: passed
+- Infrastructure Python script compile checks: passed
+- Knowledge ingestion smoke: passed, 13 chunks generated
+- Release ingestion smoke: passed, 3 release items generated
+- Backend tests: passed, 22 tests
+- Frontend build: passed
+- Golden evals: passed, 6 of 6
+- Edge-case evals: passed, 8 of 8
+- OCI local access check: passed, Object Storage namespace `idsmrn7rvqb6`
+- Local deployment smoke test: passed, including architecture and release-aware citation paths
 
 ## Pending
 
@@ -126,7 +158,12 @@ This progress is based on `docs/two-week-plan.md`.
   - structured confidence or evidence notes
 - Add frontend improvements:
   - prompt history
-- Add deployment assets after the local vertical slice stabilizes.
+- Apply the staging Terraform plan with real OCI OCIDs and an approved image OCID.
+- Deploy the backend VM using `infra/scripts/deploy_backend_vm.sh`.
+- Upload frontend assets and generated snapshots to Object Storage.
+- Run cloud smoke tests against the OCI-hosted backend and frontend URLs.
+- Move Terraform state to OCI Object Storage before shared/team usage.
+- Put the backend behind HTTPS through API Gateway or Load Balancer before production use.
 
 ## In Progress
 
@@ -142,6 +179,9 @@ This progress is based on `docs/two-week-plan.md`.
 - Release-awareness scaffold:
   - release-aware intent, prompt template, release registry, release ingestion, and release snapshot reader exist
   - impact comparison is not implemented yet
+- OCI deployment execution:
+  - Terraform, scripts, config templates, workflow, and docs exist
+  - actual cloud apply/deploy is the next operator step because it requires final tenancy-specific OCIDs and approval
 
 ## Current Known Limitations
 
@@ -150,3 +190,4 @@ This progress is based on `docs/two-week-plan.md`.
 - Release awareness has a local release snapshot foundation, but it is not yet a full live release intelligence workflow.
 - The backend returns intent-profiled recommendations, but full LLM-based synthesis is not implemented yet.
 - Generated vector snapshots are local and gitignored.
+- The first OCI deployment exposes the backend directly on port `8000`; this is acceptable for staging validation but should be replaced with HTTPS ingress before demo/prod.

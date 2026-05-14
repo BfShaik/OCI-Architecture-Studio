@@ -27,14 +27,14 @@ Turn the current local RAG and intent-aware prototype into a stronger evaluation
 | 2026-05-25 | Improve frontend result cards | Source cards show title, score, intent, URL, and concise snippet | Done |
 | 2026-05-26 | Add release-awareness scaffold | Add release source registry and a placeholder release-impact flow | Done |
 | 2026-05-27 | Add CI skeleton | GitHub Actions runs backend tests and frontend build | Done |
-| 2026-05-28 | Sprint review and backlog update | Status log, roadmap, and next sprint tasks are updated | Not Started |
+| 2026-05-28 | Sprint review and backlog update | Status log, roadmap, and next sprint tasks are updated | Done |
 
 ## Status Notes
 
-- Current task count: 9 Done, 1 In Progress, 1 Not Started, 0 Blocked.
-- Strict completion: 9 of 11 tasks, or 82%.
-- Started or partially complete: 10 of 11 tasks, or 91%.
-- Weighted progress estimate: 86%, counting `Done` as 100% and `In Progress` as 50%.
+- Current task count: 10 Done, 1 In Progress, 0 Not Started, 0 Blocked.
+- Strict completion: 10 of 11 tasks, or 91%.
+- Started or partially complete: 11 of 11 tasks, or 100%.
+- Weighted progress estimate: 95%, counting `Done` as 100% and `In Progress` as 50%.
 - 2026-05-15 structured golden evals are `Done`: `evals/golden-prompts.jsonl` exists.
 - 2026-05-18 local eval runner is `Done`: `evals/run_golden.py` executes prompts and writes JSON/Markdown reports. Current suites pass 14 of 14 cases.
 - 2026-05-19 eval runner integration is `Done`: the repo-level script is included in CI.
@@ -44,6 +44,7 @@ Turn the current local RAG and intent-aware prototype into a stronger evaluation
 - 2026-05-25 frontend result cards are `Done`: UI shows intent, prompt template, source title, service, domain, source type, score, freshness, trust level, source URL, source tags, and snippet. Prompt history remains a Sprint 2 item.
 - 2026-05-26 release-awareness scaffold is `Done`: release-aware intent, prompt template, release source registry, release ingestion, release classification, and release snapshot reader exist. Actual impact comparison remains future work.
 - 2026-05-27 CI skeleton is `Done`: `.github/workflows/ci.yml` runs ingestion smoke test, backend tests, golden evals, and frontend build.
+- 2026-05-28 sprint review and backlog update is `Done`: status, roadmap, demo closeout, Phase 2 architecture, and OCI deployment execution docs are current.
 
 ## Priority Order
 
