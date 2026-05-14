@@ -97,6 +97,24 @@ Last updated: 2026-05-14
   - golden prompt regression check
 - Add deployment assets after the local vertical slice stabilizes.
 
+## In Progress
+
+- Ingestion cleanup:
+  - basic HTML cleanup exists
+  - more Oracle documentation boilerplate cleanup is still needed
+- Source metadata:
+  - current index includes generated timestamp, source id, title, URL, source type, chunk index, and fetch status
+  - still needs service domain, intent tags, per-source fetched timestamp, and freshness status
+- Source registry expansion:
+  - added OKE, database migration, Full Stack Disaster Recovery, Cost Management, and Security Services
+  - still needs WAF/CDN, Object Storage, Vault, Cloud Guard, Logging, Monitoring, and Budgets-specific sources
+- Frontend result cards:
+  - current UI shows intent, prompt template, source title, source type, score, and snippet
+  - still needs clickable URLs, cleaner source cards, and prompt history
+- Release-awareness scaffold:
+  - release-aware intent and prompt template exist
+  - release ingestion and impact comparison are not implemented yet
+
 ## Current Known Limitations
 
 - The local RAG index is small and not a complete OCI documentation corpus.
