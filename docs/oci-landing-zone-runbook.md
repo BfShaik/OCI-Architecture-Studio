@@ -198,6 +198,8 @@ Terraform:
 - log group exists
 - CPU alarm exists
 - notification topic exists
+- monitoring alarm is readable through the OCI SDK helper
+- resource lifecycle Events rule exists and routes to Notifications
 
 ## Top Risks
 

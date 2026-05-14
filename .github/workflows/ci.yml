@@ -30,6 +30,12 @@ jobs:
           python knowledge/ingestion/ingest.py --no-fetch
           python knowledge/refresh/ingest_releases.py --no-fetch
 
+      - name: Deployment config template validation
+        run: |
+          python infra/scripts/validate_deployment_config.py \
+            --tfvars infra/terraform/envs/staging/terraform.tfvars.example \
+            --allow-placeholders
+
       - name: Backend tests
         working-directory: app/backend
         env:

@@ -68,13 +68,13 @@ variable "backend_shape" {
 variable "backend_ocpus" {
   description = "OCPUs for flexible backend shape."
   type        = number
-  default     = 1
+  default     = 8
 }
 
 variable "backend_memory_gbs" {
   description = "Memory in GB for flexible backend shape."
   type        = number
-  default     = 8
+  default     = 128
 }
 
 variable "alarm_email" {

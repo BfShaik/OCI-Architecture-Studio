@@ -113,8 +113,16 @@ This progress is based on `docs/two-week-plan.md`.
   - project-specific SSH key for the backend VM
   - latest compatible Oracle Linux 9 platform image in `us-ashburn-1`
   - `VM.Standard.E5.Flex` backend shape
+  - `8 OCPUs` and `128 GB` backend sizing
   - `baba.shaik@oracle.com` notification endpoint
 - Fixed Terraform environment propagation so the `staging` environment creates staging-named resources instead of module-default `dev` names.
+- Added deployment input validation:
+  - deployment config schema under `infra/deploy/`
+  - Terraform variable preflight validator
+  - CI template validation
+  - staging deployment workflow validation before Terraform plan
+- Extended OCI connectivity validation to include Monitoring alarm visibility.
+- Added a compartment-level OCI Events rule to notify the configured email about resource lifecycle events in the environment compartment.
 - Validated Terraform configuration for `dev`, `test`, and `staging`.
 - Validated local OCI access through the configured `DEFAULT` profile.
 - Renamed GitHub repository to `OCI-Architecture-Studio`.
@@ -129,10 +137,12 @@ Last validation run: 2026-05-14
   - `infra/terraform/envs/dev`: passed
   - `infra/terraform/envs/test`: passed
   - `infra/terraform/envs/staging`: passed
-- Terraform staging plan: passed, 18 to add, 0 to change, 0 to destroy
+- Terraform staging plan: passed, 19 to add, 0 to change, 0 to destroy
 - Terraform staging plan target: `oci-architecture-studio-staging`
 - Terraform staging compute image: `Oracle-Linux-9.7-2026.04.30-3`
 - Terraform staging compute shape: `VM.Standard.E5.Flex`
+- Terraform staging compute size: `8 OCPUs`, `128 GB`
+- Deployment config validation: passed
 - GitHub workflow YAML parsing: passed
 - Infrastructure Python script compile checks: passed
 - Knowledge ingestion smoke: passed, 13 chunks generated

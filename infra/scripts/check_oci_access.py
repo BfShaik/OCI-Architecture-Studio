@@ -11,6 +11,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--bucket-name", help="Object Storage bucket name to verify.")
     parser.add_argument("--secret-id", help="Vault secret OCID to verify read access.")
     parser.add_argument("--log-group-id", help="Logging log group OCID to verify.")
+    parser.add_argument("--alarm-id", help="Monitoring alarm OCID to verify read access.")
+    parser.add_argument("--event-rule-id", help="Events rule OCID to verify read access.")
     return parser.parse_args()
 
 
@@ -47,6 +49,18 @@ def main() -> int:
         log_group = logging.get_log_group(args.log_group_id).data
         assert log_group.id == args.log_group_id
         print(f"PASS log group readable: {log_group.display_name}")
+
+    if args.alarm_id:
+        monitoring = oci.monitoring.MonitoringClient(config)
+        alarm = monitoring.get_alarm(args.alarm_id).data
+        assert alarm.id == args.alarm_id
+        print(f"PASS monitoring alarm readable: {alarm.display_name}")
+
+    if args.event_rule_id:
+        events = oci.events.EventsClient(config)
+        rule = events.get_rule(args.event_rule_id).data
+        assert rule.id == args.event_rule_id
+        print(f"PASS events rule readable: {rule.display_name}")
 
     return 0
 

@@ -13,6 +13,7 @@ Deployment and CI/CD assets live here.
 - Deployment smoke checks live under `infra/scripts/`.
 - OCI helper script dependencies live in `infra/requirements.txt`.
 - Manual staging deployment workflow lives in `.github/workflows/deploy-oci-staging.yml`.
+- Deployment config examples and schema live under `infra/deploy/`.
 
 ## Deployment Direction
 
@@ -25,5 +26,6 @@ Phase 1 keeps the MVP simple:
 - logs in OCI Logging
 - alarms in OCI Monitoring
 - alerts in OCI Notifications
+- resource lifecycle notifications through OCI Events
 
 Phase 2 replaces local embeddings/vector index with OCI-native embeddings and vector search.

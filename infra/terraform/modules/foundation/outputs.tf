@@ -42,6 +42,14 @@ output "notification_topic_ocid" {
   value = oci_ons_notification_topic.alerts.id
 }
 
+output "backend_cpu_alarm_ocid" {
+  value = oci_monitoring_alarm.backend_cpu.id
+}
+
+output "resource_lifecycle_event_rule_ocid" {
+  value = oci_events_rule.resource_lifecycle.id
+}
+
 output "app_config_secret_ocid" {
   value = oci_vault_secret.app_config_placeholder.id
 }

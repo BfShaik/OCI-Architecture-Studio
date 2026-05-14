@@ -3,7 +3,7 @@
 
 region                 = "us-ashburn-1"
 backend_shape          = "VM.Standard.E5.Flex"
-backend_ocpus          = 1
-backend_memory_gbs     = 8
+backend_ocpus          = 8
+backend_memory_gbs     = 128
 availability_domain    = ""
 frontend_bucket_access_type = "ObjectReadWithoutList"

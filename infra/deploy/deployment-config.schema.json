@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OCI Architecture Studio deployment config",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "tenancy_ocid",
+    "parent_compartment_ocid",
+    "region",
+    "oci_profile",
+    "auth_method",
+    "admin_email",
+    "ssh_public_key",
+    "backend_image_ocid",
+    "backend_shape",
+    "backend_ocpus",
+    "backend_memory_gbs",
+    "frontend_bucket_access_type"
+  ],
+  "properties": {
+    "tenancy_ocid": {
+      "type": "string",
+      "pattern": "^ocid1\\.tenancy\\."
+    },
+    "parent_compartment_ocid": {
+      "type": "string",
+      "pattern": "^ocid1\\.compartment\\."
+    },
+    "region": {
+      "type": "string",
+      "examples": ["us-ashburn-1"]
+    },
+    "oci_profile": {
+      "type": "string",
+      "default": "DEFAULT"
+    },
+    "auth_method": {
+      "type": "string",
+      "enum": ["config_file", "instance_principal", "resource_principal"],
+      "default": "config_file"
+    },
+    "admin_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "ssh_public_key": {
+      "type": "string",
+      "pattern": "^(ssh-rsa|ssh-ed25519) "
+    },
+    "backend_image_ocid": {
+      "type": "string",
+      "pattern": "^ocid1\\.image\\."
+    },
+    "backend_shape": {
+      "type": "string",
+      "default": "VM.Standard.E5.Flex"
+    },
+    "backend_ocpus": {
+      "type": "number",
+      "minimum": 1,
+      "default": 8
+    },
+    "backend_memory_gbs": {
+      "type": "number",
+      "minimum": 1,
+      "default": 128
+    },
+    "frontend_bucket_access_type": {
+      "type": "string",
+      "enum": ["ObjectReadWithoutList", "NoPublicAccess"],
+      "default": "ObjectReadWithoutList"
+    },
+    "vcn_cidr": {
+      "type": "string",
+      "default": "10.20.0.0/16"
+    },
+    "public_subnet_cidr": {
+      "type": "string",
+      "default": "10.20.10.0/24"
+    }
+  }
+}

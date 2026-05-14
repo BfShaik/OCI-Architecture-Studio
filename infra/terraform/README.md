@@ -12,6 +12,7 @@ This scaffold is intentionally small:
 - Logging log group
 - Monitoring alarm
 - Notifications topic
+- Events rule for environment resource lifecycle notifications
 
 It is not a production HA design yet. It is the Phase 1 OCI deployment foundation for the validated MVP.
 

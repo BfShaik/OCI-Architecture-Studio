@@ -161,11 +161,20 @@ Current staging defaults:
 
 - region: `us-ashburn-1`
 - backend shape: `VM.Standard.E5.Flex`
+- backend size: `8 OCPUs`, `128 GB`
 - backend OS image family: Oracle Linux 9
 - notifications: `baba.shaik@oracle.com`
 - local SSH key path: `~/.ssh/oci-architecture-studio-staging`
 
 The real staging `terraform.tfvars`, saved plan files, and SSH keys are intentionally ignored by git.
+
+Validate deployment inputs with:
+
+```bash
+python3 infra/scripts/validate_deployment_config.py \
+  --tfvars infra/terraform/envs/staging/terraform.tfvars \
+  --profile DEFAULT
+```
 
 ## Rerun After Changes
 

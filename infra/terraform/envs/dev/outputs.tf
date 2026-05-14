@@ -26,6 +26,14 @@ output "notification_topic_ocid" {
   value = module.foundation.notification_topic_ocid
 }
 
+output "backend_cpu_alarm_ocid" {
+  value = module.foundation.backend_cpu_alarm_ocid
+}
+
+output "resource_lifecycle_event_rule_ocid" {
+  value = module.foundation.resource_lifecycle_event_rule_ocid
+}
+
 output "app_config_secret_ocid" {
   value = module.foundation.app_config_secret_ocid
 }

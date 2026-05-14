@@ -169,6 +169,29 @@ resource "oci_ons_subscription" "email" {
   endpoint       = var.alarm_email
 }
 
+resource "oci_events_rule" "resource_lifecycle" {
+  compartment_id = oci_identity_compartment.project.id
+  display_name   = "${local.name_prefix}-resource-lifecycle-alerts"
+  description    = "Send OCI Architecture Studio environment lifecycle events to the alerts topic."
+  is_enabled     = true
+  freeform_tags  = local.common_tags
+
+  condition = jsonencode({
+    data = {
+      compartmentId = [oci_identity_compartment.project.id]
+    }
+  })
+
+  actions {
+    actions {
+      action_type = "ONS"
+      is_enabled  = true
+      description = "Notify operators about resource lifecycle events in this environment."
+      topic_id    = oci_ons_notification_topic.alerts.id
+    }
+  }
+}
+
 resource "oci_core_instance" "backend" {
   availability_domain = var.availability_domain != "" ? var.availability_domain : data.oci_identity_availability_domains.ads.availability_domains[0].name
   compartment_id      = oci_identity_compartment.project.id

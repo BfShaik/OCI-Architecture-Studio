@@ -28,6 +28,43 @@ The first staging deployment uses:
 
 The real `terraform.tfvars`, saved Terraform plan, and SSH private key are local-only and must not be committed.
 
+## Deployment Input Checklist
+
+Required now:
+
+| Input | Current staging value/source |
+|---|---|
+| Tenancy OCID | OCI config `DEFAULT` profile |
+| Parent compartment OCID | `oci-architecture-studio` parent compartment |
+| Region | `us-ashburn-1` |
+| OCI CLI profile | `DEFAULT` |
+| Auth method | local `config_file`; backend target `instance_principal` later |
+| Admin/contact email | `baba.shaik@oracle.com` |
+| SSH public key | generated from `~/.ssh/oci-architecture-studio-staging.pub` |
+| Backend image OCID | latest compatible Oracle Linux 9 image for `us-ashburn-1` |
+| Backend shape | `VM.Standard.E5.Flex` |
+| Backend OCPUs/memory | `8 OCPUs`, `128 GB` |
+| Frontend bucket access | `ObjectReadWithoutList` for the first staging slice |
+
+Optional later:
+
+- private subnet or existing VCN/subnet selection
+- custom domain and TLS certificate
+- Load Balancer or API Gateway
+- remote Terraform state bucket
+- OCI Generative AI endpoint/model settings
+- Oracle AI Vector Search target
+
+Never hardcode:
+
+- OCI private keys
+- user API keys
+- application secrets
+- generated `.env` files
+- `terraform.tfvars`
+- saved Terraform plans
+- SSH private keys
+
 ## Exact Deployment Sequence
 
 ### 1. Validate Locally
@@ -62,7 +99,9 @@ python3 infra/scripts/check_oci_access.py \
   --compartment-id <compartment_ocid> \
   --bucket-name <snapshots_bucket_name> \
   --secret-id <app_config_secret_ocid> \
-  --log-group-id <log_group_ocid>
+  --log-group-id <log_group_ocid> \
+  --alarm-id <backend_cpu_alarm_ocid> \
+  --event-rule-id <resource_lifecycle_event_rule_ocid>
 ```
 
 ### 3. Provision OCI Infrastructure
@@ -82,8 +121,8 @@ ssh_public_key           = "ssh-rsa ..."
 backend_image_ocid       = "ocid1.image..."
 availability_domain      = ""
 backend_shape            = "VM.Standard.E5.Flex"
-backend_ocpus            = 1
-backend_memory_gbs       = 8
+backend_ocpus            = 8
+backend_memory_gbs       = 128
 frontend_bucket_access_type = "ObjectReadWithoutList"
 alarm_email              = "baba.shaik@oracle.com"
 ```
@@ -100,6 +139,7 @@ Run:
 terraform init
 terraform fmt -recursive
 terraform validate
+python ../../../scripts/validate_deployment_config.py --tfvars terraform.tfvars --profile DEFAULT
 terraform plan
 terraform apply
 terraform output
@@ -119,6 +159,10 @@ Useful outputs for later validation:
 - `app_config_secret_ocid`
 - `log_group_ocid`
 - `notification_topic_ocid`
+- `backend_cpu_alarm_ocid`
+- `resource_lifecycle_event_rule_ocid`
+
+The resource lifecycle Events rule sends matching environment compartment events to the same Notifications topic as the monitoring alarm.
 
 ### 4. Deploy Backend
 
