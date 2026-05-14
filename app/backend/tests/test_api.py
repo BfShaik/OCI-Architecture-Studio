@@ -24,3 +24,4 @@ def test_architecture_review() -> None:
     assert body["answer"]
     assert body["recommendations"]
     assert body["citations"]
+    assert "summary" in body["citations"][0]

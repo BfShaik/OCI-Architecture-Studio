@@ -1,8 +1,10 @@
 export type RetrievedSource = {
+  chunk_id?: string | null;
   title: string;
   source_type: string;
   url?: string | null;
   summary: string;
+  relevance_score?: number | null;
 };
 
 export type ArchitectureReviewRequest = {
@@ -11,6 +13,8 @@ export type ArchitectureReviewRequest = {
 };
 
 export type ArchitectureReviewResponse = {
+  intent: string;
+  prompt_template: string;
   answer: string;
   recommendations: string[];
   assumptions: string[];

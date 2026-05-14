@@ -18,13 +18,17 @@ class ArchitectureReviewRequest(BaseModel):
 
 
 class RetrievedSource(BaseModel):
+    chunk_id: str | None = None
     title: str
     source_type: str
     url: str | None = None
     summary: str
+    relevance_score: float | None = None
 
 
 class ArchitectureReviewResponse(BaseModel):
+    intent: str
+    prompt_template: str
     answer: str
     recommendations: list[str]
     assumptions: list[str]

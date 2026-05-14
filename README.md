@@ -10,11 +10,11 @@ The initial working flow is intentionally simple:
 
 1. User asks an OCI architecture question in the React UI.
 2. The frontend calls the FastAPI backend.
-3. The backend invokes a retrieval placeholder.
-4. A prompt orchestration placeholder produces a structured response.
+3. The backend retrieves relevant chunks from a small local OCI RAG index.
+4. A prompt orchestration placeholder shapes a structured response from that context.
 5. The UI renders the recommendation, assumptions, risks, citations, and next steps.
 
-Full RAG, LangGraph, advanced memory, and production ingestion are intentionally out of scope for this scaffold.
+LangGraph, advanced memory, release intelligence, and production ingestion are intentionally out of scope for this scaffold.
 
 ## Repository Layout
 
@@ -30,6 +30,22 @@ tests/                Backend and integration tests
 ```
 
 ## Run Locally
+
+### Build the Local OCI RAG Index
+
+Run this once before starting the backend if `knowledge/snapshots/oci-rag-index.json` does not exist:
+
+```bash
+python3 knowledge/ingestion/ingest.py
+```
+
+The ingestion pipeline reads `knowledge/source_registry.json`, fetches a small approved set of OCI documentation pages when network access is available, chunks the text, creates deterministic local embeddings, and writes a JSON vector index to `knowledge/snapshots/oci-rag-index.json`.
+
+For a fully offline seed index using the registry fallback text:
+
+```bash
+python3 knowledge/ingestion/ingest.py --no-fetch
+```
 
 ### Backend
 
@@ -72,8 +88,8 @@ VITE_API_BASE_URL=http://localhost:8000 npm run dev
 
 ## Recommended Next Steps
 
-1. Replace the retrieval placeholder with a tiny curated OCI document index.
+1. Expand the source registry with approved OCI architecture and service documents.
 2. Add source-grounded citation requirements to the first prompt template.
 3. Add eval cases for architecture quality, unsupported claims, and missing assumptions.
-4. Add CI for backend tests, frontend build, linting, and prompt/eval validation.
-5. Add a deployment target only after the local vertical slice is stable.
+4. Add CI for ingestion smoke tests, backend tests, frontend build, linting, and prompt/eval validation.
+5. Replace local hashing embeddings with the selected production embedding provider when the corpus grows.

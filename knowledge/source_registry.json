@@ -1,0 +1,81 @@
+{
+  "sources": [
+    {
+      "id": "oci-architecture-center",
+      "title": "OCI Architecture Center",
+      "url": "https://docs.oracle.com/en/solutions/",
+      "source_type": "oci_architecture_doc",
+      "fallback_text": "OCI Architecture Center provides reference architectures and solution patterns for designing workloads on Oracle Cloud Infrastructure. Use it to compare service choices, understand common deployment topologies, and identify design considerations for availability, networking, security, and operations."
+    },
+    {
+      "id": "oci-well-architected-framework",
+      "title": "OCI Well-Architected Framework",
+      "url": "https://docs.oracle.com/iaas/Content/cloud-adoption-framework/well-architected-framework.htm",
+      "source_type": "oci_architecture_doc",
+      "fallback_text": "OCI Well-Architected Framework organizes architecture review around reliability, security, performance efficiency, operational excellence, and cost optimization. Architecture recommendations should call out assumptions, risks, and tradeoffs across these pillars."
+    },
+    {
+      "id": "oci-vcn-overview",
+      "title": "OCI Virtual Cloud Network Overview",
+      "url": "https://docs.oracle.com/en-us/iaas/Content/Network/Concepts/overview.htm",
+      "source_type": "oci_service_doc",
+      "fallback_text": "OCI Virtual Cloud Networks provide isolated, configurable networks for cloud resources. VCN design should define CIDR ranges, subnets, route tables, security lists or network security groups, gateways, and private connectivity patterns."
+    },
+    {
+      "id": "oci-load-balancer-overview",
+      "title": "OCI Load Balancer Overview",
+      "url": "https://docs.oracle.com/en-us/iaas/Content/Balance/Concepts/balanceoverview.htm",
+      "source_type": "oci_service_doc",
+      "fallback_text": "OCI Load Balancer distributes traffic to backend resources and supports highly available application entry points. Designs should consider public versus private load balancers, backend health checks, listener configuration, TLS termination, and fault-domain placement."
+    },
+    {
+      "id": "oci-compute-overview",
+      "title": "OCI Compute Overview",
+      "url": "https://docs.oracle.com/en-us/iaas/Content/Compute/Concepts/computeoverview.htm",
+      "source_type": "oci_service_doc",
+      "fallback_text": "OCI Compute provides virtual machines, bare metal instances, images, shapes, and autoscaling options for application workloads. Architecture reviews should connect compute choices to availability, scaling, performance, patching, and operational requirements."
+    },
+    {
+      "id": "oci-database-overview",
+      "title": "OCI Database Services Overview",
+      "url": "https://docs.oracle.com/en-us/iaas/Content/Database/Concepts/overview.htm",
+      "source_type": "oci_service_doc",
+      "fallback_text": "OCI database services include managed Oracle Database options and supporting capabilities for resilient data tiers. Architecture recommendations should clarify data durability, backup, recovery, high availability, connectivity, and operational ownership."
+    },
+    {
+      "id": "oci-kubernetes-engine-overview",
+      "title": "OCI Kubernetes Engine Overview",
+      "url": "https://docs.oracle.com/en-us/iaas/Content/ContEng/Concepts/contengoverview.htm",
+      "source_type": "oci_service_doc",
+      "fallback_text": "OCI Kubernetes Engine, also known as OKE, runs managed Kubernetes clusters on OCI. Migration from EKS should assess Kubernetes versions, ingress controllers, worker node pools, persistent volumes, container registry, IAM mappings, secrets, networking, observability, and rollout strategy."
+    },
+    {
+      "id": "oci-database-migration-overview",
+      "title": "OCI Database Migration Overview",
+      "url": "https://docs.oracle.com/en-us/iaas/database-migration/doc/overview-database-migration.html",
+      "source_type": "oci_service_doc",
+      "fallback_text": "OCI Database Migration supports database migration planning and execution. Migration from RDS to OCI should discover the source engine, version, extensions, data size, downtime tolerance, replication needs, validation approach, and target service such as Base Database Service, Autonomous Database, MySQL HeatWave, or another managed database option."
+    },
+    {
+      "id": "oci-full-stack-dr-overview",
+      "title": "OCI Full Stack Disaster Recovery Overview",
+      "url": "https://docs.oracle.com/en-us/iaas/disaster-recovery/doc/disaster-recovery-overview.html",
+      "source_type": "oci_service_doc",
+      "fallback_text": "OCI disaster recovery design should define RTO and RPO targets, application criticality tiers, cross-region topology, database replication, backups, DNS or traffic failover, runbooks, monitoring, security controls, and regular DR drills. Fintech DR designs also need auditability, key management, and evidence of tested recovery."
+    },
+    {
+      "id": "oci-cost-management-overview",
+      "title": "OCI Cost Management Overview",
+      "url": "https://docs.oracle.com/en-us/iaas/Content/Billing/Concepts/costoverview.htm",
+      "source_type": "oci_service_doc",
+      "fallback_text": "OCI cost optimization should use budgets, cost analysis, tagging, right-sized compute, autoscaling, storage tiering, lifecycle policies, environment shutdown schedules, and measured utilization. Cost reviews should preserve required availability, backup, security, and monitoring controls."
+    },
+    {
+      "id": "oci-security-services-overview",
+      "title": "OCI Security Services Overview",
+      "url": "https://docs.oracle.com/en-us/iaas/Content/Security/Concepts/security.htm",
+      "source_type": "oci_service_doc",
+      "fallback_text": "OCI security architecture should cover IAM, least privilege, compartment strategy, network security groups, private subnets, encryption, Vault for keys and secrets, Cloud Guard, Security Zones, logging, audit, monitoring, and compliance evidence."
+    }
+  ]
+}

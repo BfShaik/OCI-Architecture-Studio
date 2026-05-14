@@ -4,7 +4,27 @@ This area will hold the RAG and release-awareness pipeline.
 
 ## Current State
 
-The scaffold intentionally includes only placeholders. The first production step should be a small curated OCI source registry and a local retrieval adapter.
+The first local RAG layer is implemented with:
+
+- `source_registry.json` for the initial OCI source list
+- `ingestion/ingest.py` for fetching, chunking, and embedding source text
+- `snapshots/oci-rag-index.json` as the local generated vector index
+
+The current embedding implementation is deterministic and local. It is useful for validating the retrieval workflow, but it should be replaced with a production embedding provider when the corpus grows.
+
+## Run Ingestion
+
+From the repository root:
+
+```bash
+python3 knowledge/ingestion/ingest.py
+```
+
+Offline fallback mode:
+
+```bash
+python3 knowledge/ingestion/ingest.py --no-fetch
+```
 
 ## Subdirectories
 

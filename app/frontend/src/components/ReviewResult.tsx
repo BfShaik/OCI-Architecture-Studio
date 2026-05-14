@@ -22,6 +22,10 @@ export function ReviewResult({ result }: ReviewResultProps) {
     <div className="review-result">
       <section className="answer-block">
         <h2>Architecture Review</h2>
+        <div className="intent-row">
+          <span>{result.intent}</span>
+          <span>{result.prompt_template}</span>
+        </div>
         <p>{result.answer}</p>
       </section>
 
@@ -38,7 +42,12 @@ export function ReviewResult({ result }: ReviewResultProps) {
           <article key={source.title} className="source-item">
             <div>
               <strong>{source.title}</strong>
-              <span>{source.source_type}</span>
+              <span>
+                {source.source_type}
+                {typeof source.relevance_score === "number"
+                  ? ` · ${source.relevance_score.toFixed(2)}`
+                  : ""}
+              </span>
             </div>
             <p>{source.summary}</p>
           </article>

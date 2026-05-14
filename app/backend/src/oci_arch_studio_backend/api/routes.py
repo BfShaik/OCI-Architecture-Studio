@@ -5,8 +5,9 @@ from oci_arch_studio_backend.models.architecture import (
     ArchitectureReviewResponse,
     HealthResponse,
 )
+from oci_arch_studio_backend.core.config import get_settings
 from oci_arch_studio_backend.services.orchestrator import ArchitectureReviewOrchestrator
-from oci_arch_studio_backend.services.retrieval import PlaceholderRetriever
+from oci_arch_studio_backend.services.retrieval import OciKnowledgeRetriever
 
 router = APIRouter()
 
@@ -20,6 +21,7 @@ async def health() -> HealthResponse:
 async def architecture_review(
     request: ArchitectureReviewRequest,
 ) -> ArchitectureReviewResponse:
-    retriever = PlaceholderRetriever()
+    settings = get_settings()
+    retriever = OciKnowledgeRetriever(index_path=settings.knowledge_index_path)
     orchestrator = ArchitectureReviewOrchestrator(retriever=retriever)
     return await orchestrator.review(request)

@@ -2,46 +2,59 @@ from oci_arch_studio_backend.models.architecture import (
     ArchitectureReviewRequest,
     ArchitectureReviewResponse,
 )
-from oci_arch_studio_backend.services.retrieval import PlaceholderRetriever
+from oci_arch_studio_backend.services.intents import (
+    IntentClassifier,
+    get_intent_profile,
+)
+from oci_arch_studio_backend.services.retrieval import OciKnowledgeRetriever
 
 
 class ArchitectureReviewOrchestrator:
-    """Coordinates retrieval and response shaping for the first vertical slice."""
+    """Coordinates intent classification, retrieval, and response shaping."""
 
-    def __init__(self, retriever: PlaceholderRetriever) -> None:
+    def __init__(
+        self,
+        retriever: OciKnowledgeRetriever,
+        classifier: IntentClassifier | None = None,
+    ) -> None:
         self.retriever = retriever
+        self.classifier = classifier or IntentClassifier()
 
     async def review(
         self,
         request: ArchitectureReviewRequest,
     ) -> ArchitectureReviewResponse:
-        sources = await self.retriever.retrieve(request.question)
+        classifier_text = " ".join(
+            part for part in (request.question, request.workload_context) if part
+        )
+        intent = self.classifier.classify(classifier_text)
+        profile = get_intent_profile(intent)
+
+        sources = await self.retriever.retrieve(
+            request.question,
+            intent_profile=profile,
+        )
+        source_titles = sorted({source.title for source in sources})
+        has_index = all(source.source_type != "missing_index" for source in sources)
+
+        context_note = (
+            f"Retrieved {len(sources)} relevant OCI knowledge chunks from "
+            f"{len(source_titles)} source document(s): {', '.join(source_titles)}."
+            if has_index
+            else sources[0].summary
+        )
 
         return ArchitectureReviewResponse(
+            intent=profile.intent.value,
+            prompt_template=profile.prompt_template,
             answer=(
-                "This is an initial architecture review scaffold. Based on the "
-                "placeholder OCI guidance, start by clarifying workload goals, "
-                "availability requirements, security boundaries, data flows, "
-                "and cost constraints before selecting services."
+                f"Intent: {profile.intent.value}. {context_note} Use the "
+                f"{profile.prompt_template} template to focus the review on "
+                f"{profile.focus}."
             ),
-            recommendations=[
-                "Define target regions, availability domains, and fault domains early.",
-                "Separate public entry points, application tiers, and data services with explicit network boundaries.",
-                "Capture non-functional requirements before choosing compute, database, and integration services.",
-                "Require citations for production recommendations once retrieval is enabled.",
-            ],
-            assumptions=[
-                "The question is exploratory and not yet tied to a finalized workload design.",
-                "The current response uses placeholder retrieval instead of a production OCI knowledge index.",
-            ],
-            risks=[
-                "Recommendations are not yet validated against current OCI release changes.",
-                "Cost guidance is directional until workload sizing and pricing inputs are added.",
-            ],
+            recommendations=list(profile.recommendations),
+            assumptions=list(profile.assumptions),
+            risks=list(profile.risks),
             citations=sources,
-            next_steps=[
-                "Add a curated OCI seed corpus for the first retrieval-backed response.",
-                "Create eval cases for unsupported claims and missing assumptions.",
-                "Introduce a prompt template that requires cited, structured output.",
-            ],
+            next_steps=list(profile.next_steps),
         )
