@@ -7,6 +7,7 @@ from oci_arch_studio_backend.models.architecture import (
 )
 from oci_arch_studio_backend.core.config import get_settings
 from oci_arch_studio_backend.services.orchestrator import ArchitectureReviewOrchestrator
+from oci_arch_studio_backend.services.releases import ReleaseSnapshotStore
 from oci_arch_studio_backend.services.retrieval import OciKnowledgeRetriever
 
 router = APIRouter()
@@ -23,5 +24,6 @@ async def architecture_review(
 ) -> ArchitectureReviewResponse:
     settings = get_settings()
     retriever = OciKnowledgeRetriever(index_path=settings.knowledge_index_path)
-    orchestrator = ArchitectureReviewOrchestrator(retriever=retriever)
+    release_store = ReleaseSnapshotStore(snapshot_path=settings.release_snapshot_path)
+    orchestrator = ArchitectureReviewOrchestrator(retriever=retriever, release_store=release_store)
     return await orchestrator.review(request)

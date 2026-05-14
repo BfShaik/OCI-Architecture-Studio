@@ -19,6 +19,10 @@ class Settings(BaseSettings):
         default=REPO_ROOT / "knowledge" / "snapshots" / "oci-rag-index.json",
         alias="KNOWLEDGE_INDEX_PATH",
     )
+    release_snapshot_path: Path = Field(
+        default=REPO_ROOT / "knowledge" / "snapshots" / "oci-release-snapshot.json",
+        alias="RELEASE_SNAPSHOT_PATH",
+    )
     backend_cors_origins: str = Field(
         default="http://localhost:5173,http://127.0.0.1:5173",
         alias="BACKEND_CORS_ORIGINS",
@@ -41,6 +45,13 @@ class Settings(BaseSettings):
     @field_validator("knowledge_index_path")
     @classmethod
     def resolve_knowledge_index_path(cls, value: Path) -> Path:
+        if value.is_absolute():
+            return value
+        return REPO_ROOT / value
+
+    @field_validator("release_snapshot_path")
+    @classmethod
+    def resolve_release_snapshot_path(cls, value: Path) -> Path:
         if value.is_absolute():
             return value
         return REPO_ROOT / value

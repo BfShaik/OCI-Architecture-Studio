@@ -7,5 +7,6 @@ Initial target:
 - fetch source metadata
 - normalize documents into retrievable records
 - chunk source text
+- attach service/domain/intent/freshness/trust metadata
 - create local deterministic embeddings
 - write a JSON vector index to `knowledge/snapshots/oci-rag-index.json`

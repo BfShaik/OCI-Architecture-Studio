@@ -18,6 +18,97 @@ sys.path.append(str(BACKEND_SRC))
 from oci_arch_studio_backend.services.embeddings import LocalHashingEmbedder  # noqa: E402
 
 
+BOILERPLATE_PATTERNS = (
+    r"JavaScript must be enabled to correctly display this content",
+    r"Previous\s+Next",
+    r"Was this article helpful\?.*?$",
+    r"About Oracle.*?$",
+    r"Copyright\s+©.*?$",
+    r"Oracle Account\s+Manage your account.*?$",
+)
+
+SERVICE_METADATA: dict[str, dict[str, object]] = {
+    "architecture-center": {
+        "service": "Architecture Center",
+        "service_domain": "architecture",
+        "intent_tags": ["architecture", "general"],
+        "architecture_patterns": ["reference-architecture", "well-architected"],
+    },
+    "well-architected": {
+        "service": "Well-Architected Framework",
+        "service_domain": "architecture",
+        "intent_tags": ["architecture", "cost", "security", "dr", "general"],
+        "architecture_patterns": ["well-architected", "operational-excellence"],
+    },
+    "vcn": {
+        "service": "Virtual Cloud Network",
+        "service_domain": "networking",
+        "intent_tags": ["architecture", "security", "dr", "general"],
+        "architecture_patterns": ["network-isolation", "private-subnets"],
+    },
+    "load-balancer": {
+        "service": "Load Balancer",
+        "service_domain": "networking",
+        "intent_tags": ["architecture", "dr", "general"],
+        "architecture_patterns": ["public-ingress", "high-availability"],
+    },
+    "object-storage": {
+        "service": "Object Storage",
+        "service_domain": "storage",
+        "intent_tags": ["architecture", "cost", "dr", "general"],
+        "architecture_patterns": ["static-assets", "backup-storage", "lifecycle-management"],
+    },
+    "cdn": {
+        "service": "CDN",
+        "service_domain": "edge",
+        "intent_tags": ["architecture", "cost", "security", "general"],
+        "architecture_patterns": ["edge-delivery", "origin-offload"],
+    },
+    "compute": {
+        "service": "Compute",
+        "service_domain": "compute",
+        "intent_tags": ["architecture", "cost", "general"],
+        "architecture_patterns": ["application-tier", "autoscaling"],
+    },
+    "database-migration": {
+        "service": "Database Migration",
+        "service_domain": "database",
+        "intent_tags": ["migration", "general"],
+        "architecture_patterns": ["migration-waves", "cutover"],
+    },
+    "database": {
+        "service": "Database Services",
+        "service_domain": "database",
+        "intent_tags": ["architecture", "migration", "dr", "cost", "general"],
+        "architecture_patterns": ["data-tier", "backup-recovery"],
+    },
+    "kubernetes": {
+        "service": "OCI Kubernetes Engine",
+        "service_domain": "containers",
+        "intent_tags": ["architecture", "migration", "general"],
+        "architecture_patterns": ["container-platform", "node-pools"],
+    },
+    "full-stack-dr": {
+        "service": "Full Stack Disaster Recovery",
+        "service_domain": "resilience",
+        "intent_tags": ["dr", "architecture", "general"],
+        "architecture_patterns": ["disaster-recovery", "failover-runbook"],
+    },
+    "cost-management": {
+        "service": "Cost Management",
+        "service_domain": "cost",
+        "intent_tags": ["cost", "general"],
+        "architecture_patterns": ["budgets", "tagging", "rightsizing"],
+    },
+    "security": {
+        "service": "Security Services",
+        "service_domain": "security",
+        "intent_tags": ["security", "dr", "architecture", "general"],
+        "architecture_patterns": ["least-privilege", "auditability"],
+    },
+}
+
+
 class HtmlTextExtractor(HTMLParser):
     def __init__(self) -> None:
         super().__init__()
@@ -43,11 +134,16 @@ class HtmlTextExtractor(HTMLParser):
 
 
 def normalize_text(text: str) -> str:
-    for marker in ("Copyright ©", "About Oracle Contact Us"):
-        if marker in text:
-            text = text.split(marker, 1)[0]
+    for pattern in BOILERPLATE_PATTERNS:
+        text = re.sub(pattern, " ", text, flags=re.IGNORECASE | re.DOTALL)
     text = re.sub(r"\s+", " ", text)
-    text = text.replace("JavaScript must be enabled to correctly display this content", "")
+    return text.strip()
+
+
+def cleanup_chunk_text(text: str) -> str:
+    text = normalize_text(text)
+    text = re.sub(r"\b(Contents|Search|Menu|Breadcrumb)\b", " ", text, flags=re.IGNORECASE)
+    text = re.sub(r"\s+", " ", text)
     return text.strip()
 
 
@@ -99,10 +195,36 @@ def load_registry(path: Path) -> list[dict[str, str]]:
     return payload["sources"]
 
 
+def infer_source_metadata(source: dict[str, str], fetched_timestamp: str, fetch_status: str) -> dict[str, object]:
+    source_id = source["id"].replace("oci-", "")
+    matched: dict[str, object] | None = None
+    for key, metadata in SERVICE_METADATA.items():
+        if key in source_id:
+            matched = metadata
+            break
+
+    metadata = dict(matched or {})
+    metadata.setdefault("service", source["title"].replace("OCI ", "").replace(" Overview", ""))
+    metadata.setdefault("service_domain", "general")
+    metadata.setdefault("intent_tags", ["general"])
+    metadata.setdefault("architecture_patterns", [])
+    metadata.update(
+        {
+            "source_url": source["url"],
+            "fetched_timestamp": fetched_timestamp,
+            "freshness_score": 0.9 if fetch_status == "fetched" else 0.65,
+            "trust_level": source.get("trust_level", "official"),
+            "release_version": source.get("release_version", "unknown"),
+        }
+    )
+    return metadata
+
+
 def build_index(args: argparse.Namespace) -> dict[str, object]:
     embedder = LocalHashingEmbedder(dimensions=args.dimensions)
     sources = load_registry(args.registry)
     chunks: list[dict[str, object]] = []
+    generated_at = datetime.now(UTC).isoformat()
 
     for source in sources:
         fallback_text = source.get("fallback_text", "")
@@ -118,10 +240,12 @@ def build_index(args: argparse.Namespace) -> dict[str, object]:
             except (TimeoutError, URLError, OSError):
                 fetch_status = "fallback"
 
+        source_metadata = infer_source_metadata(source, generated_at, fetch_status)
         for index, chunk in enumerate(
             chunk_text(text, chunk_size=args.chunk_size, chunk_overlap=args.chunk_overlap),
             start=1,
         ):
+            clean_chunk = cleanup_chunk_text(chunk)
             chunks.append(
                 {
                     "id": f"{source['id']}::{index}",
@@ -129,17 +253,18 @@ def build_index(args: argparse.Namespace) -> dict[str, object]:
                     "title": source["title"],
                     "url": source["url"],
                     "source_type": source["source_type"],
-                    "text": chunk,
-                    "embedding": embedder.embed(chunk),
+                    "text": clean_chunk,
+                    "embedding": embedder.embed(clean_chunk),
                     "metadata": {
                         "chunk_index": index,
                         "fetch_status": fetch_status,
+                        **source_metadata,
                     },
                 }
             )
 
     return {
-        "generated_at": datetime.now(UTC).isoformat(),
+        "generated_at": generated_at,
         "embedding_model": embedder.model_name,
         "dimensions": args.dimensions,
         "source_count": len(sources),

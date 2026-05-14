@@ -22,7 +22,17 @@ def test_retriever_returns_ranked_chunks(tmp_path) -> None:
                         "source_type": "oci_service_doc",
                         "text": chunk_text,
                         "embedding": embedder.embed(chunk_text),
-                        "metadata": {"chunk_index": 1},
+                        "metadata": {
+                            "chunk_index": 1,
+                            "source_url": "https://example.com/load-balancer",
+                            "service": "Load Balancer",
+                            "service_domain": "networking",
+                            "intent_tags": ["architecture"],
+                            "fetched_timestamp": "2026-05-14T00:00:00+00:00",
+                            "freshness_score": 0.9,
+                            "trust_level": "official",
+                            "architecture_patterns": ["public-ingress"],
+                        },
                     }
                 ]
             }
@@ -38,4 +48,9 @@ def test_retriever_returns_ranked_chunks(tmp_path) -> None:
 
     assert results[0].chunk_id == "load-balancer::1"
     assert results[0].title == "OCI Load Balancer Overview"
+    assert results[0].service == "Load Balancer"
+    assert results[0].service_domain == "networking"
+    assert results[0].source_url == "https://example.com/load-balancer"
+    assert results[0].trust_level == "official"
+    assert not results[0].is_stale
     assert results[0].relevance_score is not None

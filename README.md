@@ -35,6 +35,8 @@ tests/                Backend and integration tests
 - Local OCI source registry and ingestion pipeline
 - Deterministic local embeddings for development
 - JSON vector index for local retrieval
+- Citation-friendly chunk metadata with service, domain, trust, intent tags, and freshness score
+- Separate local OCI release snapshot pipeline
 - Intent-aware orchestration for:
   - product overview
   - architecture
@@ -45,6 +47,10 @@ tests/                Backend and integration tests
   - release awareness
   - general questions
 - Golden prompt regression suite
+- Machine-readable golden eval dataset
+- Negative and edge-case eval dataset
+- Local eval runner with JSON/Markdown reports, failure diagnostics, retrieval-support checks, and stale-guidance checks
+- CI workflow for knowledge/release ingestion smoke tests, backend tests, golden/edge evals, and frontend build
 - Backend tests covering API, retrieval, and intent routing
 
 ## Run Locally
@@ -63,6 +69,20 @@ For a fully offline seed index using the registry fallback text:
 
 ```bash
 python3 knowledge/ingestion/ingest.py --no-fetch
+```
+
+### Build the Local OCI Release Snapshot
+
+Release awareness uses a separate source registry and snapshot so current-release checks do not get mixed into the normal architecture knowledge index:
+
+```bash
+python3 knowledge/refresh/ingest_releases.py
+```
+
+For an offline seed snapshot:
+
+```bash
+python3 knowledge/refresh/ingest_releases.py --no-fetch
 ```
 
 ### Backend
@@ -106,15 +126,38 @@ VITE_API_BASE_URL=http://localhost:8000 npm run dev
 
 ## Recommended Next Steps
 
-1. Convert the golden prompts into a structured machine-readable eval file.
-2. Add a local eval runner for golden prompts.
-3. Improve ingestion cleanup and source metadata.
-4. Expand the source registry with WAF/CDN, Object Storage, Vault, Cloud Guard, Logging, Monitoring, and Budgets sources.
-5. Add CI for ingestion smoke tests, backend tests, frontend build, linting, and prompt/eval validation.
-6. Replace local hashing embeddings with the selected production embedding provider when the corpus grows.
+1. Expand the source registry with dedicated WAF, Vault, Cloud Guard, Logging, Monitoring, and Budgets sources.
+2. Replace fallback release parsing with stronger extraction from official OCI release pages.
+3. Improve retrieval-support checks beyond required service terms.
+4. Add release-impact evals that assert service/domain/impact classification.
+5. Replace local hashing embeddings with the selected production embedding provider when the corpus grows.
+
+## Run Evaluations
+
+```bash
+app/backend/.venv/bin/python evals/run_golden.py --output-dir evals/reports/golden
+app/backend/.venv/bin/python evals/run_golden.py --cases evals/edge-cases.jsonl --output-dir evals/reports/edge-cases
+```
+
+Reports are written to `evals/reports/` and ignored by git.
+
+## Rerun After Changes
+
+```bash
+app/backend/.venv/bin/python evals/run_golden.py --output-dir evals/reports/golden
+app/backend/.venv/bin/python evals/run_golden.py --cases evals/edge-cases.jsonl --output-dir evals/reports/edge-cases
+app/backend/.venv/bin/python knowledge/ingestion/ingest.py --no-fetch
+app/backend/.venv/bin/python knowledge/refresh/ingest_releases.py --no-fetch
+cd app/backend && PYTHONPATH=src .venv/bin/pytest -q
+cd ../frontend && npm run build
+```
 
 ## Project Status
 
 See `docs/status.md` for the current completed work, pending work, and known limitations.
 
 See `docs/two-week-plan.md` for the active two-week execution plan.
+
+See `docs/demo-readiness.md` for the demo checklist, recommended demo prompts, Sprint 2 backlog, and closeout notes.
+
+See `docs/phase-2-architecture.md` for the productionization architecture and Sprint 2 roadmap.

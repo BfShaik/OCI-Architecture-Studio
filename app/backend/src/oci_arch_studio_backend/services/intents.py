@@ -62,12 +62,23 @@ INTENT_PROFILES: dict[Intent, IntentProfile] = {
     Intent.ARCHITECTURE: IntentProfile(
         intent=Intent.ARCHITECTURE,
         prompt_template="prompts/architecture-review.architecture.v0.md",
-        retrieval_terms=("high availability", "reference architecture", "load balancer", "VCN", "compute", "database"),
+        retrieval_terms=(
+            "high availability",
+            "reference architecture",
+            "load balancer",
+            "VCN",
+            "compute",
+            "database",
+            "Object Storage",
+            "CDN",
+            "ecommerce",
+            "static assets",
+        ),
         focus="availability, tier separation, traffic flow, data durability, operations, and service placement",
         recommendations=(
             "Use a multi-tier OCI design with public ingress, private application subnets, and a protected data tier.",
             "Place load balancing, compute capacity, and database services across availability and fault boundaries appropriate to the region.",
-            "For ecommerce workloads, call out storefront, checkout, session/state, payment integration, catalog media, observability, and recovery requirements.",
+            "For ecommerce workloads, call out storefront, checkout, session/state, payment integration, catalog media on Object Storage or CDN, observability, and recovery requirements.",
             "Validate network, load balancing, compute, and database choices against retrieved OCI source context before production design.",
         ),
         assumptions=(
@@ -80,7 +91,7 @@ INTENT_PROFILES: dict[Intent, IntentProfile] = {
         ),
         next_steps=(
             "Capture traffic, order volume, RTO/RPO, compliance, and integration requirements.",
-            "Add OCI sources for WAF, CDN, Object Storage, autoscaling, and database HA.",
+            "Add OCI sources for WAF, autoscaling, and database HA.",
             "Create an ecommerce architecture eval that checks ingress, app tier, data tier, observability, and cost tradeoffs.",
         ),
     ),
@@ -117,16 +128,18 @@ INTENT_PROFILES: dict[Intent, IntentProfile] = {
         recommendations=(
             "Define fintech RTO/RPO tiers first, then map each application and data component to active-active, active-passive, backup/restore, or pilot-light DR.",
             "Prioritize resilient database protection with backups, replication, and Data Guard-style patterns where appropriate for the selected OCI database service.",
-            "Design cross-region networking, DNS/failover, secrets, IAM, logging, monitoring, and runbooks as part of the DR architecture.",
+            "Design cross-region networking, DNS/failover, Vault-backed secrets, IAM, Logging, Monitoring, and runbooks as part of the DR architecture.",
             "Test DR with scheduled exercises that validate failover, data integrity, audit evidence, and return-to-primary procedures.",
         ),
         assumptions=(
             "The fintech workload has regulated data, audit requirements, and strict recovery expectations.",
             "Exact RTO/RPO, region pair, data residency, and database engine are not yet specified.",
+            "Unsupported or invented OCI services must be rejected unless grounded in official OCI documentation.",
         ),
         risks=(
             "DR recommendations without RTO/RPO tiers can overbuild low-criticality systems or underprotect critical payment flows.",
             "Compliance evidence, key management, and operational runbooks can become blockers if added late.",
+            "Conflicting requirements such as cheapest possible, globally active, zero downtime, no backups, and no monitoring must be resolved before design approval.",
         ),
         next_steps=(
             "Define application criticality tiers, RTO/RPO targets, and data residency constraints.",
@@ -140,7 +153,7 @@ INTENT_PROFILES: dict[Intent, IntentProfile] = {
         retrieval_terms=("cost optimization", "right sizing", "autoscaling", "budgets", "usage", "compute", "storage"),
         focus="right-sizing, elasticity, managed-service fit, storage tiering, budget controls, and measurable tradeoffs",
         recommendations=(
-            "Start with a lean web architecture and scale only bottlenecked tiers using right-sized compute, autoscaling, and managed services where they reduce operational cost.",
+            "Start with a lean web architecture and scale only bottlenecked tiers using right-sized compute, autoscaling, Object Storage for suitable static assets, and managed services where they reduce operational cost.",
             "Avoid over-provisioning shapes, database editions, and always-on capacity before demand is measured.",
             "Track cost drivers with budgets, tagging, usage monitoring, and environment lifecycle policies for dev/test workloads.",
             "Evaluate static assets, logs, backups, and artifacts for lower-cost storage patterns where performance requirements allow.",
@@ -148,6 +161,7 @@ INTENT_PROFILES: dict[Intent, IntentProfile] = {
         assumptions=(
             "The web app can start with modest capacity and grow based on measured demand.",
             "Performance, availability, and compliance requirements may constrain the cheapest possible service choices.",
+            "There is not enough context for a production cost design until traffic, environments, data, backup, and security requirements are known.",
         ),
         risks=(
             "Cost optimization can reduce resilience if HA, backup, and monitoring requirements are not protected.",
@@ -199,7 +213,7 @@ INTENT_PROFILES: dict[Intent, IntentProfile] = {
         recommendations=(
             "Ask for the specific OCI release note, service update, date, or affected service before declaring architectural impact.",
             "Separate what the local RAG index can currently support from what must be verified against latest OCI release sources.",
-            "Assess impact by checking whether the update changes service limits, availability, security posture, pricing, migration path, or operational behavior.",
+            "Assess impact by checking whether the affected service, including Load Balancer when relevant, changes service limits, availability, security posture, pricing, migration path, or operational behavior.",
             "Refresh the OCI knowledge index and rerun relevant architecture, migration, DR, cost, or security evals before changing a recommendation.",
         ),
         assumptions=(

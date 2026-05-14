@@ -6,6 +6,7 @@ from oci_arch_studio_backend.services.intents import (
     IntentClassifier,
     get_intent_profile,
 )
+from oci_arch_studio_backend.services.releases import ReleaseSnapshotStore
 from oci_arch_studio_backend.services.retrieval import OciKnowledgeRetriever
 
 
@@ -16,9 +17,11 @@ class ArchitectureReviewOrchestrator:
         self,
         retriever: OciKnowledgeRetriever,
         classifier: IntentClassifier | None = None,
+        release_store: ReleaseSnapshotStore | None = None,
     ) -> None:
         self.retriever = retriever
         self.classifier = classifier or IntentClassifier()
+        self.release_store = release_store
 
     async def review(
         self,
@@ -36,6 +39,7 @@ class ArchitectureReviewOrchestrator:
         )
         source_titles = sorted({source.title for source in sources})
         has_index = all(source.source_type != "missing_index" for source in sources)
+        stale_sources = [source for source in sources if source.is_stale]
 
         context_note = (
             f"Retrieved {len(sources)} relevant OCI knowledge chunks from "
@@ -43,6 +47,20 @@ class ArchitectureReviewOrchestrator:
             if has_index
             else sources[0].summary
         )
+        if has_index and stale_sources:
+            context_note += (
+                f" {len(stale_sources)} retrieved source(s) may be stale or missing freshness metadata; "
+                "verify current release context before relying on affected guidance."
+            )
+        if profile.intent.value == "release_awareness":
+            context_note += (
+                " Release-aware guidance must compare the local knowledge snapshot against "
+                "approved OCI release snapshots before declaring current impact."
+            )
+        if self.release_store is not None:
+            release_note = self.release_store.freshness_note(profile.intent, request.question)
+            if release_note:
+                context_note += f" {release_note}"
 
         return ArchitectureReviewResponse(
             intent=profile.intent.value,

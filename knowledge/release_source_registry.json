@@ -1,0 +1,12 @@
+{
+  "sources": [
+    {
+      "id": "oci-release-notes-all-services",
+      "title": "OCI Release Notes - All Services",
+      "url": "https://docs.oracle.com/en-us/iaas/releasenotes/index.htm",
+      "source_type": "oci_release_notes",
+      "trust_level": "official",
+      "fallback_text": "Object Storage Supports Amazon S3 Virtual-Hosted Style URLs. Services: Object Storage. Release Date: February 10, 2026. This release can affect architecture impact analysis for storage access patterns, application compatibility, and migration guidance. Improved flow for requesting limit increases. Services: Oracle Cloud Infrastructure. Release Date: March 11, 2026. This release can affect operational planning for service limits and capacity management. Secrets in Vault is now Secret Management Service. Services: Secret Management. Release Date: January 22, 2026. This release can affect security architecture, secrets handling, and naming assumptions."
+    }
+  ]
+}

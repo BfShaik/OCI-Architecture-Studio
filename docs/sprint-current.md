@@ -2,7 +2,7 @@
 
 ## Sprint Goal
 
-Build the first working OCI Architecture Studio vertical slice with local RAG, intent-aware orchestration, golden prompt regression, and clear project tracking.
+Build the first working OCI Architecture Studio vertical slice with local RAG, intent-aware orchestration, golden/edge regression, release-awareness foundation, and a demo-ready UI.
 
 ## Timebox
 
@@ -17,6 +17,8 @@ Build the first working OCI Architecture Studio vertical slice with local RAG, i
 5. Expand source registry
 6. Improve frontend result cards
 7. Add CI skeleton
+8. Add release-awareness foundation
+9. Prepare demo readiness closeout
 
 ## Sprint Scope
 
@@ -24,16 +26,28 @@ In scope:
 - FastAPI backend with health and architecture review endpoints
 - React + Vite chat-style interface
 - Local RAG index with source-shaped records
+- citation-friendly retrieval metadata
 - Intent-aware orchestration with structured response
+- release source registry and release snapshot prototype
 - Prompt templates and golden prompt assets
+- edge-case evals and validation reports
+- demo prompt shortcuts and polished source cards
 - Status and two-week tracking docs
 
 Out of scope:
 - production RAG/vector database
 - LangGraph
 - advanced memory systems
-- production ingestion jobs
+- production ingestion jobs beyond local CLI snapshots
 - cloud deployment
+
+## Demo Readiness
+
+See `docs/demo-readiness.md` for the demo checklist, recommended prompts, Sprint 2 backlog, and closeout notes.
+
+## Phase 2 Planning
+
+See `docs/phase-2-architecture.md` for the productionization architecture, scalability roadmap, and recommended Sprint 2 implementation order.
 
 ## Status
 

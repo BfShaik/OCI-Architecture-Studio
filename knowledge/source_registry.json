@@ -29,6 +29,20 @@
       "fallback_text": "OCI Load Balancer distributes traffic to backend resources and supports highly available application entry points. Designs should consider public versus private load balancers, backend health checks, listener configuration, TLS termination, and fault-domain placement."
     },
     {
+      "id": "oci-object-storage-overview",
+      "title": "OCI Object Storage Overview",
+      "url": "https://docs.oracle.com/en-us/iaas/Content/Object/Concepts/objectstorageoverview.htm",
+      "source_type": "oci_service_doc",
+      "fallback_text": "OCI Object Storage stores durable unstructured data such as static website assets, product media, logs, backups, and artifacts. Architecture recommendations should consider buckets, lifecycle policies, retention, access controls, encryption, replication needs, and cost tradeoffs for static and archival content."
+    },
+    {
+      "id": "oci-cdn-overview",
+      "title": "OCI CDN Overview",
+      "url": "https://docs.oracle.com/en-us/iaas/Content/EdgeServices/Concepts/overview.htm",
+      "source_type": "oci_service_doc",
+      "fallback_text": "OCI CDN and edge services help deliver static content closer to users and can reduce origin load for web and ecommerce workloads. Designs should evaluate cacheable assets, TLS, origin protection, traffic routing, performance goals, availability requirements, and security controls such as WAF where appropriate."
+    },
+    {
       "id": "oci-compute-overview",
       "title": "OCI Compute Overview",
       "url": "https://docs.oracle.com/en-us/iaas/Content/Compute/Concepts/computeoverview.htm",

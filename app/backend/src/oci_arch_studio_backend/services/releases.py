@@ -1,0 +1,103 @@
+from __future__ import annotations
+
+import json
+from dataclasses import dataclass
+from pathlib import Path
+
+from oci_arch_studio_backend.services.intents import Intent
+
+
+RELEASE_QUERY_STOPWORDS = {
+    "announced",
+    "architecture",
+    "change",
+    "does",
+    "latest",
+    "release",
+    "service",
+    "update",
+}
+
+
+@dataclass(frozen=True)
+class ReleaseMatch:
+    title: str
+    service: str
+    service_domain: str
+    impact_tags: list[str]
+    impact_level: str
+    source_url: str | None
+    release_date: str | None
+    summary: str
+
+
+class ReleaseSnapshotStore:
+    def __init__(self, snapshot_path: Path) -> None:
+        self.snapshot_path = snapshot_path
+        self._releases: list[dict[str, object]] | None = None
+
+    @property
+    def exists(self) -> bool:
+        return self.snapshot_path.exists()
+
+    def find_matches(self, question: str, limit: int = 3) -> list[ReleaseMatch]:
+        if not self.exists:
+            return []
+
+        question_terms = {
+            token
+            for token in question.lower().replace("/", " ").replace("-", " ").split()
+            if len(token) >= 4 and token not in RELEASE_QUERY_STOPWORDS
+        }
+        scored: list[tuple[int, dict[str, object]]] = []
+        for release in self._load_releases():
+            haystack = " ".join(
+                str(release.get(field, ""))
+                for field in ("title", "service", "service_domain", "summary")
+            ).lower()
+            score = sum(1 for term in question_terms if term in haystack)
+            if score:
+                scored.append((score, release))
+
+        scored.sort(key=lambda item: item[0], reverse=True)
+        return [self._to_match(release) for _, release in scored[:limit]]
+
+    def freshness_note(self, intent: Intent, question: str) -> str | None:
+        if intent != Intent.RELEASE_AWARENESS and "latest" not in question.lower():
+            return None
+        if not self.exists:
+            return (
+                "No local release snapshot is available yet; run the release ingestion pipeline "
+                "before making current OCI update claims."
+            )
+        matches = self.find_matches(question)
+        if not matches:
+            return (
+                "A release snapshot exists, but no matching release item was found for this prompt; "
+                "treat the answer as historical/local guidance until the specific release note is provided."
+            )
+        services = ", ".join(sorted({match.service for match in matches}))
+        return (
+            "Potential release context found for "
+            f"{services}. Compare these release items with the normal knowledge snapshot before changing guidance."
+        )
+
+    def _load_releases(self) -> list[dict[str, object]]:
+        if self._releases is not None:
+            return self._releases
+        with self.snapshot_path.open("r", encoding="utf-8") as file:
+            payload = json.load(file)
+        self._releases = list(payload.get("releases", []))
+        return self._releases
+
+    def _to_match(self, release: dict[str, object]) -> ReleaseMatch:
+        return ReleaseMatch(
+            title=str(release.get("title", "")),
+            service=str(release.get("service", "Oracle Cloud Infrastructure")),
+            service_domain=str(release.get("service_domain", "general")),
+            impact_tags=[str(tag) for tag in release.get("impact_tags", [])],
+            impact_level=str(release.get("impact_level", "informational")),
+            source_url=str(release.get("source_url")) if release.get("source_url") else None,
+            release_date=str(release.get("release_date")) if release.get("release_date") else None,
+            summary=str(release.get("summary", "")),
+        )

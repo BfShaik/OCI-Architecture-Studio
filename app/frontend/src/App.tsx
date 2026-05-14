@@ -7,6 +7,14 @@ import type { ArchitectureReviewResponse } from "./types";
 const starterQuestion =
   "How should I design a highly available customer portal on OCI?";
 
+const demoPrompts = [
+  "Design a highly available ecommerce platform on OCI.",
+  "Migrate EKS + RDS to OCI.",
+  "Recommend OCI services for fintech DR.",
+  "Build a cost-optimized web app on OCI.",
+  "A new OCI Object Storage release was announced. Does it change my architecture?",
+];
+
 export function App() {
   const [question, setQuestion] = useState(starterQuestion);
   const [workloadContext, setWorkloadContext] = useState("");
@@ -44,6 +52,22 @@ export function App() {
             Ask an OCI design question and receive a structured, review-ready
             response from the first vertical slice.
           </p>
+          <div className="demo-prompts" aria-label="Demo prompts">
+            {demoPrompts.map((prompt) => (
+              <button
+                key={prompt}
+                type="button"
+                className="prompt-chip"
+                onClick={() => {
+                  setQuestion(prompt);
+                  setWorkloadContext("");
+                  setError(null);
+                }}
+              >
+                {prompt}
+              </button>
+            ))}
+          </div>
         </div>
       </aside>
 
@@ -52,24 +76,35 @@ export function App() {
           <div className="message message-system">
             <span>System</span>
             <p>
-              Retrieval and prompt orchestration are scaffolded placeholders.
-              Production grounding will be added behind these service boundaries.
+              Retrieval uses local OCI chunks with citation metadata and release
+              freshness signals. Current-release impact still requires a
+              matching release snapshot.
             </p>
           </div>
 
           {result ? (
             <ReviewResult result={result} />
+          ) : isLoading ? (
+            <div className="loading-state" role="status">
+              <span>Retrieving OCI context</span>
+              <p>Classifying intent, ranking sources, and preparing citations.</p>
+            </div>
           ) : (
             <div className="empty-state">
               <h2>Ready for the first OCI architecture question.</h2>
               <p>
                 The response will include recommendations, assumptions, risks,
-                placeholder citations, and next steps.
+                citation metadata, freshness signals, and next steps.
               </p>
             </div>
           )}
 
-          {error ? <div className="error-state">{error}</div> : null}
+          {error ? (
+            <div className="error-state" role="alert">
+              <strong>Review failed</strong>
+              <p>{error}</p>
+            </div>
+          ) : null}
         </div>
 
         <form className="composer" onSubmit={handleSubmit}>
