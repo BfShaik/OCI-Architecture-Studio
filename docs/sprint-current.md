@@ -31,3 +31,11 @@ Out of scope:
 - advanced memory systems
 - production ingestion jobs
 - cloud deployment
+
+## Status
+
+See `docs/status.md` for the current completed/pending log.
+
+## Two-Week Plan
+
+See `docs/two-week-plan.md` for dated tasks from 2026-05-14 through 2026-05-28.

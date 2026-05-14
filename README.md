@@ -93,3 +93,9 @@ VITE_API_BASE_URL=http://localhost:8000 npm run dev
 3. Add eval cases for architecture quality, unsupported claims, and missing assumptions.
 4. Add CI for ingestion smoke tests, backend tests, frontend build, linting, and prompt/eval validation.
 5. Replace local hashing embeddings with the selected production embedding provider when the corpus grows.
+
+## Project Status
+
+See `docs/status.md` for the current completed work, pending work, and known limitations.
+
+See `docs/two-week-plan.md` for the active two-week execution plan.
