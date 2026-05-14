@@ -6,6 +6,33 @@ Last updated: 2026-05-14
 
 - Two-week plan: `docs/two-week-plan.md`
 
+## Plan Progress
+
+Current two-week task count:
+
+| Status | Count | Percent of total |
+|---|---:|---:|
+| Done | 1 | 9% |
+| In Progress | 5 | 45% |
+| Not Started | 5 | 45% |
+| Blocked | 0 | 0% |
+| Total | 11 | 100% |
+
+Strict completion:
+- 1 of 11 tasks completed
+- 9% complete
+
+Started or partially complete:
+- 6 of 11 tasks touched
+- 55% started
+
+Weighted progress estimate:
+- Done tasks count as 100%
+- In-progress tasks count as 50%
+- Current weighted progress: 32%
+
+This progress is based on `docs/two-week-plan.md`.
+
 ## Completed
 
 - Created initial monorepo scaffold.

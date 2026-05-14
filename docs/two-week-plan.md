@@ -31,6 +31,10 @@ Turn the current local RAG and intent-aware prototype into a stronger evaluation
 
 ## Status Notes
 
+- Current task count: 1 Done, 5 In Progress, 5 Not Started, 0 Blocked.
+- Strict completion: 1 of 11 tasks, or 9%.
+- Started or partially complete: 6 of 11 tasks, or 55%.
+- Weighted progress estimate: 32%, counting `Done` as 100% and `In Progress` as 50%.
 - 2026-05-20 ingestion cleanup is `In Progress`: script strips script/style/noscript/svg content, JavaScript warnings, and common Oracle footer markers. More boilerplate cleanup is still needed.
 - 2026-05-21 source metadata is `In Progress`: the index includes generated timestamp, source id, title, URL, source type, chunk index, and fetch status. It still needs service domain, intent tags, per-source fetched timestamp, and freshness status.
 - 2026-05-22 source expansion is `In Progress`: registry now includes OKE, database migration, Full Stack Disaster Recovery, Cost Management, and Security Services. It still needs WAF/CDN, Object Storage, Vault, Cloud Guard, Logging, Monitoring, and Budgets-specific sources.
