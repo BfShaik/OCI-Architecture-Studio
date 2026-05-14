@@ -202,3 +202,9 @@ See `docs/oci-deployment-architecture.md` and `infra/terraform/` for the first O
 See `docs/oci-landing-zone-runbook.md` for the first OCI landing-zone deployment workflow and smoke tests.
 
 See `docs/oci-deployment-execution.md` for the command-by-command staging deployment sequence.
+
+See `docs/pre-migration-readiness-report.md` for the OCI-native retrieval pre-migration validation, stability review, and go/no-go decision.
+
+See `docs/oci-native-retrieval-migration.md` for the OCI-native retrieval architecture, phased migration guide, validation strategy, observability plan, and rollback path.
+
+See `docs/terraform-plan-review.md` for the first staging Terraform planning workflow, plan review, apply readiness criteria, and post-apply smoke-test plan.

@@ -30,6 +30,10 @@ jobs:
           python knowledge/ingestion/ingest.py --no-fetch
           python knowledge/refresh/ingest_releases.py --no-fetch
 
+      - name: Retrieval health check
+        run: |
+          python infra/scripts/check_retrieval_health.py --provider local_json
+
       - name: Deployment config template validation
         run: |
           python infra/scripts/validate_deployment_config.py \

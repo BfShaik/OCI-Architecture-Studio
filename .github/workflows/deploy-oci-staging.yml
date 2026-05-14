@@ -44,6 +44,10 @@ jobs:
           python knowledge/ingestion/ingest.py --no-fetch
           python knowledge/refresh/ingest_releases.py --no-fetch
 
+      - name: Retrieval health check
+        run: |
+          python infra/scripts/check_retrieval_health.py --provider local_json
+
       - name: Backend tests
         working-directory: app/backend
         env:

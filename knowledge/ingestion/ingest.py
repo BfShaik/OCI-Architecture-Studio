@@ -15,7 +15,11 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 BACKEND_SRC = REPO_ROOT / "app" / "backend" / "src"
 sys.path.append(str(BACKEND_SRC))
 
-from oci_arch_studio_backend.services.embeddings import LocalHashingEmbedder  # noqa: E402
+from oci_arch_studio_backend.services.embeddings import (  # noqa: E402
+    LocalHashingEmbedder,
+    OciGenerativeAiEmbedder,
+    OciGenerativeAiEmbeddingConfig,
+)
 
 
 BOILERPLATE_PATTERNS = (
@@ -220,8 +224,28 @@ def infer_source_metadata(source: dict[str, str], fetched_timestamp: str, fetch_
     return metadata
 
 
+def build_embedder(args: argparse.Namespace):
+    if args.embedding_provider == "oci_genai":
+        if not args.oci_genai_compartment_id or not args.oci_genai_embedding_model_id:
+            raise ValueError(
+                "--oci-genai-compartment-id and --oci-genai-embedding-model-id are required "
+                "when --embedding-provider=oci_genai"
+            )
+        return OciGenerativeAiEmbedder(
+            OciGenerativeAiEmbeddingConfig(
+                region=args.oci_region,
+                profile=args.oci_profile,
+                auth_mode=args.oci_auth_mode,
+                compartment_id=args.oci_genai_compartment_id,
+                model_id=args.oci_genai_embedding_model_id,
+                endpoint=args.oci_genai_endpoint,
+            )
+        )
+    return LocalHashingEmbedder(dimensions=args.dimensions)
+
+
 def build_index(args: argparse.Namespace) -> dict[str, object]:
-    embedder = LocalHashingEmbedder(dimensions=args.dimensions)
+    embedder = build_embedder(args)
     sources = load_registry(args.registry)
     chunks: list[dict[str, object]] = []
     generated_at = datetime.now(UTC).isoformat()
@@ -266,11 +290,48 @@ def build_index(args: argparse.Namespace) -> dict[str, object]:
     return {
         "generated_at": generated_at,
         "embedding_model": embedder.model_name,
-        "dimensions": args.dimensions,
+        "embedding_provider": args.embedding_provider,
+        "dimensions": args.dimensions if args.embedding_provider == "local" else None,
+        "metadata_schema_version": "2026-05-oci-native-v1",
+        "vector_migration": {
+            "local_json_compatible": True,
+            "oci_object_storage_manifest_ready": True,
+            "oracle_ai_vector_search_ready": False,
+        },
         "source_count": len(sources),
         "chunk_count": len(chunks),
         "chunks": chunks,
     }
+
+
+def upload_index_to_object_storage(index: dict[str, object], args: argparse.Namespace) -> None:
+    if not args.oci_upload_bucket:
+        return
+    if not args.oci_namespace:
+        raise ValueError("--oci-namespace is required when --oci-upload-bucket is set")
+
+    try:
+        import oci
+    except ImportError as exc:
+        raise RuntimeError("OCI SDK is required for Object Storage upload.") from exc
+
+    if args.oci_auth_mode == "instance_principal":
+        signer = oci.auth.signers.InstancePrincipalsSecurityTokenSigner()
+        client_config = {"region": args.oci_region} if args.oci_region else {}
+        object_storage = oci.object_storage.ObjectStorageClient(client_config, signer=signer)
+    else:
+        client_config = oci.config.from_file(profile_name=args.oci_profile)
+        if args.oci_region:
+            client_config["region"] = args.oci_region
+        object_storage = oci.object_storage.ObjectStorageClient(client_config)
+
+    object_storage.put_object(
+        namespace_name=args.oci_namespace,
+        bucket_name=args.oci_upload_bucket,
+        object_name=args.oci_upload_object,
+        put_object_body=json.dumps(index, indent=2).encode("utf-8"),
+    )
+    print(f"Uploaded vector manifest to oci://{args.oci_upload_bucket}/{args.oci_upload_object}")
 
 
 def parse_args() -> argparse.Namespace:
@@ -286,6 +347,16 @@ def parse_args() -> argparse.Namespace:
         default=REPO_ROOT / "knowledge" / "snapshots" / "oci-rag-index.json",
     )
     parser.add_argument("--dimensions", type=int, default=256)
+    parser.add_argument("--embedding-provider", choices=("local", "oci_genai"), default="local")
+    parser.add_argument("--oci-region")
+    parser.add_argument("--oci-profile", default="DEFAULT")
+    parser.add_argument("--oci-auth-mode", choices=("config_file", "instance_principal"), default="config_file")
+    parser.add_argument("--oci-genai-compartment-id")
+    parser.add_argument("--oci-genai-embedding-model-id")
+    parser.add_argument("--oci-genai-endpoint")
+    parser.add_argument("--oci-namespace")
+    parser.add_argument("--oci-upload-bucket")
+    parser.add_argument("--oci-upload-object", default="knowledge/oci-rag-index.json")
     parser.add_argument("--chunk-size", type=int, default=180)
     parser.add_argument("--chunk-overlap", type=int, default=30)
     parser.add_argument("--max-source-chars", type=int, default=14000)
@@ -302,6 +373,7 @@ def main() -> None:
     with args.output.open("w", encoding="utf-8") as file:
         json.dump(index, file, indent=2)
         file.write("\n")
+    upload_index_to_object_storage(index, args)
 
     print(
         f"Wrote {index['chunk_count']} chunks from {index['source_count']} sources "

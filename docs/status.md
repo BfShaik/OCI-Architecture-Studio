@@ -125,6 +125,25 @@ This progress is based on `docs/two-week-plan.md`.
 - Added a compartment-level OCI Events rule to notify the configured email about resource lifecycle events in the environment compartment.
 - Validated Terraform configuration for `dev`, `test`, and `staging`.
 - Validated local OCI access through the configured `DEFAULT` profile.
+- Completed the pre-migration validation and stability review for OCI-native retrieval migration.
+- Added `docs/pre-migration-readiness-report.md` with validation results, retrieval quality assessment, scenario spot checks, operational readiness findings, migration risks, rollback guidance, and the go/no-go decision.
+- Added the first OCI-native retrieval migration slice:
+  - optional OCI Generative AI embedding adapter
+  - optional OCI Object Storage vector-manifest retrieval adapter
+  - retrieval provider factory driven by environment configuration
+  - `/retrieval/health` diagnostics endpoint
+  - retrieval latency and result-count diagnostics
+  - ingestion support for OCI embedding generation and Object Storage vector manifest upload
+  - retrieval health validation script
+  - `docs/oci-native-retrieval-migration.md`
+- Completed the staging Terraform planning phase before first apply:
+  - `terraform fmt -check -recursive` passed
+  - `terraform init -input=false` passed
+  - `terraform validate` passed
+  - deployment config validation passed
+  - fresh staging `terraform plan -out=tfplan` passed
+  - plan remains 19 to add, 0 to change, 0 to destroy
+  - added `docs/terraform-plan-review.md`
 - Renamed GitHub repository to `OCI-Architecture-Studio`.
 - Pushed current implementation to GitHub.
 
@@ -147,17 +166,21 @@ Last validation run: 2026-05-14
 - Infrastructure Python script compile checks: passed
 - Knowledge ingestion smoke: passed, 13 chunks generated
 - Release ingestion smoke: passed, 3 release items generated
-- Backend tests: passed, 22 tests
+- Backend tests: passed, 26 tests
 - Frontend build: passed
 - Golden evals: passed, 6 of 6
 - Edge-case evals: passed, 8 of 8
+- Retrieval health check: passed for `local_json`, 13 chunks
 - OCI local access check: passed, Object Storage namespace `idsmrn7rvqb6`
 - Local deployment smoke test: passed, including architecture and release-aware citation paths
+- Pre-migration readiness review: passed with a go decision for incremental OCI-native retrieval migration behind configuration
 
 ## Pending
 
 - Replace deterministic local hash embeddings with a production embedding provider when model/provider decisions are finalized.
 - Add a production vector store adapter while keeping the current JSON vector store for local development.
+- Add an OCI-native retrieval adapter behind configuration and dual-run it against the current local JSON vector store before changing defaults.
+- Implement the Oracle AI Vector Search adapter after Object Storage manifest parity is validated.
 - Expand OCI source coverage for:
   - dedicated WAF
   - dedicated Vault

@@ -13,8 +13,30 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
     oci_region: str | None = Field(default=None, alias="OCI_REGION")
     oci_profile: str = Field(default="DEFAULT", alias="OCI_PROFILE")
+    oci_auth_mode: str = Field(default="config_file", alias="OCI_AUTH_MODE")
     openai_api_key: str | None = Field(default=None, alias="OPENAI_API_KEY")
     vector_db_url: str | None = Field(default=None, alias="VECTOR_DB_URL")
+    embedding_provider: str = Field(default="local", alias="EMBEDDING_PROVIDER")
+    retrieval_provider: str = Field(default="local_json", alias="RETRIEVAL_PROVIDER")
+    oci_genai_embedding_model_id: str | None = Field(
+        default=None,
+        alias="OCI_GENAI_EMBEDDING_MODEL_ID",
+    )
+    oci_genai_compartment_id: str | None = Field(
+        default=None,
+        alias="OCI_GENAI_COMPARTMENT_ID",
+    )
+    oci_genai_endpoint: str | None = Field(default=None, alias="OCI_GENAI_ENDPOINT")
+    oci_object_storage_namespace: str | None = Field(
+        default=None,
+        alias="OCI_OBJECT_STORAGE_NAMESPACE",
+    )
+    oci_vector_bucket: str | None = Field(default=None, alias="OCI_VECTOR_BUCKET")
+    oci_vector_object_name: str = Field(
+        default="knowledge/oci-rag-index.json",
+        alias="OCI_VECTOR_OBJECT_NAME",
+    )
+    oci_vector_index_name: str | None = Field(default=None, alias="OCI_VECTOR_INDEX_NAME")
     knowledge_index_path: Path = Field(
         default=REPO_ROOT / "knowledge" / "snapshots" / "oci-rag-index.json",
         alias="KNOWLEDGE_INDEX_PATH",
