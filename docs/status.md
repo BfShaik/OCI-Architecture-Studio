@@ -154,6 +154,11 @@ This progress is based on `docs/two-week-plan.md`.
   - OCI resource visibility checks passed for bucket, secret, log group, alarm, and Events rule
   - retrieval health passed on the OCI-hosted backend with 13 local JSON chunks
   - added `docs/oci-staging-deployment-report.md`
+- Froze the current working staging baseline:
+  - documented baseline commit, environment config, deployed OCI resources, verification results, known limitations, and technical debt in `docs/baseline-freeze.md`
+  - added `docs/operational-runbook.md`
+  - added `infra/scripts/verify_staging_baseline.py`
+  - verified the live app through backend, frontend, retrieval, OCI resource, golden eval, and edge-case checks
 - Renamed GitHub repository to `OCI-Architecture-Studio`.
 - Pushed current implementation to GitHub.
 
@@ -188,6 +193,7 @@ Last validation run: 2026-05-14
 - OCI staging backend smoke: passed, including architecture and release-aware citations
 - OCI staging frontend smoke: passed
 - OCI staging resource visibility smoke: passed
+- OCI staging baseline guardrail: passed
 
 ## Pending
 

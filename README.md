@@ -210,3 +210,5 @@ See `docs/oci-native-retrieval-migration.md` for the OCI-native retrieval archit
 See `docs/terraform-plan-review.md` for the first staging Terraform planning workflow, plan review, apply readiness criteria, and post-apply smoke-test plan.
 
 See `docs/oci-staging-deployment-report.md` for the first OCI staging apply result, deployment validation, smoke-test output, and next hardening steps.
+
+See `docs/baseline-freeze.md` and `docs/operational-runbook.md` for the frozen working baseline, post-deploy verification checklist, regression guardrails, and day-to-day staging operations.
