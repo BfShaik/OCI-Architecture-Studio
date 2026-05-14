@@ -45,6 +45,10 @@ class Settings(BaseSettings):
         default=REPO_ROOT / "knowledge" / "snapshots" / "oci-release-snapshot.json",
         alias="RELEASE_SNAPSHOT_PATH",
     )
+    frontend_dist_path: Path = Field(
+        default=REPO_ROOT / "app" / "frontend" / "dist",
+        alias="FRONTEND_DIST_PATH",
+    )
     backend_cors_origins: str = Field(
         default="http://localhost:5173,http://127.0.0.1:5173",
         alias="BACKEND_CORS_ORIGINS",
@@ -74,6 +78,13 @@ class Settings(BaseSettings):
     @field_validator("release_snapshot_path")
     @classmethod
     def resolve_release_snapshot_path(cls, value: Path) -> Path:
+        if value.is_absolute():
+            return value
+        return REPO_ROOT / value
+
+    @field_validator("frontend_dist_path")
+    @classmethod
+    def resolve_frontend_dist_path(cls, value: Path) -> Path:
         if value.is_absolute():
             return value
         return REPO_ROOT / value

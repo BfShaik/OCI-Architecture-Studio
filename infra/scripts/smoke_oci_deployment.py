@@ -2,14 +2,23 @@ from __future__ import annotations
 
 import argparse
 import json
+import ssl
 import sys
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 
+def ssl_context() -> ssl.SSLContext | None:
+    try:
+        import certifi
+    except ImportError:
+        return None
+    return ssl.create_default_context(cafile=certifi.where())
+
+
 def fetch_json(url: str, timeout: int = 10) -> dict:
     request = Request(url, headers={"User-Agent": "oci-architecture-studio-smoke/0.1"})
-    with urlopen(request, timeout=timeout) as response:
+    with urlopen(request, timeout=timeout, context=ssl_context()) as response:
         return json.loads(response.read().decode("utf-8"))
 
 
@@ -24,7 +33,7 @@ def post_json(url: str, payload: dict, timeout: int = 20) -> dict:
             "User-Agent": "oci-architecture-studio-smoke/0.1",
         },
     )
-    with urlopen(request, timeout=timeout) as response:
+    with urlopen(request, timeout=timeout, context=ssl_context()) as response:
         return json.loads(response.read().decode("utf-8"))
 
 
@@ -57,7 +66,7 @@ def check_backend(api_base_url: str) -> None:
 
 def check_frontend(frontend_url: str) -> None:
     request = Request(frontend_url, headers={"User-Agent": "oci-architecture-studio-smoke/0.1"})
-    with urlopen(request, timeout=10) as response:
+    with urlopen(request, timeout=10, context=ssl_context()) as response:
         body = response.read().decode("utf-8", errors="ignore")
     assert response.status == 200, response.status
     assert "root" in body or "OCI Architecture Studio" in body, body[:200]

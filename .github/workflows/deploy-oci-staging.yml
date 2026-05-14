@@ -227,6 +227,7 @@ jobs:
           OCI_CLI_PROFILE: DEFAULT
           OCI_OBJECT_STORAGE_NAMESPACE: ${{ secrets.OCI_OBJECT_STORAGE_NAMESPACE }}
           OCI_STAGING_FRONTEND_BUCKET: ${{ secrets.OCI_STAGING_FRONTEND_BUCKET }}
+          VITE_API_BASE_URL: ${{ secrets.OCI_STAGING_API_BASE_URL }}
         run: |
           infra/scripts/upload_frontend_to_object_storage.sh \
             "$OCI_OBJECT_STORAGE_NAMESPACE" \

@@ -208,3 +208,5 @@ See `docs/pre-migration-readiness-report.md` for the OCI-native retrieval pre-mi
 See `docs/oci-native-retrieval-migration.md` for the OCI-native retrieval architecture, phased migration guide, validation strategy, observability plan, and rollback path.
 
 See `docs/terraform-plan-review.md` for the first staging Terraform planning workflow, plan review, apply readiness criteria, and post-apply smoke-test plan.
+
+See `docs/oci-staging-deployment-report.md` for the first OCI staging apply result, deployment validation, smoke-test output, and next hardening steps.

@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from oci_arch_studio_backend.api.routes import router
 from oci_arch_studio_backend.core.config import get_settings
@@ -23,6 +24,12 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(router)
+    if settings.frontend_dist_path.exists():
+        app.mount(
+            "/",
+            StaticFiles(directory=settings.frontend_dist_path, html=True),
+            name="frontend",
+        )
     return app
 
 

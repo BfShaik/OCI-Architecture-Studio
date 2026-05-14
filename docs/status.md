@@ -144,6 +144,16 @@ This progress is based on `docs/two-week-plan.md`.
   - fresh staging `terraform plan -out=tfplan` passed
   - plan remains 19 to add, 0 to change, 0 to destroy
   - added `docs/terraform-plan-review.md`
+- Completed the first OCI staging infrastructure apply:
+  - Terraform apply completed with 19 added, 0 changed, 0 destroyed
+  - backend VM created and deployed
+  - frontend assets uploaded to Object Storage
+  - knowledge and release snapshots uploaded to Object Storage
+  - backend smoke test passed
+  - frontend Object Storage smoke test passed
+  - OCI resource visibility checks passed for bucket, secret, log group, alarm, and Events rule
+  - retrieval health passed on the OCI-hosted backend with 13 local JSON chunks
+  - added `docs/oci-staging-deployment-report.md`
 - Renamed GitHub repository to `OCI-Architecture-Studio`.
 - Pushed current implementation to GitHub.
 
@@ -174,6 +184,10 @@ Last validation run: 2026-05-14
 - OCI local access check: passed, Object Storage namespace `idsmrn7rvqb6`
 - Local deployment smoke test: passed, including architecture and release-aware citation paths
 - Pre-migration readiness review: passed with a go decision for incremental OCI-native retrieval migration behind configuration
+- OCI staging apply: passed, 19 resources added
+- OCI staging backend smoke: passed, including architecture and release-aware citations
+- OCI staging frontend smoke: passed
+- OCI staging resource visibility smoke: passed
 
 ## Pending
 
@@ -203,10 +217,6 @@ Last validation run: 2026-05-14
   - structured confidence or evidence notes
 - Add frontend improvements:
   - prompt history
-- Apply the staged Terraform plan after explicit approval.
-- Deploy the backend VM using `infra/scripts/deploy_backend_vm.sh`.
-- Upload frontend assets and generated snapshots to Object Storage.
-- Run cloud smoke tests against the OCI-hosted backend and frontend URLs.
 - Move Terraform state to OCI Object Storage before shared/team usage.
 - Put the backend behind HTTPS through API Gateway or Load Balancer before production use.
 
