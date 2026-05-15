@@ -182,7 +182,6 @@ Environment differences are config-only:
 - `knowledge/refresh_policy.json`
 - `knowledge/refresh/refresh_policy.py`
 - `knowledge/refresh/release_intelligence.py`
-- `.github/workflows/knowledge-refresh.yml`
 - `knowledge/ingestion/ingest.py`
 - `knowledge/refresh/ingest_releases.py`
 - `infra/scripts/release_impact_report.py`
@@ -192,6 +191,11 @@ Environment differences are config-only:
 ## OCI-Native Schedule
 
 OCI recurring execution is implemented with OCI Resource Scheduler invoking an OCI Function. OCI Events remains in use for operational notifications and resource lifecycle visibility, but recurring cron-style execution is modeled as Resource Scheduler because OCI Events rules do not expose a cron schedule field in the Terraform provider.
+
+GitHub Actions is no longer used for scheduled knowledge refresh. The only
+remaining GitHub workflow is CI validation; refresh orchestration should be
+enabled through the Terraform Resource Scheduler and Functions path below after
+the function image is built and pushed to OCIR.
 
 Terraform variables:
 

@@ -239,7 +239,7 @@ Use:
 - OCI CLI/SDK standard config locally
 - instance principals later for backend-to-OCI access
 
-Do not hardcode secrets in code, Terraform, or GitHub Actions.
+Do not hardcode secrets in code, Terraform, or deployment scripts.
 
 ## OCI Config Expectations
 
@@ -261,22 +261,9 @@ region=...
 key_file=...
 ```
 
-GitHub Actions staging deploy uses secrets:
-
-```text
-OCI_CONFIG_FILE_CONTENT
-OCI_PRIVATE_KEY
-OCI_PRIVATE_KEY_PATH
-OCI_STAGING_TFVARS
-OCI_STAGING_BACKEND_HOST
-OCI_STAGING_SSH_PRIVATE_KEY
-OCI_STAGING_SSH_USER
-OCI_OBJECT_STORAGE_NAMESPACE
-OCI_STAGING_FRONTEND_BUCKET
-OCI_STAGING_SNAPSHOTS_BUCKET
-OCI_STAGING_API_BASE_URL
-OCI_STAGING_FRONTEND_URL
-```
+Staging deploys currently use local operator execution with OCI CLI/SDK
+credentials and the staging SSH key. Future hosted deployment automation should
+use OCI DevOps rather than GitHub Actions.
 
 ## Remote State Recommendation
 
@@ -313,7 +300,7 @@ Infrastructure:
 - revert Terraform commit
 - re-apply only if needed
 
-## CI/CD
+## CI And Deployment
 
 Existing CI remains the quality gate:
 
@@ -323,13 +310,9 @@ Existing CI remains the quality gate:
 - golden evals
 - edge evals
 
-Manual OCI staging workflow:
-
-```text
-.github/workflows/deploy-oci-staging.yml
-```
-
-It validates, plans Terraform, optionally applies Terraform, optionally deploys the app, uploads frontend/snapshot artifacts, and runs smoke tests when app deployment is enabled.
+Staging deployment is currently local/operator-run through Terraform and the
+scripts in `infra/scripts/`. OCI-native hosted deployment automation is future
+work and should use OCI DevOps.
 
 ## First Slice Acceptance Criteria
 

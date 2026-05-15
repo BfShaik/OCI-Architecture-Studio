@@ -132,7 +132,7 @@ Deliverables:
 - knowledge snapshot Object Storage upload script — Done
 - OCI access validation helper — Done
 - deployment smoke test for health, retrieval, and release-aware path — Done
-- GitHub Actions staging deployment workflow — Done
+- OCI-native deployment automation through OCI DevOps — Future
 - first Terraform apply to OCI — Done
 - first backend/frontend cloud smoke test — Done
 - staging resource visibility checks — Done

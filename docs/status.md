@@ -112,7 +112,7 @@ This progress is based on `docs/two-week-plan.md`.
   - OCI access validation helper
   - release-aware deployment smoke test
   - non-secret staging runtime config template
-  - manual GitHub Actions staging deployment workflow
+  - local operator staging deployment scripts
 - Prepared first real OCI staging inputs:
   - root-level parent compartment `oci-architecture-studio`
   - ignored local staging `terraform.tfvars`
@@ -126,7 +126,7 @@ This progress is based on `docs/two-week-plan.md`.
   - deployment config schema under `infra/deploy/`
   - Terraform variable preflight validator
   - CI template validation
-  - staging deployment workflow validation before Terraform plan
+  - local staging deployment preflight validation before Terraform plan
 - Extended OCI connectivity validation to include Monitoring alarm visibility.
 - Added a compartment-level OCI Events rule to notify the configured email about resource lifecycle events in the environment compartment.
 - Validated Terraform configuration for `dev`, `test`, and `staging`.
@@ -258,7 +258,6 @@ This progress is based on `docs/two-week-plan.md`.
   - manifest-driven rollback automation through `--rollback-latest`
   - `/knowledge/refresh/status` endpoint for operational visibility
   - slower stable-doc cadence guidance
-  - GitHub Actions knowledge refresh workflow
   - optional OCI Functions + Resource Scheduler schedule scaffold for OCI-native recurring refresh
   - `docs/knowledge-refresh-policy.md`
   - `docs/continuous-intelligence-operations.md`
@@ -325,7 +324,7 @@ Last validation run: 2026-05-15
 - Terraform staging compute shape: `VM.Standard.E5.Flex`
 - Terraform staging compute size: `8 OCPUs`, `128 GB`
 - Deployment config validation: passed
-- GitHub workflow YAML parsing: passed
+- GitHub CI workflow YAML parsing: passed
 - Infrastructure Python script compile checks: passed
 - Knowledge ingestion smoke: passed, 44 chunks generated locally from 44 registry sources
 - Release ingestion smoke: passed, 5 release items generated in offline fallback mode

@@ -249,7 +249,7 @@ Current operational strengths:
 - Deployment smoke tests validate backend health, architecture review, release-aware review, frontend availability, and optional OCI SDK access.
 - Terraform includes logging, monitoring, notification, and lifecycle event scaffolding.
 - Deployment docs include config validation, Terraform flow, rollback basics, and smoke checks.
-- CI includes backend tests, frontend build, evals, ingestion checks, Terraform validation, and deployment workflow validation.
+- CI includes backend tests, frontend build, evals, ingestion checks, and Terraform validation. Deployment orchestration should remain local/operator-run until OCI DevOps is introduced.
 
 Operational gaps:
 
