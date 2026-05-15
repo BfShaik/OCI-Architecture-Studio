@@ -10,16 +10,16 @@ OCI Architecture Studio currently supports a validated advisory flow in local de
 
 1. User asks an OCI architecture, migration, DR, cost, security, or release-awareness question in the React UI.
 2. The frontend calls the FastAPI backend.
-3. The backend classifies the request intent and applies the matching orchestration profile.
-4. Retrieval runs through a config-selected provider.
+3. The backend classifies the request intent and applies the matching advisory profile.
+4. Retrieval runs through a config-selected provider, applies source-service mapping, detects architecture-domain heuristics, and reranks a wider candidate set before selecting final chunks.
 5. The active staging provider is `oci_object_storage`, reading the validated vector manifest from OCI Object Storage.
-6. `local_json` remains the tested config-only rollback provider.
-7. The controlled multi-agent pilot selects bounded specialist advisors, shares the same retrieved evidence across them, and runs a validation critic over evidence support, citations, freshness, and unsupported-claim risk.
+6. Local development defaults to `local_json`; it also remains the tested config-only rollback provider for staging.
+7. The controlled orchestration layer selects deterministic specialist roles, shares the same retrieved evidence across them, and runs a validation critic over evidence support, citations, freshness, and unsupported-claim risk. These are in-process role boundaries, not autonomous agents.
 8. One final synthesis step generates the advisory response through the configured provider with deterministic rollback available.
 9. The continuous intelligence pipeline refreshes OCI release knowledge on schedule, validates candidate snapshots, and promotes them only after gates pass.
-10. The UI renders intent, prompt template, active agents, specialist contributions, aggregation decision, critic findings, confidence, recommendations, assumptions, risks, citations, and next steps.
+10. The backend returns structured recommendations, confidence, evidence links, section citation metadata, optional retrieval debug traces, and standard architecture response sections. The current UI renders the main advisory fields and citation cards; full section-level citation UI is future work.
 
-LangGraph, advanced memory, autonomous agent swarms, and Oracle AI Vector Search active reads are intentionally deferred until the controlled pilot and the next vector-search parity gate are ready.
+LangGraph, advanced memory, autonomous agent execution, and Oracle AI Vector Search active reads are intentionally deferred until the deterministic control layer and the next vector-search parity gate justify promotion.
 
 ## Repository Layout
 
@@ -39,7 +39,12 @@ tests/                Backend and integration tests
 - Local OCI source registry and ingestion pipeline
 - Deterministic local embeddings for development
 - JSON vector index for local retrieval
-- Citation-friendly chunk metadata with service, domain, trust, intent tags, and freshness score
+- Citation-friendly chunk metadata with service, service category, domain, workload, architecture pattern, trust, intent tags, migration mappings, and freshness score
+- Lightweight retrieval reranking that combines semantic similarity, intent match, service relevance, metadata overlap, architecture pattern match, workload/domain relevance, topic match, and migration mapping match
+- Optional retrieval debug traces through request flag `retrieval_debug` or environment flag `RETRIEVAL_DEBUG_ENABLED`
+- Backend section citation plumbing with chunk ID, source document, OCI service category, and service name
+- Architecture-domain heuristics for ecommerce, fintech, SaaS, AI/ML inference, observability platforms, and analytics platforms
+- AWS-to-OCI service mapping for container, database, storage, CDN/DNS, networking, observability, security, AI/ML, and data engineering source services
 - OCI-native retrieval migration hooks:
   - optional OCI Generative AI embedding adapter
   - optional Object Storage vector-manifest retrieval
@@ -55,7 +60,12 @@ tests/                Backend and integration tests
   - migration
   - disaster recovery
   - cost
+  - observability
+  - AI/ML
   - security
+  - modernization
+  - SaaS platform
+  - analytics
   - release awareness
   - general questions
 - Golden prompt regression suite
@@ -69,7 +79,7 @@ tests/                Backend and integration tests
 - Config-only staging promotion to `oci_object_storage` with rollback validation
 - Evidence-linked recommendations, confidence scoring, uncertainty flags, and advisory quality metrics
 - Config-selectable advisory synthesis with deterministic rollback and an OCI GenAI chat adapter
-- Controlled multi-agent pilot with:
+- Controlled in-process orchestration pilot with:
   - one in-process supervisor
   - deterministic specialist selection for architecture, migration, HA/DR, cost, and release-awareness advisors
   - shared retrieval evidence across all agents
@@ -79,6 +89,8 @@ tests/                Backend and integration tests
   - validation critic findings
   - config-only rollback to `supervised` or `single_pass`
   - `/orchestration/health` observability
+
+The orchestration pilot does not perform autonomous tool use, long-running planning, multi-step memory, or independent agent execution. Those remain deferred until there is enough quality data to justify them.
 
 ## Run Locally
 
@@ -151,6 +163,14 @@ Architecture review:
 curl -X POST http://localhost:8000/architecture-review \
   -H "Content-Type: application/json" \
   -d '{"question":"How should I design a highly available web app on OCI?"}'
+```
+
+Optional retrieval debug trace:
+
+```bash
+curl -X POST http://localhost:8000/architecture-review \
+  -H "Content-Type: application/json" \
+  -d '{"question":"Migrate CloudWatch and IAM controls for a SaaS platform to OCI.","retrieval_debug":true}'
 ```
 
 ### Frontend
@@ -276,12 +296,12 @@ cd ../frontend && npm run build
 
 Latest full validation: 2026-05-15.
 
-- Local backend tests: `50 passed`
-- Golden evals: `6 passed, 0 failed`
-- Edge-case evals: `8 passed, 0 failed`
+- Local backend tests: `62 passed`
+- Golden/edge advisory eval run: `8 passed, 0 failed`
 - Advisory-quality evals: `5 passed, 0 failed`
 - Controlled orchestration evals: `5 passed, 0 failed`
 - Retrieval regression: `14 passed, 0 failed`
+- Retrieval health: passed for `local_json` in the current branch; staging remains documented as `oci_object_storage`
 - Knowledge ingestion: `21 chunks`
 - Release ingestion: `3 release items`
 - Knowledge refresh policy smoke: passed

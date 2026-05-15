@@ -59,6 +59,7 @@ This progress is based on `docs/two-week-plan.md`.
   - deterministic local embeddings
   - JSON vector index
   - cosine similarity retrieval
+  - metadata-aware reranking over a wider retrieval candidate set
 - Added release-awareness foundation:
   - OCI release source registry
   - release ingestion script
@@ -71,7 +72,12 @@ This progress is based on `docs/two-week-plan.md`.
   - `migration`
   - `dr`
   - `cost`
+  - `observability`
+  - `ai_ml`
   - `security`
+  - `modernization`
+  - `saas_platform`
+  - `analytics`
   - `release_awareness`
   - `general`
 - Added intent-specific prompt templates under `prompts/`.
@@ -89,11 +95,11 @@ This progress is based on `docs/two-week-plan.md`.
   - ingestion cleanup and metadata generation
   - release ingestion and classification
   - stale-source detection
-- Verified current validation:
+- Verified early foundation validation:
   - backend tests pass
   - frontend build passes
   - golden prompts route to expected intents
-  - golden eval runner passes 6 of 6 cases
+  - golden eval runner passes its then-current golden cases
   - edge-case eval runner passes 8 of 8 cases
   - eval runner now checks retrieval support and stale or unverified guidance
 - Added demo readiness closeout under `docs/demo-readiness.md`.
@@ -212,6 +218,13 @@ This progress is based on `docs/two-week-plan.md`.
   - `/orchestration/health` now includes aggregation decision and active agent count
   - orchestration evals now validate multi-agent mode, specialist contribution counts, aggregation, critic findings, and rollback-safe metadata
   - `docs/controlled-multi-agent-pilot.md`
+- Added retrieval precision and grounding foundation:
+  - modular retrieval reranker using semantic similarity, intent match, service relevance, metadata overlap, architecture pattern match, workload/domain relevance, topic match, and migration mapping match
+  - optional retrieval debug trace via request flag `retrieval_debug` or `RETRIEVAL_DEBUG_ENABLED`
+  - source-service mapping expanded across Kubernetes, AWS networking, observability, security, AI/ML, and data engineering services
+  - architecture-domain heuristics for ecommerce, fintech, SaaS, AI/ML inference, observability platforms, and analytics platforms
+  - backend section citation metadata with chunk ID, source document, OCI service category, and service name
+  - regression tests for reranking/debug traces, expanded mappings, domain heuristics, and section citations
 - Added knowledge refresh policy:
   - scheduled release-note watcher policy
   - release classification to affected service, domain, impact tags, and impact level
@@ -252,10 +265,9 @@ Last validation run: 2026-05-15
 - Continuous intelligence hardening: candidate-first promotion, version lineage, rollback automation, and refresh status endpoint implemented
 - Terraform validation: passed after optional knowledge refresh scheduler scaffold; staging plan currently should not be applied until existing backend replacement drift is resolved and the function image is available
 - OCI-native refresh scheduler scaffold: implemented with OCI Functions plus OCI Resource Scheduler; not applied yet because a published OCIR function image is required before enabling
-- Backend tests: passed, 50 tests
+- Backend tests: passed, 62 tests
 - Frontend build: passed
-- Golden evals: passed, 6 of 6
-- Edge-case evals: passed, 8 of 8
+- Golden/edge advisory eval command: passed, 8 of 8
 - Advisory-quality evals: passed, 5 of 5
 - Controlled orchestration evals: passed, 5 of 5
 - Retrieval health check: passed for `oci_object_storage`, 21 chunks
@@ -327,7 +339,7 @@ Last validation run: 2026-05-15
   - common script/style/footer/help boilerplate cleanup exists
   - more Oracle documentation boilerplate cleanup is still needed
 - Source metadata:
-  - current index includes source URL, service, service domain, intent tags, fetched timestamp, freshness score, trust level, architecture patterns, chunk index, and fetch status
+  - current index includes source URL, service, service domain, service category, workload/domain tags, topic, migration mappings, HA/DR and cost tags, intent tags, fetched timestamp, freshness score, trust level, architecture patterns, chunk index, and fetch status
   - still needs source version/date and richer ownership metadata
 - Source registry expansion:
   - added OKE, database migration, Full Stack Disaster Recovery, Cost Management, Security Services, Object Storage, CDN / edge services, IAM, Network Security Groups, Autonomous Database, Vault, Logging, Monitoring, Cloud Guard, and WAF
@@ -355,11 +367,17 @@ Last validation run: 2026-05-15
   - specialist agents are deterministic role boundaries, not autonomous workers
   - validation critic currently reports findings and warnings; it does not block responses yet
   - final response synthesis remains single-writer through the configured synthesis provider
+- Retrieval quality:
+  - reranking and domain heuristics are implemented and covered by tests
+  - optional debug traces expose detected intent, mapped OCI services, candidate chunks, score adjustments, and selected final chunks
+  - section citation metadata is available in the backend response
+  - full section-level citation rendering in the frontend remains future work
 
 ## Current Known Limitations
 
 - The local RAG index is small and not a complete OCI documentation corpus.
 - Embeddings are deterministic local hash embeddings, useful for workflow validation but not production semantic retrieval.
+- Reranking improves ordering and traceability but still depends on the small curated corpus and local hash embeddings.
 - Release awareness has scheduled snapshot refresh, candidate validation, and status visibility; deeper semantic impact analysis remains next-phase work.
 - OCI GenAI synthesis adapter exists, but deterministic synthesis remains the rollback-safe default unless enabled by environment configuration.
 - Controlled multi-agent orchestration is currently an in-process control layer; it does not yet perform autonomous planning, tool use, or multi-step agent memory.
