@@ -380,7 +380,7 @@ Last validation run: 2026-05-15
 - Executive-experience evals: passed, 3 of 3
 - FinOps-migration-optimization evals: passed, 4 of 4
 - Advisory quality gate: passed against the evaluation-intelligence report with MVP thresholds
-- Internal beta readiness gate: passed locally against governance, executive, topology, migration/FinOps, release, retrieval, and operational diagnostics checks
+- Internal beta readiness gate: passed locally and against OCI staging for governance, executive, topology, migration/FinOps, release, retrieval, and operational diagnostics checks
 - Operational hardening tests: passed in targeted API/diagnostics suite
 - Operational readiness check: passed locally against `/health`, `/retrieval/health`, `/operations/health`, `/operations/readiness`, `/operations/infrastructure`, and `/operations/analytics`; API Gateway and OCI DevOps are expected readiness warnings until configured
 - Runtime readiness endpoint: passed locally in targeted API tests

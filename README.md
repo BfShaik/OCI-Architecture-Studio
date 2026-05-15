@@ -414,7 +414,7 @@ Latest full validation: 2026-05-15.
 - Executive-experience evals: `3 passed, 0 failed`
 - FinOps-migration-optimization evals: `4 passed, 0 failed`
 - Advisory quality gate: passed with MVP thresholds
-- Internal beta readiness gate: passed locally; staging gate should pass before tagging a baseline
+- Internal beta readiness gate: passed locally and against OCI staging
 - Operational readiness check: passed locally; API Gateway and OCI DevOps are reported as readiness warnings until configured
 - Retrieval regression: `18 passed, 0 failed`
 - Retrieval health: passed for local `local_json` and staging `oci_object_storage` with 44 chunks
