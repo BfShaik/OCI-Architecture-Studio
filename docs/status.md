@@ -30,6 +30,22 @@ Last updated: 2026-05-15
 - Dev/test/staging `terraform init`, `terraform fmt`, and `terraform validate` passed.
 - A staging preflight with `enable_autonomous_vector_database=true` now proposes 5 creates, 0 changes, and 0 destroys: generated password, Vault secret, vector DB NSG, TCPS ingress rule, and Autonomous Database.
 
+## Latest Vector Search Infrastructure Apply
+
+- `TASK-025` completed on staging.
+- Terraform applied exactly 5 resources, 0 changes, and 0 destroys:
+  - generated database admin password
+  - OCI Vault secret for the generated admin password
+  - vector database network security group
+  - backend-to-database TCPS ingress rule
+  - Oracle Autonomous Database for Oracle AI Vector Search shadow mode
+- Autonomous Database OCID: `ocid1.autonomousdatabase.oc1.iad.anuwcljr2j5jslyacn2piq4ls4olitfupf4f2cfiqidc6xtqhtq5es7x4ytq`
+- Private endpoint: `stagingvectordb.adb.us-ashburn-1.oraclecloud.com`
+- Admin secret OCID: `ocid1.vaultsecret.oc1.iad.amaaaaaa2j5jslyanwaml5i3cu5xibjg6vtplqbqwd7cjsjbm2vucd4d4ihq`
+- Post-apply `terraform plan -detailed-exitcode` returned no changes.
+- Gateway smoke, operational readiness, and backend operational/API regression tests passed.
+- Active retrieval remains `oci_object_storage`; Oracle AI Vector Search is infrastructure-ready but not promoted.
+
 ## Active Plan
 
 - Living execution plan: `docs/living-execution-plan.md`
