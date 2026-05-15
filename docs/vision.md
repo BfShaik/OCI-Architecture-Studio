@@ -14,9 +14,11 @@ OCI Architecture Studio now has a validated working foundation:
 - backend section citation metadata for chunk IDs, source documents, OCI service categories, and services
 - AWS-to-OCI source service mapping and domain-aware heuristics for ecommerce, fintech, SaaS, AI/ML inference, observability, and analytics scenarios
 - deterministic architecture pattern profiles and synthesis quality signals that make fallback responses more useful while remaining explainable
+- concise decision reasoning metadata and lightweight consistency validation for recommendation coherence
+- confidence sub-signals for retrieval grounding, service relevance, workload alignment, migration mapping certainty, and citation coverage
 - OCI Object Storage retrieval manifest as the active staging retrieval provider
 - local JSON retrieval preserved as the config-only rollback provider
-- point-in-time release snapshots for release-aware guidance
+- point-in-time release snapshots, release impact metadata, and current-vs-historical schema scaffolding for release-aware guidance
 - golden, edge-case, retrieval regression, and parity validation gates
 - Terraform-based OCI staging slice with Object Storage, Vault, Logging, Monitoring, Events, and Notifications
 
@@ -26,7 +28,9 @@ The current orchestration layer is deterministic and in-process. Autonomous agen
 
 OCI GenAI synthesis is available as a configurable adapter with deterministic fail-closed fallback. Deterministic synthesis remains the safe default unless live GenAI configuration and parity validation are provided.
 
-The current deterministic synthesis layer is heuristic. It improves structure, workload specificity, and grounding fidelity, but it is not a substitute for a full OCI design review or live GenAI reasoning.
+The current deterministic synthesis layer is heuristic. It improves structure, workload specificity, grounding fidelity, and recommendation explainability, but it is not a substitute for a full OCI design review or live GenAI reasoning.
+
+Release-awareness is still foundational: the runtime can reference local release snapshots and impact metadata, but it does not yet perform full automated release reconciliation or bi-temporal retrieval.
 
 ## Product Pillars
 

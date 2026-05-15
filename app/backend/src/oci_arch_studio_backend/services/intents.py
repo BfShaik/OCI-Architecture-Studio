@@ -464,10 +464,10 @@ class IntentClassifier:
             return Intent.AI_ML
         if any(token in normalized for token in ("saas", "tenant", "multi-tenant", "multi tenant", "multi-region", "multi region")):
             return Intent.SAAS_PLATFORM
-        if any(token in normalized for token in ("analytics", "data platform", "data lake", "warehouse", "reporting", "pipeline scaling")):
-            return Intent.ANALYTICS
         if any(token in normalized for token in ("dr", "disaster recovery", "rto", "rpo", "failover", "fintech")):
             return Intent.DR
+        if any(token in normalized for token in ("analytics", "data platform", "data lake", "warehouse", "reporting", "pipeline scaling")):
+            return Intent.ANALYTICS
         if any(token in normalized for token in ("cost", "cost-optimized", "budget", "right-size", "right sized", "cheap")):
             return Intent.COST
         if any(token in normalized for token in ("observability", "logging", "monitoring", "metrics", "alarms", "dashboard", "audit trail")):

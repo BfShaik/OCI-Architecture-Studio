@@ -105,8 +105,48 @@ class ConfidenceScore(BaseModel):
     freshness: float
     release_awareness: float
     recommendation: float
+    service_relevance: float = 0.0
+    workload_alignment: float = 0.0
+    migration_mapping: float = 1.0
+    citation_coverage: float = 0.0
     overall: float
     level: str
+    notes: list[str] = Field(default_factory=list)
+
+
+class ArchitectureDecisionReason(BaseModel):
+    recommendation: str
+    service: str | None = None
+    why_chosen: str
+    workload_signal: str | None = None
+    tradeoffs: list[str] = Field(default_factory=list)
+    alternatives_rejected: list[str] = Field(default_factory=list)
+    source_chunk_ids: list[str] = Field(default_factory=list)
+    confidence: float = 0.0
+
+
+class ArchitectureConsistencyFinding(BaseModel):
+    check: str
+    severity: str
+    message: str
+    recommendation: str
+    source_chunk_ids: list[str] = Field(default_factory=list)
+
+
+class ReleaseImpactSummary(BaseModel):
+    snapshot_path: str | None = None
+    snapshot_generated_at: str | None = None
+    matched_release_count: int = 0
+    architecture_affecting_services: list[str] = Field(default_factory=list)
+    impact_categories: list[str] = Field(default_factory=list)
+    maturity_notes: list[str] = Field(default_factory=list)
+
+
+class KnowledgeTemporalContext(BaseModel):
+    knowledge_mode: str = "current_snapshot"
+    current_knowledge_snapshot: str | None = None
+    current_release_snapshot: str | None = None
+    historical_snapshots: list[str] = Field(default_factory=list)
     notes: list[str] = Field(default_factory=list)
 
 
@@ -145,6 +185,10 @@ class ArchitectureReviewResponse(BaseModel):
     synthesis_warnings: list[str] = Field(default_factory=list)
     synthesis_fallback_used: bool = False
     synthesis_quality: SynthesisQualityScore | None = None
+    decision_reasoning: list[ArchitectureDecisionReason] = Field(default_factory=list)
+    consistency_findings: list[ArchitectureConsistencyFinding] = Field(default_factory=list)
+    release_context: ReleaseImpactSummary | None = None
+    knowledge_temporal_context: KnowledgeTemporalContext | None = None
     answer: str
     recommendations: list[str]
     assumptions: list[str]

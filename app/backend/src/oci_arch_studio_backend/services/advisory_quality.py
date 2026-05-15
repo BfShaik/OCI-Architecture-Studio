@@ -99,6 +99,9 @@ class AdvisoryQualityAnalyzer:
         freshness_confidence = self._freshness_confidence(valid_sources)
         release_confidence = self._release_confidence(question, profile, release_store)
         retrieval_confidence = self._retrieval_confidence(valid_sources)
+        service_relevance = self._service_relevance(base_recommendations, valid_sources)
+        workload_alignment = self._workload_alignment(question, valid_sources)
+        migration_mapping = self._migration_mapping_confidence(question, valid_sources)
         recommendation_confidence = round((evidence_support * 0.7) + (citation_coverage * 0.3), 3)
         if low_context_prompt:
             recommendation_confidence = min(recommendation_confidence, 0.45)
@@ -108,7 +111,10 @@ class AdvisoryQualityAnalyzer:
                 + evidence_support * 0.3
                 + freshness_confidence * 0.2
                 + release_confidence * 0.1
-                + recommendation_confidence * 0.15
+                + recommendation_confidence * 0.1
+                + service_relevance * 0.025
+                + workload_alignment * 0.015
+                + migration_mapping * 0.01
             ),
             3,
         )
@@ -131,6 +137,10 @@ class AdvisoryQualityAnalyzer:
             freshness=freshness_confidence,
             release_awareness=release_confidence,
             recommendation=recommendation_confidence,
+            service_relevance=service_relevance,
+            workload_alignment=workload_alignment,
+            migration_mapping=migration_mapping,
+            citation_coverage=citation_coverage,
             overall=overall,
             level=self._confidence_level(overall),
             notes=quality_warnings[:4],
@@ -343,6 +353,50 @@ class AdvisoryQualityAnalyzer:
             return 0.2
         matches = release_store.find_matches(question)
         return 0.85 if matches else 0.55
+
+    def _service_relevance(self, recommendations: list[str], valid_sources: list[RetrievedSource]) -> float:
+        if not valid_sources:
+            return 0.0
+        source_services = [source.service.lower() for source in valid_sources if source.service]
+        if not source_services:
+            return 0.4
+        recommendation_text = " ".join(recommendations).lower()
+        matched = sum(1 for service in source_services if service in recommendation_text)
+        return round(min(matched / max(len(source_services), 1), 1.0), 3)
+
+    def _workload_alignment(self, question: str, valid_sources: list[RetrievedSource]) -> float:
+        if not valid_sources:
+            return 0.0
+        question_terms = self._terms(question)
+        source_tags = {
+            tag.lower()
+            for source in valid_sources
+            for tag in [source.workload or "", source.domain or "", *source.workload_types, *source.domain_tags]
+            if tag
+        }
+        if not source_tags:
+            return 0.45
+        matched = sum(1 for tag in source_tags if any(part in question_terms for part in self._terms(tag)))
+        return round(min(matched / len(source_tags), 1.0), 3)
+
+    def _migration_mapping_confidence(self, question: str, valid_sources: list[RetrievedSource]) -> float:
+        requested_migration = bool(
+            re.search(r"\b(eks|rds|s3|cloudfront|route\s?53|fargate|lambda|cloudwatch|glue|sagemaker|aws)\b", question, flags=re.IGNORECASE)
+        )
+        if not requested_migration:
+            return 1.0
+        mappings = {
+            source_name.lower(): target.lower()
+            for source in valid_sources
+            for source_name, target in source.migration_mappings.items()
+        }
+        if mappings:
+            return 0.85
+        source_text = " ".join(
+            " ".join((source.summary, source.service or "", source.title)).lower()
+            for source in valid_sources
+        )
+        return 0.65 if any(token in source_text for token in ("migration", "oke", "database migration")) else 0.35
 
     def _confidence_level(self, score: float) -> str:
         if score >= 0.8:

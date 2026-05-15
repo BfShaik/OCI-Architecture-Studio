@@ -242,6 +242,32 @@ def test_service_mapping_biases_migration_retrieval(tmp_path) -> None:
     assert results[0].migration_mappings == {"EKS": "OKE"}
 
 
+def test_mapped_service_selection_prioritizes_operational_coverage(tmp_path) -> None:
+    retriever = OciKnowledgeRetriever(index_path=tmp_path / "missing.json")
+
+    ordered = retriever._prioritized_mapped_services(  # noqa: SLF001 - regression for mapped-service selection.
+        (
+            "Virtual Cloud Network",
+            "OCI Kubernetes Engine",
+            "Database Migration",
+            "Database Services",
+            "Autonomous Database",
+            "Logging",
+            "Monitoring",
+            "Identity and Access Management",
+        )
+    )
+
+    assert ordered[:6] == (
+        "OCI Kubernetes Engine",
+        "Database Migration",
+        "Database Services",
+        "Autonomous Database",
+        "Logging",
+        "Monitoring",
+    )
+
+
 def test_retriever_debug_trace_explains_reranking(tmp_path) -> None:
     embedder = LocalHashingEmbedder()
     index_path = tmp_path / "index.json"

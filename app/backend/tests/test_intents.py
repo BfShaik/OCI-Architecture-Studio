@@ -20,6 +20,7 @@ from oci_arch_studio_backend.services.intents import Intent, IntentClassifier
         ("multi-region SaaS platform with failover readiness", Intent.SAAS_PLATFORM),
         ("AI inference platform with cost-aware GPU sizing", Intent.AI_ML),
         ("analytics platform with pipeline scaling and cost controls", Intent.ANALYTICS),
+        ("analytics platform DR with pipeline replay and query recovery", Intent.DR),
         ("How does the latest OCI update affect this architecture?", Intent.RELEASE_AWARENESS),
     ],
 )

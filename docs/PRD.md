@@ -21,6 +21,10 @@ OCI Architecture Studio is an AI-powered OCI architecture intelligence platform 
 - Section citation metadata in the backend response
 - Deterministic architecture pattern profiles for common OCI advisory scenarios
 - Lightweight synthesis quality scoring
+- Concise architecture decision reasoning metadata for major recommendations
+- Lightweight architecture consistency findings before final response return
+- Confidence sub-signals for service relevance, workload alignment, migration mapping certainty, and citation coverage
+- Release snapshot and temporal knowledge schemas for future release-aware architecture intelligence
 - Retrieval regression and parity validation
 - OCI staging deployment
 
@@ -34,10 +38,10 @@ User flow:
 3. The system maps known source services to OCI service candidates when migration/source-cloud services are mentioned.
 4. The system detects architecture-domain heuristics such as ecommerce, fintech, SaaS, AI/ML inference, observability, or analytics.
 5. The system retrieves OCI knowledge chunks through a config-selected retrieval provider and reranks candidates using semantic score, intent match, service relevance, metadata overlap, architecture pattern match, workload/domain relevance, topic match, and migration mappings.
-6. The system uses deterministic in-process orchestration metadata and a single synthesis step to produce a structured advisory response. The deterministic path applies lightweight architecture pattern profiles, retrieved services, workload/domain heuristics, and citation metadata.
-7. Release-aware prompts are checked against point-in-time release snapshots and freshness metadata.
-8. The backend returns recommendations, assumptions, risks, citations, evidence links, confidence, section citation metadata, and optional retrieval debug traces.
-9. The UI displays the main advisory fields and citation cards. Full section-level citation UI is not implemented yet.
+6. The system uses deterministic in-process orchestration metadata and a single synthesis step to produce a structured advisory response. The deterministic path applies lightweight architecture pattern profiles, retrieved services, workload/domain heuristics, citation metadata, and consistency validation.
+7. Release-aware prompts are checked against point-in-time release snapshots and freshness metadata. Current release awareness is snapshot/scaffold based, not live request-time reconciliation with OCI release feeds.
+8. The backend returns recommendations, assumptions, risks, citations, evidence links, confidence, decision reasoning metadata, consistency findings, section citation metadata, release context, temporal knowledge context, and optional retrieval debug traces.
+9. The UI displays the main advisory fields and citation cards. Full section-level citation, reasoning, consistency, and release-context UI is not implemented yet.
 
 Current active staging retrieval:
 
@@ -79,7 +83,8 @@ Orchestration behavior:
 
 - The current orchestration layer is deterministic and in-process.
 - It exposes supervisor, specialist, and critic metadata for visibility.
-- It does not perform autonomous planning, external tool use, persistent agent memory, or independent agent execution.
+- It also adds lightweight consistency findings and decision reasoning metadata.
+- It does not perform autonomous planning, external tool use, persistent agent memory, raw chain-of-thought exposure, or independent agent execution.
 
 ## Acceptance Criteria
 
@@ -92,6 +97,8 @@ Orchestration behavior:
 - Retrieval reranking is modular and test-covered.
 - Optional retrieval debug trace is available without changing the default response behavior.
 - Backend citation metadata can associate response sections with chunk IDs, source documents, and OCI service categories.
+- Decision reasoning metadata can associate major recommendations with concise rationale, tradeoffs, rejected alternatives, source chunk IDs, and confidence.
+- Consistency validation can flag conflicting requirements, migration mapping coverage gaps, HA/DR alignment gaps, observability gaps, and security coverage gaps.
 - Prompt templates and golden eval prompts exist in source control.
 - Golden prompts route to expected intents.
 - Golden evals, edge-case evals, retrieval regression, and dual-provider parity can be run locally.
@@ -104,5 +111,6 @@ Orchestration behavior:
 - No autonomous multi-agent execution yet.
 - No always-on live LLM synthesis by default.
 - No continuous live release intelligence beyond scheduled snapshot refresh and gated promotion.
+- No bi-temporal retrieval; current-vs-historical temporal knowledge support is schema-oriented scaffolding only.
 - Oracle AI Vector Search active reads remain guarded until schema, indexing, and query parity are validated.
 - HTTPS ingress and production HA are deferred beyond the current staging slice.

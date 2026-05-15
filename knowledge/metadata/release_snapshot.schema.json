@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://oci-architecture-studio.local/schemas/release_snapshot.schema.json",
+  "title": "OCI Release Snapshot",
+  "type": "object",
+  "required": ["generated_at", "source_count", "release_count", "releases"],
+  "properties": {
+    "generated_at": {
+      "type": "string",
+      "description": "UTC timestamp when the local release snapshot was generated."
+    },
+    "snapshot_scope": {
+      "type": "string",
+      "enum": ["current", "historical"],
+      "default": "current"
+    },
+    "source_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "release_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "releases": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/release_item"
+      }
+    }
+  },
+  "$defs": {
+    "release_item": {
+      "type": "object",
+      "required": ["id", "title", "source_url", "source_type", "service", "service_domain", "impact_tags", "impact_level", "summary"],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "source_id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "source_url": {
+          "type": "string"
+        },
+        "source_type": {
+          "type": "string"
+        },
+        "release_date": {
+          "type": ["string", "null"]
+        },
+        "service": {
+          "type": "string"
+        },
+        "services": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "service_domain": {
+          "type": "string",
+          "description": "Architecture domain affected by the release, such as networking, security, storage, database, resilience, cost, or general."
+        },
+        "service_change_tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Service-level change labels such as api-compatibility, naming, limits, availability, lifecycle, security, pricing, or migration."
+        },
+        "impact_tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "impact_level": {
+          "type": "string",
+          "enum": ["informational", "review", "high"]
+        },
+        "architecture_affecting": {
+          "type": "boolean",
+          "description": "True when the release can affect OCI architecture choices, migration compatibility, DR posture, security controls, or cost planning."
+        },
+        "knowledge_scope": {
+          "type": "string",
+          "enum": ["current", "historical"],
+          "default": "current"
+        },
+        "valid_from": {
+          "type": ["string", "null"]
+        },
+        "valid_to": {
+          "type": ["string", "null"]
+        },
+        "trust_level": {
+          "type": "string"
+        },
+        "ingested_timestamp": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "fetch_status": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

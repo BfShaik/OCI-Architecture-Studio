@@ -4,6 +4,7 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
+from oci_arch_studio_backend.models.architecture import KnowledgeTemporalContext, ReleaseImpactSummary
 from oci_arch_studio_backend.services.intents import Intent
 
 
@@ -35,6 +36,7 @@ class ReleaseSnapshotStore:
     def __init__(self, snapshot_path: Path) -> None:
         self.snapshot_path = snapshot_path
         self._releases: list[dict[str, object]] | None = None
+        self._payload: dict[str, object] | None = None
 
     @property
     def exists(self) -> bool:
@@ -82,13 +84,68 @@ class ReleaseSnapshotStore:
             f"{services}. Compare these release items with the normal knowledge snapshot before changing guidance."
         )
 
+    def impact_summary(self, question: str) -> ReleaseImpactSummary:
+        if not self.exists:
+            return ReleaseImpactSummary(
+                snapshot_path=str(self.snapshot_path),
+                maturity_notes=[
+                    "Release-awareness is scaffolded, but no local release snapshot is available.",
+                ],
+            )
+        payload = self._load_payload()
+        matches = self.find_matches(question)
+        impact_categories = sorted({tag for match in matches for tag in match.impact_tags})
+        architecture_services = sorted(
+            {
+                match.service
+                for match in matches
+                if match.impact_level in {"review", "high"}
+                or any(tag in {"architecture", "migration", "dr", "security"} for tag in match.impact_tags)
+            }
+        )
+        notes = [
+            "Release-awareness is snapshot-based scaffolding; it does not yet perform live automated OCI release reconciliation.",
+        ]
+        if not matches:
+            notes.append("No matching release item was found for this prompt in the local snapshot.")
+        return ReleaseImpactSummary(
+            snapshot_path=str(self.snapshot_path),
+            snapshot_generated_at=str(payload.get("generated_at")) if payload.get("generated_at") else None,
+            matched_release_count=len(matches),
+            architecture_affecting_services=architecture_services,
+            impact_categories=impact_categories,
+            maturity_notes=notes,
+        )
+
+    def temporal_context(self, *, knowledge_snapshot_path: Path | None = None) -> KnowledgeTemporalContext:
+        historical = []
+        if self.snapshot_path.parent.exists:
+            historical = [
+                str(path)
+                for path in sorted(self.snapshot_path.parent.glob("historical-*.json"))
+            ]
+        notes = [
+            "Current retrieval uses the active OCI knowledge snapshot; historical snapshot support is schema-only scaffolding.",
+        ]
+        return KnowledgeTemporalContext(
+            knowledge_mode="current_snapshot_with_release_overlay",
+            current_knowledge_snapshot=str(knowledge_snapshot_path) if knowledge_snapshot_path else None,
+            current_release_snapshot=str(self.snapshot_path) if self.exists else None,
+            historical_snapshots=historical,
+            notes=notes,
+        )
+
     def _load_releases(self) -> list[dict[str, object]]:
-        if self._releases is not None:
-            return self._releases
+        return list(self._load_payload().get("releases", []))
+
+    def _load_payload(self) -> dict[str, object]:
+        if self._payload is not None:
+            return self._payload
         with self.snapshot_path.open("r", encoding="utf-8") as file:
             payload = json.load(file)
+        self._payload = payload
         self._releases = list(payload.get("releases", []))
-        return self._releases
+        return payload
 
     def _to_match(self, release: dict[str, object]) -> ReleaseMatch:
         return ReleaseMatch(

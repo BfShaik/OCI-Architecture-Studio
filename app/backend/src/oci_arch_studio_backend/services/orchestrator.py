@@ -4,6 +4,8 @@ from oci_arch_studio_backend.models.architecture import (
 )
 from oci_arch_studio_backend.services.advisory_metrics import advisory_quality_metrics
 from oci_arch_studio_backend.services.advisory_quality import AdvisoryQualityAnalyzer
+from oci_arch_studio_backend.services.architecture_consistency import ArchitectureConsistencyValidator
+from oci_arch_studio_backend.services.architecture_reasoning import ArchitectureDecisionReasoner
 from oci_arch_studio_backend.services.intents import (
     IntentClassifier,
     get_intent_profile,
@@ -32,6 +34,8 @@ class ArchitectureReviewOrchestrator:
         quality_analyzer: AdvisoryQualityAnalyzer | None = None,
         synthesizer: AdvisorySynthesizer | None = None,
         agent_orchestrator: SupervisedAgentOrchestrator | None = None,
+        consistency_validator: ArchitectureConsistencyValidator | None = None,
+        decision_reasoner: ArchitectureDecisionReasoner | None = None,
     ) -> None:
         self.retriever = retriever
         self.classifier = classifier or IntentClassifier()
@@ -39,6 +43,8 @@ class ArchitectureReviewOrchestrator:
         self.quality_analyzer = quality_analyzer or AdvisoryQualityAnalyzer()
         self.synthesizer = synthesizer or DeterministicAdvisorySynthesizer()
         self.agent_orchestrator = agent_orchestrator or SupervisedAgentOrchestrator()
+        self.consistency_validator = consistency_validator or ArchitectureConsistencyValidator()
+        self.decision_reasoner = decision_reasoner or ArchitectureDecisionReasoner()
 
     async def review(
         self,
@@ -114,12 +120,43 @@ class ArchitectureReviewOrchestrator:
                 " The prompt contains requested capabilities that are not supported by the "
                 "retrieved OCI evidence; they are flagged instead of accepted as valid OCI services."
             )
+        decision_reasoning = self.decision_reasoner.build(
+            question=request.question,
+            workload_context=request.workload_context,
+            profile=profile,
+            recommendations=quality.recommendations,
+            evidence_links=quality.evidence_links,
+            sources=sources,
+        )
+        consistency_findings = self.consistency_validator.validate(
+            question=request.question,
+            workload_context=request.workload_context,
+            profile=profile,
+            answer=synthesis.answer,
+            recommendations=quality.recommendations,
+            sources=sources,
+        )
         critique = self.agent_orchestrator.critique(
             synthesis=synthesis,
             quality=quality,
             sources=sources,
         )
         orchestration_warnings = [*orchestration_plan.warnings, *critique.warnings]
+        consistency_warnings = [
+            finding.message
+            for finding in consistency_findings
+            if finding.severity in {"warning", "error"}
+        ]
+        release_context = (
+            self.release_store.impact_summary(request.question)
+            if self.release_store is not None
+            else None
+        )
+        temporal_context = (
+            self.release_store.temporal_context(knowledge_snapshot_path=getattr(self.retriever.store, "index_path", None))
+            if self.release_store is not None
+            else None
+        )
 
         advisory_quality_metrics.record(
             intent=profile.intent.value,
@@ -139,7 +176,7 @@ class ArchitectureReviewOrchestrator:
             routing_decision=orchestration_plan.routing_decision,
             aggregation_decision=orchestration_plan.aggregation_decision,
             critic_warnings=critique.warnings,
-            warnings=[*quality.quality_warnings, *synthesis.warnings, *orchestration_warnings],
+            warnings=[*quality.quality_warnings, *synthesis.warnings, *orchestration_warnings, *consistency_warnings],
         )
 
         return ArchitectureReviewResponse(
@@ -158,6 +195,10 @@ class ArchitectureReviewOrchestrator:
             synthesis_warnings=synthesis.warnings,
             synthesis_fallback_used=synthesis.used_fallback,
             synthesis_quality=synthesis.quality,
+            decision_reasoning=decision_reasoning,
+            consistency_findings=consistency_findings,
+            release_context=release_context,
+            knowledge_temporal_context=temporal_context,
             answer=synthesis.answer if not quality.not_enough_evidence else f"{synthesis.answer} {context_note}",
             recommendations=quality.recommendations,
             assumptions=synthesis.assumptions,
@@ -167,7 +208,7 @@ class ArchitectureReviewOrchestrator:
             retrieval_debug=self.retriever.last_debug_trace,
             evidence_links=quality.evidence_links,
             confidence=quality.confidence,
-            quality_warnings=[*quality.quality_warnings, *synthesis.warnings],
+            quality_warnings=[*quality.quality_warnings, *synthesis.warnings, *consistency_warnings],
             unsupported_claims=quality.unsupported_claims,
             not_enough_evidence=quality.not_enough_evidence,
             low_confidence=quality.low_confidence,

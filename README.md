@@ -15,9 +15,9 @@ OCI Architecture Studio currently supports a validated advisory flow in local de
 5. The active staging provider is `oci_object_storage`, reading the validated vector manifest from OCI Object Storage.
 6. Local development defaults to `local_json`; it also remains the tested config-only rollback provider for staging.
 7. The controlled orchestration layer selects deterministic specialist roles, shares the same retrieved evidence across them, and runs a validation critic over evidence support, citations, freshness, and unsupported-claim risk. These are in-process role boundaries, not autonomous agents.
-8. One final synthesis step generates the advisory response through the configured provider with deterministic rollback available. Deterministic synthesis now uses lightweight architecture pattern profiles and retrieved evidence rather than only profile boilerplate.
-9. The continuous intelligence pipeline refreshes OCI release knowledge on schedule, validates candidate snapshots, and promotes them only after gates pass.
-10. The backend returns structured recommendations, confidence, evidence links, section citation metadata, optional retrieval debug traces, and standard architecture response sections. The current UI renders the main advisory fields and citation cards; full section-level citation UI is future work.
+8. One final synthesis step generates the advisory response through the configured provider with deterministic rollback available. Deterministic synthesis now uses lightweight architecture pattern profiles, retrieved evidence, workload heuristics, and consistency checks rather than only profile boilerplate.
+9. Release-awareness currently uses local release snapshots, release metadata schemas, and refresh-policy scaffolding. Scheduled refresh and promotion automation exist as implementation scaffolding, but live release reconciliation is not part of request-time advisory behavior.
+10. The backend returns structured recommendations, concise decision reasoning metadata, consistency findings, confidence, evidence links, section citation metadata, optional retrieval debug traces, release context, temporal knowledge context, and standard architecture response sections. The current UI renders the main advisory fields and citation cards; full section-level citation, reasoning, consistency, and release-context UI is future work.
 
 LangGraph, advanced memory, autonomous agent execution, and Oracle AI Vector Search active reads are intentionally deferred until the deterministic control layer and the next vector-search parity gate justify promotion.
 
@@ -47,14 +47,18 @@ tests/                Backend and integration tests
 - AWS-to-OCI service mapping for container, database, storage, CDN/DNS, networking, observability, security, AI/ML, and data engineering source services
 - Deterministic architecture pattern profiles for HA web apps, Kubernetes modernization, fintech DR, AI inference, analytics/data lake, and multi-region SaaS
 - Lightweight synthesis quality signals for grounding, OCI specificity, workload alignment, migration accuracy, recommendation diversity, and citation coverage
+- Concise architecture decision reasoning metadata with service choice rationale, workload signals, tradeoffs, rejected alternatives, source chunk IDs, and confidence
+- Lightweight architecture consistency validation for conflicting requirements, migration mapping coverage, HA/DR alignment, observability coverage, security coverage, and simple unsupported combination risks
+- Expanded confidence sub-signals for service relevance, workload alignment, migration mapping certainty, and citation coverage
+- Release snapshot schema and temporal knowledge metadata schema for current-vs-historical scaffolding
 - OCI-native retrieval migration hooks:
   - optional OCI Generative AI embedding adapter
   - optional Object Storage vector-manifest retrieval
   - guarded Oracle AI Vector Search adapter boundary
   - retrieval regression reporting for citations, intents, and required service coverage
 - Separate local OCI release snapshot pipeline
-- Knowledge refresh policy for scheduled release-note watching, candidate snapshot validation, selective reindex, eval-gated promotion, version lineage, and rollback-safe updates
-- Optional OCI-native recurring refresh scaffold with OCI Functions and OCI Resource Scheduler
+- Knowledge refresh policy scaffolding for release-note watching, candidate snapshot validation, selective reindex, eval-gated promotion, version lineage, and rollback-safe updates
+- Optional OCI-native recurring refresh scaffold with OCI Functions and OCI Resource Scheduler; this is not active request-time release intelligence
 - Continuous intelligence status endpoint at `/knowledge/refresh/status`
 - Intent-aware orchestration for:
   - product overview
@@ -79,7 +83,7 @@ tests/                Backend and integration tests
 - OCI staging deployment with smoke tests, resource visibility checks, and rollback runbooks
 - Dual-provider retrieval parity gate comparing `local_json` and `oci_object_storage`
 - Config-only staging promotion to `oci_object_storage` with rollback validation
-- Evidence-linked recommendations, confidence scoring, synthesis quality signals, uncertainty flags, and advisory quality metrics
+- Evidence-linked recommendations, confidence scoring, decision reasoning metadata, consistency findings, synthesis quality signals, uncertainty flags, and advisory quality metrics
 - Config-selectable advisory synthesis with deterministic rollback and an OCI GenAI chat adapter
 - Controlled in-process orchestration pilot with:
   - one in-process supervisor

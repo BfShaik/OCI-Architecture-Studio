@@ -194,7 +194,11 @@ class OciKnowledgeRetriever:
         query_embedding = self.embedder.embed(retrieval_query)
         embedding_latency_ms = round((perf_counter() - embedding_started_at) * 1000, 2)
         filters = self._build_filters(question, intent_profile, service_mapping.mapped_services, heuristics)
-        candidate_count = max(self.top_k * self.candidate_multiplier, self.top_k + 4)
+        candidate_count = max(
+            self.top_k * self.candidate_multiplier,
+            self.top_k + 4,
+            self.top_k + (len(service_mapping.mapped_services) * 3),
+        )
         results = self.store.search(
             query_embedding=query_embedding,
             top_k=candidate_count,
@@ -368,7 +372,7 @@ class OciKnowledgeRetriever:
         selected: list[tuple[object, float]] = []
         selected_ids: set[str] = set()
 
-        for service in (*mapped_services, *pattern_services):
+        for service in (*self._prioritized_mapped_services(mapped_services), *pattern_services):
             for chunk, score in reranked:
                 if chunk.id in selected_ids:
                     continue
@@ -387,6 +391,26 @@ class OciKnowledgeRetriever:
             selected.append((chunk, score))
             selected_ids.add(chunk.id)
         return selected
+
+    def _prioritized_mapped_services(self, mapped_services: tuple[str, ...]) -> tuple[str, ...]:
+        priority = {
+            "OCI Kubernetes Engine": 0,
+            "Database Migration": 1,
+            "Database Services": 2,
+            "Autonomous Database": 3,
+            "Logging": 4,
+            "Monitoring": 5,
+            "Identity and Access Management": 6,
+            "Load Balancer": 7,
+            "Object Storage": 8,
+            "Virtual Cloud Network": 9,
+        }
+        return tuple(
+            sorted(
+                mapped_services,
+                key=lambda service: (priority.get(service, 100), service),
+            )
+        )
 
     def _pattern_triggered(self, triggers: tuple[str, ...], text: str) -> bool:
         normalized = text.lower()

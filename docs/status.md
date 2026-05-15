@@ -203,6 +203,14 @@ This progress is based on `docs/two-week-plan.md`.
   - deterministic synthesis now uses retrieved services, source chunk IDs, architecture patterns, workload/domain heuristics, and service-specific design moves
   - additive synthesis quality scoring for grounding, OCI specificity, workload alignment, migration accuracy, recommendation diversity, and citation coverage
   - expanded golden JSONL coverage for multi-region SaaS, AI inference optimization, observability modernization, secure fintech DR, Kubernetes modernization, and analytics platform scaling
+- Added architecture intelligence workflow refinements:
+  - concise decision reasoning metadata for major recommendations, including rationale, workload signal, tradeoffs, rejected alternatives, source chunk IDs, and confidence
+  - lightweight architecture consistency validation for conflicting requirements, migration mapping coverage, HA/DR alignment, observability coverage, security coverage, and simple unsupported combination risks
+  - expanded confidence scoring with service relevance, workload alignment, migration mapping certainty, and citation coverage sub-signals
+  - release impact summary metadata in advisory responses
+  - temporal knowledge context metadata for current snapshot plus future historical snapshot separation
+  - release snapshot and temporal knowledge JSON schemas under `knowledge/metadata/`
+  - expanded golden eval coverage for hybrid migration, regulated fintech, AI inference cost, enterprise observability, SaaS resiliency, and analytics DR scenarios
 - Added supervised orchestration foundation:
   - config-selected orchestration mode through `ADVISORY_ORCHESTRATION_MODE`
   - one in-process supervisor
@@ -270,14 +278,14 @@ Last validation run: 2026-05-15
 - Continuous intelligence hardening: candidate-first promotion, version lineage, rollback automation, and refresh status endpoint implemented
 - Terraform validation: passed after optional knowledge refresh scheduler scaffold; staging plan currently should not be applied until existing backend replacement drift is resolved and the function image is available
 - OCI-native refresh scheduler scaffold: implemented with OCI Functions plus OCI Resource Scheduler; not applied yet because a published OCIR function image is required before enabling
-- Backend tests: passed, 70 tests
+- Backend tests: passed, 76 tests
 - Frontend build: passed
-- Golden evals: passed, 12 of 12
+- Golden evals: passed, 18 of 18
 - Edge-case evals: passed, 8 of 8
 - Advisory-quality evals: passed, 5 of 5
 - Controlled orchestration evals: passed, 5 of 5
-- Retrieval health check: passed for `oci_object_storage`, 21 chunks
-- Retrieval regression check: passed, 20 of 20 golden + edge cases
+- Retrieval health check: passed for `local_json`, 21 chunks
+- Retrieval regression check: passed for `local_json`, 26 of 26 golden + edge cases
 - GenAI parity readiness check: passed in skip-safe mode when OCI GenAI env vars are not provided
 - Python compile checks: passed for backend, infra scripts, ingestion, and refresh code
 - Diff whitespace check: passed

@@ -122,6 +122,21 @@ def response_text(response: dict[str, Any]) -> str:
     for key in ("quality_warnings", "unsupported_claims", "synthesis_warnings"):
         parts.append(key)
         parts.extend(str(item) for item in response.get(key, []))
+    for reason in response.get("decision_reasoning", []):
+        parts.append(str(reason.get("service", "")))
+        parts.append(str(reason.get("why_chosen", "")))
+        parts.append(str(reason.get("workload_signal", "")))
+        parts.extend(str(item) for item in reason.get("tradeoffs", []))
+        parts.extend(str(item) for item in reason.get("alternatives_rejected", []))
+    for finding in response.get("consistency_findings", []):
+        parts.append(str(finding.get("check", "")))
+        parts.append(str(finding.get("message", "")))
+        parts.append(str(finding.get("recommendation", "")))
+    release_context = response.get("release_context") or {}
+    if isinstance(release_context, dict):
+        parts.extend(str(item) for item in release_context.get("architecture_affecting_services", []))
+        parts.extend(str(item) for item in release_context.get("impact_categories", []))
+        parts.extend(str(item) for item in release_context.get("maturity_notes", []))
     for key in ("active_agents", "critic_findings", "orchestration_warnings"):
         parts.append(key)
         parts.extend(str(item) for item in response.get(key, []))
@@ -204,6 +219,8 @@ def validate_structure(response: dict[str, Any]) -> EvalCheck:
         "synthesis_provider": str,
         "synthesis_warnings": list,
         "synthesis_fallback_used": bool,
+        "decision_reasoning": list,
+        "consistency_findings": list,
         "answer": str,
         "recommendations": list,
         "assumptions": list,
@@ -421,6 +438,10 @@ def validate_confidence(case: dict[str, Any], response: dict[str, Any]) -> EvalC
         "freshness",
         "release_awareness",
         "recommendation",
+        "service_relevance",
+        "workload_alignment",
+        "migration_mapping",
+        "citation_coverage",
         "overall",
         "level",
         "notes",
@@ -450,6 +471,38 @@ def validate_confidence(case: dict[str, Any], response: dict[str, Any]) -> EvalC
 
     passed = not details
     return EvalCheck("confidence", passed, 10 if passed else 0, 10, details)
+
+
+def validate_reasoning_metadata(case: dict[str, Any], response: dict[str, Any]) -> EvalCheck:
+    if not case.get("reasoning_required", False):
+        return EvalCheck("reasoning_metadata", True, 5, 5, ["reasoning metadata not required"])
+    reasons = response.get("decision_reasoning", [])
+    details: list[str] = []
+    if not reasons:
+        details.append("missing decision reasoning")
+    else:
+        first = reasons[0]
+        for field_name in ("recommendation", "why_chosen", "tradeoffs", "source_chunk_ids", "confidence"):
+            if not first.get(field_name):
+                details.append(f"missing {field_name}")
+    passed = not details
+    return EvalCheck("reasoning_metadata", passed, 5 if passed else 0, 5, details)
+
+
+def validate_consistency_metadata(case: dict[str, Any], response: dict[str, Any]) -> EvalCheck:
+    expected_checks = list(case.get("expected_consistency_checks", []))
+    if not expected_checks:
+        return EvalCheck("consistency_metadata", True, 5, 5, ["consistency checks not asserted"])
+    checks = {str(finding.get("check")) for finding in response.get("consistency_findings", [])}
+    missing = [check for check in expected_checks if check not in checks]
+    passed = not missing
+    return EvalCheck(
+        "consistency_metadata",
+        passed,
+        5 if passed else 0,
+        5,
+        [] if passed else [f"missing checks: {', '.join(missing)}"],
+    )
 
 
 def validate_forbidden_patterns(case: dict[str, Any], text: str) -> EvalCheck:
@@ -534,6 +587,8 @@ def evaluate_case(client: TestClient, case: dict[str, Any]) -> dict[str, Any]:
         validate_retrieval_support(case, response),
         validate_evidence_links(case, response),
         validate_confidence(case, response),
+        validate_reasoning_metadata(case, response),
+        validate_consistency_metadata(case, response),
         validate_forbidden_patterns(case, text),
         validate_unsupported_oci_claims(text),
         validate_stale_or_unverified_guidance(case, text),

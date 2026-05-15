@@ -31,6 +31,11 @@ def test_architecture_review() -> None:
     assert body["critic_findings"]
     assert body["synthesis_warnings"] is not None
     assert body["synthesis_quality"]["overall"] >= 0
+    assert body["decision_reasoning"]
+    assert "why_chosen" in body["decision_reasoning"][0]
+    assert body["consistency_findings"] is not None
+    assert body["release_context"] is not None
+    assert body["knowledge_temporal_context"]["knowledge_mode"]
     assert body["recommendations"]
     assert body["citations"]
     assert body["section_citations"]
@@ -38,6 +43,8 @@ def test_architecture_review() -> None:
     assert "summary" in body["citations"][0]
     assert body["evidence_links"]
     assert body["confidence"]["overall"] >= 0
+    assert body["confidence"]["service_relevance"] >= 0
+    assert body["confidence"]["citation_coverage"] >= 0
     assert body["quality_warnings"] is not None
 
 

@@ -103,6 +103,24 @@ def impact_tags(text: str) -> list[str]:
     return tags or ["general"]
 
 
+def service_change_tags(text: str) -> list[str]:
+    normalized = text.lower()
+    tags: list[str] = []
+    keyword_map = {
+        "api-compatibility": ("api", "compatibility", "s3", "endpoint", "url"),
+        "naming": ("renamed", "now", "name", "secret management"),
+        "limits": ("limit", "quota", "capacity"),
+        "availability": ("available", "availability", "region"),
+        "security": ("security", "secret", "vault", "key", "iam", "policy"),
+        "migration": ("migration", "import", "export", "compatibility"),
+        "pricing-capacity": ("cost", "budget", "billing", "capacity"),
+    }
+    for tag, keywords in keyword_map.items():
+        if any(keyword in normalized for keyword in keywords):
+            tags.append(tag)
+    return tags or ["general"]
+
+
 def parse_release_date(text: str) -> str | None:
     match = re.search(
         r"Release Date:\s*([A-Z][a-z]+\s+\d{1,2},\s+\d{4})",
@@ -142,6 +160,7 @@ def classify_release_item(item: str, source: dict[str, str], index: int, ingeste
     title = item.split(". ", 1)[0][:140]
     services = parse_services(item)
     primary_service = services[0] if services else "Oracle Cloud Infrastructure"
+    tags = impact_tags(item)
     return {
         "id": f"{source['id']}::{index}",
         "source_id": source["id"],
@@ -152,8 +171,13 @@ def classify_release_item(item: str, source: dict[str, str], index: int, ingeste
         "service": primary_service,
         "services": services,
         "service_domain": service_domain(primary_service, item),
-        "impact_tags": impact_tags(item),
-        "impact_level": "review" if any(tag in impact_tags(item) for tag in ("security", "dr", "migration")) else "informational",
+        "service_change_tags": service_change_tags(item),
+        "impact_tags": tags,
+        "impact_level": "review" if any(tag in tags for tag in ("security", "dr", "migration", "architecture")) else "informational",
+        "architecture_affecting": any(tag in tags for tag in ("architecture", "migration", "dr", "security", "cost")),
+        "knowledge_scope": "current",
+        "valid_from": parse_release_date(item),
+        "valid_to": None,
         "trust_level": source.get("trust_level", "official"),
         "ingested_timestamp": ingested_at,
         "summary": item[:800],
@@ -184,6 +208,7 @@ def build_release_snapshot(args: argparse.Namespace) -> dict[str, object]:
 
     return {
         "generated_at": ingested_at,
+        "snapshot_scope": "current",
         "source_count": len(sources),
         "release_count": len(releases),
         "releases": releases,
