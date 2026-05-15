@@ -189,7 +189,7 @@ Last validation run: 2026-05-15
 - Infrastructure Python script compile checks: passed
 - Knowledge ingestion smoke: passed, 13 chunks generated
 - Release ingestion smoke: passed, 3 release items generated
-- Backend tests: passed, 29 tests
+- Backend tests: passed, 30 tests
 - Frontend build: passed
 - Golden evals: passed, 6 of 6
 - Edge-case evals: passed, 8 of 8
@@ -205,6 +205,9 @@ Last validation run: 2026-05-15
 - OCI staging baseline guardrail: passed against `http://193.122.149.102:8000/`
 - OCI staging deployment smoke: passed for backend, frontend, and OCI SDK tenancy access
 - OCI staging resource visibility smoke: passed for Object Storage bucket, Vault secret, Logging log group, Monitoring alarm, and Events rule
+- Post-migration readiness review: passed with a go decision for continued Sprint 2 development; active staging retrieval remains `local_json` until OCI-native provider parity is proven
+- Dual-provider retrieval parity validation: passed, 14 of 14 cases, comparing `local_json` with `oci_object_storage`
+- OCI Object Storage snapshot sync: passed for `oci-rag-index.json` and `oci-release-snapshot.json`
 
 ## Pending
 
@@ -258,6 +261,8 @@ Last validation run: 2026-05-15
 - OCI-native retrieval migration:
   - Phase 1 configuration hooks, metadata enrichment, Object Storage manifest path, health checks, and regression checks exist
   - Oracle AI Vector Search read path is intentionally guarded until schema validation and parity checks are complete
+  - post-migration readiness report is captured in `docs/post-migration-readiness-report.md`
+  - dual-provider parity report is captured in `docs/retrieval-parity-validation-report.md`
 
 ## Current Known Limitations
 

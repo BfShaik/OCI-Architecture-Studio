@@ -193,6 +193,8 @@ class OciObjectStorageVectorStore(JsonVectorStore):
 
     @property
     def exists(self) -> bool:
+        if self._chunks is not None:
+            return True
         try:
             exists = bool(self._read_object_text())
             self._last_error = None

@@ -61,7 +61,7 @@ See `docs/status.md` for the current completed/pending log.
 
 Latest full validation on 2026-05-15 passed locally and in OCI staging:
 
-- backend tests: `29 passed`
+- backend tests: `30 passed`
 - golden evals: `6 passed`
 - edge-case evals: `8 passed`
 - retrieval regression: `14 passed`

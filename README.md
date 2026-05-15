@@ -209,7 +209,7 @@ cd ../frontend && npm run build
 
 Latest full validation: 2026-05-15.
 
-- Local backend tests: `29 passed`
+- Local backend tests: `30 passed`
 - Golden evals: `6 passed, 0 failed`
 - Edge-case evals: `8 passed, 0 failed`
 - Retrieval regression: `14 passed, 0 failed`
@@ -218,6 +218,8 @@ Latest full validation: 2026-05-15.
 - Frontend build: passed
 - Terraform fmt/validate: passed for `dev`, `test`, and `staging`
 - OCI staging smoke: passed for backend, frontend, OCI SDK, retrieval, and resource visibility
+- Post-migration readiness: passed for continued Sprint 2 development; staging still uses `local_json` as the active read provider until OCI-native parity is proven
+- Dual-provider retrieval parity: passed, `14/14`, comparing `local_json` with `oci_object_storage`
 
 See `docs/status.md` for the current completed work, pending work, and known limitations.
 
@@ -238,6 +240,10 @@ See `docs/pre-migration-readiness-report.md` for the OCI-native retrieval pre-mi
 See `docs/oci-native-retrieval-migration.md` for the OCI-native retrieval architecture, phased migration guide, validation strategy, observability plan, and rollback path.
 
 See `docs/oci-native-retrieval-runbook.md` for provider modes, validation gates, rollback steps, and troubleshooting for Sprint 2 retrieval migration.
+
+See `docs/post-migration-readiness-report.md` for the full post-migration validation, retrieval quality assessment, OCI platform validation, risks, and go/no-go decision.
+
+See `docs/retrieval-parity-validation-report.md` for dual-provider parity results, promotion criteria, config switching, rollback validation, and the go/no-go decision for `oci_object_storage` staging promotion.
 
 See `docs/terraform-plan-review.md` for the first staging Terraform planning workflow, plan review, apply readiness criteria, and post-apply smoke-test plan.
 

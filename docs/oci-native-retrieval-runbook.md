@@ -86,6 +86,38 @@ Do not switch staging defaults until all are true:
 - required services remain covered in retrieved evidence
 - release-awareness prompts still produce freshness cautions
 
+## Dual-Provider Parity Gate
+
+Before staging uses `oci_object_storage` as the active retrieval provider, sync the latest local snapshots to the staging knowledge bucket:
+
+```bash
+OCI_CLI_PROFILE=DEFAULT infra/scripts/sync_snapshots_to_object_storage.sh \
+  idsmrn7rvqb6 \
+  oci-architecture-studio-staging-knowledge-snapshots
+```
+
+Then compare local and OCI-native retrieval:
+
+```bash
+app/backend/.venv/bin/python infra/scripts/retrieval_parity_check.py \
+  --oci-region us-ashburn-1 \
+  --oci-profile DEFAULT \
+  --oci-namespace idsmrn7rvqb6 \
+  --oci-vector-bucket oci-architecture-studio-staging-knowledge-snapshots \
+  --oci-vector-object-name oci-rag-index.json \
+  --output-dir evals/reports/retrieval-parity
+```
+
+Promotion requires:
+
+- `14/14` parity cases passing
+- average top chunk overlap at or above `0.8`
+- no citation URL regressions
+- no stale citation regressions
+- no required service evidence regressions
+- golden and edge evals passing for both providers
+- rollback to `local_json` remaining config-only
+
 ## Rollback
 
 Rollback is configuration-only:

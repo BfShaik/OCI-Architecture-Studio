@@ -9,6 +9,9 @@ from oci_arch_studio_backend.services.vector_store import (
     JsonVectorStore,
     OracleAiVectorSearchConfig,
     OracleAiVectorSearchStore,
+    OciObjectStorageVectorConfig,
+    OciObjectStorageVectorStore,
+    VectorChunk,
     VectorSearchFilters,
 )
 
@@ -208,3 +211,36 @@ def test_oracle_ai_vector_search_store_is_guarded_until_enabled() -> None:
     assert health["exists"] is False
     assert health["read_enabled"] is False
     assert "OCI_VECTOR_DB_DSN" in health["missing_config"]
+
+
+def test_oci_object_storage_store_exists_uses_cached_chunks() -> None:
+    class CachedObjectStorageStore(OciObjectStorageVectorStore):
+        def __init__(self) -> None:
+            super().__init__(
+                OciObjectStorageVectorConfig(
+                    namespace="example",
+                    bucket_name="bucket",
+                    object_name="index.json",
+                )
+            )
+            self.read_count = 0
+            self._chunks = [
+                VectorChunk(
+                    id="chunk::1",
+                    title="Cached Chunk",
+                    url="https://example.com",
+                    source_type="oci_doc",
+                    text="cached text",
+                    embedding=[1.0],
+                    metadata={},
+                )
+            ]
+
+        def _read_object_text(self) -> str:
+            self.read_count += 1
+            raise AssertionError("cached exists should not read Object Storage")
+
+    store = CachedObjectStorageStore()
+
+    assert store.exists is True
+    assert store.read_count == 0
