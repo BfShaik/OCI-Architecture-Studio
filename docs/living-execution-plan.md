@@ -74,8 +74,8 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | TASK-002 | Done | Document manual remote state migration workflow and rollback checklist. | Terraform README/runbook updated; migration remains operator-run and non-automated. |
 | TASK-003 | Done | Add API Gateway readiness validation for configured endpoint and OCIDs. | Passed `tests/test_operational_hardening.py`, `tests/test_api.py`, `py_compile` for operational readiness script, and `git diff --check`. |
 | TASK-004 | Done | Prepare API Gateway staging cutover checklist and rollback path. | Terraform validate and Gateway smoke commands documented; default-off behavior preserved. |
-| TASK-005 | Next | Run OCI GenAI synthesis readiness/parity in skip-safe mode, then live mode when config exists. | Parity report generated; deterministic fallback preserved. |
-| TASK-006 | Not Started | Add OCI GenAI embedding activation checklist and diagnostics expectations. | Retrieval health exposes provider/fallback state; regression gate documented. |
+| TASK-005 | Done | Run OCI GenAI synthesis readiness/parity in skip-safe mode, then live mode when config exists. | Skip-safe parity run wrote `evals/reports/genai-synthesis-parity`; status skipped because `OCI_GENAI_COMPARTMENT_ID` and `OCI_GENAI_CHAT_MODEL_ID` are absent; deterministic default preserved. |
+| TASK-006 | Next | Add OCI GenAI embedding activation checklist and diagnostics expectations. | Retrieval health exposes provider/fallback state; regression gate documented. |
 | TASK-007 | Not Started | Validate Oracle AI Vector Search schema/index prerequisites without active-provider promotion. | Vector validation reports configured/unconfigured state cleanly. |
 | TASK-008 | Not Started | Add Oracle AI Vector Search dual-read parity workflow against Object Storage retrieval. | Retrieval parity report covers golden, edge, and regression prompts. |
 | TASK-009 | Not Started | Promote semantic retrieval through configuration only after parity approval. | Staging smoke, retrieval regression, vector validation, rollback drill pass. |
@@ -133,14 +133,14 @@ Run the appropriate subset after each increment; run the full matrix before a ne
 
 ## Next Actionable Increment
 
-Current task: `TASK-005`.
+Current task: `TASK-006`.
 
-Run OCI GenAI synthesis readiness/parity in skip-safe mode, then live mode when config exists:
+Add OCI GenAI embedding activation checklist and diagnostics expectations:
 
-1. Inspect current GenAI parity script behavior and required environment variables.
-2. Run skip-safe readiness mode without live GenAI credentials.
-3. Capture report output under `evals/reports/genai-synthesis-parity`.
-4. Keep deterministic synthesis as default unless live parity is later approved.
+1. Inspect current embedding provider diagnostics and fallback behavior.
+2. Document required OCI GenAI embedding configuration.
+3. Define activation gates for embedding dimensions, retrieval regression, and fallback state.
+4. Keep `EMBEDDING_PROVIDER=local` as default until live embedding parity passes.
 
 ## Operating Rules
 
