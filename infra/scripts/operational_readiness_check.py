@@ -47,10 +47,16 @@ def evaluate(base_url: str, *, require_oci_profile: bool = False) -> dict[str, A
         failures.append("runtime readiness is critical")
     if readiness.get("status") == "warning":
         warnings.append("runtime readiness has warnings")
+    api_gateway = (
+        readiness.get("checks", {}).get("api_gateway", {})
+        if isinstance(readiness.get("checks"), dict)
+        else {}
+    )
     deployment = operations.get("deployment", {}) if isinstance(operations.get("deployment"), dict) else {}
     infrastructure_environment = (
         infrastructure.get("environment", {}) if isinstance(infrastructure.get("environment"), dict) else {}
     )
+    topology = infrastructure.get("topology", {}) if isinstance(infrastructure.get("topology"), dict) else {}
     if require_oci_profile and infrastructure_environment.get("deployment_profile") == "local_dev":
         failures.append("OCI infrastructure visibility required but runtime reports local_dev")
     rebuildability = (
@@ -75,6 +81,15 @@ def evaluate(base_url: str, *, require_oci_profile: bool = False) -> dict[str, A
         "operational_status": operations.get("status"),
         "runtime_readiness_status": readiness.get("status"),
         "runtime_readiness_warnings": readiness.get("warning_checks", []),
+        "api_exposure": topology.get("api_exposure"),
+        "api_gateway": {
+            "configured": api_gateway.get("configured", False),
+            "active": api_gateway.get("active", False),
+            "promotion_ready": api_gateway.get("promotion_ready", False),
+            "endpoint_configured": api_gateway.get("endpoint_configured", False),
+            "gateway_ocid_configured": api_gateway.get("gateway_ocid_configured", False),
+            "missing_config": api_gateway.get("missing_config", []),
+        },
         "infrastructure_rebuildability_status": rebuildability.get("status"),
         "infrastructure_gap_count": len(infrastructure.get("gaps", [])) if isinstance(infrastructure.get("gaps"), list) else 0,
         "request_count": metrics.get("request_count", 0),

@@ -105,8 +105,36 @@ def test_runtime_readiness_reports_api_gateway_and_devops_configuration() -> Non
     )
 
     assert readiness["checks"]["api_gateway"]["status"] == "ok"
+    assert readiness["checks"]["api_gateway"]["promotion_ready"] is True
+    assert readiness["checks"]["api_gateway"]["active"] is True
     assert readiness["checks"]["oci_devops"]["status"] == "ok"
     assert readiness["checks"]["runtime_safeguards"]["deterministic_synthesis_available"] is True
+
+
+def test_api_gateway_partial_configuration_keeps_direct_backend_exposure() -> None:
+    settings = Settings(
+        DEPLOYMENT_PROFILE="oci_vm",
+        OCI_API_GATEWAY_OCID="ocid1.apigateway.oc1..example",
+    )
+
+    diagnostics = OperationalDiagnostics(settings)
+    readiness = diagnostics.runtime_readiness(
+        retrieval={"provider": "local_json", "store": {"exists": True, "chunk_count": 44}},
+        refresh_status={"status": "succeeded"},
+    )
+    visibility = diagnostics.infrastructure_visibility(
+        retrieval={"provider": "local_json", "store": {"exists": True, "chunk_count": 44}},
+        refresh_status={"status": "succeeded"},
+    )
+
+    api_gateway = readiness["checks"]["api_gateway"]
+    assert api_gateway["status"] == "warning"
+    assert api_gateway["configured"] is True
+    assert api_gateway["active"] is False
+    assert api_gateway["promotion_ready"] is False
+    assert api_gateway["missing_config"] == ["OCI_API_GATEWAY_ENDPOINT"]
+    assert visibility["topology"]["api_exposure"] == "direct_backend_vm"
+    assert visibility["configured_resources"]["networking"]["api_gateway_promotion_ready"] is False
 
 
 def test_infrastructure_visibility_distinguishes_configured_and_scaffolded_oci_resources() -> None:

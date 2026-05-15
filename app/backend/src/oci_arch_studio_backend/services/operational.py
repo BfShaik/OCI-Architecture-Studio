@@ -513,18 +513,31 @@ class OperationalDiagnostics:
         }
 
     def _check_api_gateway(self) -> dict[str, object]:
-        configured = bool(self.settings.oci_api_gateway_endpoint or self.settings.oci_api_gateway_ocid)
+        endpoint_configured = bool(self.settings.oci_api_gateway_endpoint)
+        gateway_ocid_configured = bool(self.settings.oci_api_gateway_ocid)
+        configured = endpoint_configured or gateway_ocid_configured
+        promotion_ready = endpoint_configured and gateway_ocid_configured
+        missing_config: list[str] = []
+        if configured and not endpoint_configured:
+            missing_config.append("OCI_API_GATEWAY_ENDPOINT")
+        if configured and not gateway_ocid_configured:
+            missing_config.append("OCI_API_GATEWAY_OCID")
+        if promotion_ready:
+            message = "OCI API Gateway endpoint and OCID are configured for the API exposure layer."
+        elif configured:
+            message = "OCI API Gateway is partially configured; keep direct backend VM exposure until endpoint and OCID are both set."
+        else:
+            message = "OCI API Gateway is not configured; current staging exposes the backend VM directly."
         return {
-            "status": "ok" if configured else "warning",
+            "status": "ok" if promotion_ready else "warning",
             "provider": "oci_api_gateway",
             "configured": configured,
-            "endpoint_configured": bool(self.settings.oci_api_gateway_endpoint),
-            "gateway_ocid_configured": bool(self.settings.oci_api_gateway_ocid),
-            "message": (
-                "OCI API Gateway is configured as an API exposure layer."
-                if configured
-                else "OCI API Gateway is not configured; current staging exposes the backend VM directly."
-            ),
+            "active": endpoint_configured,
+            "promotion_ready": promotion_ready,
+            "endpoint_configured": endpoint_configured,
+            "gateway_ocid_configured": gateway_ocid_configured,
+            "missing_config": missing_config,
+            "message": message,
         }
 
     def _check_oci_devops(self) -> dict[str, object]:
@@ -560,7 +573,7 @@ class OperationalDiagnostics:
 
     def _runtime_topology(self, *, api_gateway: dict[str, object]) -> dict[str, object]:
         profile = self.settings.deployment_profile
-        api_exposure = "oci_api_gateway" if api_gateway.get("configured") else "direct_backend_vm"
+        api_exposure = "oci_api_gateway" if api_gateway.get("active") else "direct_backend_vm"
         if profile == "oke":
             runtime_compute = "oci_kubernetes_engine"
         elif profile == "oci_functions":
@@ -574,7 +587,7 @@ class OperationalDiagnostics:
             "runtime_compute": runtime_compute,
             "network": {
                 "primary": "oci_vcn_public_subnet" if profile != "local_dev" else "local_loopback",
-                "ingress": "api_gateway_to_backend" if api_gateway.get("configured") else "public_backend_port",
+                "ingress": "api_gateway_to_backend" if api_gateway.get("active") else "public_backend_port",
                 "security_boundary": "oci_iam_dynamic_group_and_network_rules" if profile != "local_dev" else "local_dev_boundary",
             },
             "state": {
@@ -604,6 +617,8 @@ class OperationalDiagnostics:
                 "vcn": "terraform_managed_when_deployed_to_oci",
                 "public_subnet": "terraform_managed_when_deployed_to_oci",
                 "api_gateway_configured": bool(api_gateway.get("configured")),
+                "api_gateway_active": bool(api_gateway.get("active")),
+                "api_gateway_promotion_ready": bool(api_gateway.get("promotion_ready")),
             },
             "runtime": {
                 "deployment_profile": self.settings.deployment_profile,
@@ -788,7 +803,8 @@ class OperationalDiagnostics:
             "observability_iac": bool(observability.get("logging_configured"))
             or bool(observability.get("notifications_configured"))
             or self.settings.deployment_profile != "local_dev",
-            "api_gateway_iac": bool(runtime.get("api_gateway_endpoint_configured")),
+            "api_gateway_iac": bool(runtime.get("api_gateway_endpoint_configured"))
+            and bool(configured_resources.get("networking", {}).get("api_gateway_promotion_ready")),
             "oci_devops_iac": bool(runtime.get("oci_devops_configured")),
             "refresh_scheduler_iac": bool(
                 configured_resources.get("workflows", {})

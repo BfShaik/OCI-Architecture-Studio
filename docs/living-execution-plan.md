@@ -72,8 +72,8 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 |---|---|---|---|
 | TASK-001 | Done | Add read-only Terraform remote state readiness checker for OCI Object Storage backend. | Passed `python3 -m py_compile infra/scripts/check_terraform_remote_state_readiness.py`; passed local `--skip-oci` readiness mode. |
 | TASK-002 | Done | Document manual remote state migration workflow and rollback checklist. | Terraform README/runbook updated; migration remains operator-run and non-automated. |
-| TASK-003 | Next | Add API Gateway readiness validation for configured endpoint and OCIDs. | Readiness check reports direct VM vs API Gateway posture clearly. |
-| TASK-004 | Not Started | Prepare API Gateway staging cutover checklist and rollback path. | Terraform validate; smoke command documented. |
+| TASK-003 | Done | Add API Gateway readiness validation for configured endpoint and OCIDs. | Passed `tests/test_operational_hardening.py`, `tests/test_api.py`, `py_compile` for operational readiness script, and `git diff --check`. |
+| TASK-004 | Next | Prepare API Gateway staging cutover checklist and rollback path. | Terraform validate; smoke command documented. |
 | TASK-005 | Not Started | Run OCI GenAI synthesis readiness/parity in skip-safe mode, then live mode when config exists. | Parity report generated; deterministic fallback preserved. |
 | TASK-006 | Not Started | Add OCI GenAI embedding activation checklist and diagnostics expectations. | Retrieval health exposes provider/fallback state; regression gate documented. |
 | TASK-007 | Not Started | Validate Oracle AI Vector Search schema/index prerequisites without active-provider promotion. | Vector validation reports configured/unconfigured state cleanly. |
@@ -133,15 +133,15 @@ Run the appropriate subset after each increment; run the full matrix before a ne
 
 ## Next Actionable Increment
 
-Current task: `TASK-003`.
+Current task: `TASK-004`.
 
-Add API Gateway readiness validation for configured endpoint and OCIDs:
+Prepare API Gateway staging cutover checklist and rollback path:
 
-1. Inspect current operational diagnostics for API Gateway fields.
-2. Add or refine a lightweight validation path for API Gateway endpoint and OCID configuration.
-3. Ensure diagnostics distinguish direct VM exposure from API Gateway exposure.
-4. Preserve default-off API Gateway behavior for staging.
-5. Validate with focused tests or readiness script checks.
+1. Inspect Terraform API Gateway variables and outputs.
+2. Document required inputs and preflight checks for enabling API Gateway.
+3. Add smoke validation commands for the Gateway endpoint.
+4. Document rollback by disabling `enable_api_gateway` and returning to direct backend VM exposure.
+5. Preserve default-off behavior until the cutover is explicitly approved.
 
 ## Operating Rules
 
