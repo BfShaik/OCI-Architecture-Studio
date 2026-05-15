@@ -26,7 +26,7 @@ Exit criteria:
 - A machine-readable eval runner exists. — Done
 
 ## Phase 2 — Grounded Retrieval
-Status: In Progress — Object Storage parity validated
+Status: In Progress — Object Storage active in staging
 
 Architecture plan: `docs/phase-2-architecture.md`
 OCI deployment plan: `docs/oci-deployment-architecture.md`
@@ -39,6 +39,8 @@ Deliverables:
 - local retrieval adapter — Done
 - OCI Object Storage retrieval adapter — Done
 - dual-provider retrieval parity gate — Done
+- config-only Object Storage staging promotion — Done
+- rollback validation to `local_json` — Done
 - citation display — Done
 - regression evals for grounded answers — Done
 - config-only promotion and rollback path — Done
@@ -79,11 +81,12 @@ Deliverables:
 - staging baseline guardrail — Done
 
 ## Phase 5 — Retrieval Promotion And Vector Search
-Status: Next
+Status: Started
 
 Deliverables:
-- promote staging to `RETRIEVAL_PROVIDER=oci_object_storage` — Pending
-- post-promotion smoke/eval/retrieval regression — Pending
+- promote staging to `RETRIEVAL_PROVIDER=oci_object_storage` — Done
+- post-promotion smoke/eval/retrieval regression — Done
+- Object Storage rollback validation — Done
 - Oracle AI Vector Search schema design — Pending
 - Oracle AI Vector Search indexing prototype — Pending
 - Oracle AI Vector Search dual-run parity — Pending

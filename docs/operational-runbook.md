@@ -29,7 +29,8 @@ Run:
 ```bash
 python3 infra/scripts/verify_staging_baseline.py \
   --api-base-url http://193.122.149.102:8000 \
-  --frontend-url http://193.122.149.102:8000/
+  --frontend-url http://193.122.149.102:8000/ \
+  --expected-retrieval-provider oci_object_storage
 ```
 
 Expected result:
@@ -183,6 +184,7 @@ If `oci_object_storage` promotion fails:
 - restart `oci-architecture-studio`
 - rerun baseline smoke tests
 - inspect `/retrieval/health`
+- restore `RETRIEVAL_PROVIDER=oci_object_storage` only after the Object Storage manifest path is healthy again
 
 ## Rollback
 
@@ -208,6 +210,6 @@ Use full destroy only for sandbox teardown. Capture logs and outputs first if de
 - placeholder Vault secret
 - no app log shipping into OCI Logging yet
 - no custom app metrics yet
-- active staging retrieval still uses `local_json` until config promotion
+- active staging retrieval uses `oci_object_storage`; `local_json` remains the rollback provider
 
 The next hardening milestone is HTTPS ingress and restricted backend access.

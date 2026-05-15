@@ -33,7 +33,12 @@ def post_json(url: str, payload: dict, timeout: int = 20) -> dict:
         return json.loads(response.read().decode("utf-8"))
 
 
-def check_baseline(api_base_url: str, frontend_url: str, expected_chunks: int) -> dict[str, object]:
+def check_baseline(
+    api_base_url: str,
+    frontend_url: str,
+    expected_chunks: int,
+    expected_retrieval_provider: str,
+) -> dict[str, object]:
     api_base_url = api_base_url.rstrip("/")
     checks: list[dict[str, object]] = []
 
@@ -52,12 +57,13 @@ def check_baseline(api_base_url: str, frontend_url: str, expected_chunks: int) -
         {
             "name": "retrieval_health",
             "passed": (
-                retrieval.get("provider") == "local_json"
+                retrieval.get("provider") == expected_retrieval_provider
                 and store.get("exists") is True
                 and int(store.get("chunk_count", 0)) >= expected_chunks
             ),
             "detail": {
                 "provider": retrieval.get("provider"),
+                "expected_provider": expected_retrieval_provider,
                 "chunk_count": store.get("chunk_count"),
                 "warnings": retrieval.get("metrics", {}).get("warnings", []),
             },
@@ -100,13 +106,19 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--api-base-url", required=True)
     parser.add_argument("--frontend-url", required=True)
     parser.add_argument("--expected-chunks", type=int, default=13)
+    parser.add_argument("--expected-retrieval-provider", default="local_json")
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
     try:
-        result = check_baseline(args.api_base_url, args.frontend_url, args.expected_chunks)
+        result = check_baseline(
+            args.api_base_url,
+            args.frontend_url,
+            args.expected_chunks,
+            args.expected_retrieval_provider,
+        )
     except Exception as exc:  # noqa: BLE001 - guardrail script reports actionable failure.
         print(json.dumps({"passed": False, "error": str(exc)}, indent=2), file=sys.stderr)
         return 1

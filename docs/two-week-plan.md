@@ -46,16 +46,15 @@ Completed the original foundation sprint and extended it into a validated stagin
 - 2026-05-27 CI skeleton is `Done`: `.github/workflows/ci.yml` runs ingestion smoke test, backend tests, golden evals, and frontend build.
 - 2026-05-28 sprint review and backlog update is `Done`: status, roadmap, demo closeout, Phase 2 architecture, and OCI deployment execution docs are current.
 - Post-plan update: OCI staging deployment is live and validated.
-- Post-plan update: `oci_object_storage` retrieval parity passed against `local_json` and is ready for controlled config-only staging promotion.
+- Post-plan update: `oci_object_storage` retrieval parity passed against `local_json`, staging promotion completed, and rollback to `local_json` was validated.
 
 ## Priority Order
 
-1. Promote `oci_object_storage` in staging through configuration
-2. Rerun all smoke/eval/retrieval gates after promotion
+1. Prepare Oracle AI Vector Search schema and indexing prototype
+2. Dual-run Oracle AI Vector Search against the active Object Storage provider
 3. Expand OCI source coverage
-4. Prepare Oracle AI Vector Search schema and indexing prototype
-5. Improve release-impact extraction and evals
-6. Add HTTPS ingress for staging/demo
+4. Improve release-impact extraction and evals
+5. Add HTTPS ingress for staging/demo
 
 ## Risks
 

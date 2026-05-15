@@ -78,7 +78,7 @@ Fixes completed:
 
 ## Staging Smoke And OCI Checks
 
-Current active staging provider still reports `local_json`.
+Post-promotion staging now reports `oci_object_storage` as the active provider. See `docs/retrieval-provider-promotion-report.md` for the completed promotion validation.
 
 Staging checks passed:
 
@@ -140,7 +140,7 @@ No code fork is required.
 
 ## Promotion Criteria
 
-Before promoting `oci_object_storage` as active staging provider:
+Promotion criteria for `oci_object_storage` as active staging provider:
 
 - parity report passes all cases
 - golden evals pass for both providers
@@ -156,7 +156,7 @@ Before promoting `oci_object_storage` as active staging provider:
 
 ## Go / No-Go Recommendation
 
-Decision: **GO for a controlled config-only staging promotion to `oci_object_storage`**.
+Decision: **Completed. `oci_object_storage` is active in staging after controlled config-only promotion.**
 
 Boundary:
 
@@ -200,7 +200,7 @@ app/backend/.venv/bin/python evals/run_golden.py --output-dir evals/reports/gold
 
 ## Next Step
 
-Promote staging to `RETRIEVAL_PROVIDER=oci_object_storage` through environment configuration, redeploy/restart the backend, then immediately rerun:
+Prepare Oracle AI Vector Search schema and indexing in shadow mode, then immediately rerun:
 
 - `/retrieval/health`
 - staging baseline guardrail

@@ -4,7 +4,7 @@
 
 Maintain the validated OCI Architecture Studio staging baseline while advancing Sprint 2 retrieval promotion safely.
 
-The current state keeps `local_json` as the active staging provider, while `oci_object_storage` has passed dual-provider parity and is ready for controlled config-only staging promotion. Oracle AI Vector Search remains guarded until schema, indexing, and live query parity are validated.
+The current state uses `oci_object_storage` as the active staging retrieval provider after controlled config-only promotion. `local_json` remains the validated rollback provider. Oracle AI Vector Search remains guarded until schema, indexing, and live query parity are validated.
 
 ## Timebox
 
@@ -12,10 +12,10 @@ The current state keeps `local_json` as the active staging provider, while `oci_
 
 ## Current Priorities
 
-1. Promote staging retrieval to `oci_object_storage` through config only
-2. Rerun staging smoke, golden evals, edge evals, and retrieval regression after promotion
+1. Monitor the promoted `oci_object_storage` staging provider
+2. Prepare Oracle AI Vector Search schema and indexing prototype
 3. Expand source registry for WAF, Vault, Cloud Guard, Logging, Monitoring, Budgets, IAM, Audit, and Data Guard
-4. Prepare Oracle AI Vector Search schema and indexing prototype
+4. Add vector-search dual-run parity against the Object Storage provider
 5. Keep release-awareness snapshot flow honest and clearly point-in-time
 6. Add HTTPS ingress plan for staging/demo readiness
 
@@ -35,7 +35,7 @@ In scope:
 - first OCI landing-zone Terraform scaffold
 - deployment scripts, smoke tests, and staging workflow
 - dual-provider retrieval parity validation
-- Object Storage retrieval promotion runbook
+- Object Storage retrieval promotion and rollback validation
 
 Out of scope:
 - production RAG/vector database cutover

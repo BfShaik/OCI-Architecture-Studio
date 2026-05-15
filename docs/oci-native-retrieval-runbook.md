@@ -6,11 +6,21 @@ Date: 2026-05-14
 
 This runbook controls the Sprint 2 migration from the validated local retrieval baseline to OCI-native retrieval services while preserving the advisory workflow.
 
-The default remains:
+Local development default remains:
 
 ```bash
 EMBEDDING_PROVIDER=local
 RETRIEVAL_PROVIDER=local_json
+```
+
+Current staging default:
+
+```bash
+EMBEDDING_PROVIDER=local
+RETRIEVAL_PROVIDER=oci_object_storage
+OCI_OBJECT_STORAGE_NAMESPACE=idsmrn7rvqb6
+OCI_VECTOR_BUCKET=oci-architecture-studio-staging-knowledge-snapshots
+OCI_VECTOR_OBJECT_NAME=oci-rag-index.json
 ```
 
 ## Provider Modes
@@ -75,7 +85,7 @@ Current status: the adapter is a guarded boundary. It reports health and missing
 
 ## Migration Gates
 
-Do not switch staging defaults until all are true:
+Do not switch a staging provider until all are true:
 
 - backend tests pass
 - golden evals pass
@@ -88,7 +98,7 @@ Do not switch staging defaults until all are true:
 
 ## Dual-Provider Parity Gate
 
-Before staging uses `oci_object_storage` as the active retrieval provider, sync the latest local snapshots to the staging knowledge bucket:
+Before staging uses a new provider as the active retrieval provider, sync the latest local snapshots to the staging knowledge bucket:
 
 ```bash
 OCI_CLI_PROFILE=DEFAULT infra/scripts/sync_snapshots_to_object_storage.sh \
@@ -108,7 +118,7 @@ app/backend/.venv/bin/python infra/scripts/retrieval_parity_check.py \
   --output-dir evals/reports/retrieval-parity
 ```
 
-Promotion requires:
+Provider promotion requires:
 
 - `14/14` parity cases passing
 - average top chunk overlap at or above `0.8`
@@ -148,4 +158,4 @@ cd app/backend && PYTHONPATH=src .venv/bin/pytest -q
 
 ## Next Operational Milestone
 
-Run Object Storage manifest retrieval side by side with local JSON for the golden and edge suites, then approve the Oracle AI Vector Search table schema only after citation parity is visible.
+Run Oracle AI Vector Search in shadow mode side by side with the active Object Storage provider for the golden, edge, retrieval-regression, and live scenario suites, then approve active reads only after citation parity is visible.

@@ -186,7 +186,7 @@ Phase 3:
 
 Phase 4:
 - Add trend reports and historical comparison.
-- Promote Object Storage retrieval after parity.
+- Keep Object Storage retrieval under regression after promotion.
 - Add production embeddings and Oracle AI Vector Search after schema/query parity.
 
 ## Recommended Python Libraries

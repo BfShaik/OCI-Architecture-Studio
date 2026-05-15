@@ -168,6 +168,13 @@ This progress is based on `docs/two-week-plan.md`.
   - added `infra/scripts/verify_staging_baseline.py`
   - verified the live app through backend, frontend, retrieval, OCI resource, golden eval, and edge-case checks
 - Renamed GitHub repository to `OCI-Architecture-Studio`.
+- Promoted staging retrieval from `local_json` to `oci_object_storage` through configuration only:
+  - updated `/etc/oci-architecture-studio.env` on the staging VM
+  - preserved the same codebase, prompt templates, and retrieval interface
+  - verified `/retrieval/health` reports `provider=oci_object_storage`
+  - validated Object Storage manifest retrieval with 13 chunks and 10 service domains
+  - validated rollback to `local_json` and restored `oci_object_storage`
+  - added `docs/retrieval-provider-promotion-report.md`
 - Pushed current implementation to GitHub.
 
 ## Latest Validation
@@ -193,7 +200,7 @@ Last validation run: 2026-05-15
 - Frontend build: passed
 - Golden evals: passed, 6 of 6
 - Edge-case evals: passed, 8 of 8
-- Retrieval health check: passed for `local_json`, 13 chunks
+- Retrieval health check: passed for `oci_object_storage`, 13 chunks
 - Retrieval regression check: passed, 14 of 14 golden + edge cases
 - Python compile checks: passed for backend, infra scripts, ingestion, and refresh code
 - OCI local access check: passed, Object Storage namespace `idsmrn7rvqb6`
@@ -205,17 +212,22 @@ Last validation run: 2026-05-15
 - OCI staging baseline guardrail: passed against `http://193.122.149.102:8000/`
 - OCI staging deployment smoke: passed for backend, frontend, and OCI SDK tenancy access
 - OCI staging resource visibility smoke: passed for Object Storage bucket, Vault secret, Logging log group, Monitoring alarm, and Events rule
-- Post-migration readiness review: passed with a go decision for continued Sprint 2 development; active staging retrieval remains `local_json` until OCI-native provider parity is proven
+- Post-migration readiness review: passed with a go decision for continued Sprint 2 development
 - Dual-provider retrieval parity validation: passed, 14 of 14 cases, comparing `local_json` with `oci_object_storage`
 - OCI Object Storage snapshot sync: passed for `oci-rag-index.json` and `oci-release-snapshot.json`
+- Staging retrieval provider promotion: passed, active provider is now `oci_object_storage`
+- Post-promotion baseline guardrail: passed with expected provider `oci_object_storage`
+- Post-promotion deployment smoke: passed for backend, frontend, and OCI SDK tenancy access
+- Post-promotion OCI resource visibility smoke: passed for Object Storage bucket, Vault secret, Logging log group, Monitoring alarm, and Events rule
+- Post-promotion live scenario checks: passed for architecture, migration, HA/DR, cost, and release-awareness
+- Rollback validation: passed, `local_json` was restored and then `oci_object_storage` was restored without code or prompt changes
 - Presentation-friendly architecture diagrams: added in `docs/architecture-diagrams.md`
-- Documentation refresh: README, PRD, roadmap, vision, sprint docs, runbooks, demo readiness, and architecture docs now reflect the current staging and retrieval-parity state
+- Documentation refresh: README, PRD, roadmap, vision, sprint docs, runbooks, demo readiness, architecture docs, and promotion report now reflect the current promoted staging state
 
 ## Pending
 
 - Replace deterministic local hash embeddings with a production embedding provider when model/provider decisions are finalized.
 - Run OCI Generative AI embedding ingestion against the approved staging compartment and upload the vector manifest to Object Storage.
-- Dual-run Object Storage manifest retrieval against the current local JSON vector store before changing defaults.
 - Validate the Oracle AI Vector Search table schema and enable read-path implementation only after manifest parity is proven.
 - Expand OCI source coverage for:
   - dedicated WAF
@@ -262,9 +274,12 @@ Last validation run: 2026-05-15
   - initial staging cloud apply/deploy is complete and baseline-frozen
 - OCI-native retrieval migration:
   - Phase 1 configuration hooks, metadata enrichment, Object Storage manifest path, health checks, and regression checks exist
+  - Object Storage manifest retrieval is the active staging provider
+  - `local_json` remains the validated rollback provider
   - Oracle AI Vector Search read path is intentionally guarded until schema validation and parity checks are complete
   - post-migration readiness report is captured in `docs/post-migration-readiness-report.md`
   - dual-provider parity report is captured in `docs/retrieval-parity-validation-report.md`
+  - promotion report is captured in `docs/retrieval-provider-promotion-report.md`
 
 ## Current Known Limitations
 

@@ -362,7 +362,7 @@ watch release sources -> classify update -> map affected services -> mark stale 
 9. Add OCI embedding provider. — Done as guarded adapter
 10. Add Object Storage vector-manifest adapter. — Done
 11. Add dual-provider retrieval parity. — Done
-12. Promote Object Storage retrieval in staging. — Next
+12. Promote Object Storage retrieval in staging. — Done
 13. Add Oracle AI Vector Search schema/index prototype. — Pending
 
 ## Top Risks And Mitigations
@@ -378,6 +378,6 @@ watch release sources -> classify update -> map affected services -> mark stale 
 
 ## Recommended Next Step
 
-Promote staging to `RETRIEVAL_PROVIDER=oci_object_storage` through configuration, then rerun staging smoke tests, golden evals, edge-case evals, retrieval regression, and parity checks.
+Implement Oracle AI Vector Search schema and indexing in shadow mode, then rerun staging smoke tests, golden evals, edge-case evals, retrieval regression, and parity checks against the active `oci_object_storage` provider.
 
-That proves the first OCI-native retrieval read path before moving to Oracle AI Vector Search.
+That proves the managed vector path before any active-read cutover.

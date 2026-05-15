@@ -8,7 +8,7 @@ Last updated: 2026-05-15
 |---|---|---|
 | Backend API | Ready | `GET /health` and `POST /architecture-review` are working. |
 | Frontend UI | Ready | Chat-style workflow includes demo prompt shortcuts, loading state, error state, structured results, and source cards. |
-| Retrieval | Ready | Local retrieval is active in staging; OCI Object Storage retrieval passed dual-provider parity and is ready for config-only promotion. |
+| Retrieval | Ready | OCI Object Storage retrieval is active in staging after config-only promotion; `local_json` remains the tested rollback provider. |
 | Release awareness | Ready for foundation demo | Point-in-time release snapshot ingestion exists and release-aware prompts separate current-release context from historical/local guidance. |
 | Evals | Ready | Golden and edge-case evals pass. |
 | Tests/build | Ready | Backend tests and frontend build pass. |
@@ -156,11 +156,11 @@ OCI staging smoke tests: passed
 - CI workflow for tests, evals, ingestion smoke tests, and frontend build.
 - OCI staging deployment.
 - OCI Object Storage retrieval parity validation.
+- OCI Object Storage retrieval promotion and rollback validation.
 - Architecture diagrams and operational runbooks.
 
 ## Remaining Gaps
 
-- OCI Object Storage retrieval is not yet the active staging provider, although parity has passed.
 - Production semantic embeddings are not active.
 - Oracle AI Vector Search active reads are not implemented.
 - Full LLM-based synthesis is not implemented.
@@ -180,14 +180,13 @@ OCI staging smoke tests: passed
 ## Sprint 2 Backlog
 
 1. Add dedicated OCI sources for WAF, Vault, Cloud Guard, Logging, Monitoring, Budgets, IAM, Audit, and Data Guard.
-2. Promote `oci_object_storage` as active staging retrieval provider through config.
-3. Replace local hash embeddings with the selected production embedding provider.
-4. Implement Oracle AI Vector Search indexing and dual-run parity.
-5. Implement citation-aware LLM synthesis with strict grounding instructions.
-6. Add release impact comparison between release snapshots and architecture recommendations.
-7. Add release-impact eval cases.
-8. Improve frontend source cards with grouped evidence and prompt history.
-9. Add HTTPS ingress for staging/demo.
+2. Replace local hash embeddings with the selected production embedding provider.
+3. Implement Oracle AI Vector Search indexing and dual-run parity.
+4. Implement citation-aware LLM synthesis with strict grounding instructions.
+5. Add release impact comparison between release snapshots and architecture recommendations.
+6. Add release-impact eval cases.
+7. Improve frontend source cards with grouped evidence and prompt history.
+8. Add HTTPS ingress for staging/demo.
 
 ## Top Risks
 
@@ -198,6 +197,6 @@ OCI staging smoke tests: passed
 
 ## Next Highest-Value Build Block
 
-The next highest-value block is **config-only promotion of OCI Object Storage retrieval in staging, followed by post-promotion validation**.
+The next highest-value block is **Oracle AI Vector Search schema and indexing in shadow mode, followed by parity against the active Object Storage provider**.
 
-That proves the first OCI-native retrieval read path without breaking the validated advisory workflow or losing the instant rollback path to `local_json`.
+That moves retrieval toward the managed production target while preserving the validated advisory workflow and instant rollback path to `local_json`.

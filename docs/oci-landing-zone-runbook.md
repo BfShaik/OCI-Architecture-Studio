@@ -217,13 +217,13 @@ Terraform:
 - Backend/frontend staging deployment is working.
 - Object Storage snapshot bucket contains the knowledge and release snapshots.
 - OCI Object Storage retrieval has passed dual-provider parity against `local_json`.
-- Staging can be promoted to `RETRIEVAL_PROVIDER=oci_object_storage` through configuration.
+- Staging now uses `RETRIEVAL_PROVIDER=oci_object_storage` through configuration.
+- `local_json` remains the tested rollback provider.
 
 ## Next Implementation Steps
 
-1. Promote staging retrieval to `oci_object_storage` through configuration.
-2. Rerun deployment smoke tests and retrieval parity after promotion.
+1. Prepare Oracle AI Vector Search schema and indexing prototype.
+2. Dual-run Oracle AI Vector Search against the active Object Storage provider.
 3. Add HTTPS ingress with Load Balancer or API Gateway.
 4. Move Terraform state to OCI Object Storage before broader team usage.
 5. Tighten IAM policies after access patterns stabilize.
-6. Prepare Oracle AI Vector Search schema and indexing prototype.

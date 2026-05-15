@@ -2,11 +2,11 @@
 
 Date: 2026-05-15
 
-These diagrams summarize the current working platform, the validated retrieval migration path, and the next Oracle AI Vector Search target state.
+These diagrams summarize the current working platform, the completed Object Storage retrieval promotion, and the next Oracle AI Vector Search target state.
 
 ## 1. Current Working Staging Architecture
 
-Current staging is intentionally simple: one codebase, one backend VM, backend-served frontend, local JSON retrieval on the VM, and OCI services for deployment support, snapshots, secrets, logging, monitoring, and notifications.
+Current staging is intentionally simple: one codebase, one backend VM, backend-served frontend, Object Storage manifest retrieval, and OCI services for deployment support, snapshots, secrets, logging, monitoring, and notifications.
 
 ```mermaid
 flowchart LR
@@ -15,7 +15,8 @@ flowchart LR
   subgraph OCI["OCI us-ashburn-1"]
     subgraph Compartment["oci-architecture-studio-staging compartment"]
       VM["Compute VM\nFastAPI backend + served React frontend\nVM.Standard.E5.Flex\n8 OCPU / 128 GB"]
-      LocalIndex["Local JSON knowledge index\n/opt/oci-architecture-studio/knowledge/snapshots/oci-rag-index.json"]
+      LocalIndex["Local JSON knowledge index\nrollback provider"]
+      ObjectIndex["Object Storage vector manifest\nactive retrieval provider\noci-rag-index.json"]
       ReleaseSnap["Local release snapshot\noci-release-snapshot.json"]
       FrontendBucket["Object Storage\nfrontend assets"]
       SnapshotBucket["Object Storage\nknowledge + release snapshots"]
@@ -28,7 +29,8 @@ flowchart LR
 
   User -->|"HTTP staging URL"| VM
   VM -->|"serves React UI"| User
-  VM -->|"architecture-review API"| LocalIndex
+  VM -->|"architecture-review API\nactive read"| ObjectIndex
+  VM -. "config rollback" .-> LocalIndex
   VM -->|"release-aware context"| ReleaseSnap
   VM -. "snapshot sync / backup" .-> SnapshotBucket
   VM -. "frontend artifact upload path" .-> FrontendBucket
@@ -40,12 +42,12 @@ flowchart LR
 Current active retrieval provider:
 
 ```text
-RETRIEVAL_PROVIDER=local_json
+RETRIEVAL_PROVIDER=oci_object_storage
 ```
 
 ## 2. Validated Dual-Provider Retrieval Migration Path
 
-The OCI Object Storage retrieval provider has passed parity against the stable local provider. Promotion is config-only and rollback is also config-only.
+The OCI Object Storage retrieval provider passed parity against the stable local provider and is now active in staging. Promotion was config-only and rollback was validated as config-only.
 
 ```mermaid
 flowchart TD
@@ -68,7 +70,7 @@ flowchart TD
 
   Parity["Retrieval parity gate\n14/14 passed\n1.0 top chunk overlap"]
   EvalGate["Golden + edge evals\nretrieval regression\nsmoke tests"]
-  Promote["Config-only staging promotion\nRETRIEVAL_PROVIDER=oci_object_storage"]
+  Promote["Completed config-only staging promotion\nRETRIEVAL_PROVIDER=oci_object_storage"]
   Rollback["Config-only rollback\nRETRIEVAL_PROVIDER=local_json"]
 
   Prompt --> Classifier --> Query
@@ -87,6 +89,8 @@ Validated parity result:
 - golden evals: `6/6` for both provider paths
 - edge-case evals: `8/8` for both provider paths
 - retrieval regression: `14/14` for both provider paths
+- staging active provider: `oci_object_storage`
+- rollback provider: `local_json`
 
 ## 3. Target OCI-Native Retrieval Architecture
 
@@ -135,11 +139,11 @@ flowchart LR
   Freshness --> Response --> UI
 ```
 
-Promotion sequence:
+Migration sequence:
 
 1. Keep `local_json` as rollback provider.
-2. Promote `oci_object_storage` as active staging provider after parity.
-3. Validate staging smoke and evals.
+2. Promote `oci_object_storage` as active staging provider after parity. — Done
+3. Validate staging smoke and evals. — Done
 4. Implement Oracle AI Vector Search table/index.
 5. Dual-run Vector Search against `oci_object_storage`.
 6. Promote Oracle AI Vector Search only after parity and rollback validation.

@@ -12,12 +12,12 @@ OCI Architecture Studio currently supports a validated advisory flow in local de
 2. The frontend calls the FastAPI backend.
 3. The backend classifies the request intent and applies the matching orchestration profile.
 4. Retrieval runs through a config-selected provider.
-5. The active staging provider is still `local_json`.
-6. The OCI Object Storage retrieval provider has passed dual-provider parity and is ready for controlled config-only promotion.
+5. The active staging provider is `oci_object_storage`, reading the validated vector manifest from OCI Object Storage.
+6. `local_json` remains the tested config-only rollback provider.
 7. Intent-aware orchestration shapes a structured response from retrieved context and release-awareness checks.
 8. The UI renders intent, prompt template, recommendations, assumptions, risks, citations, and next steps.
 
-LangGraph, advanced memory, full LLM synthesis, continuous release intelligence, and Oracle AI Vector Search active reads are intentionally deferred until the current validated flow is promoted safely.
+LangGraph, advanced memory, full LLM synthesis, continuous release intelligence, and Oracle AI Vector Search active reads are intentionally deferred until the Object Storage provider has remained stable and the next vector-search parity gate is ready.
 
 ## Repository Layout
 
@@ -61,6 +61,7 @@ tests/                Backend and integration tests
 - Backend tests covering API, retrieval, and intent routing
 - OCI staging deployment with smoke tests, resource visibility checks, and rollback runbooks
 - Dual-provider retrieval parity gate comparing `local_json` and `oci_object_storage`
+- Config-only staging promotion to `oci_object_storage` with rollback validation
 
 ## Run Locally
 
@@ -135,11 +136,11 @@ VITE_API_BASE_URL=http://localhost:8000 npm run dev
 
 ## Recommended Next Steps
 
-1. Promote staging to `RETRIEVAL_PROVIDER=oci_object_storage` through config only.
-2. Rerun staging smoke tests, golden evals, edge evals, and retrieval regression after promotion.
-3. Expand the source registry with dedicated WAF, Vault, Cloud Guard, Logging, Monitoring, Budgets, IAM, Audit, and Data Guard sources.
-4. Replace local hashing embeddings with OCI Generative AI embeddings once provider settings and cost controls are finalized.
-5. Validate Oracle AI Vector Search schema/query parity before enabling active reads.
+1. Keep staging on `RETRIEVAL_PROVIDER=oci_object_storage` and monitor retrieval latency, citations, and failure handling.
+2. Expand the source registry with dedicated WAF, Vault, Cloud Guard, Logging, Monitoring, Budgets, IAM, Audit, and Data Guard sources.
+3. Replace local hashing embeddings with OCI Generative AI embeddings once provider settings and cost controls are finalized.
+4. Validate Oracle AI Vector Search schema/query parity before enabling active reads.
+5. Add Oracle AI Vector Search dual-run checks against the Object Storage provider before any active-read promotion.
 6. Replace fallback release parsing with stronger extraction from official OCI release pages.
 
 ## Run Evaluations
@@ -155,6 +156,12 @@ Reports are written to `evals/reports/` and ignored by git.
 
 ```bash
 app/backend/.venv/bin/python infra/scripts/check_retrieval_health.py --provider local_json
+app/backend/.venv/bin/python infra/scripts/check_retrieval_health.py --provider oci_object_storage \
+  --oci-region us-ashburn-1 \
+  --oci-profile DEFAULT \
+  --oci-namespace idsmrn7rvqb6 \
+  --oci-vector-bucket oci-architecture-studio-staging-knowledge-snapshots \
+  --oci-vector-object-name oci-rag-index.json
 app/backend/.venv/bin/python infra/scripts/retrieval_regression_check.py \
   --cases evals/golden-prompts.jsonl \
   --cases evals/edge-cases.jsonl \
@@ -238,8 +245,10 @@ Latest full validation: 2026-05-15.
 - Frontend build: passed
 - Terraform fmt/validate: passed for `dev`, `test`, and `staging`
 - OCI staging smoke: passed for backend, frontend, OCI SDK, retrieval, and resource visibility
-- Post-migration readiness: passed for continued Sprint 2 development; staging still uses `local_json` as the active read provider until OCI-native parity is proven
 - Dual-provider retrieval parity: passed, `14/14`, comparing `local_json` with `oci_object_storage`
+- Staging retrieval promotion: passed, active provider is `oci_object_storage`
+- Rollback validation: passed, `local_json` can be restored through config only and `oci_object_storage` was restored after the rollback test
+- Live post-promotion scenario checks: passed for architecture, migration, HA/DR, cost, and release-awareness prompts
 
 See `docs/status.md` for the current completed work, pending work, and known limitations.
 
@@ -266,6 +275,8 @@ See `docs/oci-native-retrieval-runbook.md` for provider modes, validation gates,
 See `docs/post-migration-readiness-report.md` for the full post-migration validation, retrieval quality assessment, OCI platform validation, risks, and go/no-go decision.
 
 See `docs/retrieval-parity-validation-report.md` for dual-provider parity results, promotion criteria, config switching, rollback validation, and the go/no-go decision for `oci_object_storage` staging promotion.
+
+See `docs/retrieval-provider-promotion-report.md` for the completed staging promotion, post-promotion validation results, rollback proof, and the next Oracle AI Vector Search boundary.
 
 See `docs/terraform-plan-review.md` for the first staging Terraform planning workflow, plan review, apply readiness criteria, and post-apply smoke-test plan.
 

@@ -4,6 +4,8 @@ Date: 2026-05-14
 
 ## Baseline Identity
 
+Current-state note: this document freezes the original post-deploy baseline. Staging retrieval was later promoted from `local_json` to `oci_object_storage`; see `docs/retrieval-provider-promotion-report.md` for the active provider validation.
+
 - Branch: `main`
 - Baseline commit at verification start: `412c892`
 - Baseline freeze artifacts: this document, the operational runbook, and the staging guardrail script on `main`
@@ -70,7 +72,7 @@ Local:
 - local knowledge index: `knowledge/snapshots/oci-rag-index.json`
 - local release snapshot: `knowledge/snapshots/oci-release-snapshot.json`
 
-OCI staging:
+OCI staging at the original baseline freeze:
 
 - backend systemd service: `oci-architecture-studio`
 - backend deploy path: `/opt/oci-architecture-studio`
