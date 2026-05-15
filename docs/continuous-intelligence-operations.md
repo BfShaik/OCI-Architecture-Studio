@@ -207,3 +207,16 @@ If promoted retrieval degrades:
 ## Next Milestone
 
 Add OCI Monitoring metrics for refresh latency, gate failures, candidate promotion count, rollback count, and retrieval regression failures so staging can alert before users see stale or degraded advisory responses.
+
+## OCI Resource Scheduler Activation Gate
+
+OCI Resource Scheduler should invoke the knowledge-refresh OCI Function only after the Function image and IAM path are validated.
+
+Activation remains blocked until:
+
+- the Function image is built and pushed to OCIR
+- the controlled no-fetch Function invocation passes from the packaged image
+- Terraform plan shows only expected Functions/Scheduler/IAM resources
+- runtime diagnostics expose configured Function and schedule OCIDs
+
+Rollback is configuration-only: set `enable_knowledge_refresh_scheduler=false`, apply the reviewed Terraform plan, and continue using operator-triggered refresh commands.

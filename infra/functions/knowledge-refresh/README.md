@@ -62,3 +62,42 @@ PY
 ```
 
 This validates the Function invocation contract without fetching live documentation, uploading snapshots, promoting candidates, or enabling schedules. Keep Resource Scheduler disabled until this controlled invocation passes with the packaged image and runtime IAM policy.
+
+## Resource Scheduler Enablement
+
+Current decision: keep schedules disabled until the Function image is built, pushed to OCIR, and validated through a controlled invocation.
+
+Prerequisites:
+
+- Function image exists in OCIR and is referenced by `knowledge_refresh_function_image`.
+- The controlled Function invocation passes with the packaged image.
+- Terraform plan shows only the expected OCI Functions application, Function, Resource Scheduler schedules, dynamic group, and policy changes.
+- Runtime diagnostics expose `OCI_KNOWLEDGE_REFRESH_FUNCTION_OCID`, `OCI_KNOWLEDGE_REFRESH_RELEASE_SCHEDULE_OCID`, and/or `OCI_KNOWLEDGE_REFRESH_STABLE_DOCS_SCHEDULE_OCID` after apply.
+
+Enable in local `terraform.tfvars`:
+
+```hcl
+enable_knowledge_refresh_scheduler         = true
+knowledge_refresh_function_image           = "iad.ocir.io/<namespace>/oci-architecture-studio/knowledge-refresh:<tag>"
+knowledge_refresh_release_cron             = "17 */6 * * *"
+knowledge_refresh_stable_docs_cron         = "23 2 * * 0"
+knowledge_refresh_function_memory_mbs      = 1024
+knowledge_refresh_function_timeout_seconds = 900
+```
+
+Validation:
+
+```bash
+terraform -chdir=infra/terraform/envs/staging validate
+terraform -chdir=infra/terraform/envs/staging plan
+python3 infra/scripts/operational_readiness_check.py \
+  --api-base-url http://<backend-public-ip>:8000 \
+  --require-oci-profile
+```
+
+Rollback:
+
+1. Set `enable_knowledge_refresh_scheduler = false`.
+2. Run `terraform plan` and verify only scheduler/function resources are removed or disabled.
+3. Apply only after manual refresh remains available.
+4. Confirm diagnostics report the scheduler as scaffolded but inactive.

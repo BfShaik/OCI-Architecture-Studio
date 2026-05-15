@@ -80,8 +80,8 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | TASK-008 | Done | Add Oracle AI Vector Search dual-read parity workflow against Object Storage retrieval. | `retrieval_parity_check.py` now supports `--oci-native-provider oracle_ai_vector_search`; skip-safe run used Object Storage baseline with 44 chunks and reported missing Oracle DB config. |
 | TASK-009 | Blocked | Promote semantic retrieval through configuration only after parity approval. | Blocked until Oracle DB vector config exists and Oracle AI Vector Search parity passes without skip; promotion and rollback runbook documented. |
 | TASK-010 | Done | Activate controlled OCI Functions knowledge-refresh invocation path. | Local Function handler smoke passed with `no_fetch`, `quick_gates`, `upload=false`, `promoted=false`, and reports written under `/tmp`. |
-| TASK-011 | Next | Activate OCI Resource Scheduler for release refresh after function readiness. | Schedule OCIDs visible in diagnostics; manual disable rollback documented. |
-| TASK-012 | Not Started | Define OCI DevOps delivery contract around existing operator artifact flow. | Pipeline requirements documented; operator scripts remain usable. |
+| TASK-011 | Blocked | Activate OCI Resource Scheduler for release refresh after function readiness. | Blocked until Function image is built/pushed to OCIR and packaged invocation passes; enablement and rollback path documented. |
+| TASK-012 | Next | Define OCI DevOps delivery contract around existing operator artifact flow. | Pipeline requirements documented; operator scripts remain usable. |
 | TASK-013 | Not Started | Wire OCI DevOps metadata into runtime readiness checks for active deployments. | Diagnostics distinguish configured vs inactive DevOps. |
 | TASK-014 | Not Started | Expand official OCI corpus for highest-value advisory gaps. | Retrieval regression and advisory evals do not regress. |
 | TASK-015 | Not Started | Harden release-intelligence freshness and selective reindex reporting. | Release refresh report shows candidate, gate, and promotion state. |
@@ -133,14 +133,13 @@ Run the appropriate subset after each increment; run the full matrix before a ne
 
 ## Next Actionable Increment
 
-Current task: `TASK-011`.
+Current task: `TASK-012`.
 
-Activate OCI Resource Scheduler for release refresh after function readiness:
+Define OCI DevOps delivery contract around existing operator artifact flow:
 
-1. Inspect Terraform scheduler resources and diagnostics.
-2. Document scheduler enablement prerequisites and rollback.
-3. Keep schedules disabled until Function image and OCIDs are validated.
-4. Confirm runtime diagnostics expose Function and schedule OCIDs when configured.
+1. Inspect current operator deployment scripts and OCI DevOps metadata fields.
+2. Document the artifact, validation, and rollback contract for a future OCI DevOps pipeline.
+3. Preserve operator scripts as the fallback deployment path.
 
 ## Operating Rules
 
