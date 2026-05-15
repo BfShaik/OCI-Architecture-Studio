@@ -204,6 +204,20 @@ def load_registry(path: Path) -> list[dict[str, str]]:
     return payload["sources"]
 
 
+def select_sources(
+    sources: list[dict[str, str]],
+    source_ids: list[str] | None,
+) -> list[dict[str, str]]:
+    if not source_ids:
+        return sources
+    requested = set(source_ids)
+    selected = [source for source in sources if source["id"] in requested]
+    missing = sorted(requested - {source["id"] for source in selected})
+    if missing:
+        raise ValueError(f"Unknown source id(s): {', '.join(missing)}")
+    return selected
+
+
 def infer_source_metadata(source: dict[str, str], fetched_timestamp: str, fetch_status: str) -> dict[str, object]:
     source_id = source["id"].replace("oci-", "")
     matched: dict[str, object] | None = None
@@ -251,7 +265,8 @@ def build_embedder(args: argparse.Namespace):
 
 def build_index(args: argparse.Namespace) -> dict[str, object]:
     embedder = build_embedder(args)
-    sources = load_registry(args.registry)
+    all_sources = load_registry(args.registry)
+    sources = select_sources(all_sources, args.source_ids)
     chunks: list[dict[str, object]] = []
     generated_at = datetime.now(UTC).isoformat()
 
@@ -295,6 +310,7 @@ def build_index(args: argparse.Namespace) -> dict[str, object]:
                 }
             )
 
+    refreshed_source_ids = [source["id"] for source in sources]
     return {
         "generated_at": generated_at,
         "embedding_model": embedder.model_name,
@@ -307,10 +323,45 @@ def build_index(args: argparse.Namespace) -> dict[str, object]:
             "oracle_ai_vector_search_schema_ready": True,
             "oracle_ai_vector_search_read_enabled": False,
         },
-        "source_count": len(sources),
+        "source_count": len(all_sources),
+        "refreshed_source_ids": refreshed_source_ids,
+        "selective_refresh": bool(args.source_ids),
         "chunk_count": len(chunks),
         "chunks": chunks,
     }
+
+
+def merge_with_existing_index(
+    new_index: dict[str, object],
+    existing_index_path: Path | None,
+    refreshed_source_ids: list[str],
+) -> dict[str, object]:
+    if not existing_index_path or not existing_index_path.exists() or not refreshed_source_ids:
+        return new_index
+
+    with existing_index_path.open("r", encoding="utf-8") as file:
+        existing_index = json.load(file)
+
+    refreshed = set(refreshed_source_ids)
+    retained_chunks = [
+        chunk
+        for chunk in existing_index.get("chunks", [])
+        if chunk.get("source_id") not in refreshed
+    ]
+    merged_chunks = [*retained_chunks, *new_index.get("chunks", [])]
+    merged_index = dict(existing_index)
+    merged_index.update(
+        {
+            key: value
+            for key, value in new_index.items()
+            if key not in {"chunks", "chunk_count"}
+        }
+    )
+    merged_index["chunks"] = merged_chunks
+    merged_index["chunk_count"] = len(merged_chunks)
+    merged_index["selective_refresh"] = True
+    merged_index["refreshed_source_ids"] = refreshed_source_ids
+    return merged_index
 
 
 def upload_index_to_object_storage(index: dict[str, object], args: argparse.Namespace) -> None:
@@ -372,12 +423,30 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--min-fetched-words", type=int, default=120)
     parser.add_argument("--timeout", type=int, default=8)
     parser.add_argument("--no-fetch", action="store_true")
+    parser.add_argument(
+        "--source-id",
+        dest="source_ids",
+        action="append",
+        default=None,
+        help="Refresh only this source id. Can be provided multiple times.",
+    )
+    parser.add_argument(
+        "--existing-index",
+        type=Path,
+        default=None,
+        help="Existing index to merge with when --source-id is used.",
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
     index = build_index(args)
+    index = merge_with_existing_index(
+        index,
+        args.existing_index,
+        [str(source_id) for source_id in index.get("refreshed_source_ids", [])],
+    )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with args.output.open("w", encoding="utf-8") as file:
         json.dump(index, file, indent=2)

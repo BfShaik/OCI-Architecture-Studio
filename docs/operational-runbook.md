@@ -84,6 +84,30 @@ app/backend/.venv/bin/python evals/run_golden.py --cases evals/advisory-quality.
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/orchestration-quality.jsonl --output-dir evals/reports/orchestration-quality
 ```
 
+## Run Knowledge Refresh Policy
+
+Release notes and fast-changing OCI sources are refreshed on a schedule or on explicit operator action. They are not refreshed on user queries.
+
+Release watcher:
+
+```bash
+app/backend/.venv/bin/python knowledge/refresh/refresh_policy.py --mode release-watch
+```
+
+Local/offline smoke:
+
+```bash
+app/backend/.venv/bin/python knowledge/refresh/refresh_policy.py --mode release-watch --no-fetch --quick-gates
+```
+
+Stable docs cadence:
+
+```bash
+app/backend/.venv/bin/python knowledge/refresh/refresh_policy.py --mode stable-docs
+```
+
+If post-refresh gates fail, restore the prior snapshots from `knowledge/reports/backups/` or rerun the policy with the previous Object Storage manifest in staging.
+
 ## Rerun Retrieval Parity
 
 ```bash

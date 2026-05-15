@@ -96,7 +96,7 @@ Deliverables:
 - distributed orchestration framework — Deferred
 
 ## Phase 3 — Release-Aware Knowledge
-Status: Point-in-time snapshots implemented
+Status: Point-in-time snapshots and refresh policy implemented
 
 Deliverables:
 - OCI release source registry — Done
@@ -105,6 +105,10 @@ Deliverables:
 - change classification — MVP Done
 - release-aware intent routing — Done
 - release snapshot reader — Done
+- scheduled release-note watcher policy — Done
+- selective source refresh rules — Done
+- eval-after-refresh workflow — Done
+- rollback-safe refresh snapshots — Done
 - release impact summaries — Pending
 - stale-knowledge warnings — MVP Done
 - continuous release watcher — Pending

@@ -1,0 +1,94 @@
+{
+  "policy_version": "2026-05-refresh-policy-v1",
+  "cadence": {
+    "release_notes": "every 6 hours in staging/prod; daily in local/dev when enabled",
+    "fast_changing_sources": "daily",
+    "stable_docs": "weekly, preferably Sunday 02:00 local environment time",
+    "full_reindex": "manual only, or when embedding model, chunking policy, metadata schema, or source registry changes"
+  },
+  "triggers": {
+    "scheduled_release_watch": true,
+    "on_change_important_updates": true,
+    "manual_refresh": true,
+    "query_time_refresh": false
+  },
+  "impact_to_source_ids": {
+    "architecture": [
+      "oci-architecture-center",
+      "oci-well-architected-framework",
+      "oci-load-balancer-overview",
+      "oci-vcn-overview",
+      "oci-compute-overview"
+    ],
+    "migration": [
+      "oci-kubernetes-engine-overview",
+      "oci-database-migration-overview",
+      "oci-database-overview",
+      "oci-object-storage-overview"
+    ],
+    "dr": [
+      "oci-full-stack-dr-overview",
+      "oci-database-overview",
+      "oci-load-balancer-overview",
+      "oci-vcn-overview",
+      "oci-security-services-overview"
+    ],
+    "cost": [
+      "oci-cost-management-overview",
+      "oci-compute-overview",
+      "oci-object-storage-overview",
+      "oci-database-overview"
+    ],
+    "security": [
+      "oci-security-services-overview",
+      "oci-vcn-overview",
+      "oci-object-storage-overview"
+    ],
+    "general": [
+      "oci-architecture-center",
+      "oci-well-architected-framework"
+    ]
+  },
+  "service_to_source_ids": {
+    "Object Storage": [
+      "oci-object-storage-overview"
+    ],
+    "Secret Management": [
+      "oci-security-services-overview"
+    ],
+    "Vault": [
+      "oci-security-services-overview"
+    ],
+    "Load Balancer": [
+      "oci-load-balancer-overview"
+    ],
+    "OCI Kubernetes Engine": [
+      "oci-kubernetes-engine-overview"
+    ],
+    "Database Migration": [
+      "oci-database-migration-overview"
+    ],
+    "Database Services": [
+      "oci-database-overview"
+    ],
+    "Oracle Cloud Infrastructure": [
+      "oci-architecture-center",
+      "oci-well-architected-framework"
+    ]
+  },
+  "important_impact_levels": [
+    "review",
+    "breaking",
+    "security"
+  ],
+  "post_refresh_gates": [
+    "release_ingestion",
+    "selective_knowledge_ingestion",
+    "retrieval_health",
+    "retrieval_regression",
+    "golden_evals",
+    "edge_case_evals",
+    "advisory_quality_evals",
+    "controlled_orchestration_evals"
+  ]
+}

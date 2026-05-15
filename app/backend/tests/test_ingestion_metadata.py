@@ -48,3 +48,42 @@ def test_chunk_content_hash_is_stable() -> None:
 
     assert ingest.chunk_content_hash(text) == ingest.chunk_content_hash(text)
     assert ingest.chunk_content_hash(text) != ingest.chunk_content_hash(text + " Updated.")
+
+
+def test_select_sources_rejects_unknown_source_ids() -> None:
+    sources = [{"id": "oci-object-storage-overview"}]
+
+    selected = ingest.select_sources(sources, ["oci-object-storage-overview"])
+
+    assert selected == sources
+
+
+def test_merge_with_existing_index_replaces_only_refreshed_sources(tmp_path: Path) -> None:
+    existing = {
+        "generated_at": "old",
+        "chunks": [
+            {"id": "oci-object-storage-overview::1", "source_id": "oci-object-storage-overview"},
+            {"id": "oci-load-balancer-overview::1", "source_id": "oci-load-balancer-overview"},
+        ],
+        "chunk_count": 2,
+    }
+    existing_path = tmp_path / "index.json"
+    existing_path.write_text(__import__("json").dumps(existing), encoding="utf-8")
+    refreshed = {
+        "generated_at": "new",
+        "chunks": [
+            {"id": "oci-object-storage-overview::1", "source_id": "oci-object-storage-overview"},
+            {"id": "oci-object-storage-overview::2", "source_id": "oci-object-storage-overview"},
+        ],
+        "chunk_count": 2,
+    }
+
+    merged = ingest.merge_with_existing_index(
+        refreshed,
+        existing_path,
+        ["oci-object-storage-overview"],
+    )
+
+    assert merged["chunk_count"] == 3
+    assert any(chunk["source_id"] == "oci-load-balancer-overview" for chunk in merged["chunks"])
+    assert sum(chunk["source_id"] == "oci-object-storage-overview" for chunk in merged["chunks"]) == 2

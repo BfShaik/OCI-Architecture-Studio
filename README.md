@@ -45,6 +45,7 @@ tests/                Backend and integration tests
   - guarded Oracle AI Vector Search adapter boundary
   - retrieval regression reporting for citations, intents, and required service coverage
 - Separate local OCI release snapshot pipeline
+- Knowledge refresh policy for scheduled release-note watching, selective reindex, post-refresh eval gates, and rollback-safe snapshot updates
 - Intent-aware orchestration for:
   - product overview
   - architecture
@@ -107,6 +108,16 @@ For an offline seed snapshot:
 ```bash
 python3 knowledge/refresh/ingest_releases.py --no-fetch
 ```
+
+### Run the Knowledge Refresh Policy
+
+Release notes and fast-changing sources are refreshed by policy, not on user queries:
+
+```bash
+python3 knowledge/refresh/refresh_policy.py --mode release-watch --no-fetch --quick-gates
+```
+
+The policy runner classifies changed release items, maps them to affected source IDs, refreshes only those chunks, runs retrieval/eval gates, and restores the previous snapshots if gates fail.
 
 ### Backend
 
@@ -246,6 +257,7 @@ app/backend/.venv/bin/python infra/scripts/retrieval_regression_check.py --cases
 app/backend/.venv/bin/python infra/scripts/retrieval_parity_check.py --oci-region us-ashburn-1 --oci-profile DEFAULT --oci-namespace idsmrn7rvqb6 --oci-vector-bucket oci-architecture-studio-staging-knowledge-snapshots --oci-vector-object-name oci-rag-index.json --output-dir evals/reports/retrieval-parity
 app/backend/.venv/bin/python knowledge/ingestion/ingest.py --no-fetch
 app/backend/.venv/bin/python knowledge/refresh/ingest_releases.py --no-fetch
+app/backend/.venv/bin/python knowledge/refresh/refresh_policy.py --mode release-watch --no-fetch --quick-gates
 cd app/backend && PYTHONPATH=src .venv/bin/pytest -q
 cd ../frontend && npm run build
 ```
@@ -254,7 +266,7 @@ cd ../frontend && npm run build
 
 Latest full validation: 2026-05-15.
 
-- Local backend tests: `42 passed`
+- Local backend tests: `46 passed`
 - Golden evals: `6 passed, 0 failed`
 - Edge-case evals: `8 passed, 0 failed`
 - Advisory-quality evals: `5 passed, 0 failed`
@@ -262,6 +274,7 @@ Latest full validation: 2026-05-15.
 - Retrieval regression: `14 passed, 0 failed`
 - Knowledge ingestion: `13 chunks`
 - Release ingestion: `3 release items`
+- Knowledge refresh policy smoke: passed
 - Frontend build: passed
 - Terraform fmt/validate: passed for `dev`, `test`, and `staging`
 - OCI staging smoke: passed for backend, frontend, OCI SDK, retrieval, and resource visibility

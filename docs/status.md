@@ -211,6 +211,15 @@ This progress is based on `docs/two-week-plan.md`.
   - `/orchestration/health` now includes aggregation decision and active agent count
   - orchestration evals now validate multi-agent mode, specialist contribution counts, aggregation, critic findings, and rollback-safe metadata
   - `docs/controlled-multi-agent-pilot.md`
+- Added knowledge refresh policy:
+  - scheduled release-note watcher policy
+  - release classification to affected service, domain, impact tags, and impact level
+  - selective source-ID refresh instead of full reindex by default
+  - post-refresh retrieval regression and eval gates
+  - slower stable-doc cadence guidance
+  - rollback-safe snapshot backups
+  - GitHub Actions knowledge refresh workflow
+  - `docs/knowledge-refresh-policy.md`
 - Pushed current implementation to GitHub.
 
 ## Latest Validation
@@ -232,7 +241,8 @@ Last validation run: 2026-05-15
 - Infrastructure Python script compile checks: passed
 - Knowledge ingestion smoke: passed, 13 chunks generated
 - Release ingestion smoke: passed, 3 release items generated
-- Backend tests: passed, 42 tests
+- Knowledge refresh policy smoke: passed, forced selective refresh with post-refresh gates
+- Backend tests: passed, 46 tests
 - Frontend build: passed
 - Golden evals: passed, 6 of 6
 - Edge-case evals: passed, 8 of 8
