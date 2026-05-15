@@ -50,7 +50,13 @@ AWS_TO_OCI_MAPPINGS: tuple[ServiceMapping, ...] = (
         source_service="EKS ALB",
         target_services=("Load Balancer",),
         retrieval_terms=("OCI Load Balancer", "Kubernetes ingress", "public ingress", "backend health checks"),
-        source_aliases=("AWS Load Balancer Controller", "ALB ingress", "Application Load Balancer"),
+        source_aliases=("AWS Load Balancer Controller", "ALB", "AWS ALB", "ALB ingress", "Application Load Balancer"),
+    ),
+    ServiceMapping(
+        source_service="ECR",
+        target_services=("OCI Registry",),
+        retrieval_terms=("OCI Registry", "container registry", "image migration", "container image security"),
+        source_aliases=("Elastic Container Registry",),
     ),
     ServiceMapping(
         source_service="RDS",
@@ -77,6 +83,12 @@ AWS_TO_OCI_MAPPINGS: tuple[ServiceMapping, ...] = (
         source_service="Fargate",
         target_services=("OKE Virtual Nodes", "OCI Kubernetes Engine"),
         retrieval_terms=("OKE Virtual Nodes", "serverless containers", "container workload migration"),
+    ),
+    ServiceMapping(
+        source_service="Lambda",
+        target_services=("OCI Functions",),
+        retrieval_terms=("OCI Functions", "serverless functions", "event-driven workloads", "function migration"),
+        source_aliases=("AWS Lambda",),
     ),
     ServiceMapping(
         source_service="VPC",

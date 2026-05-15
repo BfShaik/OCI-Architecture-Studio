@@ -21,7 +21,7 @@ def test_aws_to_oci_service_mapping_detects_initial_mappings() -> None:
 
 def test_aws_to_oci_service_mapping_detects_expanded_domains() -> None:
     mapping = OciServiceMapper().map_text(
-        "Move CloudWatch, AWS IAM, KMS, EKS ALB, Glue, SageMaker, and VPC patterns to OCI."
+        "Move CloudWatch, AWS IAM, KMS, ALB, ECR, Lambda, Glue, SageMaker, and VPC patterns to OCI."
     )
 
     assert "Logging" in mapping.mapped_services
@@ -29,6 +29,8 @@ def test_aws_to_oci_service_mapping_detects_expanded_domains() -> None:
     assert "Identity and Access Management" in mapping.mapped_services
     assert "Vault" in mapping.mapped_services
     assert "Load Balancer" in mapping.mapped_services
+    assert "OCI Registry" in mapping.mapped_services
+    assert "OCI Functions" in mapping.mapped_services
     assert "OCI Data Integration" in mapping.mapped_services
     assert "OCI Data Science" in mapping.mapped_services
     assert "Virtual Cloud Network" in mapping.mapped_services
