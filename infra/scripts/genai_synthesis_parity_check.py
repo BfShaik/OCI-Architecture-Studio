@@ -54,7 +54,7 @@ def load_cases(paths: list[Path]) -> list[dict[str, Any]]:
 
 def execute_case(client: TestClient, prompt: str) -> dict[str, Any]:
     started_at = perf_counter()
-    response = client.post("/architecture-review", json={"question": prompt})
+    response = client.post("/architecture-review", json={"question": prompt, "synthesis_debug": True})
     latency_ms = round((perf_counter() - started_at) * 1000, 2)
     response.raise_for_status()
     payload = response.json()
@@ -64,6 +64,8 @@ def execute_case(client: TestClient, prompt: str) -> dict[str, Any]:
 
 def summarize_response(response: dict[str, Any]) -> dict[str, Any]:
     confidence = response.get("confidence") or {}
+    synthesis_quality = response.get("synthesis_quality") or {}
+    synthesis_debug = response.get("synthesis_debug") or {}
     return {
         "intent": response.get("intent"),
         "synthesis_provider": response.get("synthesis_provider"),
@@ -72,12 +74,24 @@ def summarize_response(response: dict[str, Any]) -> dict[str, Any]:
         "latency_ms": response.get("_latency_ms"),
         "citation_count": len(response.get("citations", [])),
         "recommendation_count": len(response.get("recommendations", [])),
+        "decision_reasoning_count": len(response.get("decision_reasoning", [])),
+        "consistency_finding_count": len(response.get("consistency_findings", [])),
         "unsupported_claim_count": len(response.get("unsupported_claims", [])),
         "quality_warning_count": len(response.get("quality_warnings", [])),
         "not_enough_evidence": response.get("not_enough_evidence"),
         "low_confidence": response.get("low_confidence"),
         "overall_confidence": confidence.get("overall"),
         "confidence_level": confidence.get("level"),
+        "grounding_quality": synthesis_quality.get("grounding_quality"),
+        "oci_specificity": synthesis_quality.get("oci_specificity"),
+        "workload_alignment": synthesis_quality.get("workload_alignment"),
+        "migration_accuracy": synthesis_quality.get("migration_accuracy"),
+        "recommendation_diversity": synthesis_quality.get("recommendation_diversity"),
+        "citation_coverage": synthesis_quality.get("citation_coverage"),
+        "synthesis_quality_overall": synthesis_quality.get("overall"),
+        "prompt_sections": synthesis_debug.get("grounding_prompt_sections", []),
+        "estimated_input_tokens": synthesis_debug.get("estimated_input_tokens"),
+        "token_usage": synthesis_debug.get("token_usage", {}),
     }
 
 
@@ -142,6 +156,18 @@ def compare_results(
             warnings.append("GenAI fallback was used")
         if candidate_summary.get("unsupported_claim_count", 0) > base_summary.get("unsupported_claim_count", 0):
             warnings.append("unsupported claim count increased")
+        for metric in (
+            "grounding_quality",
+            "oci_specificity",
+            "migration_accuracy",
+            "synthesis_quality_overall",
+        ):
+            base_value = _float_or_none(base_summary.get(metric))
+            candidate_value = _float_or_none(candidate_summary.get(metric))
+            if base_value is not None and candidate_value is not None and candidate_value + 0.15 < base_value:
+                warnings.append(f"{metric} regressed by more than 0.15")
+        if candidate_summary.get("synthesis_provider") == "oci_genai" and not candidate_summary.get("prompt_sections"):
+            warnings.append("missing synthesis grounding prompt debug sections")
         comparisons.append(
             {
                 "id": base["id"],
@@ -152,6 +178,10 @@ def compare_results(
             }
         )
     return comparisons
+
+
+def _float_or_none(value: object) -> float | None:
+    return float(value) if isinstance(value, int | float) else None
 
 
 def write_reports(report: dict[str, Any], output_dir: Path) -> None:
@@ -182,6 +212,9 @@ def write_reports(report: dict[str, Any], output_dir: Path) -> None:
                 f"- OCI GenAI provider: `{item['oci_genai'].get('synthesis_provider')}`",
                 f"- Deterministic latency: `{item['deterministic'].get('latency_ms')} ms`",
                 f"- OCI GenAI latency: `{item['oci_genai'].get('latency_ms')} ms`",
+                f"- Deterministic quality: `{item['deterministic'].get('synthesis_quality_overall')}`",
+                f"- OCI GenAI quality: `{item['oci_genai'].get('synthesis_quality_overall')}`",
+                f"- OCI GenAI prompt sections: `{', '.join(item['oci_genai'].get('prompt_sections', []))}`",
                 "",
             ]
         )

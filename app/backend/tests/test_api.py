@@ -65,6 +65,22 @@ def test_architecture_review_optional_retrieval_debug() -> None:
     assert body["retrieval_debug"]["selected_final_chunks"]
 
 
+def test_architecture_review_optional_synthesis_debug() -> None:
+    response = client.post(
+        "/architecture-review",
+        json={
+            "question": "Design a highly available web app on OCI.",
+            "synthesis_debug": True,
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["synthesis_debug"]["selected_provider"] == "deterministic"
+    assert body["synthesis_debug"]["retrieved_chunk_ids"]
+    assert body["synthesis_debug"]["grounding_prompt_sections"]
+
+
 def test_architecture_review_flags_low_context_uncertainty() -> None:
     response = client.post(
         "/architecture-review",

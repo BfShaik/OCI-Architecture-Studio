@@ -53,6 +53,7 @@ class OciGenerativeAiEmbeddingConfig:
     compartment_id: str
     model_id: str
     endpoint: str | None = None
+    expected_dimensions: int | None = None
 
 
 class OciGenerativeAiEmbedder:
@@ -91,7 +92,18 @@ class OciGenerativeAiEmbedder:
         embeddings = getattr(response.data, "embeddings", None) or []
         if not embeddings:
             raise RuntimeError("OCI Generative AI returned no embedding.")
-        return normalize([float(value) for value in embeddings[0]])
+        vector = [float(value) for value in embeddings[0]]
+        self._validate_vector(vector)
+        return normalize(vector)
+
+    def _validate_vector(self, vector: list[float]) -> None:
+        if not vector:
+            raise RuntimeError("OCI Generative AI returned an empty embedding.")
+        if self.config.expected_dimensions is not None and len(vector) != self.config.expected_dimensions:
+            raise RuntimeError(
+                "OCI Generative AI embedding dimension mismatch: "
+                f"expected {self.config.expected_dimensions}, got {len(vector)}."
+            )
 
     def _get_client(self):
         if self._client is not None:
@@ -110,6 +122,14 @@ class OciGenerativeAiEmbedder:
                 signer=signer,
                 service_endpoint=self.config.endpoint,
             )
+        elif self.config.auth_mode == "resource_principal":
+            signer = oci.auth.signers.get_resource_principals_signer()
+            client_config = {"region": self.config.region} if self.config.region else {}
+            self._client = oci.generative_ai_inference.GenerativeAiInferenceClient(
+                config=client_config,
+                signer=signer,
+                service_endpoint=self.config.endpoint,
+            )
         else:
             client_config = oci.config.from_file(profile_name=self.config.profile)
             if self.config.region:
@@ -119,6 +139,50 @@ class OciGenerativeAiEmbedder:
                 service_endpoint=self.config.endpoint,
             )
         return self._client
+
+
+class FallbackEmbedder:
+    """Wraps an optional primary embedder and falls back to deterministic embeddings."""
+
+    def __init__(
+        self,
+        *,
+        primary: Embedder | None,
+        fallback: Embedder | None = None,
+        activation_error: str | None = None,
+    ) -> None:
+        self.primary = primary
+        self.fallback = fallback or LocalHashingEmbedder()
+        self.activation_error = activation_error
+        self.last_error: str | None = activation_error
+        self.fallback_count = 0
+
+    @property
+    def model_name(self) -> str:
+        if self.primary is None:
+            return f"{self.fallback.model_name}-fallback"
+        return f"{self.primary.model_name}-with-{self.fallback.model_name}-fallback"
+
+    def embed(self, text: str) -> list[float]:
+        if self.primary is None:
+            self.fallback_count += 1
+            return self.fallback.embed(text)
+        try:
+            return self.primary.embed(text)
+        except Exception as exc:  # noqa: BLE001 - embedding fallback preserves retrieval availability.
+            self.last_error = f"{type(exc).__name__}: {exc}"
+            self.fallback_count += 1
+            return self.fallback.embed(text)
+
+    def diagnostics(self) -> dict[str, object]:
+        return {
+            "primary_model": self.primary.model_name if self.primary is not None else None,
+            "fallback_model": self.fallback.model_name,
+            "fallback_enabled": True,
+            "fallback_count": self.fallback_count,
+            "last_error": self.last_error,
+            "activation_error": self.activation_error,
+        }
 
 
 def normalize(vector: list[float]) -> list[float]:

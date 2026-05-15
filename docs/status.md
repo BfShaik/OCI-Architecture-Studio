@@ -211,6 +211,15 @@ This progress is based on `docs/two-week-plan.md`.
   - temporal knowledge context metadata for current snapshot plus future historical snapshot separation
   - release snapshot and temporal knowledge JSON schemas under `knowledge/metadata/`
   - expanded golden eval coverage for hybrid migration, regulated fintech, AI inference cost, enterprise observability, SaaS resiliency, and analytics DR scenarios
+- Added OCI GenAI activation foundation:
+  - OCI GenAI embedding path now supports deterministic fallback, missing-config diagnostics, generation-failure fallback, and optional dimension validation
+  - retrieval health diagnostics expose embedding fallback state and activation errors
+  - OCI GenAI synthesis now uses a dedicated retrieval-grounded prompt builder with intent, mapped OCI services, workload/domain profile, architecture pattern hints, retrieved chunks, and response structure
+  - `synthesis_debug` request flag and `SYNTHESIS_DEBUG_ENABLED` config expose provider, model, selected chunks, prompt sections, estimated input tokens, token usage when available, and fallback reason
+  - ingestion accepts source-level metadata overrides for service, category, workload, domain, intent, pattern, migration, HA/DR, cost, and release tags
+  - ingestion supports OCI GenAI embedding fallback and optional embedding dimension validation
+  - deterministic-vs-OCI GenAI comparison dataset added under `evals/genai-comparison.jsonl`
+  - GenAI parity checker now reports synthesis quality signals, confidence, citations, reasoning counts, prompt sections, and fallback status
 - Added supervised orchestration foundation:
   - config-selected orchestration mode through `ADVISORY_ORCHESTRATION_MODE`
   - one in-process supervisor
@@ -278,14 +287,16 @@ Last validation run: 2026-05-15
 - Continuous intelligence hardening: candidate-first promotion, version lineage, rollback automation, and refresh status endpoint implemented
 - Terraform validation: passed after optional knowledge refresh scheduler scaffold; staging plan currently should not be applied until existing backend replacement drift is resolved and the function image is available
 - OCI-native refresh scheduler scaffold: implemented with OCI Functions plus OCI Resource Scheduler; not applied yet because a published OCIR function image is required before enabling
-- Backend tests: passed, 76 tests
+- Backend tests: passed, 83 tests
 - Frontend build: passed
 - Golden evals: passed, 18 of 18
 - Edge-case evals: passed, 8 of 8
 - Advisory-quality evals: passed, 5 of 5
 - Controlled orchestration evals: passed, 5 of 5
 - Retrieval health check: passed for `local_json`, 21 chunks
+- Retrieval health check with `EMBEDDING_PROVIDER=oci_genai` and missing OCI GenAI env vars: passed through deterministic embedding fallback
 - Retrieval regression check: passed for `local_json`, 26 of 26 golden + edge cases
+- GenAI comparison eval: skipped live OCI GenAI path because required OCI GenAI env vars were not present; deterministic side of 4 comparison cases passed and report was generated
 - GenAI parity readiness check: passed in skip-safe mode when OCI GenAI env vars are not provided
 - Python compile checks: passed for backend, infra scripts, ingestion, and refresh code
 - Diff whitespace check: passed

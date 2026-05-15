@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     openai_api_key: str | None = Field(default=None, alias="OPENAI_API_KEY")
     vector_db_url: str | None = Field(default=None, alias="VECTOR_DB_URL")
     embedding_provider: str = Field(default="local", alias="EMBEDDING_PROVIDER")
+    embedding_fallback_enabled: bool = Field(default=True, alias="EMBEDDING_FALLBACK_ENABLED")
     retrieval_provider: str = Field(default="local_json", alias="RETRIEVAL_PROVIDER")
     retrieval_debug_enabled: bool = Field(default=False, alias="RETRIEVAL_DEBUG_ENABLED")
     retrieval_candidate_multiplier: int = Field(default=3, alias="RETRIEVAL_CANDIDATE_MULTIPLIER")
@@ -38,11 +39,16 @@ class Settings(BaseSettings):
         default=None,
         alias="OCI_GENAI_EMBEDDING_MODEL_ID",
     )
+    oci_genai_embedding_dimensions: int | None = Field(
+        default=None,
+        alias="OCI_GENAI_EMBEDDING_DIMENSIONS",
+    )
     oci_genai_compartment_id: str | None = Field(
         default=None,
         alias="OCI_GENAI_COMPARTMENT_ID",
     )
     oci_genai_endpoint: str | None = Field(default=None, alias="OCI_GENAI_ENDPOINT")
+    synthesis_debug_enabled: bool = Field(default=False, alias="SYNTHESIS_DEBUG_ENABLED")
     oci_object_storage_namespace: str | None = Field(
         default=None,
         alias="OCI_OBJECT_STORAGE_NAMESPACE",

@@ -161,12 +161,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--embedding-provider", choices=("local", "oci_genai"), default="local")
     parser.add_argument("--oci-region")
     parser.add_argument("--oci-profile", default="DEFAULT")
-    parser.add_argument("--oci-auth-mode", choices=("config_file", "instance_principal"), default="config_file")
+    parser.add_argument("--oci-auth-mode", choices=("config_file", "instance_principal", "resource_principal"), default="config_file")
+    parser.add_argument("--embedding-fallback-enabled", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--oci-namespace")
     parser.add_argument("--oci-vector-bucket")
     parser.add_argument("--oci-vector-object-name", default="knowledge/oci-rag-index.json")
     parser.add_argument("--oci-genai-compartment-id")
     parser.add_argument("--oci-genai-embedding-model-id")
+    parser.add_argument("--oci-genai-embedding-dimensions", type=int)
     parser.add_argument("--oci-genai-endpoint")
     parser.add_argument("--oci-vector-db-dsn")
     parser.add_argument("--oci-vector-db-user")
@@ -180,6 +182,7 @@ async def async_main() -> int:
         KNOWLEDGE_INDEX_PATH=args.index_path,
         RETRIEVAL_PROVIDER=args.provider,
         EMBEDDING_PROVIDER=args.embedding_provider,
+        EMBEDDING_FALLBACK_ENABLED=args.embedding_fallback_enabled,
         OCI_REGION=args.oci_region,
         OCI_PROFILE=args.oci_profile,
         OCI_AUTH_MODE=args.oci_auth_mode,
@@ -188,6 +191,7 @@ async def async_main() -> int:
         OCI_VECTOR_OBJECT_NAME=args.oci_vector_object_name,
         OCI_GENAI_COMPARTMENT_ID=args.oci_genai_compartment_id,
         OCI_GENAI_EMBEDDING_MODEL_ID=args.oci_genai_embedding_model_id,
+        OCI_GENAI_EMBEDDING_DIMENSIONS=args.oci_genai_embedding_dimensions,
         OCI_GENAI_ENDPOINT=args.oci_genai_endpoint,
         OCI_VECTOR_DB_DSN=args.oci_vector_db_dsn,
         OCI_VECTOR_DB_USER=args.oci_vector_db_user,

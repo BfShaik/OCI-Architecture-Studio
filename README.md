@@ -15,7 +15,7 @@ OCI Architecture Studio currently supports a validated advisory flow in local de
 5. The active staging provider is `oci_object_storage`, reading the validated vector manifest from OCI Object Storage.
 6. Local development defaults to `local_json`; it also remains the tested config-only rollback provider for staging.
 7. The controlled orchestration layer selects deterministic specialist roles, shares the same retrieved evidence across them, and runs a validation critic over evidence support, citations, freshness, and unsupported-claim risk. These are in-process role boundaries, not autonomous agents.
-8. One final synthesis step generates the advisory response through the configured provider with deterministic rollback available. Deterministic synthesis now uses lightweight architecture pattern profiles, retrieved evidence, workload heuristics, and consistency checks rather than only profile boilerplate.
+8. One final synthesis step generates the advisory response through the configured provider with deterministic rollback available. Deterministic synthesis now uses lightweight architecture pattern profiles, retrieved evidence, workload heuristics, and consistency checks rather than only profile boilerplate. OCI GenAI synthesis can be enabled through configuration and uses the same retrieved context through a dedicated grounding prompt builder.
 9. Release-awareness currently uses local release snapshots, release metadata schemas, and refresh-policy scaffolding. Scheduled refresh and promotion automation exist as implementation scaffolding, but live release reconciliation is not part of request-time advisory behavior.
 10. The backend returns structured recommendations, concise decision reasoning metadata, consistency findings, confidence, evidence links, section citation metadata, optional retrieval debug traces, release context, temporal knowledge context, and standard architecture response sections. The current UI renders the main advisory fields and citation cards; full section-level citation, reasoning, consistency, and release-context UI is future work.
 
@@ -38,6 +38,7 @@ tests/                Backend and integration tests
 
 - Local OCI source registry and ingestion pipeline
 - Deterministic local embeddings for development
+- Optional OCI Generative AI embeddings with provider switching, dimensional validation, failure diagnostics, and deterministic local fallback
 - JSON vector index for local retrieval
 - Citation-friendly chunk metadata with service, service category, domain, workload, architecture pattern, trust, intent tags, migration mappings, and freshness score
 - Lightweight retrieval reranking that combines semantic similarity, intent match, service relevance, metadata overlap, architecture pattern match, workload/domain relevance, topic match, and migration mapping match
@@ -85,6 +86,8 @@ tests/                Backend and integration tests
 - Config-only staging promotion to `oci_object_storage` with rollback validation
 - Evidence-linked recommendations, confidence scoring, decision reasoning metadata, consistency findings, synthesis quality signals, uncertainty flags, and advisory quality metrics
 - Config-selectable advisory synthesis with deterministic rollback and an OCI GenAI chat adapter
+- Retrieval-grounded GenAI prompt construction with detected intent, mapped OCI services, workload/domain profile, architecture pattern hints, retrieved OCI chunks, and required response structure
+- Optional synthesis debug traces with selected provider, retrieved chunk IDs, grounding prompt sections, approximate input tokens, token usage when available, and fallback reason
 - Controlled in-process orchestration pilot with:
   - one in-process supervisor
   - deterministic specialist selection for architecture, migration, HA/DR, cost, and release-awareness advisors
@@ -97,6 +100,28 @@ tests/                Backend and integration tests
   - `/orchestration/health` observability
 
 The orchestration pilot does not perform autonomous tool use, long-running planning, multi-step memory, or independent agent execution. Those remain deferred until there is enough quality data to justify them.
+
+## GenAI Activation Status
+
+OCI Architecture Studio is evolving from deterministic scaffolding into an OCI GenAI-assisted advisor. The current runtime still defaults to deterministic mode for safety and offline repeatability.
+
+Implemented today:
+
+- `EMBEDDING_PROVIDER=local|oci_genai`
+- `EMBEDDING_FALLBACK_ENABLED=true|false`
+- `ADVISORY_SYNTHESIS_PROVIDER=deterministic|oci_genai`
+- `SYNTHESIS_DEBUG_ENABLED=true|false`
+- request-level `synthesis_debug`
+- fail-closed OCI GenAI synthesis fallback to deterministic synthesis
+- deterministic fallback for OCI GenAI embedding activation or generation failures when fallback is enabled
+- deterministic-vs-OCI GenAI comparison reporting under `infra/scripts/genai_synthesis_parity_check.py`
+
+Current limitations:
+
+- The active local corpus is still small: 21 OCI knowledge chunks/services.
+- OCI GenAI mode requires valid OCI SDK auth, compartment, model IDs, region/endpoint policy access, and parity validation before promotion.
+- Live GenAI comparison is skipped when required OCI GenAI environment variables are absent.
+- GenAI output is still constrained by retrieved evidence quality; corpus expansion remains necessary before production-grade breadth.
 
 ## Run Locally
 
@@ -210,6 +235,7 @@ app/backend/.venv/bin/python evals/run_golden.py --output-dir evals/reports/gold
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/edge-cases.jsonl --output-dir evals/reports/edge-cases
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/advisory-quality.jsonl --output-dir evals/reports/advisory-quality
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/orchestration-quality.jsonl --output-dir evals/reports/orchestration-quality
+app/backend/.venv/bin/python infra/scripts/genai_synthesis_parity_check.py --cases evals/genai-comparison.jsonl --output-dir evals/reports/genai-comparison --allow-skip
 app/backend/.venv/bin/python infra/scripts/genai_synthesis_parity_check.py --cases evals/golden-prompts.jsonl --output-dir evals/reports/genai-parity --allow-skip
 ```
 

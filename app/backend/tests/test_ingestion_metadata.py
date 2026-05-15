@@ -48,6 +48,31 @@ def test_infer_source_metadata_adds_citation_ready_fields() -> None:
     assert metadata["metadata_schema_version"] == ingest.METADATA_SCHEMA_VERSION
 
 
+def test_infer_source_metadata_accepts_registry_overrides() -> None:
+    source = {
+        "id": "oci-custom-ai-source",
+        "title": "OCI Custom AI Source",
+        "url": "https://docs.oracle.com/example",
+        "source_type": "oci_service_doc",
+        "service": "OCI Data Science",
+        "service_domain": "ai_ml",
+        "source_category": "ai",
+        "workload_types": ["ai-inference"],
+        "domain_tags": ["AI/ML"],
+        "intent_tags": ["ai_ml", "architecture"],
+        "architecture_patterns": ["model-serving"],
+        "release_tags": ["model-serving"],
+    }
+
+    metadata = ingest.infer_source_metadata(source, "2026-05-14T00:00:00+00:00", "fallback")
+
+    assert metadata["service"] == "OCI Data Science"
+    assert metadata["service_domain"] == "ai_ml"
+    assert metadata["source_category"] == "ai"
+    assert metadata["release_tags"] == ["model-serving"]
+    assert "ai-inference" in metadata["workload_types"]
+
+
 def test_chunk_content_hash_is_stable() -> None:
     text = "OCI Object Storage supports durable architecture artifacts."
 

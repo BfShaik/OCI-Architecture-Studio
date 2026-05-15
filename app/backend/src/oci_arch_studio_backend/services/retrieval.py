@@ -10,6 +10,7 @@ from oci_arch_studio_backend.services.architecture_heuristics import (
 from oci_arch_studio_backend.services.architecture_patterns import ArchitecturePatternSelector
 from oci_arch_studio_backend.services.embeddings import (
     Embedder,
+    FallbackEmbedder,
     LocalHashingEmbedder,
     OciGenerativeAiEmbedder,
     OciGenerativeAiEmbeddingConfig,
@@ -262,9 +263,19 @@ class OciKnowledgeRetriever:
         return sources
 
     def diagnostics(self) -> dict[str, object]:
+        embedding_diagnostics = (
+            self.embedder.diagnostics()
+            if hasattr(self.embedder, "diagnostics")
+            else {
+                "primary_model": self.embedder.model_name,
+                "fallback_enabled": False,
+            }
+        )
         return {
             "provider": self.provider_name,
             "embedding_model": self.embedder.model_name,
+            "embedding_provider": self.embedder.model_name,
+            "embedding": embedding_diagnostics,
             "store": self.store.health(),
             "metrics": retrieval_metrics.snapshot(),
         }
@@ -434,22 +445,51 @@ def build_retriever(settings: Settings, top_k: int = 6) -> OciKnowledgeRetriever
     embedder: Embedder
     if settings.embedding_provider == "oci_genai":
         if not settings.oci_genai_compartment_id or not settings.oci_genai_embedding_model_id:
+            if settings.embedding_fallback_enabled:
+                missing = [
+                    name
+                    for name, value in (
+                        ("OCI_GENAI_COMPARTMENT_ID", settings.oci_genai_compartment_id),
+                        ("OCI_GENAI_EMBEDDING_MODEL_ID", settings.oci_genai_embedding_model_id),
+                    )
+                    if not value
+                ]
+                embedder = FallbackEmbedder(
+                    primary=None,
+                    fallback=LocalHashingEmbedder(),
+                    activation_error="Missing required OCI GenAI embedding setting(s): " + ", ".join(missing),
+                )
+            else:
+                raise ValueError(
+                    "OCI_GENAI_COMPARTMENT_ID and OCI_GENAI_EMBEDDING_MODEL_ID are required "
+                    "when EMBEDDING_PROVIDER=oci_genai."
+                )
+        else:
+            primary = OciGenerativeAiEmbedder(
+                OciGenerativeAiEmbeddingConfig(
+                    region=settings.oci_region,
+                    profile=settings.oci_profile,
+                    auth_mode=settings.oci_auth_mode,
+                    compartment_id=settings.oci_genai_compartment_id,
+                    model_id=settings.oci_genai_embedding_model_id,
+                    endpoint=settings.oci_genai_endpoint,
+                    expected_dimensions=settings.oci_genai_embedding_dimensions,
+                )
+            )
+            embedder = (
+                FallbackEmbedder(primary=primary, fallback=LocalHashingEmbedder())
+                if settings.embedding_fallback_enabled
+                else primary
+            )
+    else:
+        embedder = LocalHashingEmbedder()
+
+    if settings.embedding_provider == "oci_genai" and not settings.embedding_fallback_enabled:
+        if not settings.oci_genai_compartment_id or not settings.oci_genai_embedding_model_id:
             raise ValueError(
                 "OCI_GENAI_COMPARTMENT_ID and OCI_GENAI_EMBEDDING_MODEL_ID are required "
                 "when EMBEDDING_PROVIDER=oci_genai."
             )
-        embedder = OciGenerativeAiEmbedder(
-            OciGenerativeAiEmbeddingConfig(
-                region=settings.oci_region,
-                profile=settings.oci_profile,
-                auth_mode=settings.oci_auth_mode,
-                compartment_id=settings.oci_genai_compartment_id,
-                model_id=settings.oci_genai_embedding_model_id,
-                endpoint=settings.oci_genai_endpoint,
-            )
-        )
-    else:
-        embedder = LocalHashingEmbedder()
 
     if settings.retrieval_provider == "oci_object_storage":
         if not settings.oci_object_storage_namespace or not settings.oci_vector_bucket:

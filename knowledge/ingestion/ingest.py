@@ -17,6 +17,7 @@ BACKEND_SRC = REPO_ROOT / "app" / "backend" / "src"
 sys.path.append(str(BACKEND_SRC))
 
 from oci_arch_studio_backend.services.embeddings import (  # noqa: E402
+    FallbackEmbedder,
     LocalHashingEmbedder,
     OciGenerativeAiEmbedder,
     OciGenerativeAiEmbeddingConfig,
@@ -270,7 +271,7 @@ def select_sources(
     return selected
 
 
-def infer_source_metadata(source: dict[str, str], fetched_timestamp: str, fetch_status: str) -> dict[str, object]:
+def infer_source_metadata(source: dict[str, object], fetched_timestamp: str, fetch_status: str) -> dict[str, object]:
     source_id = source["id"].replace("oci-", "")
     matched: dict[str, object] | None = None
     for key, metadata in SERVICE_METADATA.items():
@@ -285,24 +286,81 @@ def infer_source_metadata(source: dict[str, str], fetched_timestamp: str, fetch_
     metadata.setdefault("architecture_patterns", [])
     metadata.update(
         {
+            key: source[key]
+            for key in (
+                "service",
+                "service_domain",
+                "service_category",
+                "category",
+                "topic",
+                "workload",
+                "workload_types",
+                "domain",
+                "domain_tags",
+                "intent_tags",
+                "architecture_patterns",
+                "pattern",
+                "migration_mappings",
+                "ha_dr_tags",
+                "cost_optimization_tags",
+            )
+            if key in source
+        }
+    )
+    metadata.update(
+        {
             "source_url": source["url"],
+            "source_id": source["id"],
+            "source_type": source.get("source_type", "oci_doc"),
+            "source_category": source.get("source_category", metadata.get("service_domain", "general")),
+            "release_tags": _as_list(source.get("release_tags", [])),
             "fetched_timestamp": fetched_timestamp,
             "freshness_score": 0.9 if fetch_status == "fetched" else 0.65,
             "trust_level": source.get("trust_level", "official"),
             "release_version": source.get("release_version", "unknown"),
         }
     )
-    return enrich_metadata(metadata)
+    enriched = enrich_metadata(metadata)
+    for key in (
+        "workload_types",
+        "domain_tags",
+        "intent_tags",
+        "architecture_patterns",
+        "migration_mappings",
+        "ha_dr_tags",
+        "cost_optimization_tags",
+    ):
+        if key in source:
+            enriched[key] = source[key]
+    if "workload" in source:
+        enriched["workload"] = source["workload"]
+    if "domain" in source:
+        enriched["domain"] = source["domain"]
+    return enriched
 
 
 def build_embedder(args: argparse.Namespace):
     if args.embedding_provider == "oci_genai":
         if not args.oci_genai_compartment_id or not args.oci_genai_embedding_model_id:
+            if args.embedding_fallback_enabled:
+                missing = [
+                    name
+                    for name, value in (
+                        ("--oci-genai-compartment-id", args.oci_genai_compartment_id),
+                        ("--oci-genai-embedding-model-id", args.oci_genai_embedding_model_id),
+                    )
+                    if not value
+                ]
+                return FallbackEmbedder(
+                    primary=None,
+                    fallback=LocalHashingEmbedder(dimensions=args.dimensions),
+                    activation_error="Missing required OCI GenAI embedding setting(s): " + ", ".join(missing),
+                )
             raise ValueError(
                 "--oci-genai-compartment-id and --oci-genai-embedding-model-id are required "
                 "when --embedding-provider=oci_genai"
             )
-        return OciGenerativeAiEmbedder(
+        primary = OciGenerativeAiEmbedder(
             OciGenerativeAiEmbeddingConfig(
                 region=args.oci_region,
                 profile=args.oci_profile,
@@ -310,9 +368,23 @@ def build_embedder(args: argparse.Namespace):
                 compartment_id=args.oci_genai_compartment_id,
                 model_id=args.oci_genai_embedding_model_id,
                 endpoint=args.oci_genai_endpoint,
+                expected_dimensions=args.oci_genai_embedding_dimensions,
             )
         )
+        return (
+            FallbackEmbedder(primary=primary, fallback=LocalHashingEmbedder(dimensions=args.dimensions))
+            if args.embedding_fallback_enabled
+            else primary
+        )
     return LocalHashingEmbedder(dimensions=args.dimensions)
+
+
+def _as_list(value: object) -> list[str]:
+    if isinstance(value, list):
+        return [str(item) for item in value]
+    if isinstance(value, str) and value:
+        return [value]
+    return []
 
 
 def build_index(args: argparse.Namespace) -> dict[str, object]:
@@ -368,6 +440,12 @@ def build_index(args: argparse.Namespace) -> dict[str, object]:
         "embedding_model": embedder.model_name,
         "embedding_provider": args.embedding_provider,
         "dimensions": args.dimensions if args.embedding_provider == "local" else None,
+        "embedding_validation": {
+            "fallback_enabled": bool(args.embedding_fallback_enabled),
+            "expected_dimensions": args.oci_genai_embedding_dimensions,
+            "fallback_used": bool(getattr(embedder, "fallback_count", 0)),
+            "last_error": getattr(embedder, "last_error", None),
+        },
         "metadata_schema_version": METADATA_SCHEMA_VERSION,
         "vector_migration": {
             "local_json_compatible": True,
@@ -464,11 +542,13 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--dimensions", type=int, default=256)
     parser.add_argument("--embedding-provider", choices=("local", "oci_genai"), default="local")
+    parser.add_argument("--embedding-fallback-enabled", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--oci-region")
     parser.add_argument("--oci-profile", default="DEFAULT")
     parser.add_argument("--oci-auth-mode", choices=("config_file", "instance_principal", "resource_principal"), default="config_file")
     parser.add_argument("--oci-genai-compartment-id")
     parser.add_argument("--oci-genai-embedding-model-id")
+    parser.add_argument("--oci-genai-embedding-dimensions", type=int)
     parser.add_argument("--oci-genai-endpoint")
     parser.add_argument("--oci-namespace")
     parser.add_argument("--oci-upload-bucket")

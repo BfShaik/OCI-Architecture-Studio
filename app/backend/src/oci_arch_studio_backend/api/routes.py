@@ -50,6 +50,7 @@ async def architecture_review(
         agent_orchestrator=SupervisedAgentOrchestrator(
             mode=settings.advisory_orchestration_mode,
         ),
+        synthesis_debug_enabled=settings.synthesis_debug_enabled,
     )
     return await orchestrator.review(request)
 

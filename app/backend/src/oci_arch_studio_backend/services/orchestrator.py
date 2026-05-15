@@ -36,6 +36,7 @@ class ArchitectureReviewOrchestrator:
         agent_orchestrator: SupervisedAgentOrchestrator | None = None,
         consistency_validator: ArchitectureConsistencyValidator | None = None,
         decision_reasoner: ArchitectureDecisionReasoner | None = None,
+        synthesis_debug_enabled: bool = False,
     ) -> None:
         self.retriever = retriever
         self.classifier = classifier or IntentClassifier()
@@ -45,6 +46,7 @@ class ArchitectureReviewOrchestrator:
         self.agent_orchestrator = agent_orchestrator or SupervisedAgentOrchestrator()
         self.consistency_validator = consistency_validator or ArchitectureConsistencyValidator()
         self.decision_reasoner = decision_reasoner or ArchitectureDecisionReasoner()
+        self.synthesis_debug_enabled = synthesis_debug_enabled
 
     async def review(
         self,
@@ -101,6 +103,7 @@ class ArchitectureReviewOrchestrator:
                 profile=profile,
                 sources=sources,
                 context_note=orchestration_plan.context_note,
+                debug_enabled=bool(request.synthesis_debug or self.synthesis_debug_enabled),
             )
         )
         quality = self.quality_analyzer.assess(
@@ -195,6 +198,7 @@ class ArchitectureReviewOrchestrator:
             synthesis_warnings=synthesis.warnings,
             synthesis_fallback_used=synthesis.used_fallback,
             synthesis_quality=synthesis.quality,
+            synthesis_debug=synthesis.debug,
             decision_reasoning=decision_reasoning,
             consistency_findings=consistency_findings,
             release_context=release_context,

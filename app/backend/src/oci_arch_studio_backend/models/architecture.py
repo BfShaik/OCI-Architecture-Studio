@@ -19,6 +19,10 @@ class ArchitectureReviewRequest(BaseModel):
         default=False,
         description="Include backend retrieval trace details for diagnostics.",
     )
+    synthesis_debug: bool = Field(
+        default=False,
+        description="Include backend synthesis grounding diagnostics for provider validation.",
+    )
 
 
 class RetrievedSource(BaseModel):
@@ -97,6 +101,19 @@ class SynthesisQualityScore(BaseModel):
     citation_coverage: float
     overall: float
     notes: list[str] = Field(default_factory=list)
+
+
+class SynthesisDebugTrace(BaseModel):
+    selected_provider: str
+    selected_model: str | None = None
+    retrieved_chunk_ids: list[str] = Field(default_factory=list)
+    grounding_prompt_sections: list[str] = Field(default_factory=list)
+    prompt_char_count: int = 0
+    estimated_input_tokens: int = 0
+    output_char_count: int = 0
+    fallback_used: bool = False
+    fallback_reason: str | None = None
+    token_usage: dict[str, int] = Field(default_factory=dict)
 
 
 class ConfidenceScore(BaseModel):
@@ -185,6 +202,7 @@ class ArchitectureReviewResponse(BaseModel):
     synthesis_warnings: list[str] = Field(default_factory=list)
     synthesis_fallback_used: bool = False
     synthesis_quality: SynthesisQualityScore | None = None
+    synthesis_debug: SynthesisDebugTrace | None = None
     decision_reasoning: list[ArchitectureDecisionReason] = Field(default_factory=list)
     consistency_findings: list[ArchitectureConsistencyFinding] = Field(default_factory=list)
     release_context: ReleaseImpactSummary | None = None

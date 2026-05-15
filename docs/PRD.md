@@ -19,6 +19,10 @@ OCI Architecture Studio is an AI-powered OCI architecture intelligence platform 
 - AWS-to-OCI service mapping before retrieval
 - Metadata-aware retrieval reranking and optional retrieval debug traces
 - Section citation metadata in the backend response
+- OCI GenAI embedding provider path with deterministic fallback and validation diagnostics
+- OCI GenAI synthesis provider path with fail-closed deterministic fallback
+- Dedicated retrieval-grounded prompt builder for GenAI synthesis
+- Optional synthesis debug metadata for provider, prompt sections, retrieved chunks, token estimates, and fallback reasons
 - Deterministic architecture pattern profiles for common OCI advisory scenarios
 - Lightweight synthesis quality scoring
 - Concise architecture decision reasoning metadata for major recommendations
@@ -30,7 +34,7 @@ OCI Architecture Studio is an AI-powered OCI architecture intelligence platform 
 
 ## Current Working Flow
 
-The current implementation supports a validated API/UI advisory workflow with intent classification, source-service mapping, metadata-aware retrieval, reranking, deterministic fallback synthesis, release-awareness scaffolding, and OCI staging deployment.
+The current implementation supports a validated API/UI advisory workflow with intent classification, source-service mapping, metadata-aware retrieval, reranking, deterministic fallback synthesis, optional OCI GenAI-assisted synthesis, release-awareness scaffolding, and OCI staging deployment.
 
 User flow:
 1. A user asks an OCI architecture, migration, DR, cost, observability, AI/ML, security, modernization, SaaS, analytics, or release-awareness question.
@@ -38,7 +42,7 @@ User flow:
 3. The system maps known source services to OCI service candidates when migration/source-cloud services are mentioned.
 4. The system detects architecture-domain heuristics such as ecommerce, fintech, SaaS, AI/ML inference, observability, or analytics.
 5. The system retrieves OCI knowledge chunks through a config-selected retrieval provider and reranks candidates using semantic score, intent match, service relevance, metadata overlap, architecture pattern match, workload/domain relevance, topic match, and migration mappings.
-6. The system uses deterministic in-process orchestration metadata and a single synthesis step to produce a structured advisory response. The deterministic path applies lightweight architecture pattern profiles, retrieved services, workload/domain heuristics, citation metadata, and consistency validation.
+6. The system uses deterministic in-process orchestration metadata and a single synthesis step to produce a structured advisory response. The deterministic path applies lightweight architecture pattern profiles, retrieved services, workload/domain heuristics, citation metadata, and consistency validation. The OCI GenAI path injects a retrieval-grounded prompt with intent, mappings, workload/domain profile, pattern hints, and retrieved chunks.
 7. Release-aware prompts are checked against point-in-time release snapshots and freshness metadata. Current release awareness is snapshot/scaffold based, not live request-time reconciliation with OCI release feeds.
 8. The backend returns recommendations, assumptions, risks, citations, evidence links, confidence, decision reasoning metadata, consistency findings, section citation metadata, release context, temporal knowledge context, and optional retrieval debug traces.
 9. The UI displays the main advisory fields and citation cards. Full section-level citation, reasoning, consistency, and release-context UI is not implemented yet.
@@ -74,10 +78,20 @@ Supported intents:
 Synthesis behavior:
 
 - Deterministic synthesis is implemented and remains the fallback-safe default unless `ADVISORY_SYNTHESIS_PROVIDER=oci_genai` is configured.
+- OCI GenAI synthesis is implemented as a configurable path with deterministic fail-closed fallback.
+- The GenAI prompt builder explicitly includes retrieved chunks, mapped services, workload/domain heuristics, architecture pattern hints, and response section requirements.
+- Optional synthesis debug output exposes provider, model, grounding prompt sections, selected chunks, token estimates, token usage when available, and fallback reason.
 - Deterministic synthesis uses reusable architecture profiles for HA web apps, Kubernetes modernization, fintech DR, AI inference, analytics/data lake, and multi-region SaaS.
 - The response includes additive synthesis quality signals for grounding, OCI specificity, workload alignment, migration accuracy, recommendation diversity, and citation coverage.
-- OCI GenAI chat synthesis adapter exists, but live GenAI use requires environment configuration and parity validation.
+- Live GenAI use requires environment configuration and parity validation.
 - If OCI GenAI synthesis fails, the system fails closed to deterministic synthesis.
+
+Embedding behavior:
+
+- Local hashing embeddings remain the default for deterministic offline mode.
+- OCI GenAI embeddings can be selected with `EMBEDDING_PROVIDER=oci_genai`.
+- Embedding fallback is enabled by default through `EMBEDDING_FALLBACK_ENABLED=true`.
+- The embedding path validates missing provider configuration, generation failures, and optional dimensional consistency.
 
 Orchestration behavior:
 
@@ -96,6 +110,7 @@ Orchestration behavior:
 - Retrieval, intent classification, and orchestration are separated behind service modules.
 - Retrieval reranking is modular and test-covered.
 - Optional retrieval debug trace is available without changing the default response behavior.
+- Optional synthesis debug trace is available without changing the default response behavior.
 - Backend citation metadata can associate response sections with chunk IDs, source documents, and OCI service categories.
 - Decision reasoning metadata can associate major recommendations with concise rationale, tradeoffs, rejected alternatives, source chunk IDs, and confidence.
 - Consistency validation can flag conflicting requirements, migration mapping coverage gaps, HA/DR alignment gaps, observability gaps, and security coverage gaps.
@@ -110,6 +125,7 @@ Orchestration behavior:
 - No advanced memory or bi-temporal storage implementation yet.
 - No autonomous multi-agent execution yet.
 - No always-on live LLM synthesis by default.
+- No promotion of OCI GenAI mode without parity and operational validation.
 - No continuous live release intelligence beyond scheduled snapshot refresh and gated promotion.
 - No bi-temporal retrieval; current-vs-historical temporal knowledge support is schema-oriented scaffolding only.
 - Oracle AI Vector Search active reads remain guarded until schema, indexing, and query parity are validated.

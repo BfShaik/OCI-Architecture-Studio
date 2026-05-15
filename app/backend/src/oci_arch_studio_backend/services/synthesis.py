@@ -6,10 +6,11 @@ from time import perf_counter
 from typing import Protocol
 
 from oci_arch_studio_backend.models.architecture import RetrievedSource
+from oci_arch_studio_backend.models.architecture import SynthesisDebugTrace
 from oci_arch_studio_backend.services.architecture_heuristics import ArchitectureHeuristicClassifier
+from oci_arch_studio_backend.services.grounding_prompt import GroundingPromptBuilder
 from oci_arch_studio_backend.services.intents import IntentProfile
 from oci_arch_studio_backend.services.response_formatter import (
-    STANDARD_RESPONSE_SECTIONS,
     ensure_standard_sections,
     format_standard_answer,
 )
@@ -23,6 +24,7 @@ class SynthesisRequest:
     profile: IntentProfile
     sources: list[RetrievedSource]
     context_note: str
+    debug_enabled: bool = False
 
 
 @dataclass(frozen=True)
@@ -38,6 +40,7 @@ class SynthesisResult:
     warnings: list[str] = field(default_factory=list)
     used_fallback: bool = False
     quality: dict[str, object] | None = None
+    debug: SynthesisDebugTrace | None = None
 
 
 class AdvisorySynthesizer(Protocol):
@@ -79,6 +82,19 @@ class DeterministicAdvisorySynthesizer:
             model="profile-v0",
             latency_ms=0.0,
             quality=quality.as_dict(),
+            debug=self._debug_trace(request, answer) if request.debug_enabled else None,
+        )
+
+    def _debug_trace(self, request: SynthesisRequest, answer: str) -> SynthesisDebugTrace:
+        return SynthesisDebugTrace(
+            selected_provider=self.provider_name,
+            selected_model="profile-v0",
+            retrieved_chunk_ids=[source.chunk_id or source.title for source in request.sources],
+            grounding_prompt_sections=("deterministic_profile", "architecture_pattern", "retrieved_services"),
+            prompt_char_count=len(request.question) + len(request.context_note),
+            estimated_input_tokens=max((len(request.question) + len(request.context_note)) // 4, 1),
+            output_char_count=len(answer),
+            fallback_used=False,
         )
 
 
@@ -105,6 +121,9 @@ class OciGenAiAdvisorySynthesizer:
         self.config = config
         self.fallback = fallback or DeterministicAdvisorySynthesizer()
         self._client = None
+        self.prompt_builder = GroundingPromptBuilder()
+        self._last_grounding_prompt = None
+        self._last_token_usage: dict[str, int] = {}
 
     def synthesize(self, request: SynthesisRequest) -> SynthesisResult:
         started_at = perf_counter()
@@ -134,9 +153,18 @@ class OciGenAiAdvisorySynthesizer:
                 latency_ms=round((perf_counter() - started_at) * 1000, 2),
                 warnings=self._list_or_default(payload.get("quality_warnings"), ()),
                 quality=quality.as_dict(),
+                debug=self._debug_trace(
+                    request=request,
+                    output=answer,
+                    fallback_used=False,
+                    token_usage=self._last_token_usage,
+                )
+                if request.debug_enabled
+                else None,
             )
         except Exception as exc:  # noqa: BLE001 - synthesis must fail closed into deterministic advisory.
             fallback = self.fallback.synthesize(request)
+            fallback_reason = f"{type(exc).__name__}: {exc}"
             return SynthesisResult(
                 answer=fallback.answer,
                 recommendations=fallback.recommendations,
@@ -148,10 +176,18 @@ class OciGenAiAdvisorySynthesizer:
                 latency_ms=round((perf_counter() - started_at) * 1000, 2),
                 warnings=[
                     "OCI GenAI synthesis failed closed; deterministic synthesis fallback was used.",
-                    f"{type(exc).__name__}: {exc}",
+                    fallback_reason,
                 ],
                 used_fallback=True,
                 quality=fallback.quality,
+                debug=self._debug_trace(
+                    request=request,
+                    output=fallback.answer,
+                    fallback_used=True,
+                    fallback_reason=fallback_reason,
+                )
+                if request.debug_enabled
+                else fallback.debug,
             )
 
     def _invoke_model(self, request: SynthesisRequest) -> str:
@@ -161,19 +197,15 @@ class OciGenAiAdvisorySynthesizer:
         except ImportError as exc:
             raise RuntimeError("OCI SDK is required for OCI Generative AI synthesis.") from exc
 
-        system_prompt = (
-            "You are OCI Architecture Studio. Return only JSON with keys: "
-            "answer, recommendations, assumptions, risks, next_steps, quality_warnings. "
-            "Use only the retrieved OCI evidence. Do not invent OCI services. "
-            "Tie actionable recommendations to citation chunk IDs or source titles. "
-            "If evidence is insufficient, say so explicitly and keep guidance provisional. "
-            "Use workload/domain characteristics and architecture pattern guidance from the prompt; avoid generic cloud filler. "
-            "Prioritize network segmentation, IAM/security boundaries, HA/DR, cost/performance tradeoffs, observability, and migration validation when relevant. "
-            "For latest/release prompts, do not claim current impact unless release evidence is present. "
-            "The answer field must use these section headings in order: "
-            f"{', '.join(STANDARD_RESPONSE_SECTIONS)}."
+        grounding_prompt = self.prompt_builder.build(
+            question=request.question,
+            workload_context=request.workload_context,
+            profile=request.profile,
+            sources=request.sources,
+            context_note=request.context_note,
         )
-        user_prompt = self._build_user_prompt(request)
+        self._last_grounding_prompt = grounding_prompt
+        self._last_token_usage = {}
         serving_mode = oci.generative_ai_inference.models.OnDemandServingMode(
             model_id=self.config.model_id,
         )
@@ -183,14 +215,14 @@ class OciGenAiAdvisorySynthesizer:
                 oci.generative_ai_inference.models.SystemMessage(
                     content=[
                         oci.generative_ai_inference.models.TextContent(
-                            text=system_prompt,
+                            text=grounding_prompt.system_prompt,
                         )
                     ]
                 ),
                 oci.generative_ai_inference.models.UserMessage(
                     content=[
                         oci.generative_ai_inference.models.TextContent(
-                            text=user_prompt,
+                            text=grounding_prompt.user_prompt,
                         )
                     ]
                 ),
@@ -204,51 +236,18 @@ class OciGenAiAdvisorySynthesizer:
             chat_request=chat_request,
         )
         response = client.chat(details)
+        self._last_token_usage = self._extract_usage(response)
         chat_response = getattr(response.data, "chat_response", None)
         return self._extract_text(chat_response)
 
     def _build_user_prompt(self, request: SynthesisRequest) -> str:
-        source_blocks = []
-        for source in request.sources[:8]:
-            source_blocks.append(
-                "\n".join(
-                    (
-                        f"chunk_id: {source.chunk_id}",
-                        f"title: {source.title}",
-                        f"service: {source.service}",
-                        f"domain: {source.service_domain}",
-                        f"service_category: {source.service_category or source.category}",
-                        f"workload_types: {', '.join(source.workload_types)}",
-                        f"domain_tags: {', '.join(source.domain_tags)}",
-                        f"architecture_patterns: {', '.join(source.architecture_patterns)}",
-                        f"stale: {source.is_stale}",
-                        f"url: {source.source_url or source.url}",
-                        f"summary: {source.summary[:1200]}",
-                    )
-                )
-            )
-        return "\n\n".join(
-            (
-                f"Question: {request.question}",
-                f"Workload context: {request.workload_context or 'not provided'}",
-                f"Intent: {request.profile.intent.value}",
-                f"Prompt template: {request.profile.prompt_template}",
-                f"Focus: {request.profile.focus}",
-                "Architecture domain heuristics: "
-                + (
-                    " ".join(
-                        ArchitectureHeuristicClassifier()
-                        .detect(" ".join(part for part in (request.question, request.workload_context) if part))
-                        .recommendations
-                    )
-                    or "none detected"
-                ),
-                f"Context note: {request.context_note}",
-                "Retrieved evidence:",
-                "\n---\n".join(source_blocks),
-                "Write enterprise-ready OCI guidance. Keep every recommendation grounded in the evidence.",
-            )
-        )
+        return self.prompt_builder.build(
+            question=request.question,
+            workload_context=request.workload_context,
+            profile=request.profile,
+            sources=request.sources,
+            context_note=request.context_note,
+        ).user_prompt
 
     def _get_client(self):
         if self._client is not None:
@@ -261,6 +260,14 @@ class OciGenAiAdvisorySynthesizer:
 
         if self.config.auth_mode == "instance_principal":
             signer = oci.auth.signers.InstancePrincipalsSecurityTokenSigner()
+            client_config = {"region": self.config.region} if self.config.region else {}
+            self._client = oci.generative_ai_inference.GenerativeAiInferenceClient(
+                config=client_config,
+                signer=signer,
+                service_endpoint=self.config.endpoint,
+            )
+        elif self.config.auth_mode == "resource_principal":
+            signer = oci.auth.signers.get_resource_principals_signer()
             client_config = {"region": self.config.region} if self.config.region else {}
             self._client = oci.generative_ai_inference.GenerativeAiInferenceClient(
                 config=client_config,
@@ -292,6 +299,54 @@ class OciGenAiAdvisorySynthesizer:
                 if item_text:
                     return str(item_text)
         raise RuntimeError("OCI GenAI returned no response text.")
+
+    def _extract_usage(self, response) -> dict[str, int]:
+        usage = getattr(getattr(response, "data", None), "usage", None) or getattr(response, "usage", None)
+        if usage is None:
+            return {}
+        values: dict[str, int] = {}
+        for source_name, target_name in (
+            ("input_tokens", "input_tokens"),
+            ("output_tokens", "output_tokens"),
+            ("total_tokens", "total_tokens"),
+            ("prompt_tokens", "input_tokens"),
+            ("completion_tokens", "output_tokens"),
+        ):
+            value = getattr(usage, source_name, None)
+            if isinstance(value, int):
+                values[target_name] = value
+        return values
+
+    def _debug_trace(
+        self,
+        *,
+        request: SynthesisRequest,
+        output: str,
+        fallback_used: bool,
+        fallback_reason: str | None = None,
+        token_usage: dict[str, int] | None = None,
+    ) -> SynthesisDebugTrace:
+        grounding_prompt = getattr(self, "_last_grounding_prompt", None)
+        if grounding_prompt is None:
+            grounding_prompt = self.prompt_builder.build(
+                question=request.question,
+                workload_context=request.workload_context,
+                profile=request.profile,
+                sources=request.sources,
+                context_note=request.context_note,
+            )
+        return SynthesisDebugTrace(
+            selected_provider=self.provider_name if not fallback_used else self.fallback.provider_name,
+            selected_model=self.config.model_id if not fallback_used else "profile-v0",
+            retrieved_chunk_ids=[source.chunk_id or source.title for source in request.sources],
+            grounding_prompt_sections=list(grounding_prompt.sections),
+            prompt_char_count=grounding_prompt.prompt_char_count,
+            estimated_input_tokens=grounding_prompt.estimated_input_tokens,
+            output_char_count=len(output),
+            fallback_used=fallback_used,
+            fallback_reason=fallback_reason,
+            token_usage=token_usage or {},
+        )
 
     def _parse_json(self, value: str) -> dict[str, object]:
         stripped = value.strip()

@@ -11,6 +11,9 @@ OCI Architecture Studio now has a validated working foundation:
 - React/FastAPI advisory workflow deployed in OCI staging
 - intent-aware advisory profiles for product overview, architecture, migration, DR, cost, observability, AI/ML, security, modernization, SaaS platform, analytics, release-awareness, and general prompts
 - metadata-aware retrieval reranking with optional debug traces
+- configurable OCI GenAI embeddings with deterministic fallback and validation diagnostics
+- configurable OCI GenAI synthesis with retrieval-grounded prompt construction and fail-closed deterministic fallback
+- optional synthesis debug traces for prompt sections, retrieved chunks, token estimates, and fallback reasons
 - backend section citation metadata for chunk IDs, source documents, OCI service categories, and services
 - AWS-to-OCI source service mapping and domain-aware heuristics for ecommerce, fintech, SaaS, AI/ML inference, observability, and analytics scenarios
 - deterministic architecture pattern profiles and synthesis quality signals that make fallback responses more useful while remaining explainable
@@ -26,11 +29,13 @@ The next platform milestone is to validate Oracle AI Vector Search schema, index
 
 The current orchestration layer is deterministic and in-process. Autonomous agent planning, persistent agent memory, and independent tool-using agents are future research and productization items, not current runtime behavior.
 
-OCI GenAI synthesis is available as a configurable adapter with deterministic fail-closed fallback. Deterministic synthesis remains the safe default unless live GenAI configuration and parity validation are provided.
+OCI GenAI embeddings and synthesis are available as configurable paths with deterministic fallback. Deterministic synthesis remains the safe default unless live GenAI configuration and parity validation are provided.
 
 The current deterministic synthesis layer is heuristic. It improves structure, workload specificity, grounding fidelity, and recommendation explainability, but it is not a substitute for a full OCI design review or live GenAI reasoning.
 
 Release-awareness is still foundational: the runtime can reference local release snapshots and impact metadata, but it does not yet perform full automated release reconciliation or bi-temporal retrieval.
+
+The corpus remains intentionally modest. Current quality work should be read as a controlled transition from deterministic OCI advisory scaffolding toward retrieval-grounded OCI GenAI-assisted synthesis, not as a claim of full OCI documentation coverage.
 
 ## Product Pillars
 

@@ -350,10 +350,24 @@ def test_build_retriever_requires_oci_vector_settings(tmp_path) -> None:
         build_retriever(settings)
 
 
-def test_build_retriever_requires_oci_embedding_settings(tmp_path) -> None:
+def test_build_retriever_falls_back_when_oci_embedding_settings_are_missing(tmp_path) -> None:
     settings = Settings(
         KNOWLEDGE_INDEX_PATH=tmp_path / "index.json",
         EMBEDDING_PROVIDER="oci_genai",
+    )
+
+    retriever = build_retriever(settings)
+    diagnostics = retriever.diagnostics()
+
+    assert diagnostics["embedding"]["fallback_enabled"] is True
+    assert "OCI_GENAI_COMPARTMENT_ID" in diagnostics["embedding"]["activation_error"]
+
+
+def test_build_retriever_can_require_oci_embedding_settings(tmp_path) -> None:
+    settings = Settings(
+        KNOWLEDGE_INDEX_PATH=tmp_path / "index.json",
+        EMBEDDING_PROVIDER="oci_genai",
+        EMBEDDING_FALLBACK_ENABLED=False,
     )
 
     with pytest.raises(ValueError, match="OCI_GENAI_COMPARTMENT_ID"):
