@@ -405,6 +405,7 @@ class OracleAiVectorSearchStore:
                 cursor = connection.cursor()
                 cursor.execute(sql, binds)
                 rows = cursor.fetchall()
+                results = [self._row_to_result(row) for row in rows]
             latency_ms = round((perf_counter() - started_at) * 1000, 2)
             self._last_error = None
             self._last_query = {
@@ -413,7 +414,7 @@ class OracleAiVectorSearchStore:
                 "top_k": top_k,
                 "result_count": len(rows),
             }
-            return [self._row_to_result(row) for row in rows]
+            return results
         except Exception as exc:
             self._last_error = str(exc)
             raise

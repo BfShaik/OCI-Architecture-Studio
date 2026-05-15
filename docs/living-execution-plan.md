@@ -96,7 +96,8 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | TASK-024 | Done | Harden Autonomous Database admin secret handling before apply. | Added generated password support and OCI Vault secret storage for the vector database admin password; dev/test/staging Terraform init, fmt, and validate passed; staging preflight now shows 5 creates, 0 changes, 0 destroys. |
 | TASK-025 | Done | Apply Oracle Autonomous AI Database vector-search shadow infrastructure. | Applied exactly 5 resources, 0 changes, 0 destroys: generated password, Vault secret, vector DB NSG, TCPS ingress rule, and Autonomous Database. Post-apply no-change plan, Gateway smoke, operational readiness, and backend regression tests passed. Active retrieval remains `oci_object_storage`. |
 | TASK-026 | Done | Validate live Oracle AI Vector Search connectivity and schema/index prerequisites. | Added wallet-aware Oracle vector configuration, validated mTLS connectivity from the backend VM to the Autonomous Database private endpoint, and confirmed the vector table is not created yet. Active retrieval remains `oci_object_storage`. |
-| TASK-027 | Next | Create Oracle AI Vector Search schema and load shadow index. | Use the live wallet/secret path from the backend VM, create the vector table/index, rebuild chunks into Oracle AI Vector Search, then run vector health and parity checks without promoting active retrieval. |
+| TASK-027 | Done | Create Oracle AI Vector Search schema and load shadow index. | Deployed wallet-aware code, created Oracle vector schema and index, upserted 47 chunks, fixed Oracle LOB materialization before connection close, and passed health plus vector retrieval validation with 0.967 average top-chunk overlap. Active retrieval remains `oci_object_storage`. |
+| TASK-028 | Next | Prepare controlled Oracle AI Vector Search shadow-provider runtime metadata. | Store wallet/runtime metadata through the approved OCI-native secret path, add diagnostics for vector shadow readiness, and run parity/regression gates again before considering provider promotion. |
 
 ## Phase Gates
 
@@ -144,13 +145,13 @@ Run the appropriate subset after each increment; run the full matrix before a ne
 
 ## Next Actionable Increment
 
-Current task: `TASK-027`.
+Current task: `TASK-028`.
 
-Create Oracle AI Vector Search schema and load shadow index:
+Prepare controlled Oracle AI Vector Search shadow-provider runtime metadata:
 
-1. Stage wallet and runtime secrets through the approved OCI-native/operator path without committing credentials.
-2. Run `oracle_vector_index.py rebuild` from the backend VM to create schema and upsert chunks.
-3. Run Oracle vector health and retrieval parity checks; keep `RETRIEVAL_PROVIDER=oci_object_storage` until parity passes.
+1. Keep `RETRIEVAL_PROVIDER=oci_object_storage` as the active runtime default.
+2. Add or validate runtime metadata that lets diagnostics report Oracle vector shadow readiness without exposing secrets.
+3. Re-run vector parity, retrieval regression, staging smoke, and operational readiness before any active-provider promotion.
 
 ## Operating Rules
 

@@ -56,6 +56,18 @@ Last updated: 2026-05-15
 - The target vector table `OCI_ARCHITECTURE_CHUNKS` does not exist yet; next task is schema creation and shadow index loading.
 - Active retrieval remains `oci_object_storage`; no production read path was promoted.
 
+## Latest Vector Search Shadow Index Load
+
+- `TASK-027` completed.
+- Wallet-aware code was deployed to the staging backend VM.
+- Oracle AI Vector Search schema health passed after creating the table and vector index.
+- `oracle_vector_index.py rebuild` upserted 47 chunks into `OCI_ARCHITECTURE_CHUNKS`.
+- Oracle vector health reports 47 chunks, 44 services, 14 service domains, valid schema, and no missing config.
+- A live retrieval validation run passed across 18 cases with average local latency `2.18 ms`, average Oracle vector latency `215.51 ms`, and average top-chunk overlap `0.967`.
+- Fixed Oracle vector result materialization so LOB-backed vector serialization is read before the database connection closes.
+- Staging smoke, operational readiness, and Terraform no-change validation passed after the shadow load.
+- Active retrieval remains `oci_object_storage`; Oracle AI Vector Search is loaded and validated in shadow mode only.
+
 ## Active Plan
 
 - Living execution plan: `docs/living-execution-plan.md`
