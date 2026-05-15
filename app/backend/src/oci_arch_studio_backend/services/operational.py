@@ -350,8 +350,9 @@ class OperationalDiagnostics:
                 "release_refresh": self._check_release_freshness(refresh_status),
                 "scheduler": scheduler,
                 "deployment": {
-                    "provider": "oci_devops" if devops.get("configured") else "operator_scripts",
+                    "provider": "oci_devops" if devops.get("promotion_ready") else "operator_scripts",
                     "oci_devops_configured": bool(devops.get("configured")),
+                    "oci_devops_promotion_ready": bool(devops.get("promotion_ready")),
                     "message": devops.get("message"),
                 },
             },
@@ -541,18 +542,31 @@ class OperationalDiagnostics:
         }
 
     def _check_oci_devops(self) -> dict[str, object]:
-        configured = bool(self.settings.oci_devops_project_ocid or self.settings.oci_devops_deploy_pipeline_ocid)
+        project_configured = bool(self.settings.oci_devops_project_ocid)
+        deploy_pipeline_configured = bool(self.settings.oci_devops_deploy_pipeline_ocid)
+        configured = project_configured or deploy_pipeline_configured
+        promotion_ready = project_configured and deploy_pipeline_configured
+        missing_config: list[str] = []
+        if configured and not project_configured:
+            missing_config.append("OCI_DEVOPS_PROJECT_OCID")
+        if configured and not deploy_pipeline_configured:
+            missing_config.append("OCI_DEVOPS_DEPLOY_PIPELINE_OCID")
+        if promotion_ready:
+            message = "OCI DevOps project and deploy pipeline metadata are configured."
+        elif configured:
+            message = "OCI DevOps is partially configured; keep operator scripts as the active deployment path."
+        else:
+            message = "OCI DevOps is not configured; deployment currently uses operator scripts."
         return {
-            "status": "ok" if configured else "warning",
+            "status": "ok" if promotion_ready else "warning",
             "provider": "oci_devops",
             "configured": configured,
-            "project_ocid_configured": bool(self.settings.oci_devops_project_ocid),
-            "deploy_pipeline_ocid_configured": bool(self.settings.oci_devops_deploy_pipeline_ocid),
-            "message": (
-                "OCI DevOps deployment metadata is configured."
-                if configured
-                else "OCI DevOps is not configured; deployment currently uses operator scripts."
-            ),
+            "promotion_ready": promotion_ready,
+            "project_ocid_configured": project_configured,
+            "deploy_pipeline_ocid_configured": deploy_pipeline_configured,
+            "missing_config": missing_config,
+            "active_deployment_path": "oci_devops" if promotion_ready else "operator_scripts",
+            "message": message,
         }
 
     def _check_runtime_safeguards(self, retrieval: dict[str, object]) -> dict[str, object]:
@@ -624,6 +638,7 @@ class OperationalDiagnostics:
                 "deployment_profile": self.settings.deployment_profile,
                 "api_gateway_endpoint_configured": bool(self.settings.oci_api_gateway_endpoint),
                 "oci_devops_configured": bool(devops.get("configured")),
+                "oci_devops_promotion_ready": bool(devops.get("promotion_ready")),
             },
             "storage": {
                 "object_storage_namespace_configured": bool(self.settings.oci_object_storage_namespace),
@@ -824,7 +839,7 @@ class OperationalDiagnostics:
             or self.settings.deployment_profile != "local_dev",
             "api_gateway_iac": bool(runtime.get("api_gateway_endpoint_configured"))
             and bool(configured_resources.get("networking", {}).get("api_gateway_promotion_ready")),
-            "oci_devops_iac": bool(runtime.get("oci_devops_configured")),
+            "oci_devops_iac": bool(runtime.get("oci_devops_promotion_ready")),
             "refresh_scheduler_iac": bool(
                 configured_resources.get("workflows", {})
                 .get("release_schedule_configured")

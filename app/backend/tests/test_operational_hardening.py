@@ -108,7 +108,25 @@ def test_runtime_readiness_reports_api_gateway_and_devops_configuration() -> Non
     assert readiness["checks"]["api_gateway"]["promotion_ready"] is True
     assert readiness["checks"]["api_gateway"]["active"] is True
     assert readiness["checks"]["oci_devops"]["status"] == "ok"
+    assert readiness["checks"]["oci_devops"]["promotion_ready"] is True
+    assert readiness["checks"]["oci_devops"]["active_deployment_path"] == "oci_devops"
     assert readiness["checks"]["runtime_safeguards"]["deterministic_synthesis_available"] is True
+
+
+def test_oci_devops_partial_configuration_keeps_operator_scripts_active() -> None:
+    settings = Settings(OCI_DEVOPS_PROJECT_OCID="ocid1.devopsproject.oc1..example")
+
+    readiness = OperationalDiagnostics(settings).runtime_readiness(
+        retrieval={"provider": "local_json", "store": {"exists": True, "chunk_count": 44}},
+        refresh_status={"status": "succeeded"},
+    )
+
+    devops = readiness["checks"]["oci_devops"]
+    assert devops["status"] == "warning"
+    assert devops["configured"] is True
+    assert devops["promotion_ready"] is False
+    assert devops["missing_config"] == ["OCI_DEVOPS_DEPLOY_PIPELINE_OCID"]
+    assert devops["active_deployment_path"] == "operator_scripts"
 
 
 def test_api_gateway_partial_configuration_keeps_direct_backend_exposure() -> None:
@@ -151,6 +169,7 @@ def test_infrastructure_visibility_distinguishes_configured_and_scaffolded_oci_r
         OCI_VECTOR_BUCKET="oci-architecture-studio-staging-knowledge-snapshots",
         OCI_API_GATEWAY_ENDPOINT="https://example.apigateway.us-ashburn-1.oci.customer-oci.com",
         OCI_DEVOPS_PROJECT_OCID="ocid1.devopsproject.oc1..example",
+        OCI_DEVOPS_DEPLOY_PIPELINE_OCID="ocid1.devopsdeploypipeline.oc1..example",
     )
 
     visibility = OperationalDiagnostics(settings).infrastructure_visibility(
@@ -162,6 +181,7 @@ def test_infrastructure_visibility_distinguishes_configured_and_scaffolded_oci_r
     assert visibility["topology"]["runtime_compute"] == "oci_compute_vm"
     assert visibility["configured_resources"]["storage"]["knowledge_bucket_configured"] is True
     assert visibility["operational_workflows"]["deployment"]["provider"] == "oci_devops"
+    assert visibility["configured_resources"]["runtime"]["oci_devops_promotion_ready"] is True
     assert visibility["providers"]["embeddings"]["configured_provider"] == "local"
     assert visibility["providers"]["embeddings"]["activation_ready"] is False
     assert not any(gap["area"] == "identity" for gap in visibility["gaps"])

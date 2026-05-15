@@ -52,6 +52,11 @@ def evaluate(base_url: str, *, require_oci_profile: bool = False) -> dict[str, A
         if isinstance(readiness.get("checks"), dict)
         else {}
     )
+    devops = (
+        readiness.get("checks", {}).get("oci_devops", {})
+        if isinstance(readiness.get("checks"), dict)
+        else {}
+    )
     deployment = operations.get("deployment", {}) if isinstance(operations.get("deployment"), dict) else {}
     infrastructure_environment = (
         infrastructure.get("environment", {}) if isinstance(infrastructure.get("environment"), dict) else {}
@@ -89,6 +94,14 @@ def evaluate(base_url: str, *, require_oci_profile: bool = False) -> dict[str, A
             "endpoint_configured": api_gateway.get("endpoint_configured", False),
             "gateway_ocid_configured": api_gateway.get("gateway_ocid_configured", False),
             "missing_config": api_gateway.get("missing_config", []),
+        },
+        "oci_devops": {
+            "configured": devops.get("configured", False),
+            "promotion_ready": devops.get("promotion_ready", False),
+            "project_ocid_configured": devops.get("project_ocid_configured", False),
+            "deploy_pipeline_ocid_configured": devops.get("deploy_pipeline_ocid_configured", False),
+            "missing_config": devops.get("missing_config", []),
+            "active_deployment_path": devops.get("active_deployment_path"),
         },
         "infrastructure_rebuildability_status": rebuildability.get("status"),
         "infrastructure_gap_count": len(infrastructure.get("gaps", [])) if isinstance(infrastructure.get("gaps"), list) else 0,
