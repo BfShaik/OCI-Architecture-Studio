@@ -94,6 +94,10 @@ output "autonomous_vector_database_private_endpoint" {
   value = var.enable_autonomous_vector_database ? oci_database_autonomous_database.vector_search[0].private_endpoint : null
 }
 
+output "autonomous_vector_database_admin_secret_ocid" {
+  value = var.enable_autonomous_vector_database ? oci_vault_secret.autonomous_vector_db_admin_password[0].id : null
+}
+
 output "autonomous_vector_database_connection_strings" {
   value     = var.enable_autonomous_vector_database ? oci_database_autonomous_database.vector_search[0].connection_strings : null
   sensitive = true
@@ -181,6 +185,7 @@ output "runtime_infrastructure_summary" {
       provider_ready                     = var.enable_autonomous_vector_database
       autonomous_database_ocid           = var.enable_autonomous_vector_database ? oci_database_autonomous_database.vector_search[0].id : null
       autonomous_database_private_ep     = var.enable_autonomous_vector_database ? oci_database_autonomous_database.vector_search[0].private_endpoint : null
+      autonomous_database_admin_secret   = var.enable_autonomous_vector_database ? oci_vault_secret.autonomous_vector_db_admin_password[0].id : null
       autonomous_database_version        = var.enable_autonomous_vector_database ? oci_database_autonomous_database.vector_search[0].db_version : null
       autonomous_database_private_access = var.enable_autonomous_vector_database
     }

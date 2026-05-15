@@ -77,3 +77,7 @@ output "autonomous_vector_database_ocid" {
 output "autonomous_vector_database_private_endpoint" {
   value = module.foundation.autonomous_vector_database_private_endpoint
 }
+
+output "autonomous_vector_database_admin_secret_ocid" {
+  value = module.foundation.autonomous_vector_database_admin_secret_ocid
+}

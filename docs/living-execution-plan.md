@@ -93,7 +93,8 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | TASK-021 | Done | Apply OCI API Gateway and run smoke validation. | Gateway and deployment applied; route backend context fixed to `${request.path[path]}`; subnet HTTPS 443 opened; Gateway smoke, Gateway operational readiness, direct backend rollback smoke, and post-apply Terraform no-change plan passed. Runtime diagnostics still required a backend code/config sync before final promotion-ready reporting. |
 | TASK-022 | Done | Update staging runtime API Gateway metadata without replacing backend VM. | Backend VM env now includes API Gateway endpoint/OCID and deployed code matches the repo; Gateway smoke, direct backend rollback smoke, and operational readiness passed with `api_gateway.active=true` and `api_gateway.promotion_ready=true`. Remaining readiness warning is OCI DevOps metadata only. |
 | TASK-023 | Done | Run Oracle Autonomous AI Database / AI Vector Search live preflight plan. | Passed Terraform validate; staging plan with database enablement proposed exactly 3 creates, 0 changes, 0 destroys: vector DB NSG, TCPS ingress rule, and Autonomous Database. Binary plan artifact was removed because it can carry sensitive values. |
-| TASK-024 | Next | Apply Oracle Autonomous AI Database vector-search shadow infrastructure. | Apply only the previously reviewed 3-resource shape, then capture database OCID/private endpoint, validate outputs, and keep `RETRIEVAL_PROVIDER=oci_object_storage` until Oracle AI Vector Search parity passes. |
+| TASK-024 | Done | Harden Autonomous Database admin secret handling before apply. | Added generated password support and OCI Vault secret storage for the vector database admin password; dev/test/staging Terraform init, fmt, and validate passed; staging preflight now shows 5 creates, 0 changes, 0 destroys. |
+| TASK-025 | Next | Apply Oracle Autonomous AI Database vector-search shadow infrastructure. | Apply only the reviewed 5-resource shape: generated password, Vault secret, vector DB NSG, TCPS ingress rule, and Autonomous Database; keep `RETRIEVAL_PROVIDER=oci_object_storage` until Oracle AI Vector Search parity passes. |
 
 ## Phase Gates
 
@@ -141,12 +142,12 @@ Run the appropriate subset after each increment; run the full matrix before a ne
 
 ## Next Actionable Increment
 
-Current task: `TASK-024`.
+Current task: `TASK-025`.
 
 Apply Oracle Autonomous AI Database vector-search shadow infrastructure:
 
-1. Generate a fresh apply-time Terraform plan with `enable_autonomous_vector_database=true` and a strong admin password supplied through sensitive runtime input, not committed files.
-2. Apply only if the fresh plan still shows the expected 3 creates and no unrelated changes.
+1. Generate a fresh Terraform plan with `enable_autonomous_vector_database=true`; rely on generated password plus OCI Vault secret unless an operator explicitly supplies a sensitive override.
+2. Apply only if the fresh plan still shows the expected 5 creates and no unrelated changes.
 3. Validate outputs and staging readiness, then leave active retrieval on Object Storage until shadow vector parity passes.
 
 ## Operating Rules

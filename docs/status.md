@@ -21,6 +21,15 @@ Last updated: 2026-05-15
 - The planned database shape used private endpoint access, mTLS, ECPU compute, 2 ECPUs, 1 TB storage, `26ai`, and `LICENSE_INCLUDED`.
 - No apply was run in this task; the binary plan artifact was removed because Terraform plans can carry sensitive values.
 
+## Latest Secret Handling Hardening
+
+- `TASK-024` completed before database apply to avoid relying on a transient shell-supplied database password.
+- Terraform now generates the Autonomous Database admin password when no local sensitive override is supplied.
+- Terraform also creates an OCI Vault secret named `<project>-<environment>-vector-db-admin-password` so operations have an OCI-native retrieval point for the generated credential.
+- Dev, test, and staging Terraform provider locks now include the `hashicorp/random` provider used only for local IaC password generation; runtime secret storage remains OCI Vault.
+- Dev/test/staging `terraform init`, `terraform fmt`, and `terraform validate` passed.
+- A staging preflight with `enable_autonomous_vector_database=true` now proposes 5 creates, 0 changes, and 0 destroys: generated password, Vault secret, vector DB NSG, TCPS ingress rule, and Autonomous Database.
+
 ## Active Plan
 
 - Living execution plan: `docs/living-execution-plan.md`

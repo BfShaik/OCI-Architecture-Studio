@@ -215,23 +215,26 @@ The scaffold creates, only when explicitly enabled:
 - an OCI Network Security Group for the database private endpoint
 - an ingress rule allowing backend subnet TCPS access on port `1522`
 - an Oracle Autonomous Database configured for private endpoint access, mTLS, ECPU compute, and `26ai` by default
-- outputs for the database OCID and private endpoint
+- a generated admin password when no override is supplied, stored as an OCI Vault secret
+- outputs for the database OCID, private endpoint, and admin password secret OCID
 
 Do not enable this resource in committed environment files. Use a local, uncommitted `terraform.tfvars` override:
 
 ```hcl
 enable_autonomous_vector_database   = true
 autonomous_vector_db_name           = "OCIARCHVEC"
-autonomous_vector_db_admin_password = "REPLACE_WITH_STRONG_PASSWORD"
 autonomous_vector_db_compute_count  = 2
 autonomous_vector_db_storage_tbs    = 1
 autonomous_vector_db_version        = "26ai"
 autonomous_vector_db_license_model  = "LICENSE_INCLUDED"
 ```
 
+If `autonomous_vector_db_admin_password` is left empty, Terraform generates a password and stores it in OCI Vault as `<project>-<environment>-vector-db-admin-password`. Provide a local sensitive override only when an operator-managed password rotation process requires it.
+
 Security and state notes:
 
-- `autonomous_vector_db_admin_password` is marked sensitive, but Terraform state can still contain sensitive values. Move state to the OCI Object Storage backend, restrict state access, and review the state plan before shared/team operation.
+- Generated and override passwords are marked sensitive, but Terraform state can still contain sensitive values. Move state to the OCI Object Storage backend, restrict state access, and review the state plan before shared/team operation.
+- OCI Vault is the operational retrieval point for the generated database admin password after apply; do not copy the password into committed files.
 - The database is intended for shadow validation first. Keep `RETRIEVAL_PROVIDER=oci_object_storage` until Oracle AI Vector Search parity passes without skip.
 - After apply, store runtime connection details in OCI Vault or the approved deployment secret path instead of plaintext shell files.
 

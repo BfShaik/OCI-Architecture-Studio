@@ -5,6 +5,11 @@ locals {
     environment = var.environment
     managed_by  = "terraform"
   }
+  autonomous_vector_db_admin_password = (
+    var.autonomous_vector_db_admin_password != ""
+    ? var.autonomous_vector_db_admin_password
+    : try(random_password.autonomous_vector_db_admin[0].result, "")
+  )
 }
 
 data "oci_identity_availability_domains" "ads" {
@@ -154,6 +159,32 @@ resource "oci_vault_secret" "app_config_placeholder" {
   secret_content {
     content_type = "BASE64"
     content      = base64encode("replace-through-oci-console-or-ci")
+  }
+}
+
+resource "random_password" "autonomous_vector_db_admin" {
+  count            = var.enable_autonomous_vector_database && var.autonomous_vector_db_admin_password == "" ? 1 : 0
+  length           = 24
+  min_lower        = 1
+  min_numeric      = 1
+  min_special      = 1
+  min_upper        = 1
+  override_special = "#_-"
+  special          = true
+}
+
+resource "oci_vault_secret" "autonomous_vector_db_admin_password" {
+  count          = var.enable_autonomous_vector_database ? 1 : 0
+  compartment_id = oci_identity_compartment.project.id
+  vault_id       = oci_kms_vault.main.id
+  key_id         = oci_kms_key.main.id
+  secret_name    = "${local.name_prefix}-vector-db-admin-password"
+  description    = "Admin password for the Autonomous Database used by Oracle AI Vector Search shadow mode."
+  freeform_tags  = merge(local.common_tags, { purpose = "oracle-ai-vector-search" })
+
+  secret_content {
+    content_type = "BASE64"
+    content      = base64encode(local.autonomous_vector_db_admin_password)
   }
 }
 
@@ -416,7 +447,7 @@ resource "oci_database_autonomous_database" "vector_search" {
   compartment_id              = oci_identity_compartment.project.id
   db_name                     = var.autonomous_vector_db_name
   display_name                = "${local.name_prefix}-vector-db"
-  admin_password              = var.autonomous_vector_db_admin_password
+  admin_password              = local.autonomous_vector_db_admin_password
   compute_model               = "ECPU"
   compute_count               = var.autonomous_vector_db_compute_count
   data_storage_size_in_tbs    = var.autonomous_vector_db_storage_tbs
@@ -433,8 +464,8 @@ resource "oci_database_autonomous_database" "vector_search" {
 
   lifecycle {
     precondition {
-      condition     = !var.enable_autonomous_vector_database || var.autonomous_vector_db_admin_password != ""
-      error_message = "autonomous_vector_db_admin_password is required when enable_autonomous_vector_database is true."
+      condition     = !var.enable_autonomous_vector_database || local.autonomous_vector_db_admin_password != ""
+      error_message = "autonomous_vector_db_admin_password or generated password is required when enable_autonomous_vector_database is true."
     }
   }
 }

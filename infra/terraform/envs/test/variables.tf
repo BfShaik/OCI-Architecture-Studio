@@ -132,7 +132,7 @@ variable "autonomous_vector_db_name" {
 }
 
 variable "autonomous_vector_db_admin_password" {
-  description = "Admin password for the optional Autonomous AI Database. Required only when enabled."
+  description = "Optional admin password override for the Autonomous AI Database. When empty, Terraform generates one and stores a copy in OCI Vault."
   type        = string
   default     = ""
   sensitive   = true
