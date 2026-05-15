@@ -399,6 +399,7 @@ def update_status_from_report(
             "affected_source_ids": report["affected_source_ids"],
             "gates_passed": report["gates_passed"],
             "rollback_performed": report["rollback_performed"],
+            "lifecycle": report.get("lifecycle", {}),
         },
         "current_promoted_snapshot": (
             manifest if promoted else previous_status.get("current_promoted_snapshot")
@@ -412,6 +413,47 @@ def update_status_from_report(
         "history": history[-25:],
     }
     write_status(args.report_dir, status)
+
+
+def build_refresh_lifecycle(report: dict[str, Any], *, candidate_changed: bool) -> dict[str, Any]:
+    gates = report.get("gates", [])
+    rollback_sources = report.get("rollback_sources", {})
+    promoted = bool(report.get("promoted"))
+    oci_upload_requested = bool(report.get("oci_upload_requested"))
+    oci_upload_performed = bool(report.get("oci_upload_performed"))
+
+    if promoted:
+        promotion_status = "promoted"
+    elif candidate_changed and report.get("gates_passed") is False:
+        promotion_status = "blocked_by_gates"
+    elif candidate_changed:
+        promotion_status = "validated_without_promotion"
+    else:
+        promotion_status = "no_change"
+
+    return {
+        "candidate_created": bool(report.get("candidate_paths")),
+        "candidate_changed": candidate_changed,
+        "gates_run": bool(gates),
+        "gates_passed": bool(report.get("gates_passed")),
+        "promoted": promoted,
+        "promotion_status": promotion_status,
+        "authoritative_snapshots_updated": promoted,
+        "oci_upload_requested": oci_upload_requested,
+        "oci_upload_performed": oci_upload_performed,
+        "oci_upload_status": (
+            "uploaded"
+            if oci_upload_performed
+            else "requested_not_performed"
+            if oci_upload_requested
+            else "not_requested"
+        ),
+        "rollback_available": any(rollback_sources.values()),
+        "rollback_performed": bool(report.get("rollback_performed")),
+        "query_time_refresh": bool(report.get("query_time_refresh")),
+        "selective_reindex": bool(report.get("selective_reindex")),
+        "full_reindex": bool(report.get("full_reindex")),
+    }
 
 
 def rollback_latest(args: argparse.Namespace) -> dict[str, Any]:
@@ -675,6 +717,7 @@ def execute_refresh_policy(args: argparse.Namespace) -> dict[str, Any]:
             key: str(value) if value else None for key, value in rollback_sources.items()
         },
     }
+    report["lifecycle"] = build_refresh_lifecycle(report, candidate_changed=candidate_changed)
     args.report_dir.mkdir(parents=True, exist_ok=True)
     write_json(args.report_dir / "knowledge-refresh-report.json", report)
     write_json(run_dir / "knowledge-refresh-report.json", report)

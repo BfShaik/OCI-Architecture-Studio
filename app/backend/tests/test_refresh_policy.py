@@ -213,11 +213,21 @@ def test_refresh_promotes_candidate_only_after_gates_pass(tmp_path: Path, monkey
     status = json.loads((args.report_dir / "knowledge-refresh-status.json").read_text(encoding="utf-8"))
     assert report["status"] == "promoted"
     assert report["promoted"] is True
+    assert report["lifecycle"]["candidate_created"] is True
+    assert report["lifecycle"]["candidate_changed"] is True
+    assert report["lifecycle"]["gates_run"] is True
+    assert report["lifecycle"]["gates_passed"] is True
+    assert report["lifecycle"]["promoted"] is True
+    assert report["lifecycle"]["promotion_status"] == "promoted"
+    assert report["lifecycle"]["authoritative_snapshots_updated"] is True
+    assert report["lifecycle"]["rollback_available"] is True
+    assert report["lifecycle"]["query_time_refresh"] is False
     assert promoted_index["chunks"][0]["id"] == "new::1"
     assert promoted_index["chunks"][0]["metadata"]["release_impacted"] is True
     assert "release_intelligence" in report
     assert "security-change" in report["impact_report"]["change_categories"]
     assert status["current_promoted_snapshot"]["status"] == "promoted"
+    assert status["last_run"]["lifecycle"]["promotion_status"] == "promoted"
     assert status["current_promoted_snapshot"]["historical_snapshots"]["knowledge_index"]
     assert status["current_promoted_snapshot"]["lineage"]["knowledge_snapshot_version"].startswith("knowledge-")
 
@@ -269,7 +279,41 @@ def test_failed_gates_do_not_overwrite_authoritative_snapshots(tmp_path: Path, m
 
     assert report["status"] == "failed_gate"
     assert report["promoted"] is False
+    assert report["lifecycle"]["candidate_created"] is True
+    assert report["lifecycle"]["candidate_changed"] is True
+    assert report["lifecycle"]["gates_run"] is True
+    assert report["lifecycle"]["gates_passed"] is False
+    assert report["lifecycle"]["promoted"] is False
+    assert report["lifecycle"]["promotion_status"] == "blocked_by_gates"
+    assert report["lifecycle"]["authoritative_snapshots_updated"] is False
+    assert report["lifecycle"]["rollback_available"] is False
     assert args.knowledge_index.read_text(encoding="utf-8") == original_index
+
+
+def test_no_change_report_exposes_refresh_lifecycle_without_gates(tmp_path: Path, monkeypatch) -> None:
+    args = refresh_args(tmp_path)
+    previous_release_snapshot = json.loads(args.release_snapshot.read_text(encoding="utf-8"))
+
+    monkeypatch.setattr(refresh_policy, "build_release_snapshot", lambda _args: previous_release_snapshot)
+
+    def fail_if_gates_run(*_args):
+        raise AssertionError("no-change refresh should not run post-refresh gates")
+
+    monkeypatch.setattr(refresh_policy, "run_post_refresh_gates", fail_if_gates_run)
+
+    report = refresh_policy.execute_refresh_policy(args)
+
+    assert report["status"] == "no_change"
+    assert report["promoted"] is False
+    assert report["selective_reindex"] is False
+    assert report["lifecycle"]["candidate_created"] is True
+    assert report["lifecycle"]["candidate_changed"] is False
+    assert report["lifecycle"]["gates_run"] is False
+    assert report["lifecycle"]["gates_passed"] is True
+    assert report["lifecycle"]["promotion_status"] == "no_change"
+    assert report["lifecycle"]["authoritative_snapshots_updated"] is False
+    assert report["lifecycle"]["rollback_available"] is False
+    assert report["lifecycle"]["query_time_refresh"] is False
 
 
 def test_rollback_latest_restores_previous_promoted_snapshot(tmp_path: Path, monkeypatch) -> None:

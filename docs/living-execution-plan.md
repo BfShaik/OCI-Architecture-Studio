@@ -84,8 +84,8 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | TASK-012 | Done | Define OCI DevOps delivery contract around existing operator artifact flow. | OCI DevOps artifact/stage/rollback contract documented; operator script remains fallback. |
 | TASK-013 | Done | Wire OCI DevOps metadata into runtime readiness checks for active deployments. | Passed `tests/test_operational_hardening.py`, `tests/test_api.py`, and `py_compile`; diagnostics distinguish inactive, partial, and promotion-ready DevOps metadata. |
 | TASK-014 | Done | Expand official OCI corpus for highest-value advisory gaps. | Added Budgets, Security Zones, and Compute Autoscaling sources; offline index rebuild produced 47 chunks; retrieval regression 18/18, advisory-quality 5/5, golden 18/18 passed. |
-| TASK-015 | Next | Harden release-intelligence freshness and selective reindex reporting. | Release refresh report shows candidate, gate, and promotion state. |
-| TASK-016 | Not Started | Cut a new internal beta baseline after all active gates pass. | Full validation matrix passes; docs updated; commit, push, and tag. |
+| TASK-015 | Done | Harden release-intelligence freshness and selective reindex reporting. | Added refresh `lifecycle` summary covering candidate, gate, promotion, upload, rollback, and query-time refresh state; passed `tests/test_refresh_policy.py`, `git diff --check`, and no-fetch release-watch validation with 47 chunks. |
+| TASK-016 | Next | Cut a new internal beta baseline after all active gates pass. | Full validation matrix passes; docs updated; commit, push, and tag. |
 
 ## Phase Gates
 
@@ -133,14 +133,14 @@ Run the appropriate subset after each increment; run the full matrix before a ne
 
 ## Next Actionable Increment
 
-Current task: `TASK-015`.
+Current task: `TASK-016`.
 
-Harden release-intelligence freshness and selective reindex reporting:
+Cut a new internal beta baseline after active gates pass:
 
-1. Inspect refresh reports and current status fields.
-2. Run no-fetch quick-gate refresh validation.
-3. Improve reporting if candidate, gate, promotion, or rollback state is unclear.
-4. Preserve candidate-first behavior and avoid query-time refresh.
+1. Inspect current docs, status, and validation reports.
+2. Run the required local regression matrix for active providers.
+3. Confirm blocked live OCI promotions remain documented and default-off.
+4. Commit, push, and create the next internal beta baseline tag when gates pass.
 
 ## Operating Rules
 
