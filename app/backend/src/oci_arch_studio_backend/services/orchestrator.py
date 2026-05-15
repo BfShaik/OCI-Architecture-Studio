@@ -12,6 +12,7 @@ from oci_arch_studio_backend.services.architecture_reasoning import Architecture
 from oci_arch_studio_backend.services.architecture_reasoning_engine import ArchitectureReasoningEngine
 from oci_arch_studio_backend.services.architecture_topology import ArchitectureTopologyBuilder
 from oci_arch_studio_backend.services.enterprise_governance import EnterpriseGovernanceAdvisor
+from oci_arch_studio_backend.services.executive_experience import ExecutiveExperienceBuilder
 from oci_arch_studio_backend.services.intents import (
     IntentClassifier,
     get_intent_profile,
@@ -46,6 +47,7 @@ class ArchitectureReviewOrchestrator:
         reasoning_engine: ArchitectureReasoningEngine | None = None,
         governance_advisor: EnterpriseGovernanceAdvisor | None = None,
         topology_builder: ArchitectureTopologyBuilder | None = None,
+        executive_experience_builder: ExecutiveExperienceBuilder | None = None,
         synthesis_debug_enabled: bool = False,
     ) -> None:
         self.retriever = retriever
@@ -59,6 +61,7 @@ class ArchitectureReviewOrchestrator:
         self.reasoning_engine = reasoning_engine or ArchitectureReasoningEngine()
         self.governance_advisor = governance_advisor or EnterpriseGovernanceAdvisor()
         self.topology_builder = topology_builder or ArchitectureTopologyBuilder()
+        self.executive_experience_builder = executive_experience_builder or ExecutiveExperienceBuilder()
         self.synthesis_debug_enabled = synthesis_debug_enabled
 
     async def review(
@@ -228,6 +231,44 @@ class ArchitectureReviewOrchestrator:
             sources=sources,
             recommendations=quality.recommendations,
         )
+        architecture_tradeoffs = [
+            ArchitectureTradeoffAnalysis(
+                dimension=tradeoff.dimension,
+                decision=tradeoff.decision,
+                benefit=tradeoff.benefit,
+                cost_or_risk=tradeoff.cost_or_risk,
+                guidance=tradeoff.guidance,
+                source_chunk_ids=list(tradeoff.source_chunk_ids),
+            )
+            for tradeoff in reasoning_result.tradeoffs
+        ]
+        recommendation_confidence = [
+            RecommendationConfidenceIndicator(
+                recommendation=item.recommendation,
+                score=item.score,
+                level=item.level,
+                reasoning_basis=item.reasoning_basis,
+                source_chunk_ids=list(item.source_chunk_ids),
+                known_limitations=list(item.known_limitations),
+                assumptions=list(item.assumptions),
+            )
+            for item in reasoning_result.recommendation_confidence
+        ]
+        executive_experience = self.executive_experience_builder.build(
+            intent=profile.intent.value,
+            question=request.question,
+            recommendations=quality.recommendations,
+            risks=synthesis.risks,
+            next_steps=synthesis.next_steps,
+            sources=sources,
+            governance=governance_assessment,
+            topology=architecture_topology,
+            decision_reasoning=decision_reasoning,
+            tradeoffs=architecture_tradeoffs,
+            recommendation_confidence=recommendation_confidence,
+            evidence_links=quality.evidence_links,
+            confidence=quality.confidence,
+        )
 
         advisory_quality_metrics.record(
             intent=profile.intent.value,
@@ -278,33 +319,15 @@ class ArchitectureReviewOrchestrator:
                 synthesis_provider=synthesis.provider,
             ),
             architecture_tradeoffs=[
-                ArchitectureTradeoffAnalysis(
-                    dimension=tradeoff.dimension,
-                    decision=tradeoff.decision,
-                    benefit=tradeoff.benefit,
-                    cost_or_risk=tradeoff.cost_or_risk,
-                    guidance=tradeoff.guidance,
-                    source_chunk_ids=list(tradeoff.source_chunk_ids),
-                )
-                for tradeoff in reasoning_result.tradeoffs
+                *architecture_tradeoffs,
             ],
-            recommendation_confidence=[
-                RecommendationConfidenceIndicator(
-                    recommendation=item.recommendation,
-                    score=item.score,
-                    level=item.level,
-                    reasoning_basis=item.reasoning_basis,
-                    source_chunk_ids=list(item.source_chunk_ids),
-                    known_limitations=list(item.known_limitations),
-                    assumptions=list(item.assumptions),
-                )
-                for item in reasoning_result.recommendation_confidence
-            ],
+            recommendation_confidence=[*recommendation_confidence],
             consistency_findings=consistency_findings,
             release_context=release_context,
             knowledge_temporal_context=temporal_context,
             enterprise_governance=governance_assessment,
             architecture_topology=architecture_topology,
+            executive_experience=executive_experience,
             answer=synthesis.answer if not quality.not_enough_evidence else f"{synthesis.answer} {context_note}",
             recommendations=quality.recommendations,
             assumptions=synthesis.assumptions,

@@ -62,6 +62,9 @@ def test_operations_analytics_records_architecture_review_usage() -> None:
     assert "governance_policy_triggers" in metrics
     assert "governance_risk_trends" in metrics
     assert "runtime_degradation_events" in metrics
+    assert metrics["executive_summary_count"] >= 1
+    assert metrics["visualization_generation_count"] >= 1
+    assert metrics["review_artifact_count"] >= 1
 
 
 def test_oci_vm_profile_warns_when_using_config_file_auth() -> None:

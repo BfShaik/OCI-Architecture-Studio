@@ -20,6 +20,7 @@ OCI Architecture Studio now has a validated working foundation:
 - deterministic architecture pattern profiles, reasoning profiles, and synthesis quality signals that make fallback responses more useful while remaining explainable
 - concise decision reasoning metadata, explicit tradeoff analysis, per-recommendation confidence indicators, and lightweight consistency validation for recommendation coherence
 - deterministic enterprise governance metadata for executive framing, security posture checks, risk classification, recommendation priority, architecture comparison, enterprise review findings, and auditability trace
+- executive experience metadata for review-ready summaries, prioritized decisions, phased sequencing, topology summaries, comparison summaries, explainability highlights, and Markdown export artifacts
 - lightweight architecture topology metadata for service relationships, deployment topology, HA/DR posture, operational notes, and future visualization
 - confidence sub-signals for retrieval grounding, service relevance, workload alignment, migration mapping certainty, and citation coverage
 - deterministic evaluation intelligence for advisory quality scoring, hallucination heuristics, benchmark expectation checks, provider comparison signals, and configurable quality gates
@@ -41,6 +42,8 @@ OCI GenAI embeddings and synthesis are available as configurable paths with dete
 The current deterministic synthesis and reasoning layer is heuristic. It improves structure, workload specificity, tradeoff visibility, grounding fidelity, and recommendation explainability, but it is not a substitute for a full OCI design review or live GenAI reasoning.
 
 The enterprise governance layer is also heuristic and deterministic. It makes recommendations more reviewable by adding control annotations, risk signals, priority guidance, comparison reasoning, and audit trace metadata, but it does not enforce policies or replace human architecture/security approval.
+
+The executive experience layer packages existing advisory metadata for review conversations and lightweight export. It improves readability and stakeholder usability, but it is not a full diagramming system, slide generator, or replacement for architecture review board materials.
 
 Architecture visualization support is foundational: backend topology metadata and Mermaid text exist, but a full diagram editor or frontend renderer is future work.
 

@@ -315,6 +315,11 @@ This progress is based on `docs/two-week-plan.md`.
   - Terraform `runtime_infrastructure_summary` output for deployment review and rebuild documentation
   - operational readiness checker now validates infrastructure visibility in addition to health/readiness/analytics endpoints
   - runtime-production-readiness eval suite under `evals/runtime-production-readiness.jsonl`
+- Added executive experience and visualization foundation:
+  - additive `executive_experience` response object with executive summary, decision brief, implementation sequence, architecture visualization summary, comparison summary, explainability highlights, and Markdown review artifact
+  - frontend review-board rendering for executive brief, implementation sequence, topology/dependency summaries, decision comparisons, explainability highlights, and Markdown export
+  - operational analytics counters for executive summaries, visualization generation, review artifacts, architecture comparison usage, recommendation categories, and topology role usage
+  - executive-experience eval suite under `evals/executive-experience.jsonl`
 - Added OCI-native operational hardening foundation:
   - runtime deployment profiles for local development, OCI VM, OKE, and OCI Functions-compatible execution
   - additive `/operations/profile`, `/operations/health`, `/operations/readiness`, `/operations/infrastructure`, and `/operations/analytics` endpoints
@@ -360,6 +365,7 @@ Last validation run: 2026-05-15
 - Enterprise-governance evals: passed, 5 of 5
 - Enterprise-platform-maturity evals: passed, 4 of 4
 - Runtime-production-readiness evals: passed, 3 of 3
+- Executive-experience evals: passed, 3 of 3
 - Advisory quality gate: passed against the evaluation-intelligence report with MVP thresholds
 - Operational hardening tests: passed in targeted API/diagnostics suite
 - Operational readiness check: passed locally against `/health`, `/retrieval/health`, `/operations/health`, `/operations/readiness`, `/operations/infrastructure`, and `/operations/analytics`; API Gateway and OCI DevOps are expected readiness warnings until configured

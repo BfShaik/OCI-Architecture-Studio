@@ -31,6 +31,7 @@ It adds a lightweight evidence, confidence, reasoning-profile, tradeoff, control
 13. Build deterministic enterprise-governance metadata for executive summary, control annotations, security posture, risk classification, recommendation priority, comparison reasoning, enterprise review findings, and audit trace.
 14. Build lightweight architecture topology metadata for service nodes, relationships, deployment topology, HA/DR posture, operational notes, and Mermaid flow text.
 15. Surface reasoning trace, tradeoffs, governance assessment, topology summary, evidence gaps, unsupported requested services, stale evidence, synthesis warnings, critic findings, and missing-context warnings.
+16. Package review-ready executive experience metadata for decision brief, implementation sequence, topology summary, comparisons, explainability highlights, and Markdown export.
 16. Return the structured advisory response to the UI.
 
 This remains an MVP-friendly in-process pipeline. It does not add LangGraph, autonomous multi-agent planning, or a new distributed service.
@@ -169,6 +170,22 @@ It contains:
 - `mermaid_flow`: simple Mermaid text for future UI rendering.
 
 This is intentionally not a diagram engine. It is backend topology metadata that makes advisory responses easier to review and lays groundwork for a future visualization UI.
+
+## Executive Experience Metadata
+
+The backend now exposes an additive `executive_experience` object in architecture-review responses.
+
+It includes:
+
+- `executive_summary`: concise business and risk framing for architecture review discussions.
+- `decision_brief`: prioritized recommendation cards with business impact, risk visibility, and implementation priority.
+- `implementation_sequence`: three lightweight phases for review, controlled implementation, and optimization.
+- `architecture_visualization`: topology, deployment, HA/DR, dependency, migration-flow, and Mermaid-text summaries derived from existing topology metadata.
+- `comparison_summary`: a review-friendly copy of deterministic architecture comparison reasoning.
+- `explainability_highlights`: short rationale, tradeoff, confidence, and retrieval-grounding notes.
+- `review_artifacts`: Markdown and structured JSON summary artifacts for lightweight export.
+
+This is not a presentation engine and does not render live diagrams. It packages existing deterministic advisory metadata into a format that is easier for architecture review boards, platform teams, and engineering leadership to read.
 
 ## Uncertainty Handling
 

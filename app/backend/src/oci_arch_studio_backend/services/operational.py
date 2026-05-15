@@ -62,6 +62,12 @@ class OperationalMetrics:
     governance_policy_triggers: Counter[str] = field(default_factory=Counter)
     governance_risk_trends: Counter[str] = field(default_factory=Counter)
     runtime_degradation_events: Counter[str] = field(default_factory=Counter)
+    architecture_comparison_usage: Counter[str] = field(default_factory=Counter)
+    recommendation_category_trends: Counter[str] = field(default_factory=Counter)
+    architecture_pattern_usage: Counter[str] = field(default_factory=Counter)
+    executive_summary_count: int = 0
+    visualization_generation_count: int = 0
+    review_artifact_count: int = 0
     total_response_latency_ms: float = 0.0
     last_response_latency_ms: float | None = None
     last_event_at: str | None = None
@@ -84,6 +90,12 @@ class OperationalMetrics:
             "governance_policy_triggers": dict(self.governance_policy_triggers),
             "governance_risk_trends": dict(self.governance_risk_trends),
             "runtime_degradation_events": dict(self.runtime_degradation_events),
+            "architecture_comparison_usage": dict(self.architecture_comparison_usage),
+            "recommendation_category_trends": dict(self.recommendation_category_trends),
+            "architecture_pattern_usage": dict(self.architecture_pattern_usage),
+            "executive_summary_count": self.executive_summary_count,
+            "visualization_generation_count": self.visualization_generation_count,
+            "review_artifact_count": self.review_artifact_count,
             "average_response_latency_ms": self.average_response_latency_ms,
             "last_response_latency_ms": self.last_response_latency_ms,
             "last_event_at": self.last_event_at,
@@ -145,6 +157,29 @@ class OperationalMetricsRecorder:
                     level = str(risk.get("level") or "unknown")
                     category = str(risk.get("category") or "unknown")
                     self.metrics.governance_risk_trends[f"{level}:{category}"] += 1
+            for priority in governance.get("recommendation_priorities", []):
+                if isinstance(priority, dict):
+                    self.metrics.recommendation_category_trends[str(priority.get("priority") or "unknown")] += 1
+            for comparison in governance.get("architecture_comparisons", []):
+                if isinstance(comparison, dict):
+                    self.metrics.architecture_comparison_usage[str(comparison.get("decision") or "unknown")] += 1
+
+        topology = response.get("architecture_topology") or {}
+        if isinstance(topology, dict) and topology.get("mermaid_flow"):
+            self.metrics.visualization_generation_count += 1
+            for node in topology.get("nodes", []):
+                if isinstance(node, dict):
+                    pattern = node.get("role") or node.get("category")
+                    if pattern:
+                        self.metrics.architecture_pattern_usage[str(pattern)] += 1
+
+        executive = response.get("executive_experience") or {}
+        if isinstance(executive, dict):
+            if executive.get("executive_summary"):
+                self.metrics.executive_summary_count += 1
+            artifacts = executive.get("review_artifacts", [])
+            if isinstance(artifacts, list):
+                self.metrics.review_artifact_count += len(artifacts)
 
     def snapshot(self) -> dict[str, object]:
         return self.metrics.as_dict()

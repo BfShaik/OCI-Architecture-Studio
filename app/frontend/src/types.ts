@@ -71,6 +71,10 @@ export type ConfidenceScore = {
   freshness: number;
   release_awareness: number;
   recommendation: number;
+  service_relevance?: number;
+  workload_alignment?: number;
+  migration_mapping?: number;
+  citation_coverage?: number;
   overall: number;
   level: string;
   notes: string[];
@@ -106,6 +110,139 @@ export type AgentContribution = {
   warnings: string[];
 };
 
+export type ArchitectureDecisionReason = {
+  recommendation: string;
+  service?: string | null;
+  why_chosen: string;
+  workload_signal?: string | null;
+  tradeoffs: string[];
+  alternatives_rejected: string[];
+  source_chunk_ids: string[];
+  confidence: number;
+};
+
+export type ArchitectureTradeoffAnalysis = {
+  dimension: string;
+  decision: string;
+  benefit: string;
+  cost_or_risk: string;
+  guidance: string;
+  source_chunk_ids: string[];
+};
+
+export type RecommendationConfidenceIndicator = {
+  recommendation: string;
+  score: number;
+  level: string;
+  reasoning_basis: string;
+  source_chunk_ids: string[];
+  known_limitations: string[];
+  assumptions: string[];
+};
+
+export type ArchitectureComparison = {
+  decision: string;
+  preferred_option: string;
+  alternatives: string[];
+  pros: string[];
+  cons: string[];
+  governance_implications: string[];
+  cost_implications: string;
+  operational_complexity: string;
+  source_chunk_ids: string[];
+};
+
+export type RecommendationPriority = {
+  recommendation_index: number;
+  priority: string;
+  implementation_phase: string;
+  rationale: string;
+};
+
+export type ExecutiveAdvisorySummary = {
+  business_impact: string;
+  governance_posture: string;
+  risk_summary: string;
+  implementation_guidance: string;
+};
+
+export type EnterpriseGovernanceAssessment = {
+  maturity_level: string;
+  executive_summary: ExecutiveAdvisorySummary;
+  recommendation_priorities: RecommendationPriority[];
+  architecture_comparisons: ArchitectureComparison[];
+  notes: string[];
+};
+
+export type ArchitectureTopologyNode = {
+  node_id: string;
+  label: string;
+  service?: string | null;
+  category?: string | null;
+  role: string;
+  source_chunk_ids: string[];
+};
+
+export type ArchitectureTopologyRelationship = {
+  from_node: string;
+  to_node: string;
+  relationship: string;
+  rationale: string;
+  source_chunk_ids: string[];
+};
+
+export type ArchitectureTopologySummary = {
+  topology_summary: string;
+  deployment_topology: string;
+  ha_dr_topology: string;
+  service_dependencies: ArchitectureTopologyRelationship[];
+  nodes: ArchitectureTopologyNode[];
+  mermaid_flow?: string | null;
+  operational_notes: string[];
+  source_chunk_ids: string[];
+};
+
+export type ExecutiveDecisionBrief = {
+  title: string;
+  summary: string;
+  business_impact: string;
+  risk_visibility: string;
+  implementation_priority: string;
+};
+
+export type ImplementationSequenceItem = {
+  phase: string;
+  objective: string;
+  actions: string[];
+  exit_criteria: string[];
+};
+
+export type ArchitectureVisualizationSummary = {
+  topology_summary: string;
+  dependency_summary: string[];
+  deployment_view: string;
+  ha_dr_view: string;
+  migration_flow: string[];
+  mermaid_flow?: string | null;
+};
+
+export type ArchitectureReviewArtifact = {
+  title: string;
+  markdown_summary: string;
+  json_summary: Record<string, unknown>;
+  review_checkpoints: string[];
+};
+
+export type ExecutiveExperienceSummary = {
+  executive_summary: string;
+  decision_brief: ExecutiveDecisionBrief[];
+  implementation_sequence: ImplementationSequenceItem[];
+  architecture_visualization?: ArchitectureVisualizationSummary | null;
+  comparison_summary: ArchitectureComparison[];
+  explainability_highlights: string[];
+  review_artifacts: ArchitectureReviewArtifact[];
+};
+
 export type ArchitectureReviewRequest = {
   question: string;
   workload_context?: string;
@@ -128,6 +265,12 @@ export type ArchitectureReviewResponse = {
   synthesis_warnings: string[];
   synthesis_fallback_used: boolean;
   synthesis_quality?: SynthesisQualityScore | null;
+  decision_reasoning: ArchitectureDecisionReason[];
+  architecture_tradeoffs: ArchitectureTradeoffAnalysis[];
+  recommendation_confidence: RecommendationConfidenceIndicator[];
+  enterprise_governance?: EnterpriseGovernanceAssessment | null;
+  architecture_topology?: ArchitectureTopologySummary | null;
+  executive_experience?: ExecutiveExperienceSummary | null;
   answer: string;
   recommendations: string[];
   assumptions: string[];

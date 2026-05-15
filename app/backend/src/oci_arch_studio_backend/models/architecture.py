@@ -289,6 +289,47 @@ class ArchitectureTopologySummary(BaseModel):
     source_chunk_ids: list[str] = Field(default_factory=list)
 
 
+class ExecutiveDecisionBrief(BaseModel):
+    title: str
+    summary: str
+    business_impact: str
+    risk_visibility: str
+    implementation_priority: str
+
+
+class ImplementationSequenceItem(BaseModel):
+    phase: str
+    objective: str
+    actions: list[str] = Field(default_factory=list)
+    exit_criteria: list[str] = Field(default_factory=list)
+
+
+class ArchitectureVisualizationSummary(BaseModel):
+    topology_summary: str
+    dependency_summary: list[str] = Field(default_factory=list)
+    deployment_view: str
+    ha_dr_view: str
+    migration_flow: list[str] = Field(default_factory=list)
+    mermaid_flow: str | None = None
+
+
+class ArchitectureReviewArtifact(BaseModel):
+    title: str
+    markdown_summary: str
+    json_summary: dict[str, object] = Field(default_factory=dict)
+    review_checkpoints: list[str] = Field(default_factory=list)
+
+
+class ExecutiveExperienceSummary(BaseModel):
+    executive_summary: str
+    decision_brief: list[ExecutiveDecisionBrief] = Field(default_factory=list)
+    implementation_sequence: list[ImplementationSequenceItem] = Field(default_factory=list)
+    architecture_visualization: ArchitectureVisualizationSummary | None = None
+    comparison_summary: list[ArchitectureComparison] = Field(default_factory=list)
+    explainability_highlights: list[str] = Field(default_factory=list)
+    review_artifacts: list[ArchitectureReviewArtifact] = Field(default_factory=list)
+
+
 class ReleaseImpactSummary(BaseModel):
     snapshot_path: str | None = None
     snapshot_generated_at: str | None = None
@@ -354,6 +395,7 @@ class ArchitectureReviewResponse(BaseModel):
     consistency_findings: list[ArchitectureConsistencyFinding] = Field(default_factory=list)
     enterprise_governance: EnterpriseGovernanceAssessment | None = None
     architecture_topology: ArchitectureTopologySummary | None = None
+    executive_experience: ExecutiveExperienceSummary | None = None
     release_context: ReleaseImpactSummary | None = None
     knowledge_temporal_context: KnowledgeTemporalContext | None = None
     answer: str

@@ -191,6 +191,23 @@ def response_text(response: dict[str, Any]) -> str:
             if isinstance(item, dict):
                 parts.extend(str(value) for value in item.values())
         parts.extend(str(note) for note in topology.get("operational_notes", []))
+    executive = response.get("executive_experience") or {}
+    if isinstance(executive, dict):
+        parts.append(str(executive.get("executive_summary", "")))
+        for key in ("decision_brief", "implementation_sequence", "comparison_summary", "explainability_highlights"):
+            for item in executive.get(key, []):
+                if isinstance(item, dict):
+                    parts.extend(str(value) for value in item.values())
+                else:
+                    parts.append(str(item))
+        visualization = executive.get("architecture_visualization") or {}
+        if isinstance(visualization, dict):
+            parts.extend(str(value) for value in visualization.values())
+        for artifact in executive.get("review_artifacts", []):
+            if isinstance(artifact, dict):
+                parts.append(str(artifact.get("title", "")))
+                parts.append(str(artifact.get("markdown_summary", "")))
+                parts.extend(str(item) for item in artifact.get("review_checkpoints", []))
     release_context = response.get("release_context") or {}
     if isinstance(release_context, dict):
         parts.extend(str(item) for item in release_context.get("architecture_affecting_services", []))

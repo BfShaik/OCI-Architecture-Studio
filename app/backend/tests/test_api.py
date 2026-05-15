@@ -45,6 +45,13 @@ def test_architecture_review() -> None:
     assert body["architecture_topology"]["topology_summary"]
     assert body["architecture_topology"]["nodes"]
     assert body["architecture_topology"]["mermaid_flow"].startswith("flowchart")
+    assert body["executive_experience"]["executive_summary"]
+    assert body["executive_experience"]["decision_brief"]
+    assert body["executive_experience"]["implementation_sequence"]
+    assert body["executive_experience"]["architecture_visualization"]["topology_summary"]
+    assert body["executive_experience"]["review_artifacts"][0]["markdown_summary"].startswith(
+        "# OCI Architecture Review Summary"
+    )
     assert body["release_context"] is not None
     assert body["knowledge_temporal_context"]["knowledge_mode"]
     assert body["recommendations"]

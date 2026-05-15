@@ -9,8 +9,8 @@ function Section({ title, items }: { title: string; items: string[] }) {
     <section className="result-section">
       <h3>{title}</h3>
       <ul>
-        {items.map((item) => (
-          <li key={item}>{item}</li>
+        {items.map((item, index) => (
+          <li key={`${title}-${index}-${item}`}>{item}</li>
         ))}
       </ul>
     </section>
@@ -25,9 +25,34 @@ function percent(value: number) {
   return `${Math.round(value * 100)}%`;
 }
 
+function readable(value: string) {
+  return value.replace(/_/g, " ");
+}
+
+function answerSections(answer: string) {
+  const sections = answer
+    .split(/\n(?=\d+\.\s)/g)
+    .map((section) => section.trim())
+    .filter(Boolean);
+  return sections.length > 1 ? sections : [answer];
+}
+
+function downloadMarkdown(title: string, markdown: string) {
+  const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.md`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 export function ReviewResult({ result }: ReviewResultProps) {
   const citationCount = result.citations.length;
   const confidence = result.confidence;
+  const experience = result.executive_experience;
+  const visualization = experience?.architecture_visualization;
+  const reviewArtifact = experience?.review_artifacts[0];
 
   return (
     <div className="review-result">
@@ -49,7 +74,12 @@ export function ReviewResult({ result }: ReviewResultProps) {
           {result.not_enough_evidence ? <span className="warning-pill">needs evidence</span> : null}
           <span>{result.prompt_template}</span>
         </div>
-        <p>{result.answer}</p>
+        {experience ? <p className="executive-summary">{experience.executive_summary}</p> : null}
+        <div className="answer-sections">
+          {answerSections(result.answer).slice(0, 4).map((section, index) => (
+            <p key={`answer-${index}`}>{section}</p>
+          ))}
+        </div>
         {result.quality_warnings.length ||
         result.synthesis_warnings.length ||
         result.orchestration_warnings.length ? (
@@ -60,6 +90,110 @@ export function ReviewResult({ result }: ReviewResultProps) {
           </div>
         ) : null}
       </section>
+
+      {experience ? (
+        <section className="result-section executive-brief">
+          <div className="section-heading-row">
+            <div>
+              <h3>Executive Brief</h3>
+              <p>Review-ready decisions, implementation order, and governance context.</p>
+            </div>
+            {reviewArtifact ? (
+              <button
+                type="button"
+                className="secondary-action"
+                onClick={() => downloadMarkdown(reviewArtifact.title, reviewArtifact.markdown_summary)}
+              >
+                Export Markdown
+              </button>
+            ) : null}
+          </div>
+          <div className="decision-grid">
+            {experience.decision_brief.map((decision, index) => (
+              <article key={`decision-${index}`}>
+                <span>{readable(decision.implementation_priority)}</span>
+                <h4>{decision.summary}</h4>
+                <p>{decision.business_impact}</p>
+                <small>{decision.risk_visibility}</small>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {experience?.implementation_sequence.length ? (
+        <section className="result-section sequence-panel">
+          <h3>Implementation Sequence</h3>
+          <div className="sequence-list">
+            {experience.implementation_sequence.map((phase) => (
+              <article key={phase.phase}>
+                <strong>{phase.phase}</strong>
+                <p>{phase.objective}</p>
+                <ul>
+                  {phase.actions.slice(0, 3).map((action, index) => (
+                    <li key={`${phase.phase}-action-${index}`}>{action}</li>
+                  ))}
+                </ul>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {visualization ? (
+        <section className="result-section topology-panel">
+          <h3>Architecture View</h3>
+          <div className="topology-grid">
+            <div>
+              <h4>Topology</h4>
+              <p>{visualization.topology_summary}</p>
+            </div>
+            <div>
+              <h4>Deployment</h4>
+              <p>{visualization.deployment_view}</p>
+            </div>
+            <div>
+              <h4>HA/DR</h4>
+              <p>{visualization.ha_dr_view}</p>
+            </div>
+          </div>
+          {visualization.dependency_summary.length ? (
+            <div className="dependency-flow">
+              {visualization.dependency_summary.slice(0, 6).map((dependency, index) => (
+                <span key={`dependency-${index}`}>{dependency}</span>
+              ))}
+            </div>
+          ) : null}
+          {visualization.migration_flow.length ? (
+            <ol className="migration-flow">
+              {visualization.migration_flow.map((step) => (
+                <li key={`flow-${step}`}>{step}</li>
+              ))}
+            </ol>
+          ) : null}
+        </section>
+      ) : null}
+
+      {experience?.comparison_summary.length ? (
+        <section className="result-section comparison-panel">
+          <h3>Decision Comparisons</h3>
+          <div className="comparison-list">
+            {experience.comparison_summary.map((comparison) => (
+              <article key={comparison.decision}>
+                <div>
+                  <strong>{comparison.decision}</strong>
+                  <span>Prefer {comparison.preferred_option}</span>
+                </div>
+                <p>{comparison.operational_complexity}</p>
+                <p>{comparison.cost_implications}</p>
+                {comparison.governance_implications.length ? (
+                  <small>{comparison.governance_implications.slice(0, 2).join(" ")}</small>
+                ) : null}
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {result.active_agents.length || result.critic_findings.length ? (
         <section className="result-section orchestration-panel">
@@ -103,6 +237,9 @@ export function ReviewResult({ result }: ReviewResultProps) {
             <span>Freshness {percent(confidence.freshness)}</span>
             <span>Release {percent(confidence.release_awareness)}</span>
             <span>Recommendation {percent(confidence.recommendation)}</span>
+            {typeof confidence.citation_coverage === "number" ? (
+              <span>Citations {percent(confidence.citation_coverage)}</span>
+            ) : null}
           </div>
           {confidence.notes.length ? (
             <ul>
@@ -120,6 +257,32 @@ export function ReviewResult({ result }: ReviewResultProps) {
         <Section title="Risks" items={result.risks} />
         <Section title="Next Steps" items={result.next_steps} />
       </div>
+
+      {experience?.explainability_highlights.length || result.decision_reasoning.length ? (
+        <section className="result-section explainability-panel">
+          <h3>Why This Recommendation</h3>
+          {experience?.explainability_highlights.length ? (
+            <ul>
+              {experience.explainability_highlights.map((highlight, index) => (
+                <li key={`highlight-${index}`}>{highlight}</li>
+              ))}
+            </ul>
+          ) : null}
+          {result.decision_reasoning.length ? (
+            <div className="reasoning-list">
+              {result.decision_reasoning.slice(0, 4).map((reason) => (
+                <article key={`${reason.recommendation}-${reason.why_chosen}`}>
+                  <strong>{reason.service ?? "Architecture decision"}</strong>
+                  <p>{reason.why_chosen}</p>
+                  {reason.alternatives_rejected.length ? (
+                    <small>Alternatives: {reason.alternatives_rejected.slice(0, 2).join("; ")}</small>
+                  ) : null}
+                </article>
+              ))}
+            </div>
+          ) : null}
+        </section>
+      ) : null}
 
       {result.evidence_links.length ? (
         <section className="result-section evidence-links">

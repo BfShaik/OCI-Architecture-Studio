@@ -23,6 +23,10 @@ evals/
   orchestration-quality.jsonl
   architecture-realism.jsonl
   evaluation-intelligence.jsonl
+  executive-experience.jsonl
+  enterprise-governance.jsonl
+  enterprise-platform-maturity.jsonl
+  runtime-production-readiness.jsonl
   run_golden.py            Local eval runner
   reports/                 Generated reports, ignored by git
 
@@ -152,6 +156,7 @@ Implemented today:
 - response quality analytics for repeated recommendations, generic filler, service frequency, pattern coverage, citation coverage, workload quality, retrieval influence, and hallucination trends
 - configurable report-level quality gating through `infra/scripts/advisory_quality_gate.py`
 - provider comparison enrichment in `infra/scripts/genai_synthesis_parity_check.py`
+- executive-experience checks for review-ready summaries, implementation sequencing, comparison usefulness, visualization summary usefulness, and export-friendly Markdown content
 
 The layer is deterministic and regression-friendly. It does not use autonomous judges, fine-tuning, or LLM-as-judge scoring.
 
