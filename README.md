@@ -19,7 +19,7 @@ OCI Architecture Studio currently supports a validated advisory flow in local de
 9. Release-awareness currently uses local release snapshots, release metadata schemas, and refresh-policy scaffolding. Scheduled refresh and promotion automation exist as implementation scaffolding, but live release reconciliation is not part of request-time advisory behavior.
 10. The backend returns structured recommendations, concise decision reasoning metadata, consistency findings, confidence, evidence links, section citation metadata, optional retrieval debug traces, release context, temporal knowledge context, and standard architecture response sections. The current UI renders the main advisory fields and citation cards; full section-level citation, reasoning, consistency, and release-context UI is future work.
 
-LangGraph, advanced memory, autonomous agent execution, and Oracle AI Vector Search active reads are intentionally deferred until the deterministic control layer and the next vector-search parity gate justify promotion.
+LangGraph, advanced memory, and autonomous agent execution remain deferred. Oracle AI Vector Search provider code and tooling exist, but staging active-read promotion is deferred until a real Oracle vector index is built and parity checks pass.
 
 ## Repository Layout
 
@@ -59,8 +59,9 @@ tests/                Backend and integration tests
 - OCI-native retrieval migration hooks:
   - optional OCI Generative AI embedding adapter
   - optional Object Storage vector-manifest retrieval
-  - guarded Oracle AI Vector Search adapter boundary
+  - optional Oracle AI Vector Search provider with schema SQL, vector upsert, similarity search, metadata filters, health checks, and local fallback
   - retrieval regression reporting for citations, intents, and required service coverage
+- Hybrid retrieval path combining provider vector similarity, metadata filters, reranking heuristics, intent/domain heuristics, and intent-critical service coverage
 - Separate local OCI release snapshot pipeline
 - Knowledge refresh policy scaffolding for release-note watching, candidate snapshot validation, selective reindex, eval-gated promotion, version lineage, and rollback-safe updates
 - Optional OCI-native recurring refresh scaffold with OCI Functions and OCI Resource Scheduler; this is not active request-time release intelligence
@@ -236,8 +237,8 @@ VITE_API_BASE_URL=http://localhost:8000 npm run dev
 2. Run the scheduled refresh function in staging with candidate-first promotion and watch `/knowledge/refresh/status`.
 3. Continue expanding the source registry with Budgets, Audit, Data Guard, and deeper service-specific architecture sources.
 4. Replace local hashing embeddings with OCI Generative AI embeddings once provider settings and cost controls are finalized.
-5. Validate Oracle AI Vector Search schema/query parity before enabling active reads.
-6. Add Oracle AI Vector Search dual-run checks against the Object Storage provider before any active-read promotion.
+5. Build and validate the Oracle AI Vector Search table/index with production embeddings before enabling staging active reads.
+6. Run Oracle AI Vector Search dual-run checks against local JSON and the Object Storage provider before any active-read promotion.
 7. Replace fallback release parsing with stronger extraction from official OCI release pages.
 
 ## Run Evaluations
@@ -270,6 +271,20 @@ app/backend/.venv/bin/python infra/scripts/retrieval_regression_check.py \
 ```
 
 This checks retrieval health, intent alignment, citation availability, top chunks, stale citations, and required OCI service coverage before changing retrieval providers.
+
+## Run Oracle Vector Index Checks
+
+```bash
+app/backend/.venv/bin/python infra/scripts/oracle_vector_index.py validate-local-index \
+  --index-path knowledge/snapshots/oci-rag-index.json
+app/backend/.venv/bin/python infra/scripts/oracle_vector_index.py print-schema
+app/backend/.venv/bin/python infra/scripts/vector_retrieval_validation.py \
+  --cases evals/vector-retrieval-cases.jsonl \
+  --allow-skip \
+  --output-dir evals/reports/vector-retrieval
+```
+
+`oracle_ai_vector_search` requires `OCI_VECTOR_DB_DSN`, `OCI_VECTOR_DB_USER`, `OCI_VECTOR_DB_PASSWORD`, and the `python-oracledb` package from backend requirements. When `RETRIEVAL_FALLBACK_ENABLED=true`, the backend can fall back to `local_json` if the Oracle vector provider is unavailable.
 
 ## Run Retrieval Parity Checks
 
@@ -340,13 +355,16 @@ cd ../frontend && npm run build
 
 Latest full validation: 2026-05-15.
 
-- Local backend tests: `89 passed`
+- Local backend tests: `93 passed`
 - Golden evals: `18 passed, 0 failed`
 - Edge-case evals: `8 passed, 0 failed`
 - Advisory-quality evals: `5 passed, 0 failed`
 - Controlled orchestration evals: `5 passed, 0 failed`
 - Retrieval regression: `26 passed, 0 failed`
 - Retrieval health: passed for `local_json` with 44 chunks in the current branch; staging remains documented as `oci_object_storage`
+- Oracle AI Vector Search local fallback health: passed with fallback active when DB settings are absent
+- Oracle vector local-index validation: passed for 44 chunks at 256 dimensions
+- Vector retrieval validation: skip-safe report generated when Oracle DB settings are absent
 - Corpus health: passed for 44 chunks, 44 sources, 41 services, and 14 service domains
 - Knowledge ingestion: `44 chunks`
 - Release ingestion: `3 release items`

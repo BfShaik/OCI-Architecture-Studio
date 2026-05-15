@@ -83,11 +83,14 @@ class RetrievalScoreTrace(BaseModel):
 
 
 class RetrievalDebugTrace(BaseModel):
+    provider: str | None = None
     detected_intent: str | None = None
     mapped_oci_services: list[str] = Field(default_factory=list)
     mapped_service_summary: str | None = None
     domain_heuristics: list[str] = Field(default_factory=list)
+    metadata_filters: dict[str, list[str] | str | bool | None] = Field(default_factory=dict)
     retrieved_chunk_ids: list[str] = Field(default_factory=list)
+    retrieved_chunk_diversity: dict[str, int] = Field(default_factory=dict)
     retrieval_scores: list[RetrievalScoreTrace] = Field(default_factory=list)
     selected_final_chunks: list[str] = Field(default_factory=list)
 

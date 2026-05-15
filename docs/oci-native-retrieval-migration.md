@@ -31,7 +31,7 @@ What remains pre-production:
 - Local JSON vector index.
 - Small OCI source corpus.
 - Object Storage vector manifest is a migration-safe managed copy, not the final production vector engine.
-- Oracle AI Vector Search is now represented as a guarded adapter boundary; read cutover remains disabled until schema and parity validation are complete.
+- Oracle AI Vector Search provider code and index tooling exist; staging read cutover remains disabled until a real DB index and parity validation are complete.
 - Release awareness uses local snapshots rather than live watcher/refresh intelligence.
 - Response synthesis is template/profile-driven rather than full LLM synthesis.
 
@@ -75,7 +75,8 @@ Target services:
 Backend configuration:
 
 - `EMBEDDING_PROVIDER=local|oci_genai`
-- `RETRIEVAL_PROVIDER=local_json|oci_object_storage`
+- `RETRIEVAL_PROVIDER=local_json|oci_object_storage|oracle_ai_vector_search`
+- `RETRIEVAL_FALLBACK_ENABLED=true|false`
 - `OCI_GENAI_COMPARTMENT_ID`
 - `OCI_GENAI_EMBEDDING_MODEL_ID`
 - `OCI_GENAI_ENDPOINT`
@@ -87,6 +88,8 @@ Backend configuration:
 - `OCI_VECTOR_DB_USER`
 - `OCI_VECTOR_DB_PASSWORD`
 - `OCI_VECTOR_TABLE_NAME`
+- `OCI_VECTOR_DIMENSIONS`
+- `OCI_VECTOR_DISTANCE_METRIC`
 
 Backend adapters:
 
@@ -94,7 +97,7 @@ Backend adapters:
 - `OciGenerativeAiEmbedder`
 - `JsonVectorStore`
 - `OciObjectStorageVectorStore`
-- `OracleAiVectorSearchStore` guarded Phase 2 boundary
+- `OracleAiVectorSearchStore` optional provider with schema validation, vector upsert, vector similarity search, metadata filters, health diagnostics, and local fallback
 - `build_retriever(settings)`
 
 Health and diagnostics:
@@ -102,6 +105,8 @@ Health and diagnostics:
 - `GET /retrieval/health`
 - `infra/scripts/check_retrieval_health.py`
 - `infra/scripts/retrieval_regression_check.py`
+- `infra/scripts/oracle_vector_index.py`
+- `infra/scripts/vector_retrieval_validation.py`
 
 Ingestion updates:
 
@@ -186,34 +191,36 @@ python3 infra/scripts/check_retrieval_health.py \
   --oci-genai-embedding-model-id "$OCI_GENAI_EMBEDDING_MODEL_ID"
 ```
 
-### Phase 3 — Oracle AI Vector Search Adapter
+### Phase 3 — Oracle AI Vector Search Provider
 
 Purpose: replace manifest search with production vector retrieval.
 
-Implementation work:
+Implemented provider foundation:
 
-- Define vector table/index schema. Proposed first table shape:
+- Vector table/index schema tooling. Current first table shape:
   - `chunk_id`
   - `source_id`
   - `title`
   - `source_url`
   - `source_type`
-  - `text`
+  - `chunk_text`
   - `embedding`
   - `metadata_json`
   - `content_hash`
-  - `fetched_timestamp`
-  - `release_version`
-- Preserve chunk ID, source URL, title, service, service domain, intent tags, trust level, freshness score, release version, and fetched timestamp.
-- Add metadata filters for service domain, intent, freshness, trust, and architecture pattern.
-- Add side-by-side retrieval diff reports.
-- Switch default only after evals pass in both local and OCI-native modes.
+- flattened service, service domain, category, topic, intent, architecture pattern, workload, and domain-tag columns
+- Vector upsert from the generated JSON index.
+- Vector similarity search using Oracle vector distance.
+- Metadata filters for service, service domain, intent, freshness, trust, topic, architecture pattern, workload, and domain tags.
+- Side-by-side local-vs-Oracle retrieval validation utility.
+- Local JSON fallback when `RETRIEVAL_FALLBACK_ENABLED=true`.
 
 Current implementation status:
 
 - `RETRIEVAL_PROVIDER=oracle_ai_vector_search` is accepted by the backend factory.
-- The adapter reports health and missing DB inputs.
-- Search reads are intentionally disabled until schema validation and retrieval parity are proven.
+- The provider reports health, missing DB inputs, schema validity, chunk count, service/domain counts, fallback state, and last-query diagnostics.
+- Search reads execute when Oracle DB config and schema are valid.
+- In local/offline mode, Oracle vector validation is skip-safe and fallback-safe.
+- Staging active reads remain disabled until live index build and retrieval parity are proven.
 - Rollback remains configuration-only because `local_json` stays the default.
 
 ## Retrieval Intelligence Roadmap

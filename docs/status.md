@@ -145,7 +145,7 @@ This progress is based on `docs/two-week-plan.md`.
 - Started Sprint 2 OCI-native retrieval migration while preserving the local default:
   - added metadata-aware retrieval boosts for intent, service domain, architecture pattern, trust, freshness, and release-aware prompts
   - added per-chunk `content_hash`, `chunk_word_count`, and `vector_ready` metadata during ingestion
-  - added a guarded `oracle_ai_vector_search` retrieval provider boundary for Phase 2 schema validation
+  - initially added a guarded `oracle_ai_vector_search` retrieval provider boundary for Phase 2 schema validation
   - added vector DB environment settings without hardcoded secrets
   - added retrieval regression reporting under `infra/scripts/retrieval_regression_check.py`
   - added `docs/oci-native-retrieval-runbook.md`
@@ -270,6 +270,14 @@ This progress is based on `docs/two-week-plan.md`.
   - added automatic chunk metadata enrichment for OCI service references, workload/domain labels, migration relevance, HA/DR relevance, cost relevance, security/compliance tags, and architecture patterns
   - added corpus health validation for chunk count, metadata completeness, missing service tags, empty embeddings, duplicate IDs/content, orphaned chunks, and coverage gaps
   - improved final retrieval selection so intent-critical services and retrieval diversity survive the larger curated corpus
+- Added Oracle AI Vector Search retrieval foundation:
+  - implemented optional `oracle_ai_vector_search` provider with Oracle vector table schema SQL, vector index SQL, vector similarity search, vector upsert, and metadata-aware filters
+  - added config-controlled local fallback through `RETRIEVAL_FALLBACK_ENABLED`
+  - added provider diagnostics for missing DB configuration, schema validity, chunk count, service/domain counts, last query metadata filters, latency, and fallback state
+  - added retrieval debug fields for provider, metadata filters, and retrieved chunk diversity
+  - added `infra/scripts/oracle_vector_index.py` for schema printing, local-index validation, health checks, schema creation, vector index creation, and rebuild/upsert
+  - added `infra/scripts/vector_retrieval_validation.py` for honest local-vs-Oracle retrieval comparison with skip-safe behavior when DB config is unavailable
+  - added `evals/vector-retrieval-cases.jsonl` for local-vs-Oracle vector retrieval comparison scenarios
 - Pushed current implementation to GitHub.
 
 ## Latest Validation
@@ -295,7 +303,7 @@ Last validation run: 2026-05-15
 - Continuous intelligence hardening: candidate-first promotion, version lineage, rollback automation, and refresh status endpoint implemented
 - Terraform validation: passed after optional knowledge refresh scheduler scaffold; staging plan currently should not be applied until existing backend replacement drift is resolved and the function image is available
 - OCI-native refresh scheduler scaffold: implemented with OCI Functions plus OCI Resource Scheduler; not applied yet because a published OCIR function image is required before enabling
-- Backend tests: passed, 89 tests
+- Backend tests: passed, 93 tests
 - Frontend build: passed
 - Golden evals: passed, 18 of 18
 - Edge-case evals: passed, 8 of 8
@@ -304,6 +312,9 @@ Last validation run: 2026-05-15
 - Retrieval health check: passed for `local_json`, 44 chunks
 - Retrieval health check with `EMBEDDING_PROVIDER=oci_genai` and missing OCI GenAI env vars: passed through deterministic embedding fallback
 - Retrieval regression check: passed for `local_json`, 26 of 26 golden + edge cases
+- Oracle AI Vector Search fallback health: passed locally with fallback active when Oracle DB settings are absent
+- Oracle vector local-index validation: passed for 44 chunks at 256 dimensions
+- Oracle vector retrieval validation: generated a skip-safe report because Oracle DB settings were not provided
 - GenAI comparison eval: skipped live OCI GenAI path because required OCI GenAI env vars were not present; deterministic side of 4 comparison cases passed and report was generated
 - GenAI parity readiness check: passed in skip-safe mode when OCI GenAI env vars are not provided
 - Python compile checks: passed for backend, infra scripts, ingestion, and refresh code
@@ -338,7 +349,7 @@ Last validation run: 2026-05-15
 
 - Replace deterministic local hash embeddings with a production embedding provider when model/provider decisions are finalized.
 - Run OCI Generative AI embedding ingestion against the approved staging compartment and upload the vector manifest to Object Storage.
-- Validate the Oracle AI Vector Search table schema and enable read-path implementation only after manifest parity is proven.
+- Build the Oracle AI Vector Search table/index in a configured database and run live query parity before staging active-read promotion.
 - Expand OCI source coverage for:
   - Budgets-specific documentation
   - Data Guard-specific documentation
@@ -389,7 +400,8 @@ Last validation run: 2026-05-15
   - Phase 1 configuration hooks, metadata enrichment, Object Storage manifest path, health checks, and regression checks exist
   - Object Storage manifest retrieval is the active staging provider
   - `local_json` remains the validated rollback provider
-  - Oracle AI Vector Search read path is intentionally guarded until schema validation and parity checks are complete
+  - Oracle AI Vector Search provider code, schema/upsert/search tooling, fallback safety, and skip-safe validation exist
+  - Oracle AI Vector Search is not the active staging read path until a real DB index is built and parity checks pass
   - post-migration readiness report is captured in `docs/post-migration-readiness-report.md`
   - dual-provider parity report is captured in `docs/retrieval-parity-validation-report.md`
   - promotion report is captured in `docs/retrieval-provider-promotion-report.md`
@@ -405,7 +417,7 @@ Last validation run: 2026-05-15
   - OCI GenAI remains optional and must pass parity validation before staging activation
 - Retrieval quality:
   - reranking and domain heuristics are implemented and covered by tests
-  - optional debug traces expose detected intent, mapped OCI services, candidate chunks, score adjustments, and selected final chunks
+  - optional debug traces expose provider, detected intent, mapped OCI services, metadata filters, candidate chunks, score adjustments, retrieved chunk diversity, and selected final chunks
   - final chunk selection now protects intent-critical architecture services before generic diversity fill
   - section citation metadata is available in the backend response
   - full section-level citation rendering in the frontend remains future work
@@ -415,6 +427,7 @@ Last validation run: 2026-05-15
 - The local RAG index is a curated 44-source corpus, not a complete OCI documentation corpus.
 - Embeddings are deterministic local hash embeddings, useful for workflow validation but not production semantic retrieval.
 - Reranking improves ordering and traceability but still depends on the curated corpus and local hash embeddings.
+- Oracle AI Vector Search code and tooling are implemented, but live Oracle vector retrieval has not been validated without DB configuration in this branch.
 - Release awareness has scheduled snapshot refresh, candidate validation, and status visibility; deeper semantic impact analysis remains next-phase work.
 - OCI GenAI synthesis adapter exists, but deterministic synthesis remains the rollback-safe default unless enabled by environment configuration.
 - Deterministic architecture patterns improve fallback usefulness but are still heuristic and bounded by the retrieved corpus.

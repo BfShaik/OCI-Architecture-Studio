@@ -21,12 +21,13 @@ OCI Architecture Studio now has a validated working foundation:
 - concise decision reasoning metadata and lightweight consistency validation for recommendation coherence
 - confidence sub-signals for retrieval grounding, service relevance, workload alignment, migration mapping certainty, and citation coverage
 - OCI Object Storage retrieval manifest as the active staging retrieval provider
+- optional Oracle AI Vector Search provider and index tooling for the next OCI-native retrieval step
 - local JSON retrieval preserved as the config-only rollback provider
 - point-in-time release snapshots, release impact metadata, and current-vs-historical schema scaffolding for release-aware guidance
 - golden, edge-case, retrieval regression, and parity validation gates
 - Terraform-based OCI staging slice with Object Storage, Vault, Logging, Monitoring, Events, and Notifications
 
-The next platform milestone is to validate Oracle AI Vector Search schema, indexing, and live query parity against the active Object Storage provider before any active-read cutover.
+The next platform milestone is to build the Oracle AI Vector Search index with production-aligned embeddings, then validate live query parity against local JSON and the active Object Storage provider before any staging active-read cutover.
 
 The current orchestration layer is deterministic and in-process. Autonomous agent planning, persistent agent memory, and independent tool-using agents are future research and productization items, not current runtime behavior.
 

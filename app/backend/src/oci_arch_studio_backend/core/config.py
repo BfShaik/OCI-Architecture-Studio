@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     embedding_provider: str = Field(default="local", alias="EMBEDDING_PROVIDER")
     embedding_fallback_enabled: bool = Field(default=True, alias="EMBEDDING_FALLBACK_ENABLED")
     retrieval_provider: str = Field(default="local_json", alias="RETRIEVAL_PROVIDER")
+    retrieval_fallback_enabled: bool = Field(default=True, alias="RETRIEVAL_FALLBACK_ENABLED")
     retrieval_debug_enabled: bool = Field(default=False, alias="RETRIEVAL_DEBUG_ENABLED")
     retrieval_candidate_multiplier: int = Field(default=6, alias="RETRIEVAL_CANDIDATE_MULTIPLIER")
     advisory_orchestration_mode: str = Field(
@@ -59,6 +60,8 @@ class Settings(BaseSettings):
         alias="OCI_VECTOR_OBJECT_NAME",
     )
     oci_vector_index_name: str | None = Field(default=None, alias="OCI_VECTOR_INDEX_NAME")
+    oci_vector_dimensions: int = Field(default=256, alias="OCI_VECTOR_DIMENSIONS")
+    oci_vector_distance_metric: str = Field(default="COSINE", alias="OCI_VECTOR_DISTANCE_METRIC")
     oci_vector_db_dsn: str | None = Field(default=None, alias="OCI_VECTOR_DB_DSN")
     oci_vector_db_user: str | None = Field(default=None, alias="OCI_VECTOR_DB_USER")
     oci_vector_db_password: str | None = Field(default=None, alias="OCI_VECTOR_DB_PASSWORD")

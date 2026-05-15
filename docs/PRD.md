@@ -22,6 +22,7 @@ OCI Architecture Studio is an AI-powered OCI architecture intelligence platform 
 - Curated 44-source local OCI knowledge corpus in the current branch
 - Ingestion scaffolding for source groups, source categorization, document hierarchy, chunk lineage, release tags, metadata enrichment, and source traceability
 - Corpus health validation for metadata completeness, duplicates, orphaned chunks, service tags, embeddings, and retrieval coverage gaps
+- Oracle AI Vector Search provider path with schema/index tooling, vector upsert, metadata-aware similarity search, health checks, and local fallback
 - OCI GenAI embedding provider path with deterministic fallback and validation diagnostics
 - OCI GenAI synthesis provider path with fail-closed deterministic fallback
 - Dedicated retrieval-grounded prompt builder for GenAI synthesis
@@ -96,6 +97,15 @@ Embedding behavior:
 - Embedding fallback is enabled by default through `EMBEDDING_FALLBACK_ENABLED=true`.
 - The embedding path validates missing provider configuration, generation failures, and optional dimensional consistency.
 
+Vector retrieval behavior:
+
+- `local_json` remains the local development default.
+- `oci_object_storage` remains the current staging provider until a new snapshot/provider is promoted.
+- `oracle_ai_vector_search` is implemented as an optional provider that requires Oracle Database vector search configuration.
+- Oracle vector retrieval supports vector similarity search, chunk upsert, metadata filtering over service/domain/pattern/workload/tag fields, and retrieval health diagnostics.
+- `RETRIEVAL_FALLBACK_ENABLED=true` allows local JSON fallback if the Oracle vector provider is unavailable.
+- Oracle vector promotion still requires a built index, production embedding alignment, retrieval regression, parity validation, and operational sign-off.
+
 Corpus and ingestion behavior:
 
 - The current local corpus is curated, not a complete OCI documentation mirror.
@@ -127,6 +137,7 @@ Orchestration behavior:
 - Prompt templates and golden eval prompts exist in source control.
 - Golden prompts route to expected intents.
 - Golden evals, edge-case evals, retrieval regression, and dual-provider parity can be run locally.
+- Local-vs-Oracle vector retrieval comparison cases exist for migration, SaaS, AI inference, observability, fintech DR, and analytics retrieval scenarios.
 - OCI staging smoke tests validate backend, frontend, retrieval, and OCI SDK access.
 
 ## Current Non-Goals / Deferred Work
@@ -139,5 +150,5 @@ Orchestration behavior:
 - No continuous live release intelligence beyond scheduled snapshot refresh and gated promotion.
 - No autonomous documentation crawling or full OCI documentation corpus yet.
 - No bi-temporal retrieval; current-vs-historical temporal knowledge support is schema-oriented scaffolding only.
-- Oracle AI Vector Search active reads remain guarded until schema, indexing, and query parity are validated.
+- Oracle AI Vector Search staging active reads remain guarded until a real index is built and query parity is validated.
 - HTTPS ingress and production HA are deferred beyond the current staging slice.

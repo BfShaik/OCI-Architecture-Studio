@@ -79,9 +79,20 @@ OCI_VECTOR_DB_DSN=...
 OCI_VECTOR_DB_USER=...
 OCI_VECTOR_DB_PASSWORD=...
 OCI_VECTOR_TABLE_NAME=OCI_ARCHITECTURE_CHUNKS
+OCI_VECTOR_DIMENSIONS=256
+OCI_VECTOR_DISTANCE_METRIC=COSINE
+RETRIEVAL_FALLBACK_ENABLED=true
 ```
 
-Current status: the adapter is a guarded boundary. It reports health and missing configuration but intentionally does not serve reads yet.
+Current status: the provider code can create schema, upsert chunks, and serve reads when Oracle DB settings and schema are valid. Staging still uses `oci_object_storage`; Oracle vector active reads require live parity validation first.
+
+Local operational checks:
+
+```bash
+app/backend/.venv/bin/python infra/scripts/oracle_vector_index.py validate-local-index
+app/backend/.venv/bin/python infra/scripts/oracle_vector_index.py print-schema
+app/backend/.venv/bin/python infra/scripts/vector_retrieval_validation.py --allow-skip
+```
 
 ## Migration Gates
 
@@ -152,7 +163,7 @@ cd app/backend && PYTHONPATH=src .venv/bin/pytest -q
 - Missing or zero chunks: rerun ingestion and check `KNOWLEDGE_INDEX_PATH` or Object Storage bucket/object inputs.
 - OCI embedding failure: verify `OCI_GENAI_COMPARTMENT_ID`, `OCI_GENAI_EMBEDDING_MODEL_ID`, region, auth mode, and policy access.
 - Object Storage retrieval failure: verify namespace, bucket, object name, instance principal or OCI profile permissions.
-- Vector Search selected accidentally: set `RETRIEVAL_PROVIDER=local_json` or `oci_object_storage` until the read adapter is enabled.
+- Vector Search selected accidentally: set `RETRIEVAL_PROVIDER=local_json` or `oci_object_storage`, or keep `RETRIEVAL_FALLBACK_ENABLED=true` while Oracle DB config is incomplete.
 - Generic answers: inspect retrieval regression report for missing services or missing citations.
 - Stale guidance: rerun release ingestion and check citation freshness fields.
 

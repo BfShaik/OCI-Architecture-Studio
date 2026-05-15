@@ -392,7 +392,10 @@ def test_retriever_debug_trace_explains_reranking(tmp_path) -> None:
 
     assert results[0].chunk_id == "observability::1"
     assert retriever.last_debug_trace is not None
+    assert retriever.last_debug_trace.provider == "local_json"
     assert retriever.last_debug_trace.detected_intent == "observability"
+    assert retriever.last_debug_trace.metadata_filters["intent"] == "observability"
+    assert retriever.last_debug_trace.retrieved_chunk_diversity["observability"] >= 1
     assert "Logging" in retriever.last_debug_trace.mapped_oci_services
     assert retriever.last_debug_trace.selected_final_chunks[0] == "observability::1"
     assert any(

@@ -78,6 +78,7 @@ def build_settings(
     return Settings(
         KNOWLEDGE_INDEX_PATH=args.index_path,
         RETRIEVAL_PROVIDER=provider,
+        RETRIEVAL_FALLBACK_ENABLED=args.retrieval_fallback_enabled,
         EMBEDDING_PROVIDER=args.embedding_provider,
         EMBEDDING_FALLBACK_ENABLED=args.embedding_fallback_enabled,
         OCI_REGION=args.oci_region,
@@ -93,6 +94,10 @@ def build_settings(
         OCI_VECTOR_DB_DSN=args.oci_vector_db_dsn,
         OCI_VECTOR_DB_USER=args.oci_vector_db_user,
         OCI_VECTOR_DB_PASSWORD=args.oci_vector_db_password,
+        OCI_VECTOR_TABLE_NAME=args.oci_vector_table_name,
+        OCI_VECTOR_INDEX_NAME=args.oci_vector_index_name,
+        OCI_VECTOR_DIMENSIONS=args.oci_vector_dimensions,
+        OCI_VECTOR_DISTANCE_METRIC=args.oci_vector_distance_metric,
     )
 
 
@@ -297,6 +302,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", type=Path, default=REPO_ROOT / "evals" / "reports" / "retrieval-parity")
     parser.add_argument("--index-path", type=Path, default=REPO_ROOT / "knowledge" / "snapshots" / "oci-rag-index.json")
     parser.add_argument("--embedding-provider", choices=("local", "oci_genai"), default="local")
+    parser.add_argument("--retrieval-fallback-enabled", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--oci-region")
     parser.add_argument("--oci-profile", default="DEFAULT")
     parser.add_argument("--oci-auth-mode", choices=("config_file", "instance_principal", "resource_principal"), default="config_file")
@@ -311,6 +317,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--oci-vector-db-dsn")
     parser.add_argument("--oci-vector-db-user")
     parser.add_argument("--oci-vector-db-password")
+    parser.add_argument("--oci-vector-table-name", default="OCI_ARCHITECTURE_CHUNKS")
+    parser.add_argument("--oci-vector-index-name", default="OCI_ARCH_CHUNKS_VEC_IDX")
+    parser.add_argument("--oci-vector-dimensions", type=int, default=256)
+    parser.add_argument("--oci-vector-distance-metric", default="COSINE")
     parser.add_argument("--min-top-overlap", type=float, default=0.8)
     parser.add_argument("--max-latency-ms", type=float, default=250.0)
     return parser.parse_args()

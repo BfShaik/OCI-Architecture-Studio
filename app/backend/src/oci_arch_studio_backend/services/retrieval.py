@@ -21,6 +21,7 @@ from oci_arch_studio_backend.services.retrieval_metrics import retrieval_metrics
 from oci_arch_studio_backend.services.retrieval_reranker import RetrievalReranker
 from oci_arch_studio_backend.services.service_mapping import OciServiceMapper
 from oci_arch_studio_backend.services.vector_store import (
+    FallbackVectorStore,
     JsonVectorStore,
     OracleAiVectorSearchConfig,
     OracleAiVectorSearchStore,
@@ -236,11 +237,14 @@ class OciKnowledgeRetriever:
         sources = [self._to_retrieved_source(chunk, score) for chunk, score in selected]
         if self._debug_requested(debug_enabled):
             self.last_debug_trace = RetrievalDebugTrace(
+                provider=self.provider_name,
                 detected_intent=intent,
                 mapped_oci_services=list(service_mapping.mapped_services),
                 mapped_service_summary=service_mapping.summary(),
                 domain_heuristics=list(heuristics.domains),
+                metadata_filters=self._filter_debug(filters),
                 retrieved_chunk_ids=[chunk.id for chunk, _score in results],
+                retrieved_chunk_diversity=self._chunk_diversity(results),
                 retrieval_scores=[
                     RetrievalScoreTrace(
                         chunk_id=trace.chunk_id,
@@ -359,6 +363,8 @@ class OciKnowledgeRetriever:
         )
         services = tuple(dict.fromkeys((*explicit_services, *mapped_services)))
         hints = INTENT_RETRIEVAL_HINTS.get(intent_profile.intent.value, {})
+        if not hints:
+            return VectorSearchFilters()
         heuristics = heuristics or ArchitectureDomainHeuristics()
         return VectorSearchFilters(
             intent=intent_profile.intent.value,
@@ -370,6 +376,26 @@ class OciKnowledgeRetriever:
             services=services,
             release_aware=intent_profile.intent.value == "release_awareness",
         )
+
+    def _filter_debug(self, filters: VectorSearchFilters) -> dict[str, list[str] | str | bool | None]:
+        return {
+            "intent": filters.intent,
+            "service_domain": filters.service_domain,
+            "service_domains": list(filters.service_domains),
+            "services": list(filters.services),
+            "architecture_patterns": list(filters.architecture_patterns),
+            "workload_types": list(filters.workload_types),
+            "domain_tags": list(filters.domain_tags),
+            "topics": list(filters.topics),
+            "release_aware": filters.release_aware,
+        }
+
+    def _chunk_diversity(self, results: list[tuple[object, float]]) -> dict[str, int]:
+        diversity: dict[str, int] = {}
+        for chunk, _score in results:
+            domain = str(chunk.metadata.get("service_domain") or "unknown")
+            diversity[domain] = diversity.get(domain, 0) + 1
+        return dict(sorted(diversity.items()))
 
     def _debug_requested(self, request_debug: bool | None) -> bool:
         return self.debug_enabled if request_debug is None else bool(request_debug or self.debug_enabled)
@@ -554,13 +580,25 @@ def build_retriever(settings: Settings, top_k: int = 6) -> OciKnowledgeRetriever
         )
         provider_name = "oci_object_storage"
     elif settings.retrieval_provider == "oracle_ai_vector_search":
-        store = OracleAiVectorSearchStore(
+        oracle_store = OracleAiVectorSearchStore(
             OracleAiVectorSearchConfig(
                 dsn=settings.oci_vector_db_dsn,
                 username=settings.oci_vector_db_user,
                 password=settings.oci_vector_db_password,
                 table_name=settings.oci_vector_table_name,
+                index_name=settings.oci_vector_index_name or "OCI_ARCH_CHUNKS_VEC_IDX",
+                dimensions=settings.oci_vector_dimensions,
+                distance_metric=settings.oci_vector_distance_metric,
             )
+        )
+        store = (
+            FallbackVectorStore(
+                primary=oracle_store,
+                fallback=JsonVectorStore(index_path=settings.knowledge_index_path),
+                provider_name="oracle_ai_vector_search",
+            )
+            if settings.retrieval_fallback_enabled
+            else oracle_store
         )
         provider_name = "oracle_ai_vector_search"
     else:
