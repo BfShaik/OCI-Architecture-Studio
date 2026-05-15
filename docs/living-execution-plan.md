@@ -81,8 +81,8 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | TASK-009 | Blocked | Promote semantic retrieval through configuration only after parity approval. | Blocked until Oracle DB vector config exists and Oracle AI Vector Search parity passes without skip; promotion and rollback runbook documented. |
 | TASK-010 | Done | Activate controlled OCI Functions knowledge-refresh invocation path. | Local Function handler smoke passed with `no_fetch`, `quick_gates`, `upload=false`, `promoted=false`, and reports written under `/tmp`. |
 | TASK-011 | Blocked | Activate OCI Resource Scheduler for release refresh after function readiness. | Blocked until Function image is built/pushed to OCIR and packaged invocation passes; enablement and rollback path documented. |
-| TASK-012 | Next | Define OCI DevOps delivery contract around existing operator artifact flow. | Pipeline requirements documented; operator scripts remain usable. |
-| TASK-013 | Not Started | Wire OCI DevOps metadata into runtime readiness checks for active deployments. | Diagnostics distinguish configured vs inactive DevOps. |
+| TASK-012 | Done | Define OCI DevOps delivery contract around existing operator artifact flow. | OCI DevOps artifact/stage/rollback contract documented; operator script remains fallback. |
+| TASK-013 | Next | Wire OCI DevOps metadata into runtime readiness checks for active deployments. | Diagnostics distinguish configured vs inactive DevOps. |
 | TASK-014 | Not Started | Expand official OCI corpus for highest-value advisory gaps. | Retrieval regression and advisory evals do not regress. |
 | TASK-015 | Not Started | Harden release-intelligence freshness and selective reindex reporting. | Release refresh report shows candidate, gate, and promotion state. |
 | TASK-016 | Not Started | Cut a new internal beta baseline after all active gates pass. | Full validation matrix passes; docs updated; commit, push, and tag. |
@@ -133,13 +133,13 @@ Run the appropriate subset after each increment; run the full matrix before a ne
 
 ## Next Actionable Increment
 
-Current task: `TASK-012`.
+Current task: `TASK-013`.
 
-Define OCI DevOps delivery contract around existing operator artifact flow:
+Wire OCI DevOps metadata into runtime readiness checks for active deployments:
 
-1. Inspect current operator deployment scripts and OCI DevOps metadata fields.
-2. Document the artifact, validation, and rollback contract for a future OCI DevOps pipeline.
-3. Preserve operator scripts as the fallback deployment path.
+1. Inspect current OCI DevOps diagnostics behavior.
+2. Tighten readiness semantics for project vs deploy-pipeline metadata.
+3. Ensure diagnostics clearly distinguish inactive, partial, and promotion-ready DevOps configuration.
 
 ## Operating Rules
 
