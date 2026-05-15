@@ -2,6 +2,8 @@
 
 Date: 2026-05-15
 
+Validated baseline: `v1.0.1`
+
 ## Readiness Position
 
 OCI Architecture Studio is ready for a controlled enterprise internal beta after the validation gates listed below pass on the target environment.
@@ -12,7 +14,7 @@ This milestone is an internal beta baseline, not a production HA certification. 
 
 | Area | Current State | Internal Beta Decision |
 |---|---|---|
-| Retrieval | `oci_object_storage` is active in staging with 44 chunks and `local_json` fallback. Oracle AI Vector Search provider and tooling exist but live DB-backed promotion is not complete. | Accept for beta. Keep Oracle AI Vector Search as the next retrieval promotion gate. |
+| Retrieval | `oci_object_storage` is active in staging with 47 chunks and `local_json` fallback. Oracle AI Vector Search provider and tooling exist but live DB-backed promotion is not complete. | Accept for beta. Keep Oracle AI Vector Search as the next retrieval promotion gate. |
 | Advisory synthesis | Deterministic synthesis is default. OCI GenAI chat path exists with fail-closed deterministic fallback. | Accept for beta. Enable live OCI GenAI only after parity checks pass with approved model config. |
 | Governance | Deterministic governance annotations, risk classification, security posture checks, prioritization, comparisons, and auditability trace exist. | Accept for beta as human-review metadata, not policy enforcement. |
 | Migration and FinOps | `optimization_plan` adds phased migration, modernization options, FinOps levers, workload optimization, comparisons, and implementation readiness. | Accept for beta. It is heuristic advisory guidance and does not call live OCI billing APIs. |
@@ -29,7 +31,9 @@ This milestone is an internal beta baseline, not a production HA certification. 
 2. Improved scheduler diagnostics so OCI Resource Scheduler/Functions readiness is based on configured Function and Schedule OCIDs, not only the process deployment profile.
 3. Extended Terraform cloud-init and runtime profile examples to carry knowledge-refresh Function/Schedule OCIDs when the scheduler is enabled.
 4. Added regression coverage for scheduler diagnostic visibility.
-5. Updated this readiness summary and related docs to keep internal beta claims precise.
+5. Added release-refresh lifecycle reporting so candidate creation, gate status, promotion, upload, rollback, and query-time refresh posture are visible in one report.
+6. Synced the refreshed 47-chunk knowledge snapshot and release snapshot to OCI Object Storage staging.
+7. Updated this readiness summary and related docs to keep internal beta claims precise.
 
 ## Accepted Internal Beta Limitations
 
@@ -122,8 +126,41 @@ PYTHONPATH=app/backend/src app/backend/.venv/bin/python infra/scripts/check_retr
 After the full validation baseline passes and staging is refreshed, create a stable milestone tag:
 
 ```bash
-git tag -a internal-beta-2026-05-15 -m "Internal beta baseline"
-git push origin internal-beta-2026-05-15
+git tag -a v1.0.1 -m "OCI Architecture Studio v1.0.1 internal beta baseline"
+git tag -a internal-beta-2026-05-15-r2 -m "Internal beta baseline refresh"
+git push origin v1.0.1 internal-beta-2026-05-15-r2
 ```
 
-Use a new date-suffixed tag for future internal beta baselines rather than moving an existing tag.
+Use a new version tag for code baselines, for example `v1.0.1`, and a date/revision-suffixed internal beta tag when a same-day beta baseline already exists, for example `internal-beta-2026-05-15-r2`. Do not move existing baseline tags.
+
+## Latest Baseline Validation
+
+The `v1.0.1` validation on 2026-05-15 passed:
+
+- Backend tests: 126 passed.
+- Frontend build: passed.
+- Golden evals: 18 of 18 passed.
+- Edge-case evals: 8 of 8 passed.
+- Advisory-quality evals: 5 of 5 passed.
+- Orchestration-quality evals: 5 of 5 passed.
+- Architecture-realism evals: 4 of 4 passed.
+- Evaluation-intelligence evals: 9 of 9 passed.
+- Enterprise-governance evals: 5 of 5 passed.
+- Enterprise-platform-maturity evals: 4 of 4 passed.
+- Runtime-production-readiness evals: 3 of 3 passed.
+- Executive-experience evals: 3 of 3 passed.
+- FinOps-migration-optimization evals: 4 of 4 passed.
+- Local retrieval regression: 18 of 18 passed against 47 chunks.
+- Object Storage retrieval parity: 26 of 26 passed against the refreshed staging snapshot.
+- Vector retrieval validation: skipped safely because Oracle AI Vector Search DB settings are not configured.
+- Oracle AI Vector Search parity: skipped safely because Oracle DB vector settings are not configured.
+- OCI GenAI synthesis parity: skipped safely because OCI GenAI model and compartment settings are not configured.
+- Terraform validation: dev, test, and staging validated after backend-disabled init.
+- Deployment config validation: passed for staging tfvars.
+- Terraform remote-state readiness: passed in non-mutating `--skip-oci` mode with expected warnings that remote state is not yet enabled.
+- Release-watch refresh validation: passed in no-fetch mode with no query-time refresh.
+- Staging Object Storage snapshot sync: uploaded `oci-rag-index.json` and `oci-release-snapshot.json`.
+- Staging retrieval health: passed with `oci_object_storage`, 47 chunks, 44 services, and 14 service domains.
+- Staging smoke: passed for backend and frontend.
+- Staging operational readiness: passed with expected API Gateway and OCI DevOps warnings.
+- Staging internal beta readiness: passed with expected API Gateway and OCI DevOps warnings.

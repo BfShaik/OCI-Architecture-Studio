@@ -4,7 +4,7 @@ Last updated: 2026-05-15
 
 ## Purpose
 
-This document is the active execution plan for moving OCI Architecture Studio from the `v1.0.0` internal beta baseline toward a stronger OCI-native enterprise beta. It is intentionally living: update it whenever a promotion gate passes, a gap is retired, or a new risk is discovered.
+This document is the active execution plan for moving OCI Architecture Studio from the `v1.0.1` internal beta baseline toward a stronger OCI-native enterprise beta. It is intentionally living: update it whenever a promotion gate passes, a gap is retired, or a new risk is discovered.
 
 The plan favors OCI-native services, Terraform-managed infrastructure, deterministic fallback, local development compatibility, and small explainable increments. It does not introduce autonomous agents, hidden SaaS dependencies, external schedulers, external vector databases, GitHub Actions-based operational orchestration, or heavyweight workflow engines.
 
@@ -12,7 +12,7 @@ The plan favors OCI-native services, Terraform-managed infrastructure, determini
 
 | Area | Current position | Baseline decision |
 |---|---|---|
-| Git baseline | `main` and `v1.0.0` point at the internal beta release baseline. Current execution branch is `codex/oci-native-continuous-execution`. | Treat `v1.0.0` as the stable recovery point. |
+| Git baseline | `v1.0.1` is the validated internal beta code baseline; current execution branch is `codex/oci-native-continuous-execution`. | Treat `v1.0.1` as the current recovery point after the tag is pushed. |
 | Retrieval | Staging uses `oci_object_storage` with `local_json` fallback. Oracle AI Vector Search provider/tooling exists but active DB-backed retrieval is not promoted. | Keep Object Storage active until vector parity passes. |
 | Synthesis | Deterministic synthesis is default. OCI GenAI synthesis exists behind configuration and fails closed to deterministic fallback. | Keep deterministic default until live GenAI parity passes. |
 | Embeddings | Deterministic local embeddings are the stable path. OCI GenAI embeddings are configurable but not the default. | Activate in shadow/parity mode before promotion. |
@@ -85,7 +85,8 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | TASK-013 | Done | Wire OCI DevOps metadata into runtime readiness checks for active deployments. | Passed `tests/test_operational_hardening.py`, `tests/test_api.py`, and `py_compile`; diagnostics distinguish inactive, partial, and promotion-ready DevOps metadata. |
 | TASK-014 | Done | Expand official OCI corpus for highest-value advisory gaps. | Added Budgets, Security Zones, and Compute Autoscaling sources; offline index rebuild produced 47 chunks; retrieval regression 18/18, advisory-quality 5/5, golden 18/18 passed. |
 | TASK-015 | Done | Harden release-intelligence freshness and selective reindex reporting. | Added refresh `lifecycle` summary covering candidate, gate, promotion, upload, rollback, and query-time refresh state; passed `tests/test_refresh_policy.py`, `git diff --check`, and no-fetch release-watch validation with 47 chunks. |
-| TASK-016 | Next | Cut a new internal beta baseline after all active gates pass. | Full validation matrix passes; docs updated; commit, push, and tag. |
+| TASK-016 | Done | Cut a new internal beta baseline after all active gates pass. | Local/backend/frontend/eval/Terraform gates passed; staging Object Storage refreshed to 47 chunks; staging smoke, retrieval health, operational readiness, and internal beta readiness passed with expected API Gateway/OCI DevOps warnings. |
+| TASK-017 | Next | Select and execute the next OCI-native promotion increment. | New task is added before implementation; blocked live promotions remain default-off until required OCI config and parity evidence exist. |
 
 ## Phase Gates
 
@@ -133,14 +134,13 @@ Run the appropriate subset after each increment; run the full matrix before a ne
 
 ## Next Actionable Increment
 
-Current task: `TASK-016`.
+Current task: `TASK-017`.
 
-Cut a new internal beta baseline after active gates pass:
+Select the next OCI-native promotion increment:
 
-1. Inspect current docs, status, and validation reports.
-2. Run the required local regression matrix for active providers.
-3. Confirm blocked live OCI promotions remain documented and default-off.
-4. Commit, push, and create the next internal beta baseline tag when gates pass.
+1. Review blocked promotion gates for Oracle AI Vector Search, OCI GenAI, Resource Scheduler, API Gateway, and OCI DevOps.
+2. Pick the highest-value task that can move forward without violating default-off or parity rules.
+3. Add the task to the linear queue before implementation.
 
 ## Operating Rules
 

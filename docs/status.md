@@ -360,14 +360,14 @@ Last validation run: 2026-05-15
 - Deployment config validation: passed
 - GitHub CI workflow YAML parsing: passed
 - Infrastructure Python script compile checks: passed
-- Knowledge ingestion smoke: passed, 44 chunks generated locally from 44 registry sources
+- Knowledge ingestion smoke: passed, 47 chunks generated locally from 47 registry sources
 - Release ingestion smoke: passed, 5 release items generated in offline fallback mode
 - Release impact report: passed with deterministic classification, impacted source/chunk mapping, targeted eval impact detection, refresh action reporting, and unresolved-risk reporting
 - Knowledge refresh policy smoke: passed in offline `release-watch` quick-gate mode
 - Continuous intelligence hardening: candidate-first promotion, version lineage, rollback automation, and refresh status endpoint implemented
 - Terraform validation: passed after optional knowledge refresh scheduler scaffold; staging plan currently should not be applied until existing backend replacement drift is resolved and the function image is available
 - OCI-native refresh scheduler scaffold: implemented with OCI Functions plus OCI Resource Scheduler; not applied yet because a published OCIR function image is required before enabling
-- Backend tests: passed, 121 tests
+- Backend tests: passed, 126 tests
 - Frontend build: passed
 - Golden evals: passed, 18 of 18
 - Edge-case evals: passed, 8 of 8
@@ -385,11 +385,11 @@ Last validation run: 2026-05-15
 - Operational hardening tests: passed in targeted API/diagnostics suite
 - Operational readiness check: passed locally against `/health`, `/retrieval/health`, `/operations/health`, `/operations/readiness`, `/operations/infrastructure`, and `/operations/analytics`; API Gateway and OCI DevOps are expected readiness warnings until configured
 - Runtime readiness endpoint: passed locally in targeted API tests
-- Retrieval health check: passed for `local_json`, 44 chunks
+- Retrieval health check: passed for `local_json`, 47 chunks
 - Retrieval health check with `EMBEDDING_PROVIDER=oci_genai` and missing OCI GenAI env vars: passed through deterministic embedding fallback
 - Retrieval regression check: passed for `local_json`, 18 of 18 configured cases
 - Oracle AI Vector Search fallback health: passed locally with fallback active when Oracle DB settings are absent
-- Oracle vector local-index validation: passed for 44 chunks at 256 dimensions
+- Oracle vector local-index validation: passed for 47 chunks at 256 dimensions
 - Oracle vector retrieval validation: generated a skip-safe report because Oracle DB settings were not provided
 - GenAI comparison eval: skipped live OCI GenAI path because required OCI GenAI env vars were not present; deterministic side of 4 comparison cases passed and report was generated
 - GenAI parity readiness check: passed in skip-safe mode when OCI GenAI env vars are not provided
@@ -406,12 +406,12 @@ Last validation run: 2026-05-15
 - OCI staging deployment smoke: passed for backend, frontend, and OCI SDK tenancy access
 - OCI staging resource visibility smoke: passed for Object Storage bucket, Vault secret, Logging log group, Monitoring alarm, and Events rule
 - Post-migration readiness review: passed with a go decision for continued Sprint 2 development
-- Dual-provider retrieval parity validation: passed, 14 of 14 cases, comparing `local_json` with `oci_object_storage`
+- Dual-provider retrieval parity validation: passed, 26 of 26 cases, comparing `local_json` with `oci_object_storage`
 - OCI Object Storage snapshot sync: passed for `oci-rag-index.json` and `oci-release-snapshot.json`
 - Staging retrieval provider promotion: passed, active provider is now `oci_object_storage`
 - Staging redeploy from the latest audited working tree: passed
 - Staging endpoint parity: passed for `/health`, `/architecture-review`, `/retrieval/health`, `/advisory/quality`, `/orchestration/health`, and `/knowledge/refresh/status`
-- Staging retrieval snapshot: passed with `oci_object_storage`, 44 chunks, 41 services, and 14 service domains after Object Storage snapshot sync
+- Staging retrieval snapshot: passed with `oci_object_storage`, 47 chunks, 44 services, and 14 service domains after Object Storage snapshot sync
 - Staging enterprise governance smoke: passed, including `enterprise_governance` response metadata and governance analytics counters
 - Post-promotion baseline guardrail: passed with expected provider `oci_object_storage`
 - Post-promotion deployment smoke: passed for backend, frontend, and OCI SDK tenancy access
