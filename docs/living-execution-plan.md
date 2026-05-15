@@ -78,8 +78,8 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | TASK-006 | Done | Add OCI GenAI embedding activation checklist and diagnostics expectations. | Passed `tests/test_operational_hardening.py`, `tests/test_api.py`, and `git diff --check`; activation gates documented. |
 | TASK-007 | Done | Validate Oracle AI Vector Search schema/index prerequisites without active-provider promotion. | Local index validation passed for 44 chunks at 256 dimensions; vector validation skip-safe report confirms missing Oracle DB config without active-provider promotion. |
 | TASK-008 | Done | Add Oracle AI Vector Search dual-read parity workflow against Object Storage retrieval. | `retrieval_parity_check.py` now supports `--oci-native-provider oracle_ai_vector_search`; skip-safe run used Object Storage baseline with 44 chunks and reported missing Oracle DB config. |
-| TASK-009 | Next | Promote semantic retrieval through configuration only after parity approval. | Staging smoke, retrieval regression, vector validation, rollback drill pass. |
-| TASK-010 | Not Started | Activate controlled OCI Functions knowledge-refresh invocation path. | Function invocation smoke passes; no automatic promotion of snapshots without gates. |
+| TASK-009 | Blocked | Promote semantic retrieval through configuration only after parity approval. | Blocked until Oracle DB vector config exists and Oracle AI Vector Search parity passes without skip; promotion and rollback runbook documented. |
+| TASK-010 | Next | Activate controlled OCI Functions knowledge-refresh invocation path. | Function invocation smoke passes; no automatic promotion of snapshots without gates. |
 | TASK-011 | Not Started | Activate OCI Resource Scheduler for release refresh after function readiness. | Schedule OCIDs visible in diagnostics; manual disable rollback documented. |
 | TASK-012 | Not Started | Define OCI DevOps delivery contract around existing operator artifact flow. | Pipeline requirements documented; operator scripts remain usable. |
 | TASK-013 | Not Started | Wire OCI DevOps metadata into runtime readiness checks for active deployments. | Diagnostics distinguish configured vs inactive DevOps. |
@@ -133,14 +133,14 @@ Run the appropriate subset after each increment; run the full matrix before a ne
 
 ## Next Actionable Increment
 
-Current task: `TASK-009`.
+Current task: `TASK-010`.
 
-Promote semantic retrieval through configuration only after parity approval:
+Activate controlled OCI Functions knowledge-refresh invocation path:
 
-1. Do not change staging provider until Oracle AI Vector Search parity passes without skip.
-2. Document the configuration-only promotion steps for `RETRIEVAL_PROVIDER=oracle_ai_vector_search`.
-3. Document rollback to `oci_object_storage` and `local_json`.
-4. Require staging smoke, retrieval regression, vector validation, and rollback drill before promotion.
+1. Inspect Function scaffold and knowledge-refresh handler.
+2. Document or validate controlled invocation inputs.
+3. Ensure refresh remains candidate-first and does not promote snapshots without gates.
+4. Keep Resource Scheduler disabled until Function invocation is validated.
 
 ## Operating Rules
 

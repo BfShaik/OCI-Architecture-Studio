@@ -111,6 +111,63 @@ app/backend/.venv/bin/python infra/scripts/retrieval_parity_check.py \
 
 When Oracle DB settings exist, provide `OCI_VECTOR_DB_DSN`, `OCI_VECTOR_DB_USER`, and `OCI_VECTOR_DB_PASSWORD` through the matching CLI flags or environment wrapper and rerun the same parity gate. Do not promote `RETRIEVAL_PROVIDER=oracle_ai_vector_search` until parity passes without fallback.
 
+## Oracle AI Vector Search Active Promotion
+
+Current decision: **do not promote yet**. Oracle AI Vector Search active reads require a non-skipped parity report against the active Object Storage baseline.
+
+Prerequisites:
+
+- Oracle DB DSN, user, and password are available through OCI Vault or approved runtime configuration.
+- `infra/scripts/oracle_vector_index.py validate-local-index` passes.
+- Oracle schema and vector index are created or verified.
+- `infra/scripts/retrieval_parity_check.py --baseline-provider oci_object_storage --oci-native-provider oracle_ai_vector_search` passes without `--allow-skip`.
+- Golden, edge, retrieval regression, vector validation, and staging smoke checks pass.
+
+Configuration-only promotion:
+
+```text
+RETRIEVAL_PROVIDER=oracle_ai_vector_search
+RETRIEVAL_FALLBACK_ENABLED=true
+OCI_VECTOR_DB_DSN=<vault/runtime value>
+OCI_VECTOR_DB_USER=<vault/runtime value>
+OCI_VECTOR_DB_PASSWORD=<vault/runtime value>
+OCI_VECTOR_TABLE_NAME=OCI_ARCHITECTURE_CHUNKS
+OCI_VECTOR_INDEX_NAME=OCI_ARCH_CHUNKS_VEC_IDX
+OCI_VECTOR_DIMENSIONS=256
+OCI_VECTOR_DISTANCE_METRIC=COSINE
+```
+
+Post-promotion checks:
+
+```bash
+app/backend/.venv/bin/python infra/scripts/check_retrieval_health.py \
+  --provider oracle_ai_vector_search \
+  --oci-vector-db-dsn "$OCI_VECTOR_DB_DSN" \
+  --oci-vector-db-user "$OCI_VECTOR_DB_USER" \
+  --oci-vector-db-password "$OCI_VECTOR_DB_PASSWORD"
+
+app/backend/.venv/bin/python infra/scripts/retrieval_regression_check.py \
+  --provider oracle_ai_vector_search \
+  --output-dir evals/reports/retrieval-oracle-active
+
+app/backend/.venv/bin/python infra/scripts/vector_retrieval_validation.py \
+  --output-dir evals/reports/vector-retrieval
+```
+
+Rollback:
+
+```text
+RETRIEVAL_PROVIDER=oci_object_storage
+```
+
+Emergency local rollback:
+
+```text
+RETRIEVAL_PROVIDER=local_json
+```
+
+After rollback, rerun `/retrieval/health`, retrieval regression, and staging smoke. Record whether fallback was active, what failed, and which provider is now authoritative.
+
 ## Migration Gates
 
 Do not switch a staging provider until all are true:
