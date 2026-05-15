@@ -10,6 +10,17 @@ Last updated: 2026-05-15
 - Operational readiness now reports `api_exposure=oci_api_gateway`, `api_gateway.active=true`, and `api_gateway.promotion_ready=true`.
 - Remaining runtime readiness warning is limited to OCI DevOps metadata not being configured; operator-script deployment remains the active fallback path.
 
+## Latest Vector Search Preflight
+
+- `TASK-023` completed as a non-mutating Terraform preflight for Oracle Autonomous AI Database / Oracle AI Vector Search shadow infrastructure.
+- Terraform validation passed for staging.
+- A staging plan with `enable_autonomous_vector_database=true` proposed exactly 3 creates, 0 changes, and 0 destroys:
+  - `oci_core_network_security_group.autonomous_vector_db[0]`
+  - `oci_core_network_security_group_security_rule.backend_to_autonomous_vector_db[0]`
+  - `oci_database_autonomous_database.vector_search[0]`
+- The planned database shape used private endpoint access, mTLS, ECPU compute, 2 ECPUs, 1 TB storage, `26ai`, and `LICENSE_INCLUDED`.
+- No apply was run in this task; the binary plan artifact was removed because Terraform plans can carry sensitive values.
+
 ## Active Plan
 
 - Living execution plan: `docs/living-execution-plan.md`
