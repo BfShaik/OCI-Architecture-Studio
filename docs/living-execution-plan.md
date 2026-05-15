@@ -89,7 +89,8 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | TASK-017 | Done | Select and execute the next OCI-native promotion increment. | Chose default-off Terraform readiness for API Gateway plus Oracle Autonomous AI Database/Vector Search rather than any live promotion. |
 | TASK-018 | Done | Add default-off Terraform scaffold for Oracle Autonomous AI Database vector-search shadow mode. | Passed `terraform fmt -recursive`, `git diff --check`, and Terraform validate for dev/test/staging. Non-mutating staging plan kept API Gateway and Autonomous Database disabled; existing backend replacement drift remains a known do-not-apply condition. |
 | TASK-019 | Done | Resolve staging Terraform drift before live API Gateway or database apply. | Added targeted `metadata["user_data"]` ignore for backend cloud-init bootstrap drift; passed Terraform fmt/check/validate; non-mutating staging plan now shows no real infrastructure changes, only new outputs. |
-| TASK-020 | Next | Run API Gateway live preflight plan without cutover apply. | Staging plan with API Gateway enabled shows only expected Gateway/deployment changes and no backend replacement or unrelated destructive changes. |
+| TASK-020 | Done | Run API Gateway live preflight plan without cutover apply. | API Gateway-enabled staging plan proposed only `oci_apigateway_gateway.api[0]` and `oci_apigateway_deployment.backend[0]` creates; backend and all existing resources were no-op. |
+| TASK-021 | Next | Apply OCI API Gateway and run smoke validation. | Gateway endpoint responds through smoke tests; direct backend VM remains healthy as rollback path; runtime docs note cloud-init metadata is not auto-mutated. |
 
 ## Phase Gates
 
@@ -137,13 +138,14 @@ Run the appropriate subset after each increment; run the full matrix before a ne
 
 ## Next Actionable Increment
 
-Current task: `TASK-020`.
+Current task: `TASK-021`.
 
-Run API Gateway live preflight plan without cutover apply:
+Apply OCI API Gateway and run smoke validation:
 
-1. Generate an API Gateway-enabled plan without applying.
-2. Confirm the plan only adds expected API Gateway resources and output changes.
-3. Keep direct backend VM exposure as rollback path until smoke succeeds.
+1. Apply only the reviewed API Gateway plan.
+2. Capture Gateway endpoint outputs.
+3. Smoke test Gateway and direct backend rollback path.
+4. Record validation evidence before any further promotion.
 
 ## Operating Rules
 
