@@ -71,8 +71,8 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | ID | Status | Task | Validation Gate |
 |---|---|---|---|
 | TASK-001 | Done | Add read-only Terraform remote state readiness checker for OCI Object Storage backend. | Passed `python3 -m py_compile infra/scripts/check_terraform_remote_state_readiness.py`; passed local `--skip-oci` readiness mode. |
-| TASK-002 | Next | Document manual remote state migration workflow and rollback checklist. | Terraform README/runbook updated; no state migration performed by automation. |
-| TASK-003 | Not Started | Add API Gateway readiness validation for configured endpoint and OCIDs. | Readiness check reports direct VM vs API Gateway posture clearly. |
+| TASK-002 | Done | Document manual remote state migration workflow and rollback checklist. | Terraform README/runbook updated; migration remains operator-run and non-automated. |
+| TASK-003 | Next | Add API Gateway readiness validation for configured endpoint and OCIDs. | Readiness check reports direct VM vs API Gateway posture clearly. |
 | TASK-004 | Not Started | Prepare API Gateway staging cutover checklist and rollback path. | Terraform validate; smoke command documented. |
 | TASK-005 | Not Started | Run OCI GenAI synthesis readiness/parity in skip-safe mode, then live mode when config exists. | Parity report generated; deterministic fallback preserved. |
 | TASK-006 | Not Started | Add OCI GenAI embedding activation checklist and diagnostics expectations. | Retrieval health exposes provider/fallback state; regression gate documented. |
@@ -133,16 +133,15 @@ Run the appropriate subset after each increment; run the full matrix before a ne
 
 ## Next Actionable Increment
 
-Current task: `TASK-002`.
+Current task: `TASK-003`.
 
-Document the manual Terraform remote-state migration workflow and rollback checklist:
+Add API Gateway readiness validation for configured endpoint and OCIDs:
 
-1. Add a reviewed sequence for backing up local state.
-2. Add a controlled `backend.tf` creation step from `backend.object-storage.example.tf`.
-3. Document `terraform init -migrate-state` as an operator-run command, not automation.
-4. Add rollback guidance for returning to local state if migration fails before promotion.
-5. Keep real namespace, bucket, and state keys out of committed files.
-6. Validate docs and commit after review.
+1. Inspect current operational diagnostics for API Gateway fields.
+2. Add or refine a lightweight validation path for API Gateway endpoint and OCID configuration.
+3. Ensure diagnostics distinguish direct VM exposure from API Gateway exposure.
+4. Preserve default-off API Gateway behavior for staging.
+5. Validate with focused tests or readiness script checks.
 
 ## Operating Rules
 

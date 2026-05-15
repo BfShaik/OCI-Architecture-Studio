@@ -91,4 +91,55 @@ python3 infra/scripts/check_terraform_remote_state_readiness.py \
 ```
 
 This script is intentionally non-mutating. It does not create `backend.tf`, create buckets, run `terraform init -migrate-state`, or modify state files.
+
+## Manual Object Storage Backend Migration
+
+Run this only after the readiness check passes and the target state bucket exists.
+
+1. Back up the current local state and lock metadata:
+
+```bash
+cd infra/terraform/envs/staging
+mkdir -p ../../../.terraform-state-backups/staging
+cp terraform.tfstate ../../../.terraform-state-backups/staging/terraform.tfstate.$(date +%Y%m%d%H%M%S)
+cp .terraform.lock.hcl ../../../.terraform-state-backups/staging/.terraform.lock.hcl.$(date +%Y%m%d%H%M%S)
+```
+
+2. Copy the backend template into the environment directory:
+
+```bash
+cp ../../backend.object-storage.example.tf backend.tf
+```
+
+3. Edit `backend.tf` locally with the real bucket, namespace, key, and region. Do not commit `backend.tf` if it contains environment-specific values.
+4. Review the pending local diff:
+
+```bash
+git status --short
+terraform fmt
+```
+
+5. Run migration as an explicit operator action:
+
+```bash
+terraform init -migrate-state
+```
+
+6. Validate that the migrated backend can read state and produce a stable plan:
+
+```bash
+terraform validate
+terraform plan
+```
+
+7. Keep the local backup until at least one successful apply/read cycle has completed from the remote backend.
+
+Rollback before promotion:
+
+1. Stop if `terraform init -migrate-state`, `terraform validate`, or `terraform plan` fails.
+2. Remove the uncommitted environment `backend.tf`.
+3. Restore the backed-up `terraform.tfstate` only if the local state file changed during the failed migration.
+4. Re-run `terraform init` against the local backend and confirm `terraform plan` works.
+5. Record the failure in the operational log before retrying.
+
 - See `docs/oci-landing-zone-runbook.md` for the deployment and validation workflow.

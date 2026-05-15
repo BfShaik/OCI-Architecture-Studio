@@ -243,6 +243,57 @@ python3 infra/scripts/check_terraform_remote_state_readiness.py \
 
 Only run manual state migration after the readiness check passes, the backend bucket is confirmed, the current local state is backed up, and the rollback plan has been reviewed.
 
+## Migrate Terraform State To Object Storage
+
+This is an operator-run procedure. Do not automate it inside deployment scripts.
+
+Prerequisites:
+
+- `python3 infra/scripts/check_terraform_remote_state_readiness.py --env staging --profile DEFAULT --namespace <namespace> --bucket-name <bucket> --region us-ashburn-1` passes.
+- The state bucket is dedicated to Terraform state and protected by OCI IAM.
+- The current local state is backed up.
+- No other operator is running Terraform against the same environment.
+
+Migration:
+
+```bash
+cd infra/terraform/envs/staging
+mkdir -p ../../../.terraform-state-backups/staging
+cp terraform.tfstate ../../../.terraform-state-backups/staging/terraform.tfstate.$(date +%Y%m%d%H%M%S)
+cp .terraform.lock.hcl ../../../.terraform-state-backups/staging/.terraform.lock.hcl.$(date +%Y%m%d%H%M%S)
+cp ../../backend.object-storage.example.tf backend.tf
+```
+
+Edit `backend.tf` locally with the real Object Storage bucket, namespace, key, and region. Keep environment-specific backend values out of committed files unless the team explicitly approves committing a sanitized backend configuration.
+
+```bash
+terraform fmt
+terraform init -migrate-state
+terraform validate
+terraform plan
+```
+
+Promotion checklist:
+
+- `terraform init -migrate-state` completed without errors.
+- `terraform validate` passes.
+- `terraform plan` shows expected drift only.
+- A second operator can run `terraform init` and read remote state with approved OCI IAM access.
+- The migration result is recorded in the status log or deployment report.
+
+Rollback before promotion:
+
+```bash
+rm -f backend.tf
+terraform init
+terraform validate
+terraform plan
+```
+
+If local `terraform.tfstate` changed during the failed migration, restore the latest file from `infra/.terraform-state-backups/staging/` before running `terraform init`.
+
+Do not run `terraform apply` until the backend posture is clear.
+
 ## Inspect Backend Service
 
 SSH to the VM:
