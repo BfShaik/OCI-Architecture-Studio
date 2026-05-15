@@ -90,15 +90,16 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | TASK-018 | Done | Add default-off Terraform scaffold for Oracle Autonomous AI Database vector-search shadow mode. | Passed `terraform fmt -recursive`, `git diff --check`, and Terraform validate for dev/test/staging. Non-mutating staging plan kept API Gateway and Autonomous Database disabled; existing backend replacement drift remains a known do-not-apply condition. |
 | TASK-019 | Done | Resolve staging Terraform drift before live API Gateway or database apply. | Added targeted `metadata["user_data"]` ignore for backend cloud-init bootstrap drift; passed Terraform fmt/check/validate; non-mutating staging plan now shows no real infrastructure changes, only new outputs. |
 | TASK-020 | Done | Run API Gateway live preflight plan without cutover apply. | API Gateway-enabled staging plan proposed only `oci_apigateway_gateway.api[0]` and `oci_apigateway_deployment.backend[0]` creates; backend and all existing resources were no-op. |
-| TASK-021 | Done | Apply OCI API Gateway and run smoke validation. | Gateway and deployment applied; route backend context fixed to `${request.path[path]}`; subnet HTTPS 443 opened; Gateway smoke, Gateway operational readiness, direct backend rollback smoke, and post-apply Terraform no-change plan passed. Runtime diagnostics still report API Gateway warning until the running VM env is updated outside cloud-init. |
-| TASK-022 | Next | Update staging runtime API Gateway metadata without replacing backend VM. | `/operations/readiness` reports API Gateway configured/promotion-ready while direct backend rollback remains healthy. |
+| TASK-021 | Done | Apply OCI API Gateway and run smoke validation. | Gateway and deployment applied; route backend context fixed to `${request.path[path]}`; subnet HTTPS 443 opened; Gateway smoke, Gateway operational readiness, direct backend rollback smoke, and post-apply Terraform no-change plan passed. Runtime diagnostics still required a backend code/config sync before final promotion-ready reporting. |
+| TASK-022 | Done | Update staging runtime API Gateway metadata without replacing backend VM. | Backend VM env now includes API Gateway endpoint/OCID and deployed code matches the repo; Gateway smoke, direct backend rollback smoke, and operational readiness passed with `api_gateway.active=true` and `api_gateway.promotion_ready=true`. Remaining readiness warning is OCI DevOps metadata only. |
+| TASK-023 | Next | Run Oracle Autonomous AI Database / AI Vector Search live preflight plan. | Terraform plan should show only the intended database, private endpoint, and related vector-search resources before any apply; Object Storage retrieval remains active until vector parity passes. |
 
 ## Phase Gates
 
 | Phase | Status | Promotion gate | Rollback path |
 |---|---|---|---|
 | Remote Terraform state readiness | Not Started | Readiness checker passes without mutating state; runbook updated. | Continue local Terraform state. |
-| API Gateway promotion | Not Started | Terraform validate, API Gateway endpoint smoke, backend direct path retained until cutover verified. | Disable `enable_api_gateway`; use direct VM backend endpoint. |
+| API Gateway promotion | Done | Terraform validate, API Gateway endpoint smoke, backend direct path retained until cutover verified. | Disable `enable_api_gateway`; use direct VM backend endpoint. |
 | OCI GenAI shadow activation | Not Started | Parity report shows no unsupported claims increase, no fallback-only result, acceptable latency, citation coverage preserved. | `SYNTHESIS_PROVIDER=deterministic`; deterministic fallback remains enabled. |
 | OCI GenAI embeddings shadow activation | Not Started | Embedding dimension validation passes; retrieval regression does not degrade; fallback diagnostics clean. | `EMBEDDING_PROVIDER=local`; retain existing vector manifest. |
 | Oracle AI Vector Search shadow mode | Not Started | Schema/index validation passes; dual-read parity acceptable across golden, edge, and retrieval regression cases. | Keep `RETRIEVAL_PROVIDER=oci_object_storage`. |
@@ -139,13 +140,13 @@ Run the appropriate subset after each increment; run the full matrix before a ne
 
 ## Next Actionable Increment
 
-Current task: `TASK-022`.
+Current task: `TASK-023`.
 
-Update staging runtime API Gateway metadata without replacing backend VM:
+Run Oracle Autonomous AI Database / AI Vector Search live preflight plan:
 
-1. Update the running backend configuration through the approved operator path, not cloud-init replacement.
-2. Re-run Gateway and direct backend smoke checks.
-3. Re-run operational readiness and confirm API Gateway diagnostics are clean.
+1. Review the current staging Terraform variables and confirm database/vector-search enablement remains explicit and default-off.
+2. Produce a non-mutating staging Terraform plan for the Autonomous Database vector-search path.
+3. Approve apply only if the plan contains the intended database/private-endpoint resources and no unrelated mutations.
 
 ## Operating Rules
 

@@ -2,6 +2,14 @@
 
 Last updated: 2026-05-15
 
+## Latest Operational Promotion
+
+- `TASK-022` completed on staging: API Gateway runtime metadata was added to the running VM environment and the backend was redeployed from the current repository code without replacing the VM.
+- API Gateway smoke passed through `https://pkgmvyyi3itxklv6knh4xfm6ca.apigateway.us-ashburn-1.oci.customer-oci.com`.
+- Direct backend smoke passed through `http://193.122.149.102:8000`, preserving the rollback path.
+- Operational readiness now reports `api_exposure=oci_api_gateway`, `api_gateway.active=true`, and `api_gateway.promotion_ready=true`.
+- Remaining runtime readiness warning is limited to OCI DevOps metadata not being configured; operator-script deployment remains the active fallback path.
+
 ## Active Plan
 
 - Living execution plan: `docs/living-execution-plan.md`
