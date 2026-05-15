@@ -215,12 +215,17 @@ This progress is based on `docs/two-week-plan.md`.
   - scheduled release-note watcher policy
   - release classification to affected service, domain, impact tags, and impact level
   - selective source-ID refresh instead of full reindex by default
-  - post-refresh retrieval regression and eval gates
+  - candidate-first snapshot generation before authoritative promotion
+  - post-refresh retrieval regression and eval gates against candidate snapshots
+  - eval-gated promotion so refreshed knowledge is not authoritative until validation passes
+  - ingestion run manifests with knowledge, release, embedding, and metadata version lineage
+  - manifest-driven rollback automation through `--rollback-latest`
+  - `/knowledge/refresh/status` endpoint for operational visibility
   - slower stable-doc cadence guidance
-  - rollback-safe snapshot backups
   - GitHub Actions knowledge refresh workflow
   - optional OCI Functions + Resource Scheduler schedule scaffold for OCI-native recurring refresh
   - `docs/knowledge-refresh-policy.md`
+  - `docs/continuous-intelligence-operations.md`
 - Pushed current implementation to GitHub.
 
 ## Latest Validation
@@ -243,9 +248,10 @@ Last validation run: 2026-05-15
 - Knowledge ingestion smoke: passed, 13 chunks generated
 - Release ingestion smoke: passed, 3 release items generated
 - Knowledge refresh policy smoke: passed, forced selective refresh with post-refresh gates
+- Continuous intelligence hardening: candidate-first promotion, version lineage, rollback automation, and refresh status endpoint implemented
 - Terraform validation: passed after optional knowledge refresh scheduler scaffold; staging plan currently should not be applied until existing backend replacement drift is resolved and the function image is available
 - OCI-native refresh scheduler scaffold: implemented with OCI Functions plus OCI Resource Scheduler; not applied yet because a published OCIR function image is required before enabling
-- Backend tests: passed, 46 tests
+- Backend tests: passed, 50 tests
 - Frontend build: passed
 - Golden evals: passed, 6 of 6
 - Edge-case evals: passed, 8 of 8
@@ -254,6 +260,7 @@ Last validation run: 2026-05-15
 - Retrieval health check: passed for `oci_object_storage`, 13 chunks
 - Retrieval regression check: passed, 14 of 14 golden + edge cases
 - Python compile checks: passed for backend, infra scripts, ingestion, and refresh code
+- Diff whitespace check: passed
 - Local API smoke: passed for `/health`, `/architecture-review`, and `/orchestration/health`, including `multi_agent_pilot` with 3 specialist contributions
 - OCI local access check: passed, Object Storage namespace `idsmrn7rvqb6`
 - Local deployment smoke test: passed, including architecture and release-aware citation paths
@@ -293,9 +300,10 @@ Last validation run: 2026-05-15
   - source version/date
   - per-service owners
   - source freshness policy
-- Implement real release-awareness workflow:
-  - architecture impact analysis
+- Extend release-awareness workflow:
+  - deeper architecture impact analysis
   - explicit current-vs-historical recommendation comparison
+  - stronger release source parsing for point-in-time snapshots
 - Continue hardening advisory synthesis:
   - enable OCI GenAI synthesis in staging through approved configuration where appropriate
   - compare GenAI and deterministic behavior on regression scenarios
@@ -320,9 +328,11 @@ Last validation run: 2026-05-15
 - Source registry expansion:
   - added OKE, database migration, Full Stack Disaster Recovery, Cost Management, Security Services, Object Storage, and CDN / edge services
   - still needs dedicated WAF, Vault, Cloud Guard, Logging, Monitoring, and Budgets-specific sources
-- Release-awareness scaffold:
+- Release-awareness and continuous intelligence:
   - release-aware intent, prompt template, release registry, release ingestion, and release snapshot reader exist
-  - impact comparison is not implemented yet
+  - scheduled refresh automation and candidate-first promotion now exist
+  - refresh status and rollback manifests now exist
+  - deeper impact comparison is still a next-phase item
 - OCI deployment execution:
   - Terraform, scripts, config templates, workflow, and docs exist
   - staging values, plan files, and secrets are ignored by git
@@ -346,7 +356,7 @@ Last validation run: 2026-05-15
 
 - The local RAG index is small and not a complete OCI documentation corpus.
 - Embeddings are deterministic local hash embeddings, useful for workflow validation but not production semantic retrieval.
-- Release awareness has a local release snapshot foundation, but it is not yet a full live release intelligence workflow.
+- Release awareness has scheduled snapshot refresh, candidate validation, and status visibility; deeper semantic impact analysis remains next-phase work.
 - OCI GenAI synthesis adapter exists, but deterministic synthesis remains the rollback-safe default unless enabled by environment configuration.
 - Controlled multi-agent orchestration is currently an in-process control layer; it does not yet perform autonomous planning, tool use, or multi-step agent memory.
 - Generated vector snapshots are local and gitignored.

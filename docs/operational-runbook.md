@@ -34,6 +34,12 @@ Orchestration health endpoint:
 http://193.122.149.102:8000/orchestration/health
 ```
 
+Knowledge refresh status endpoint:
+
+```text
+http://193.122.149.102:8000/knowledge/refresh/status
+```
+
 ## Verify Deployment Health
 
 Run:
@@ -106,7 +112,21 @@ Stable docs cadence:
 app/backend/.venv/bin/python knowledge/refresh/refresh_policy.py --mode stable-docs
 ```
 
-If post-refresh gates fail, restore the prior snapshots from `knowledge/reports/backups/` or rerun the policy with the previous Object Storage manifest in staging.
+If post-refresh gates fail, do not promote the candidate. Inspect the run folder and keep the authoritative snapshots unchanged.
+
+Current behavior is candidate-first:
+
+- candidates are written under `knowledge/reports/runs/<run_id>/candidates`
+- gates run against candidate paths
+- authoritative snapshots are promoted only after gates pass
+- run lineage is written to `knowledge/reports/runs/<run_id>/manifest.json`
+- latest operational state is written to `knowledge/reports/knowledge-refresh-status.json`
+
+Rollback latest promoted refresh:
+
+```bash
+app/backend/.venv/bin/python knowledge/refresh/refresh_policy.py --rollback-latest
+```
 
 ## Rerun Retrieval Parity
 

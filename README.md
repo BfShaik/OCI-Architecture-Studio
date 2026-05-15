@@ -16,9 +16,10 @@ OCI Architecture Studio currently supports a validated advisory flow in local de
 6. `local_json` remains the tested config-only rollback provider.
 7. The controlled multi-agent pilot selects bounded specialist advisors, shares the same retrieved evidence across them, and runs a validation critic over evidence support, citations, freshness, and unsupported-claim risk.
 8. One final synthesis step generates the advisory response through the configured provider with deterministic rollback available.
-9. The UI renders intent, prompt template, active agents, specialist contributions, aggregation decision, critic findings, confidence, recommendations, assumptions, risks, citations, and next steps.
+9. The continuous intelligence pipeline refreshes OCI release knowledge on schedule, validates candidate snapshots, and promotes them only after gates pass.
+10. The UI renders intent, prompt template, active agents, specialist contributions, aggregation decision, critic findings, confidence, recommendations, assumptions, risks, citations, and next steps.
 
-LangGraph, advanced memory, autonomous agent swarms, continuous release intelligence, and Oracle AI Vector Search active reads are intentionally deferred until the controlled pilot and the next vector-search parity gate are ready.
+LangGraph, advanced memory, autonomous agent swarms, and Oracle AI Vector Search active reads are intentionally deferred until the controlled pilot and the next vector-search parity gate are ready.
 
 ## Repository Layout
 
@@ -45,8 +46,9 @@ tests/                Backend and integration tests
   - guarded Oracle AI Vector Search adapter boundary
   - retrieval regression reporting for citations, intents, and required service coverage
 - Separate local OCI release snapshot pipeline
-- Knowledge refresh policy for scheduled release-note watching, selective reindex, post-refresh eval gates, and rollback-safe snapshot updates
+- Knowledge refresh policy for scheduled release-note watching, candidate snapshot validation, selective reindex, eval-gated promotion, version lineage, and rollback-safe updates
 - Optional OCI-native recurring refresh scaffold with OCI Functions and OCI Resource Scheduler
+- Continuous intelligence status endpoint at `/knowledge/refresh/status`
 - Intent-aware orchestration for:
   - product overview
   - architecture
@@ -118,7 +120,13 @@ Release notes and fast-changing sources are refreshed by policy, not on user que
 python3 knowledge/refresh/refresh_policy.py --mode release-watch --no-fetch --quick-gates
 ```
 
-The policy runner classifies changed release items, maps them to affected source IDs, refreshes only those chunks, runs retrieval/eval gates, and restores the previous snapshots if gates fail.
+The policy runner classifies changed release items, maps them to affected source IDs, builds candidate snapshots under `knowledge/reports/runs/<run_id>/candidates`, runs retrieval/eval gates against the candidate paths, and promotes refreshed knowledge only when validation passes.
+
+Rollback the latest promoted refresh:
+
+```bash
+python3 knowledge/refresh/refresh_policy.py --rollback-latest
+```
 
 ### Backend
 
@@ -162,8 +170,8 @@ VITE_API_BASE_URL=http://localhost:8000 npm run dev
 ## Recommended Next Steps
 
 1. Keep staging on `RETRIEVAL_PROVIDER=oci_object_storage` and monitor retrieval latency, citations, and failure handling.
-2. Expand the source registry with dedicated WAF, Vault, Cloud Guard, Logging, Monitoring, Budgets, IAM, Audit, and Data Guard sources.
-3. Enable OCI GenAI synthesis in staging through configuration and compare it against deterministic synthesis on the demo scenarios.
+2. Run the scheduled refresh function in staging with candidate-first promotion and watch `/knowledge/refresh/status`.
+3. Expand the source registry with dedicated WAF, Vault, Cloud Guard, Logging, Monitoring, Budgets, IAM, Audit, and Data Guard sources.
 4. Replace local hashing embeddings with OCI Generative AI embeddings once provider settings and cost controls are finalized.
 5. Validate Oracle AI Vector Search schema/query parity before enabling active reads.
 6. Add Oracle AI Vector Search dual-run checks against the Object Storage provider before any active-read promotion.

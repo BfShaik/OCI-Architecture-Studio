@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -32,6 +33,27 @@ def write_json(path: Path, payload: dict[str, Any]) -> None:
     with path.open("w", encoding="utf-8") as file:
         json.dump(payload, file, indent=2)
         file.write("\n")
+
+
+def snapshot_hash(payload: dict[str, Any]) -> str:
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def make_run_id(started_at: str) -> str:
+    compact = (
+        started_at.replace("+00:00", "Z")
+        .replace("-", "")
+        .replace(":", "")
+        .replace(".", "")
+    )
+    return f"refresh-{compact}"
+
+
+def version_id(prefix: str, payload: dict[str, Any]) -> str:
+    generated_at = str(payload.get("generated_at") or datetime.now(UTC).isoformat())
+    compact = generated_at.replace("+00:00", "Z").replace("-", "").replace(":", "").replace(".", "")
+    return f"{prefix}-{compact}-{snapshot_hash(payload)[:10]}"
 
 
 def stable_release_key(release: dict[str, Any]) -> str:
@@ -92,6 +114,13 @@ def backup_file(path: Path, backup_dir: Path) -> Path | None:
     return target
 
 
+def promote_candidate(candidate: Path, authoritative: Path, backup_dir: Path) -> Path | None:
+    backup = backup_file(authoritative, backup_dir)
+    authoritative.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(candidate, authoritative)
+    return backup
+
+
 def build_release_snapshot(args: argparse.Namespace) -> dict[str, Any]:
     release_args = argparse.Namespace(
         registry=args.release_registry,
@@ -108,6 +137,7 @@ def build_release_snapshot(args: argparse.Namespace) -> dict[str, Any]:
 def build_selective_knowledge_index(
     args: argparse.Namespace,
     source_ids: list[str],
+    existing_index_path: Path | None = None,
 ) -> dict[str, Any]:
     ingest_args = argparse.Namespace(
         registry=args.source_registry,
@@ -130,23 +160,24 @@ def build_selective_knowledge_index(
         timeout=args.timeout,
         no_fetch=args.no_fetch,
         source_ids=source_ids,
-        existing_index=args.knowledge_index,
+        existing_index=existing_index_path or args.knowledge_index,
     )
     index = ingest.build_index(ingest_args)
-    return ingest.merge_with_existing_index(index, args.knowledge_index, source_ids)
+    return ingest.merge_with_existing_index(index, existing_index_path or args.knowledge_index, source_ids)
 
 
 def all_source_ids(source_registry: Path) -> list[str]:
     return [source["id"] for source in ingest.load_registry(source_registry)]
 
 
-def run_gate(command: list[str], cwd: Path) -> dict[str, Any]:
+def run_gate(command: list[str], cwd: Path, env: dict[str, str] | None = None) -> dict[str, Any]:
     completed = subprocess.run(
         command,
         cwd=cwd,
         check=False,
         text=True,
         capture_output=True,
+        env=env,
     )
     return {
         "command": " ".join(command),
@@ -161,10 +192,28 @@ def python_executable() -> str:
     return str(BACKEND_PYTHON if BACKEND_PYTHON.exists() else Path(sys.executable))
 
 
-def run_post_refresh_gates(args: argparse.Namespace) -> list[dict[str, Any]]:
+def run_post_refresh_gates(
+    args: argparse.Namespace,
+    candidate_knowledge_index: Path,
+    candidate_release_snapshot: Path,
+    run_report_dir: Path,
+) -> list[dict[str, Any]]:
     python = python_executable()
+    gate_env = {
+        **os.environ,
+        "KNOWLEDGE_INDEX_PATH": str(candidate_knowledge_index),
+        "RELEASE_SNAPSHOT_PATH": str(candidate_release_snapshot),
+        "RETRIEVAL_PROVIDER": "local_json",
+    }
     gates = [
-        [python, "infra/scripts/check_retrieval_health.py", "--provider", "local_json"],
+        [
+            python,
+            "infra/scripts/check_retrieval_health.py",
+            "--provider",
+            "local_json",
+            "--index-path",
+            str(candidate_knowledge_index),
+        ],
         [
             python,
             "infra/scripts/retrieval_regression_check.py",
@@ -173,16 +222,18 @@ def run_post_refresh_gates(args: argparse.Namespace) -> list[dict[str, Any]]:
             "--cases",
             "evals/edge-cases.jsonl",
             "--output-dir",
-            "evals/reports/retrieval-refresh",
+            str(run_report_dir / "retrieval-regression"),
+            "--index-path",
+            str(candidate_knowledge_index),
         ],
-        [python, "evals/run_golden.py", "--output-dir", "evals/reports/golden-refresh"],
+        [python, "evals/run_golden.py", "--output-dir", str(run_report_dir / "golden")],
         [
             python,
             "evals/run_golden.py",
             "--cases",
             "evals/edge-cases.jsonl",
             "--output-dir",
-            "evals/reports/edge-refresh",
+            str(run_report_dir / "edge"),
         ],
         [
             python,
@@ -190,7 +241,7 @@ def run_post_refresh_gates(args: argparse.Namespace) -> list[dict[str, Any]]:
             "--cases",
             "evals/advisory-quality.jsonl",
             "--output-dir",
-            "evals/reports/advisory-refresh",
+            str(run_report_dir / "advisory"),
         ],
         [
             python,
@@ -198,12 +249,12 @@ def run_post_refresh_gates(args: argparse.Namespace) -> list[dict[str, Any]]:
             "--cases",
             "evals/orchestration-quality.jsonl",
             "--output-dir",
-            "evals/reports/orchestration-refresh",
+            str(run_report_dir / "orchestration"),
         ],
     ]
     if args.quick_gates:
         gates = gates[:2]
-    return [run_gate(gate, REPO_ROOT) for gate in gates]
+    return [run_gate(gate, REPO_ROOT, env=gate_env) for gate in gates]
 
 
 def restore_backups(backups: dict[str, Path | None], paths: dict[str, Path]) -> None:
@@ -212,18 +263,171 @@ def restore_backups(backups: dict[str, Path | None], paths: dict[str, Path]) -> 
             shutil.copy2(backup, paths[key])
 
 
-def execute_refresh_policy(args: argparse.Namespace) -> dict[str, Any]:
-    policy = load_json(args.policy)
-    started_at = datetime.now(UTC).isoformat()
-    backup_dir = args.report_dir / "backups" / started_at.replace(":", "").replace("+", "Z")
-    paths = {
+def load_status(report_dir: Path) -> dict[str, Any]:
+    return load_json(report_dir / "knowledge-refresh-status.json")
+
+
+def write_status(report_dir: Path, status: dict[str, Any]) -> None:
+    write_json(report_dir / "knowledge-refresh-status.json", status)
+
+
+def candidate_args(args: argparse.Namespace, knowledge_index: Path, release_snapshot: Path) -> argparse.Namespace:
+    values = vars(args).copy()
+    values["knowledge_index"] = knowledge_index
+    values["release_snapshot"] = release_snapshot
+    return argparse.Namespace(**values)
+
+
+def write_manifest(
+    path: Path,
+    *,
+    run_id: str,
+    started_at: str,
+    policy: dict[str, Any],
+    mode: str,
+    refresh_reason: str,
+    status: str,
+    knowledge_index: dict[str, Any] | None,
+    release_snapshot: dict[str, Any],
+    affected_source_ids: list[str],
+    changed_releases: list[dict[str, Any]],
+    gates: list[dict[str, Any]],
+    candidate_paths: dict[str, Path],
+    promoted_paths: dict[str, Path],
+    rollback_sources: dict[str, Path | None] | None = None,
+) -> dict[str, Any]:
+    manifest = {
+        "run_id": run_id,
+        "started_at": started_at,
+        "generated_at": datetime.now(UTC).isoformat(),
+        "policy_version": policy.get("policy_version"),
+        "mode": mode,
+        "refresh_reason": refresh_reason,
+        "status": status,
+        "lineage": {
+            "knowledge_snapshot_version": version_id("knowledge", knowledge_index) if knowledge_index else None,
+            "release_snapshot_version": version_id("release", release_snapshot),
+            "embedding_version": (knowledge_index or {}).get("embedding_model"),
+            "embedding_provider": (knowledge_index or {}).get("embedding_provider"),
+            "metadata_schema_version": (knowledge_index or {}).get("metadata_schema_version"),
+            "affected_source_ids": affected_source_ids,
+            "changed_release_ids": [str(item.get("id") or item.get("title")) for item in changed_releases],
+        },
+        "candidate_paths": {key: str(value) for key, value in candidate_paths.items()},
+        "promoted_paths": {key: str(value) for key, value in promoted_paths.items()},
+        "rollback_sources": {
+            key: str(value) if value else None for key, value in (rollback_sources or {}).items()
+        },
+        "gates": gates,
+    }
+    write_json(path, manifest)
+    return manifest
+
+
+def update_status_from_report(
+    args: argparse.Namespace,
+    report: dict[str, Any],
+    manifest: dict[str, Any],
+    previous_status: dict[str, Any],
+) -> None:
+    history = list(previous_status.get("history", []))
+    history.append(
+        {
+            "run_id": report["run_id"],
+            "generated_at": report["generated_at"],
+            "status": report["status"],
+            "passed": report["passed"],
+            "refresh_reason": report["refresh_reason"],
+            "affected_source_ids": report["affected_source_ids"],
+            "gate_failures": [
+                gate["command"] for gate in report.get("gates", []) if not gate.get("passed")
+            ],
+        }
+    )
+    promoted = report["status"] == "promoted"
+    status = {
+        "generated_at": datetime.now(UTC).isoformat(),
+        "last_run": {
+            "run_id": report["run_id"],
+            "status": report["status"],
+            "passed": report["passed"],
+            "started_at": report["started_at"],
+            "generated_at": report["generated_at"],
+            "changed_release_count": report["changed_release_count"],
+            "affected_source_ids": report["affected_source_ids"],
+            "gates_passed": report["gates_passed"],
+            "rollback_performed": report["rollback_performed"],
+        },
+        "current_promoted_snapshot": (
+            manifest if promoted else previous_status.get("current_promoted_snapshot")
+        ),
+        "previous_promoted_snapshot": (
+            previous_status.get("current_promoted_snapshot")
+            if promoted
+            else previous_status.get("previous_promoted_snapshot")
+        ),
+        "last_rollback": previous_status.get("last_rollback"),
+        "history": history[-25:],
+    }
+    write_status(args.report_dir, status)
+
+
+def rollback_latest(args: argparse.Namespace) -> dict[str, Any]:
+    status = load_status(args.report_dir)
+    current = status.get("current_promoted_snapshot") or {}
+    rollback_sources = current.get("rollback_sources") or {}
+    targets = {
         "knowledge_index": args.knowledge_index,
         "release_snapshot": args.release_snapshot,
     }
-    backups = {
-        "knowledge_index": backup_file(args.knowledge_index, backup_dir),
-        "release_snapshot": backup_file(args.release_snapshot, backup_dir),
+    restored: dict[str, str] = {}
+    for key, target in targets.items():
+        source = rollback_sources.get(key)
+        if source and Path(source).exists():
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(Path(source), target)
+            restored[key] = str(source)
+
+    rollback_event = {
+        "run_id": make_run_id(datetime.now(UTC).isoformat()),
+        "generated_at": datetime.now(UTC).isoformat(),
+        "rolled_back_from": current.get("run_id"),
+        "restored": restored,
+        "passed": bool(restored),
     }
+    if restored:
+        status["current_promoted_snapshot"] = status.get("previous_promoted_snapshot")
+        status["previous_promoted_snapshot"] = None
+    status["last_rollback"] = rollback_event
+    history = list(status.get("history", []))
+    history.append(
+        {
+            "run_id": rollback_event["run_id"],
+            "generated_at": rollback_event["generated_at"],
+            "status": "rollback",
+            "passed": bool(restored),
+            "refresh_reason": "operator-rollback",
+            "affected_source_ids": [],
+            "gate_failures": [],
+        }
+    )
+    status["history"] = history[-25:]
+    write_status(args.report_dir, status)
+    write_json(args.report_dir / "knowledge-refresh-rollback-report.json", rollback_event)
+    return rollback_event
+
+
+def execute_refresh_policy(args: argparse.Namespace) -> dict[str, Any]:
+    policy = load_json(args.policy)
+    started_at = datetime.now(UTC).isoformat()
+    run_id = make_run_id(started_at)
+    run_dir = args.report_dir / "runs" / run_id
+    candidate_dir = run_dir / "candidates"
+    backup_dir = run_dir / "rollback"
+    gate_report_dir = run_dir / "gates"
+    candidate_knowledge_path = candidate_dir / args.knowledge_index.name
+    candidate_release_path = candidate_dir / args.release_snapshot.name
+    previous_status = load_status(args.report_dir)
 
     previous_release_snapshot = load_json(args.release_snapshot)
     current_release_snapshot = previous_release_snapshot
@@ -232,10 +436,11 @@ def execute_refresh_policy(args: argparse.Namespace) -> dict[str, Any]:
     refresh_reason = args.mode
 
     if args.mode in {"release-watch", "manual"}:
-        current_release_snapshot = build_release_snapshot(args)
+        current_release_snapshot = build_release_snapshot(
+            candidate_args(args, candidate_knowledge_path, candidate_release_path)
+        )
         changed_releases = new_release_items(previous_release_snapshot, current_release_snapshot)
         selected_source_ids = affected_source_ids(changed_releases, policy)
-        write_json(args.release_snapshot, current_release_snapshot)
         if not changed_releases and not args.force:
             refresh_reason = "release-watch-no-change"
 
@@ -247,29 +452,104 @@ def execute_refresh_policy(args: argparse.Namespace) -> dict[str, Any]:
         selected_source_ids = all_source_ids(args.source_registry)
         refresh_reason = f"{args.mode}-forced"
 
+    candidate_dir.mkdir(parents=True, exist_ok=True)
+    if current_release_snapshot or not args.release_snapshot.exists():
+        write_json(candidate_release_path, current_release_snapshot)
+    elif args.release_snapshot.exists():
+        shutil.copy2(args.release_snapshot, candidate_release_path)
+    if args.knowledge_index.exists():
+        shutil.copy2(args.knowledge_index, candidate_knowledge_path)
+
     knowledge_index: dict[str, Any] | None = None
     if selected_source_ids:
-        knowledge_index = build_selective_knowledge_index(args, selected_source_ids)
-        write_json(args.knowledge_index, knowledge_index)
+        knowledge_index = build_selective_knowledge_index(
+            candidate_args(args, candidate_knowledge_path, candidate_release_path),
+            selected_source_ids,
+            existing_index_path=args.knowledge_index,
+        )
+        write_json(candidate_knowledge_path, knowledge_index)
+    else:
+        knowledge_index = load_json(candidate_knowledge_path)
 
     gate_results: list[dict[str, Any]] = []
-    if not args.skip_gates and selected_source_ids:
-        gate_results = run_post_refresh_gates(args)
+    candidate_changed = bool(selected_source_ids or changed_releases or args.force)
+    if not args.skip_gates and candidate_changed:
+        gate_results = run_post_refresh_gates(
+            args,
+            candidate_knowledge_path,
+            candidate_release_path,
+            gate_report_dir,
+        )
 
     passed = all(result["passed"] for result in gate_results) if gate_results else True
     upload_performed = False
+    promoted = False
+    rollback_sources: dict[str, Path | None] = {}
+    manifest = write_manifest(
+        run_dir / "manifest.json",
+        run_id=run_id,
+        started_at=started_at,
+        policy=policy,
+        mode=args.mode,
+        refresh_reason=refresh_reason,
+        status="candidate_validated" if passed else "candidate_failed",
+        knowledge_index=knowledge_index,
+        release_snapshot=current_release_snapshot,
+        affected_source_ids=selected_source_ids,
+        changed_releases=changed_releases,
+        gates=gate_results,
+        candidate_paths={
+            "knowledge_index": candidate_knowledge_path,
+            "release_snapshot": candidate_release_path,
+        },
+        promoted_paths={
+            "knowledge_index": args.knowledge_index,
+            "release_snapshot": args.release_snapshot,
+        },
+    )
+
     if passed and knowledge_index and args.oci_upload_bucket:
         ingest.upload_index_to_object_storage(knowledge_index, args)
         upload_performed = True
-    if not passed and args.rollback_on_failure:
-        restore_backups(backups, paths)
+
+    if passed and candidate_changed:
+        rollback_sources = {
+            "knowledge_index": promote_candidate(candidate_knowledge_path, args.knowledge_index, backup_dir),
+            "release_snapshot": promote_candidate(candidate_release_path, args.release_snapshot, backup_dir),
+        }
+        promoted = True
+        manifest = write_manifest(
+            run_dir / "manifest.json",
+            run_id=run_id,
+            started_at=started_at,
+            policy=policy,
+            mode=args.mode,
+            refresh_reason=refresh_reason,
+            status="promoted",
+            knowledge_index=knowledge_index,
+            release_snapshot=current_release_snapshot,
+            affected_source_ids=selected_source_ids,
+            changed_releases=changed_releases,
+            gates=gate_results,
+            candidate_paths={
+                "knowledge_index": candidate_knowledge_path,
+                "release_snapshot": candidate_release_path,
+            },
+            promoted_paths={
+                "knowledge_index": args.knowledge_index,
+                "release_snapshot": args.release_snapshot,
+            },
+            rollback_sources=rollback_sources,
+        )
 
     report = {
+        "run_id": run_id,
         "generated_at": datetime.now(UTC).isoformat(),
         "started_at": started_at,
         "policy_version": policy.get("policy_version"),
         "mode": args.mode,
         "refresh_reason": refresh_reason,
+        "status": "promoted" if promoted else "no_change" if not candidate_changed else "failed_gate",
         "cadence": policy.get("cadence", {}),
         "query_time_refresh": False,
         "changed_release_count": len(changed_releases),
@@ -280,13 +560,24 @@ def execute_refresh_policy(args: argparse.Namespace) -> dict[str, Any]:
         "knowledge_chunk_count": knowledge_index.get("chunk_count") if knowledge_index else None,
         "oci_upload_requested": bool(args.oci_upload_bucket),
         "oci_upload_performed": upload_performed,
+        "candidate_paths": {
+            "knowledge_index": str(candidate_knowledge_path),
+            "release_snapshot": str(candidate_release_path),
+        },
+        "manifest_path": str(run_dir / "manifest.json"),
         "gates": gate_results,
+        "gates_passed": passed,
         "passed": passed,
-        "rollback_performed": bool(not passed and args.rollback_on_failure),
-        "backups": {key: str(value) if value else None for key, value in backups.items()},
+        "promoted": promoted,
+        "rollback_performed": False,
+        "rollback_sources": {
+            key: str(value) if value else None for key, value in rollback_sources.items()
+        },
     }
     args.report_dir.mkdir(parents=True, exist_ok=True)
     write_json(args.report_dir / "knowledge-refresh-report.json", report)
+    write_json(run_dir / "knowledge-refresh-report.json", report)
+    update_status_from_report(args, report, manifest, previous_status)
     return report
 
 
@@ -337,11 +628,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--skip-gates", action="store_true")
     parser.add_argument("--quick-gates", action="store_true")
     parser.add_argument("--rollback-on-failure", action="store_true", default=True)
+    parser.add_argument("--rollback-latest", action="store_true")
     return parser.parse_args()
 
 
 def main() -> int:
-    report = execute_refresh_policy(parse_args())
+    args = parse_args()
+    if args.rollback_latest:
+        report = rollback_latest(args)
+        print(json.dumps(report, indent=2))
+        return 0 if report["passed"] else 1
+    report = execute_refresh_policy(args)
     print(json.dumps(report, indent=2))
     return 0 if report["passed"] else 1
 

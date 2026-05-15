@@ -1,3 +1,5 @@
+import json
+
 from fastapi import APIRouter
 
 from oci_arch_studio_backend.models.architecture import (
@@ -57,6 +59,23 @@ async def retrieval_health() -> dict[str, object]:
     settings = get_settings()
     retriever = build_retriever(settings)
     return retriever.diagnostics()
+
+
+@router.get("/knowledge/refresh/status")
+async def knowledge_refresh_status() -> dict[str, object]:
+    settings = get_settings()
+    status_path = settings.knowledge_refresh_status_path
+    if not status_path.exists():
+        return {
+            "status": "not_initialized",
+            "status_path": str(status_path),
+            "last_run": None,
+            "current_promoted_snapshot": None,
+        }
+    with status_path.open("r", encoding="utf-8") as file:
+        status = json.load(file)
+    status["status_path"] = str(status_path)
+    return status
 
 
 @router.get("/advisory/quality")

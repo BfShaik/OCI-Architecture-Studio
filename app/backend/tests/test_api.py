@@ -78,6 +78,15 @@ def test_retrieval_health() -> None:
     assert "metrics" in body
 
 
+def test_knowledge_refresh_status_endpoint() -> None:
+    response = client.get("/knowledge/refresh/status")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert "status_path" in body
+    assert "last_run" in body
+
+
 def test_orchestration_health() -> None:
     client.post(
         "/architecture-review",

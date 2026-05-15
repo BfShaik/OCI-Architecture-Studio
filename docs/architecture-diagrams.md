@@ -24,6 +24,8 @@ flowchart LR
       Logs["OCI Logging\napp and deployment logs"]
       Monitoring["OCI Monitoring\nbackend CPU alarm"]
       Events["OCI Events + Notifications\nresource lifecycle alerts"]
+      Scheduler["OCI Resource Scheduler\nrelease + stable-doc refresh"]
+      Function["OCI Function\nknowledge refresh runner"]
     end
   end
 
@@ -37,6 +39,9 @@ flowchart LR
   VM -. "secrets access" .-> Vault
   VM -. "logs" .-> Logs
   Monitoring --> Events
+  Scheduler --> Function
+  Function --> SnapshotBucket
+  Function --> ObjectIndex
 ```
 
 Current active retrieval provider:
@@ -100,6 +105,7 @@ This is the next production retrieval target. Oracle AI Vector Search remains gu
 flowchart LR
   Sources["Approved OCI docs\nsource registry"]
   Releases["OCI release sources\nrelease registry"]
+  Scheduler["OCI Resource Scheduler\nrelease-watch + stable-docs"]
 
   subgraph Ingestion["Knowledge Refresh Pipeline"]
     Fetch["Fetch or fallback"]
@@ -107,6 +113,9 @@ flowchart LR
     Chunk["Chunk documents"]
     Metadata["Add metadata\nservice, domain, intent tags,\nfreshness, trust, content hash"]
     Embed["OCI Generative AI embeddings"]
+    Candidate["Candidate snapshots\nrun-scoped"]
+    Gates["Retrieval + eval gates"]
+    Promote["Promote only if gates pass"]
   end
 
   subgraph Storage["OCI Knowledge Storage"]
@@ -125,10 +134,11 @@ flowchart LR
     Response["Structured advisory response\nrecommendations, risks, citations"]
   end
 
-  Sources --> Fetch --> Clean --> Chunk --> Metadata --> Embed
+  Scheduler --> Fetch
+  Sources --> Fetch --> Clean --> Chunk --> Metadata --> Embed --> Candidate --> Gates --> Promote
   Metadata --> Raw
-  Embed --> Manifest
-  Embed -. "future active read path" .-> Vector
+  Promote --> Manifest
+  Promote -. "future active read path" .-> Vector
   Releases --> ReleaseStore
 
   UI --> API --> Intent --> Retriever
@@ -148,34 +158,47 @@ Migration sequence:
 5. Dual-run Vector Search against `oci_object_storage`.
 6. Promote Oracle AI Vector Search only after parity and rollback validation.
 
-## 4. Release-Awareness Flow
+## 4. Continuous Release-Awareness Flow
 
 Release-awareness is a differentiator because release context is stored separately from normal architecture knowledge. The system can avoid treating old architecture guidance as current release truth.
 
 ```mermaid
 flowchart TD
+  Scheduler["Scheduled release watcher"]
+  ReleaseIngest["Release ingestion"]
+  Classify["Classify service, domain, impact"]
+  Candidate["Candidate release + knowledge snapshots"]
+  Gates["Eval and retrieval gates"]
+  Promote["Promoted authoritative snapshot"]
+  Status["/knowledge/refresh/status"]
   UserPrompt["User asks about latest OCI update"]
   Intent["Intent classifier\nrelease_awareness"]
-  Knowledge["Normal architecture retrieval\ncurrent knowledge snapshot"]
-  ReleaseSnapshot["Release snapshot store\npoint-in-time release knowledge"]
+  Knowledge["Architecture retrieval\ncurrent promoted snapshot"]
+  ReleaseSnapshot["Point-in-time release snapshot"]
   FreshnessCheck["Freshness / staleness check"]
-  Answer["Response separates\nhistorical guidance from release-sensitive guidance"]
-  NextStep["Ask for release note or refresh snapshot\nbefore definitive impact claim"]
+  Answer["Response separates\ncurrent guidance from release-sensitive guidance"]
 
+  Scheduler --> ReleaseIngest --> Classify --> Candidate --> Gates
+  Gates -->|pass| Promote --> Status
+  Gates -->|fail| Status
   UserPrompt --> Intent
   Intent --> Knowledge
   Intent --> ReleaseSnapshot
+  Promote --> Knowledge
+  Promote --> ReleaseSnapshot
   Knowledge --> FreshnessCheck
   ReleaseSnapshot --> FreshnessCheck
-  FreshnessCheck --> Answer --> NextStep
+  FreshnessCheck --> Answer
 ```
 
 Current release-awareness maturity:
 
 - point-in-time release snapshot exists
+- scheduled release watcher scaffold exists
+- candidate-first refresh and eval-gated promotion exist
 - release-aware intent exists
 - stale-source caution exists
-- full continuous release watcher and impact analyzer are still future work
+- deeper semantic impact analysis remains future work
 
 ## 5. Operational Control Points
 

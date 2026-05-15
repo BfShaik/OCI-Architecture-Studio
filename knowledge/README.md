@@ -11,7 +11,7 @@ The first local RAG layer is implemented with:
 - `snapshots/oci-rag-index.json` as the local generated vector index
 - `release_source_registry.json` for official OCI release sources
 - `refresh/ingest_releases.py` for release snapshot ingestion and classification
-- `refresh_policy.json` and `refresh/refresh_policy.py` for scheduled release watching, selective reindex, eval gates, and rollback-safe refresh
+- `refresh_policy.json` and `refresh/refresh_policy.py` for scheduled release watching, selective reindex, candidate-first eval gates, version lineage, and rollback-safe refresh
 - `snapshots/oci-release-snapshot.json` as the generated release snapshot
 
 The current embedding implementation is deterministic and local. It is useful for validating the retrieval workflow, but it should be replaced with a production embedding provider when the corpus grows.
@@ -54,7 +54,13 @@ Local smoke mode:
 python3 knowledge/refresh/refresh_policy.py --mode release-watch --no-fetch --quick-gates
 ```
 
-The policy runner does not run on user queries. It watches release sources on a schedule or by explicit operator action, maps important changes to affected source IDs, refreshes only those chunks, runs eval/regression gates, and keeps backups for rollback.
+The policy runner does not run on user queries. It watches release sources on a schedule or by explicit operator action, maps important changes to affected source IDs, refreshes only those chunks as candidate snapshots, runs eval/regression gates against the candidates, and promotes them only after validation passes.
+
+Rollback latest promoted refresh:
+
+```bash
+python3 knowledge/refresh/refresh_policy.py --rollback-latest
+```
 
 ## Subdirectories
 

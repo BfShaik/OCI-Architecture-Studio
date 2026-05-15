@@ -57,7 +57,7 @@ Full reindex is reserved for:
 - source registry restructuring
 - corrupted or missing index
 
-## Eval-After-Refresh Workflow
+## Eval-Gated Promotion Workflow
 
 After any selective refresh, run:
 
@@ -68,13 +68,15 @@ python knowledge/refresh/refresh_policy.py --mode release-watch
 The policy runner performs:
 
 1. release ingestion
-2. selective knowledge ingestion
-3. retrieval health check
-4. retrieval regression check
-5. golden evals
-6. edge-case evals
-7. advisory-quality evals
-8. controlled orchestration evals
+2. candidate release snapshot creation under `knowledge/reports/runs/<run_id>/candidates`
+3. selective candidate knowledge ingestion for affected source IDs
+4. retrieval health check against the candidate knowledge index
+5. retrieval regression check against the candidate knowledge index
+6. golden evals with `KNOWLEDGE_INDEX_PATH` and `RELEASE_SNAPSHOT_PATH` pointed at the candidate snapshots
+7. edge-case evals
+8. advisory-quality evals
+9. controlled orchestration evals
+10. promotion to authoritative snapshots only if all gates pass
 
 For quick local validation:
 
@@ -90,12 +92,56 @@ python knowledge/refresh/refresh_policy.py --mode stable-docs
 
 ## Rollback Approach
 
-Before writing refreshed snapshots, the policy runner backs up:
+The policy is candidate-first. It does not overwrite authoritative snapshots until validation passes.
+
+When validation passes, the policy runner promotes candidate snapshots to:
 
 - `knowledge/snapshots/oci-rag-index.json`
 - `knowledge/snapshots/oci-release-snapshot.json`
 
-If post-refresh gates fail and rollback is enabled, the previous snapshots are restored.
+During promotion it stores rollback copies under the run directory:
+
+```text
+knowledge/reports/runs/<run_id>/rollback/
+```
+
+If post-refresh gates fail, the candidate is kept for inspection but authoritative snapshots are not changed.
+
+Operator rollback:
+
+```bash
+python knowledge/refresh/refresh_policy.py --rollback-latest
+```
+
+Rollback restores the previous promoted snapshots from the latest run manifest and records an event in `knowledge/reports/knowledge-refresh-status.json`.
+
+## Versioning And Lineage
+
+Each refresh writes:
+
+- `knowledge/reports/runs/<run_id>/manifest.json`
+- `knowledge/reports/runs/<run_id>/knowledge-refresh-report.json`
+- `knowledge/reports/knowledge-refresh-report.json`
+- `knowledge/reports/knowledge-refresh-status.json`
+
+The manifest tracks:
+
+- ingestion run ID
+- candidate and promoted snapshot paths
+- knowledge snapshot version
+- release snapshot version
+- embedding provider and embedding version
+- metadata schema version
+- affected source IDs
+- changed release IDs
+- gate results
+- rollback sources
+
+The backend exposes the latest operational status at:
+
+```text
+GET /knowledge/refresh/status
+```
 
 For OCI staging/prod, rollback remains config-safe:
 
