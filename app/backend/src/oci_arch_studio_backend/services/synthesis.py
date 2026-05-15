@@ -7,6 +7,11 @@ from typing import Protocol
 
 from oci_arch_studio_backend.models.architecture import RetrievedSource
 from oci_arch_studio_backend.services.intents import IntentProfile
+from oci_arch_studio_backend.services.response_formatter import (
+    STANDARD_RESPONSE_SECTIONS,
+    ensure_standard_sections,
+    format_standard_answer,
+)
 
 
 @dataclass(frozen=True)
@@ -45,10 +50,11 @@ class DeterministicAdvisorySynthesizer:
     def synthesize(self, request: SynthesisRequest) -> SynthesisResult:
         profile = request.profile
         return SynthesisResult(
-            answer=(
-                f"Intent: {profile.intent.value}. {request.context_note} Use the "
-                f"{profile.prompt_template} template to focus the review on "
-                f"{profile.focus}."
+            answer=format_standard_answer(
+                profile=profile,
+                context_note=request.context_note,
+                sources=request.sources,
+                workload_context=request.workload_context,
             ),
             recommendations=list(profile.recommendations),
             assumptions=list(profile.assumptions),
@@ -90,7 +96,11 @@ class OciGenAiAdvisorySynthesizer:
             raw_text = self._invoke_model(request)
             payload = self._parse_json(raw_text)
             return SynthesisResult(
-                answer=self._string_or_default(payload.get("answer"), request.context_note),
+                answer=ensure_standard_sections(
+                    self._string_or_default(payload.get("answer"), request.context_note),
+                    profile=request.profile,
+                    context_note=request.context_note,
+                ),
                 recommendations=self._list_or_default(payload.get("recommendations"), request.profile.recommendations),
                 assumptions=self._list_or_default(payload.get("assumptions"), request.profile.assumptions),
                 risks=self._list_or_default(payload.get("risks"), request.profile.risks),
@@ -131,7 +141,9 @@ class OciGenAiAdvisorySynthesizer:
             "Use only the retrieved OCI evidence. Do not invent OCI services. "
             "Tie actionable recommendations to citation chunk IDs or source titles. "
             "If evidence is insufficient, say so explicitly and keep guidance provisional. "
-            "For latest/release prompts, do not claim current impact unless release evidence is present."
+            "For latest/release prompts, do not claim current impact unless release evidence is present. "
+            "The answer field must use these section headings in order: "
+            f"{', '.join(STANDARD_RESPONSE_SECTIONS)}."
         )
         user_prompt = self._build_user_prompt(request)
         serving_mode = oci.generative_ai_inference.models.OnDemandServingMode(

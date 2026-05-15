@@ -12,6 +12,7 @@ from oci_arch_studio_backend.services.embeddings import (
 from oci_arch_studio_backend.services.freshness import is_stale_source
 from oci_arch_studio_backend.services.intents import IntentProfile
 from oci_arch_studio_backend.services.retrieval_metrics import retrieval_metrics
+from oci_arch_studio_backend.services.service_mapping import OciServiceMapper
 from oci_arch_studio_backend.services.vector_store import (
     JsonVectorStore,
     OracleAiVectorSearchConfig,
@@ -27,26 +28,79 @@ INTENT_RETRIEVAL_HINTS: dict[str, dict[str, tuple[str, ...]]] = {
     "architecture": {
         "service_domains": ("architecture", "networking", "compute", "database", "storage", "edge"),
         "architecture_patterns": ("reference-architecture", "high-availability", "public-ingress", "data-tier"),
+        "workload_types": ("webapp", "ecommerce", "enterprise-app"),
+        "domain_tags": ("ecommerce", "SaaS", "enterprise"),
+        "topics": ("architecture",),
     },
     "migration": {
         "service_domains": ("containers", "database"),
         "architecture_patterns": ("migration-waves", "cutover", "container-platform"),
+        "workload_types": ("migration", "saas-platform", "enterprise-app"),
+        "domain_tags": ("enterprise", "SaaS"),
+        "topics": ("migration",),
     },
     "dr": {
         "service_domains": ("resilience", "database", "security", "networking", "storage", "observability"),
         "architecture_patterns": ("disaster-recovery", "failover-runbook", "backup-recovery", "operational-visibility", "auditability"),
+        "workload_types": ("regulated-workload", "enterprise-app"),
+        "domain_tags": ("fintech", "enterprise"),
+        "topics": ("disaster-recovery",),
     },
     "cost": {
         "service_domains": ("cost", "compute", "storage", "database"),
         "architecture_patterns": ("budgets", "rightsizing", "lifecycle-management", "autoscaling"),
+        "workload_types": ("cost-optimized-webapp", "webapp", "enterprise-app"),
+        "domain_tags": ("ecommerce", "SaaS", "enterprise"),
+        "topics": ("cost-optimization",),
     },
     "security": {
         "service_domains": ("security", "networking"),
         "architecture_patterns": ("least-privilege", "auditability", "network-isolation"),
+        "workload_types": ("regulated-workload", "enterprise-app"),
+        "domain_tags": ("fintech", "enterprise"),
+        "topics": ("architecture",),
     },
     "release_awareness": {
         "service_domains": ("architecture", "resilience", "database", "networking", "compute", "storage", "observability"),
         "architecture_patterns": ("well-architected", "operational-excellence", "high-availability"),
+        "workload_types": ("enterprise-app", "migration", "webapp"),
+        "domain_tags": ("enterprise",),
+        "topics": ("architecture", "migration", "cost-optimization"),
+    },
+    "observability": {
+        "service_domains": ("observability", "security", "database", "compute", "containers"),
+        "architecture_patterns": ("operational-visibility", "auditability", "alarms", "slo-monitoring"),
+        "workload_types": ("enterprise-app", "regulated-workload", "saas-platform"),
+        "domain_tags": ("enterprise", "fintech", "SaaS"),
+        "topics": ("observability",),
+    },
+    "ai_ml": {
+        "service_domains": ("compute", "containers", "storage", "networking", "observability", "security", "cost"),
+        "architecture_patterns": ("application-tier", "autoscaling", "operational-visibility", "key-management"),
+        "workload_types": ("ai-inference", "enterprise-app"),
+        "domain_tags": ("AI/ML", "enterprise"),
+        "topics": ("architecture", "observability", "cost-optimization"),
+    },
+    "modernization": {
+        "service_domains": ("containers", "database", "networking", "security", "observability"),
+        "architecture_patterns": ("container-platform", "managed-database", "migration-waves", "cutover"),
+        "workload_types": ("migration", "enterprise-app", "webapp"),
+        "domain_tags": ("enterprise", "SaaS"),
+        "topics": ("migration",),
+    },
+    "saas_platform": {
+        "service_domains": ("networking", "containers", "compute", "database", "storage", "edge", "security", "observability", "cost"),
+        "architecture_patterns": ("high-availability", "network-isolation", "tagging", "operational-visibility"),
+        "workload_types": ("saas-platform", "webapp", "enterprise-app"),
+        "domain_tags": ("SaaS", "enterprise"),
+        "topics": ("architecture", "disaster-recovery", "cost-optimization", "observability"),
+    },
+    "analytics": {
+        "service_domains": ("database", "storage", "observability", "security", "cost"),
+        "architecture_patterns": ("managed-database", "data-tier", "lifecycle-management", "operational-visibility"),
+        "workload_types": ("analytics", "enterprise-app"),
+        "domain_tags": ("enterprise",),
+        "topics": ("architecture", "cost-optimization", "observability"),
     },
 }
 
@@ -77,6 +131,7 @@ class OciKnowledgeRetriever:
         self.top_k = top_k
         self.embedder = embedder or LocalHashingEmbedder()
         self.provider_name = provider_name
+        self.service_mapper = OciServiceMapper()
 
     async def retrieve(
         self,
@@ -98,11 +153,14 @@ class OciKnowledgeRetriever:
             )
             return sources
 
+        service_mapping = self.service_mapper.map_text(question)
         retrieval_query = self._build_retrieval_query(question, intent_profile)
+        if service_mapping.retrieval_terms:
+            retrieval_query = " ".join((retrieval_query, *service_mapping.retrieval_terms))
         embedding_started_at = perf_counter()
         query_embedding = self.embedder.embed(retrieval_query)
         embedding_latency_ms = round((perf_counter() - embedding_started_at) * 1000, 2)
-        filters = self._build_filters(question, intent_profile)
+        filters = self._build_filters(question, intent_profile, service_mapping.mapped_services)
         results = self.store.search(
             query_embedding=query_embedding,
             top_k=self.top_k,
@@ -158,6 +216,17 @@ class OciKnowledgeRetriever:
             source_url=str(source_url) if source_url else None,
             service=str(metadata.get("service")) if metadata.get("service") else None,
             service_domain=str(metadata.get("service_domain")) if metadata.get("service_domain") else None,
+            service_category=str(metadata.get("service_category")) if metadata.get("service_category") else None,
+            category=str(metadata.get("category")) if metadata.get("category") else None,
+            pattern=str(metadata.get("pattern")) if metadata.get("pattern") else None,
+            workload=str(metadata.get("workload")) if metadata.get("workload") else None,
+            workload_types=[str(tag) for tag in metadata.get("workload_types", [])],
+            domain=str(metadata.get("domain")) if metadata.get("domain") else None,
+            domain_tags=[str(tag) for tag in metadata.get("domain_tags", [])],
+            topic=str(metadata.get("topic")) if metadata.get("topic") else None,
+            migration_mappings={str(key): str(value) for key, value in metadata.get("migration_mappings", {}).items()},
+            ha_dr_tags=[str(tag) for tag in metadata.get("ha_dr_tags", [])],
+            cost_optimization_tags=[str(tag) for tag in metadata.get("cost_optimization_tags", [])],
             intent_tags=[str(tag) for tag in metadata.get("intent_tags", [])],
             fetched_timestamp=fetched_value,
             freshness_score=freshness_value,
@@ -193,7 +262,12 @@ class OciKnowledgeRetriever:
             return question
         return " ".join((question, intent_profile.focus, *intent_profile.retrieval_terms))
 
-    def _build_filters(self, question: str, intent_profile: IntentProfile | None) -> VectorSearchFilters:
+    def _build_filters(
+        self,
+        question: str,
+        intent_profile: IntentProfile | None,
+        mapped_services: tuple[str, ...] = (),
+    ) -> VectorSearchFilters:
         if intent_profile is None:
             return VectorSearchFilters()
         normalized_question = question.lower()
@@ -202,6 +276,7 @@ class OciKnowledgeRetriever:
             for service, terms in SERVICE_QUERY_TERMS.items()
             if any(term in normalized_question for term in terms)
         )
+        services = tuple(dict.fromkeys((*explicit_services, *mapped_services)))
         return VectorSearchFilters(
             intent=intent_profile.intent.value,
             service_domains=INTENT_RETRIEVAL_HINTS.get(intent_profile.intent.value, {}).get(
@@ -212,7 +287,19 @@ class OciKnowledgeRetriever:
                 "architecture_patterns",
                 (),
             ),
-            services=explicit_services,
+            workload_types=INTENT_RETRIEVAL_HINTS.get(intent_profile.intent.value, {}).get(
+                "workload_types",
+                (),
+            ),
+            domain_tags=INTENT_RETRIEVAL_HINTS.get(intent_profile.intent.value, {}).get(
+                "domain_tags",
+                (),
+            ),
+            topics=INTENT_RETRIEVAL_HINTS.get(intent_profile.intent.value, {}).get(
+                "topics",
+                (),
+            ),
+            services=services,
             release_aware=intent_profile.intent.value == "release_awareness",
         )
 

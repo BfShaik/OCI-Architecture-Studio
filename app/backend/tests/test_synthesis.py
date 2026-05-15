@@ -29,6 +29,8 @@ def test_deterministic_synthesizer_preserves_profile_contract() -> None:
     assert result.latency_ms == 0.0
     assert result.recommendations == list(profile.recommendations)
     assert "Retrieved test context" in result.answer
+    assert "1. Executive Summary" in result.answer
+    assert "10. Recommended Next Steps" in result.answer
 
 
 def test_oci_genai_synthesizer_fails_closed_to_deterministic() -> None:

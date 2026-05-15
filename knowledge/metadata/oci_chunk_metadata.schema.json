@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://oci-architecture-studio.local/schemas/oci_chunk_metadata.schema.json",
+  "title": "OCI Architecture Studio Chunk Metadata",
+  "type": "object",
+  "required": [
+    "metadata_schema_version",
+    "service",
+    "service_domain",
+    "service_category",
+    "category",
+    "topic",
+    "intent_tags",
+    "architecture_patterns",
+    "workload_types",
+    "domain_tags",
+    "migration_mappings",
+    "ha_dr_tags",
+    "cost_optimization_tags"
+  ],
+  "properties": {
+    "metadata_schema_version": { "type": "string" },
+    "service": { "type": "string" },
+    "service_domain": { "type": "string" },
+    "service_category": { "type": "string" },
+    "category": { "type": "string" },
+    "pattern": { "type": ["string", "null"] },
+    "workload": { "type": ["string", "null"] },
+    "domain": { "type": ["string", "null"] },
+    "topic": { "type": "string" },
+    "intent_tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "architecture_patterns": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "workload_types": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "domain_tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "migration_mappings": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "ha_dr_tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "cost_optimization_tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    }
+  },
+  "additionalProperties": true
+}

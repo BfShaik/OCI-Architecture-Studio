@@ -4,6 +4,7 @@ import pytest
 
 from oci_arch_studio_backend.core.config import Settings
 from oci_arch_studio_backend.services.embeddings import LocalHashingEmbedder
+from oci_arch_studio_backend.services.intents import Intent, get_intent_profile
 from oci_arch_studio_backend.services.retrieval import OciKnowledgeRetriever, build_retriever
 from oci_arch_studio_backend.services.vector_store import (
     JsonVectorStore,
@@ -180,6 +181,65 @@ def test_vector_store_boosts_intent_domain_and_pattern_metadata(tmp_path) -> Non
     )
 
     assert results[0][0].id == "dr::1"
+
+
+def test_service_mapping_biases_migration_retrieval(tmp_path) -> None:
+    embedder = LocalHashingEmbedder()
+    index_path = tmp_path / "index.json"
+    generic_text = "OCI architecture guidance should consider availability and operations."
+    oke_text = "OCI Kubernetes Engine provides a managed Kubernetes platform for container workloads."
+    index_path.write_text(
+        json.dumps(
+            {
+                "chunks": [
+                    {
+                        "id": "generic::1",
+                        "title": "OCI Architecture Overview",
+                        "url": "https://example.com/architecture",
+                        "source_type": "oci_doc",
+                        "text": generic_text,
+                        "embedding": embedder.embed(generic_text),
+                        "metadata": {
+                            "service": "Architecture Center",
+                            "service_domain": "architecture",
+                            "intent_tags": ["architecture"],
+                            "freshness_score": 0.9,
+                            "trust_level": "official",
+                            "architecture_patterns": ["reference-architecture"],
+                        },
+                    },
+                    {
+                        "id": "oke::1",
+                        "title": "OCI Kubernetes Engine",
+                        "url": "https://example.com/oke",
+                        "source_type": "oci_doc",
+                        "text": oke_text,
+                        "embedding": embedder.embed(oke_text),
+                        "metadata": {
+                            "service": "OCI Kubernetes Engine",
+                            "service_domain": "containers",
+                            "intent_tags": ["migration", "architecture"],
+                            "freshness_score": 0.9,
+                            "trust_level": "official",
+                            "architecture_patterns": ["container-platform"],
+                            "migration_mappings": {"EKS": "OKE"},
+                        },
+                    },
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    retriever = OciKnowledgeRetriever(index_path=index_path, embedder=embedder)
+
+    import asyncio
+
+    results = asyncio.run(
+        retriever.retrieve("Migrate EKS workloads to OCI.", get_intent_profile(Intent.MIGRATION))
+    )
+
+    assert results[0].chunk_id == "oke::1"
+    assert results[0].migration_mappings == {"EKS": "OKE"}
 
 
 def test_build_retriever_requires_oci_vector_settings(tmp_path) -> None:

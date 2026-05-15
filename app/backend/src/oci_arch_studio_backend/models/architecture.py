@@ -25,6 +25,17 @@ class RetrievedSource(BaseModel):
     source_url: str | None = None
     service: str | None = None
     service_domain: str | None = None
+    service_category: str | None = None
+    category: str | None = None
+    pattern: str | None = None
+    workload: str | None = None
+    workload_types: list[str] = Field(default_factory=list)
+    domain: str | None = None
+    domain_tags: list[str] = Field(default_factory=list)
+    topic: str | None = None
+    migration_mappings: dict[str, str] = Field(default_factory=dict)
+    ha_dr_tags: list[str] = Field(default_factory=list)
+    cost_optimization_tags: list[str] = Field(default_factory=list)
     intent_tags: list[str] = Field(default_factory=list)
     fetched_timestamp: str | None = None
     freshness_score: float | None = None

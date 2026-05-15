@@ -20,7 +20,12 @@ AGENT_BY_INTENT: dict[Intent, str] = {
     Intent.MIGRATION: "migration_advisor",
     Intent.DR: "ha_dr_advisor",
     Intent.COST: "cost_advisor",
+    Intent.OBSERVABILITY: "architecture_advisor",
+    Intent.AI_ML: "architecture_advisor",
     Intent.SECURITY: "architecture_advisor",
+    Intent.MODERNIZATION: "migration_advisor",
+    Intent.SAAS_PLATFORM: "architecture_advisor",
+    Intent.ANALYTICS: "architecture_advisor",
     Intent.RELEASE_AWARENESS: "release_awareness_advisor",
     Intent.GENERAL: "architecture_advisor",
 }
@@ -303,7 +308,7 @@ class SupervisedAgentOrchestrator:
         normalized = question.lower()
         source_domains = {source.service_domain for source in sources if source.service_domain}
 
-        if any(token in normalized for token in ("migrate", "migration", "eks", "rds", "aws")):
+        if any(token in normalized for token in ("migrate", "migration", "eks", "rds", "aws", "modernize", "modernization")):
             selected.append("migration_advisor")
         if any(token in normalized for token in ("dr", "disaster recovery", "failover", "rto", "rpo", "resilience", "fintech")) or "resilience" in source_domains:
             selected.append("ha_dr_advisor")
@@ -311,7 +316,17 @@ class SupervisedAgentOrchestrator:
             selected.append("cost_advisor")
         if any(token in normalized for token in ("latest", "release", "update", "current", "changed")):
             selected.append("release_awareness_advisor")
-        if profile.intent in {Intent.COST, Intent.DR, Intent.MIGRATION, Intent.RELEASE_AWARENESS}:
+        if profile.intent in {
+            Intent.COST,
+            Intent.DR,
+            Intent.MIGRATION,
+            Intent.MODERNIZATION,
+            Intent.SAAS_PLATFORM,
+            Intent.AI_ML,
+            Intent.ANALYTICS,
+            Intent.OBSERVABILITY,
+            Intent.RELEASE_AWARENESS,
+        }:
             selected.append("architecture_advisor")
 
         deduped: list[str] = []
@@ -378,6 +393,8 @@ class SupervisedAgentOrchestrator:
     def _specialist_note(self, intent: Intent) -> str:
         if intent == Intent.MIGRATION:
             return "Migration advisor focused on source-to-target service mapping, phases, dependencies, and cutover risk."
+        if intent == Intent.MODERNIZATION:
+            return "Migration advisor focused on incremental modernization, source-to-target mapping, phases, dependencies, and rollback risk."
         if intent == Intent.DR:
             return "HA/DR advisor focused on RTO/RPO, cross-region resilience, failover, security, and runbooks."
         if intent == Intent.COST:

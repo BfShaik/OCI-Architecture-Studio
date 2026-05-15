@@ -24,6 +24,9 @@ class VectorSearchFilters:
     service_domains: tuple[str, ...] = ()
     services: tuple[str, ...] = ()
     architecture_patterns: tuple[str, ...] = ()
+    workload_types: tuple[str, ...] = ()
+    domain_tags: tuple[str, ...] = ()
+    topics: tuple[str, ...] = ()
     min_freshness_score: float | None = None
     trust_level: str | None = None
     release_aware: bool = False
@@ -123,6 +126,9 @@ class JsonVectorStore:
         service = str(metadata.get("service", "")).lower()
         domain = str(metadata.get("service_domain", "")).lower()
         patterns = {str(pattern).lower() for pattern in metadata.get("architecture_patterns", [])}
+        workload_types = {str(workload).lower() for workload in metadata.get("workload_types", [])}
+        domain_tags = {str(tag).lower() for tag in metadata.get("domain_tags", [])}
+        topic = str(metadata.get("topic", "")).lower()
         if filters.intent and filters.intent in metadata.get("intent_tags", []):
             score += 0.08
         if domain and domain in {item.lower() for item in filters.service_domains}:
@@ -131,6 +137,12 @@ class JsonVectorStore:
             score += 0.16
         if patterns.intersection({item.lower() for item in filters.architecture_patterns}):
             score += 0.04
+        if workload_types.intersection({item.lower() for item in filters.workload_types}):
+            score += 0.04
+        if domain_tags.intersection({item.lower() for item in filters.domain_tags}):
+            score += 0.03
+        if topic and topic in {item.lower() for item in filters.topics}:
+            score += 0.03
         if metadata.get("trust_level") == "official":
             score += 0.03
         freshness_score = metadata.get("freshness_score")

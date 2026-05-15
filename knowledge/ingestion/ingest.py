@@ -21,6 +21,10 @@ from oci_arch_studio_backend.services.embeddings import (  # noqa: E402
     OciGenerativeAiEmbedder,
     OciGenerativeAiEmbeddingConfig,
 )
+from oci_arch_studio_backend.services.metadata import (  # noqa: E402
+    METADATA_SCHEMA_VERSION,
+    enrich_metadata,
+)
 
 
 BOILERPLATE_PATTERNS = (
@@ -288,7 +292,7 @@ def infer_source_metadata(source: dict[str, str], fetched_timestamp: str, fetch_
             "release_version": source.get("release_version", "unknown"),
         }
     )
-    return metadata
+    return enrich_metadata(metadata)
 
 
 def build_embedder(args: argparse.Namespace):
@@ -364,7 +368,7 @@ def build_index(args: argparse.Namespace) -> dict[str, object]:
         "embedding_model": embedder.model_name,
         "embedding_provider": args.embedding_provider,
         "dimensions": args.dimensions if args.embedding_provider == "local" else None,
-        "metadata_schema_version": "2026-05-oci-native-v1",
+        "metadata_schema_version": METADATA_SCHEMA_VERSION,
         "vector_migration": {
             "local_json_compatible": True,
             "oci_object_storage_manifest_ready": True,

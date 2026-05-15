@@ -38,9 +38,14 @@ def test_infer_source_metadata_adds_citation_ready_fields() -> None:
     assert metadata["source_url"] == source["url"]
     assert metadata["service"] == "Load Balancer"
     assert metadata["service_domain"] == "networking"
+    assert metadata["service_category"] == "networking"
+    assert metadata["category"] == "networking"
+    assert "webapp" in metadata["workload_types"]
+    assert "ecommerce" in metadata["domain_tags"]
     assert "architecture" in metadata["intent_tags"]
     assert metadata["trust_level"] == "official"
     assert metadata["freshness_score"] == 0.9
+    assert metadata["metadata_schema_version"] == ingest.METADATA_SCHEMA_VERSION
 
 
 def test_chunk_content_hash_is_stable() -> None:

@@ -172,8 +172,17 @@ class AdvisoryQualityAnalyzer:
                     source.summary,
                     source.service or "",
                     source.service_domain or "",
+                    source.service_category or "",
+                    source.category or "",
+                    source.topic or "",
+                    source.workload or "",
+                    " ".join(source.workload_types),
+                    source.domain or "",
+                    " ".join(source.domain_tags),
                     " ".join(source.intent_tags),
                     " ".join(source.architecture_patterns),
+                    " ".join(source.ha_dr_tags),
+                    " ".join(source.cost_optimization_tags),
                 )
             )
             source_terms = self._terms(source_text)

@@ -11,7 +11,12 @@ from oci_arch_studio_backend.services.intents import Intent, IntentClassifier
         ("migrate EKS + RDS to OCI", Intent.MIGRATION),
         ("fintech DR design", Intent.DR),
         ("cost-optimized web app on OCI", Intent.COST),
+        ("centralized logging monitoring alarms and dashboards on OCI", Intent.OBSERVABILITY),
+        ("private AI inference platform with model artifacts", Intent.AI_ML),
         ("secure private application on OCI", Intent.SECURITY),
+        ("modernize a legacy web app onto managed OCI services", Intent.MODERNIZATION),
+        ("multi-region SaaS platform with tenant isolation", Intent.SAAS_PLATFORM),
+        ("analytics data platform on OCI", Intent.ANALYTICS),
         ("How does the latest OCI update affect this architecture?", Intent.RELEASE_AWARENESS),
     ],
 )

@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 from enum import StrEnum
 
@@ -8,7 +9,12 @@ class Intent(StrEnum):
     MIGRATION = "migration"
     DR = "dr"
     COST = "cost"
+    OBSERVABILITY = "observability"
+    AI_ML = "ai_ml"
     SECURITY = "security"
+    MODERNIZATION = "modernization"
+    SAAS_PLATFORM = "saas_platform"
+    ANALYTICS = "analytics"
     RELEASE_AWARENESS = "release_awareness"
     GENERAL = "general"
 
@@ -173,6 +179,179 @@ INTENT_PROFILES: dict[Intent, IntentProfile] = {
             "Create a cost eval that requires concrete cost levers and tradeoffs, not only general architecture guidance.",
         ),
     ),
+    Intent.OBSERVABILITY: IntentProfile(
+        intent=Intent.OBSERVABILITY,
+        prompt_template="prompts/architecture-review.general.v0.md",
+        retrieval_terms=(
+            "observability",
+            "logging",
+            "monitoring",
+            "metrics",
+            "alarms",
+            "audit trails",
+            "dashboards",
+            "operational visibility",
+        ),
+        focus="logs, metrics, alarms, audit trails, dashboards, runbooks, and operational readiness",
+        recommendations=(
+            "Centralize OCI Logging and Monitoring coverage across application, infrastructure, database, and security signals.",
+            "Tie alarms to service-level indicators such as latency, errors, saturation, availability, backup health, and security findings.",
+            "Control log retention and access so observability supports incident response and audit without exposing sensitive data.",
+            "Use observability requirements to validate architecture readiness before production cutover.",
+        ),
+        assumptions=(
+            "The workload needs enterprise operational visibility but exact SLOs and retention requirements are not specified.",
+            "Monitoring and logging controls must be validated against organization policy and compliance needs.",
+        ),
+        risks=(
+            "Dashboards without alarms and runbooks can create visibility without operational response.",
+            "Missing audit logs can block incident response, compliance evidence, and DR validation.",
+            "Over-retention or unfiltered logs can increase cost and expose sensitive data.",
+        ),
+        next_steps=(
+            "Define SLOs, alert thresholds, log retention, dashboard audiences, and incident-response ownership.",
+            "Add or verify OCI sources for Logging, Monitoring, alarms, Audit, Notifications, and service-specific telemetry.",
+            "Create observability evals that require logs, metrics, alarms, runbooks, security audit, and retention tradeoffs.",
+        ),
+    ),
+    Intent.AI_ML: IntentProfile(
+        intent=Intent.AI_ML,
+        prompt_template="prompts/architecture-review.architecture.v0.md",
+        retrieval_terms=(
+            "AI inference",
+            "model artifacts",
+            "private API",
+            "Object Storage",
+            "compute",
+            "Kubernetes",
+            "logging",
+            "monitoring",
+            "cost-aware scaling",
+        ),
+        focus="AI/ML inference service placement, private access, model artifact handling, observability, security, and scaling tradeoffs",
+        recommendations=(
+            "Store model artifacts in durable, access-controlled Object Storage and validate rollout and rollback controls.",
+            "Run inference serving on Compute or OCI Kubernetes Engine only after throughput, latency, and operational ownership are understood.",
+            "Keep internal inference APIs on private networks where possible and protect secrets, keys, and data access with IAM and Vault-backed controls.",
+            "Monitor inference latency, error rate, saturation, deployment health, and cost drivers before scaling capacity.",
+        ),
+        assumptions=(
+            "The current corpus may not include dedicated OCI AI service evidence, so recommendations should stay grounded in retrieved compute, storage, networking, security, and observability sources.",
+            "Traffic shape, model size, accelerator needs, and data sensitivity are not yet specified.",
+        ),
+        risks=(
+            "GPU, accelerator, or specialized serving recommendations require sizing evidence and current OCI service validation.",
+            "Sensitive prompts, inputs, outputs, and model artifacts can create data protection and retention risk.",
+            "Always-on inference capacity can become costly without autoscaling and utilization monitoring.",
+        ),
+        next_steps=(
+            "Capture latency, throughput, concurrency, model size, artifact lifecycle, data sensitivity, and deployment requirements.",
+            "Add OCI AI/ML and model-serving sources before making specialized service claims.",
+            "Create an AI inference eval that checks private access, artifact security, observability, and cost-aware scaling.",
+        ),
+    ),
+    Intent.MODERNIZATION: IntentProfile(
+        intent=Intent.MODERNIZATION,
+        prompt_template="prompts/architecture-review.migration.v0.md",
+        retrieval_terms=(
+            "modernization",
+            "container platform",
+            "managed database",
+            "migration waves",
+            "OKE",
+            "Autonomous Database",
+            "observability",
+            "security",
+        ),
+        focus="incremental modernization, managed-service fit, container platform choices, operational ownership, migration waves, and rollback",
+        recommendations=(
+            "Separate lift-and-shift migration decisions from modernization decisions so risk can be managed in waves.",
+            "Use OKE, managed database options, Object Storage, and observability controls where they reduce operational burden and fit workload constraints.",
+            "Prioritize dependency discovery, compatibility validation, IAM/network changes, and rollback paths before changing runtime architecture.",
+            "Modernize only the components with clear reliability, cost, security, or operational benefits.",
+        ),
+        assumptions=(
+            "The workload may be moving from an existing platform and needs incremental change rather than a full rewrite.",
+            "Current runtime, database engine, dependencies, and operational constraints still need discovery.",
+        ),
+        risks=(
+            "Modernization can expand scope and delay migration if it is not separated into measurable waves.",
+            "Managed-service fit depends on compatibility, licensing, operational ownership, and performance requirements.",
+        ),
+        next_steps=(
+            "Inventory source runtime, data stores, dependencies, deployment process, and operational pain points.",
+            "Define modernization candidates and acceptance criteria by migration wave.",
+            "Run migration and modernization evals for explicit source-to-target mapping and rollback coverage.",
+        ),
+    ),
+    Intent.SAAS_PLATFORM: IntentProfile(
+        intent=Intent.SAAS_PLATFORM,
+        prompt_template="prompts/architecture-review.architecture.v0.md",
+        retrieval_terms=(
+            "SaaS platform",
+            "tenant isolation",
+            "multi region",
+            "shared services",
+            "database resilience",
+            "cost allocation",
+            "observability",
+        ),
+        focus="tenant isolation, shared platform services, multi-region resilience, observability, cost allocation, and migration-aware platform growth",
+        recommendations=(
+            "Define the tenant isolation model before choosing network, database, IAM, and operational boundaries.",
+            "Separate public ingress, shared platform services, tenant workloads, data tiers, and observability controls.",
+            "Use tagging, budgets, and cost reporting patterns to support tenant, environment, and shared-service cost visibility.",
+            "Treat multi-region expansion as an HA/DR and data-placement decision with explicit consistency, failover, and residency assumptions.",
+        ),
+        assumptions=(
+            "Tenant count, isolation tier, region strategy, data residency, and source-platform context are not fully specified.",
+            "Multi-region SaaS may need AWS-to-OCI migration mapping if the source services are mentioned.",
+        ),
+        risks=(
+            "Weak tenant isolation can create security, compliance, and noisy-neighbor risk.",
+            "Multi-region data consistency, failover, and operational runbooks can dominate platform complexity.",
+            "Shared-service costs can become opaque without tagging and allocation controls.",
+        ),
+        next_steps=(
+            "Define tenant isolation, data residency, region strategy, RTO/RPO, and cost allocation requirements.",
+            "Add SaaS-specific evals that require isolation, multi-region tradeoffs, observability, and cost controls.",
+            "Run migration mapping when AWS-origin services are present.",
+        ),
+    ),
+    Intent.ANALYTICS: IntentProfile(
+        intent=Intent.ANALYTICS,
+        prompt_template="prompts/architecture-review.architecture.v0.md",
+        retrieval_terms=(
+            "analytics",
+            "data platform",
+            "Object Storage",
+            "database",
+            "data tier",
+            "lifecycle management",
+            "monitoring",
+            "cost optimization",
+        ),
+        focus="data ingestion, storage, database/service fit, lifecycle controls, governance, observability, and cost-aware analytics architecture",
+        recommendations=(
+            "Separate raw, curated, and serving data concerns before selecting storage and database services.",
+            "Use Object Storage lifecycle controls and managed database choices where they fit retention, query, and operational requirements.",
+            "Protect data access with IAM, encryption, private networking, logging, and audit-ready controls.",
+            "Monitor ingestion, freshness, query performance, storage growth, and cost drivers.",
+        ),
+        assumptions=(
+            "The analytics workload requirements, data volume, query pattern, and governance scope are not yet specified.",
+            "The current corpus may not contain specialized analytics services, so guidance must stay bounded by retrieved evidence.",
+        ),
+        risks=(
+            "Analytics designs can overfit storage or database choices before query, retention, and governance needs are clear.",
+            "Cost and performance risks rise quickly if data lifecycle and monitoring are omitted.",
+        ),
+        next_steps=(
+            "Capture source systems, volume, latency, query patterns, governance, retention, and consumers.",
+            "Add OCI analytics-specific sources before recommending specialized analytics services.",
+            "Create analytics evals that require data lifecycle, security, observability, and cost tradeoffs.",
+        ),
+    ),
     Intent.SECURITY: IntentProfile(
         intent=Intent.SECURITY,
         prompt_template="prompts/architecture-review.security.v0.md",
@@ -279,14 +458,24 @@ class IntentClassifier:
             )
         ):
             return Intent.RELEASE_AWARENESS
-        if any(token in normalized for token in ("migrate", "migration", "eks", "rds", "aws")):
+        if any(token in normalized for token in ("migrate", "migration")) or re.search(r"\b(eks|rds|aws)\b", normalized):
             return Intent.MIGRATION
         if any(token in normalized for token in ("dr", "disaster recovery", "rto", "rpo", "failover", "fintech")):
             return Intent.DR
         if any(token in normalized for token in ("cost", "cost-optimized", "budget", "right-size", "right sized", "cheap")):
             return Intent.COST
+        if any(token in normalized for token in ("observability", "logging", "monitoring", "metrics", "alarms", "dashboard", "audit trail")):
+            return Intent.OBSERVABILITY
+        if any(token in normalized for token in ("ai/ml", "ai inference", "model", "inference", "ml platform", "machine learning")):
+            return Intent.AI_ML
         if any(token in normalized for token in ("security", "secure", "iam", "vault", "encryption", "compliance")):
             return Intent.SECURITY
+        if any(token in normalized for token in ("modernize", "modernization", "refactor", "replatform", "managed database")):
+            return Intent.MODERNIZATION
+        if any(token in normalized for token in ("saas", "tenant", "multi-tenant", "multi tenant", "multi-region", "multi region")):
+            return Intent.SAAS_PLATFORM
+        if any(token in normalized for token in ("analytics", "data platform", "data lake", "warehouse", "reporting")):
+            return Intent.ANALYTICS
         if any(token in normalized for token in ("design", "architecture", "architect", "highly available", "ecommerce", "platform")):
             return Intent.ARCHITECTURE
         return Intent.GENERAL
