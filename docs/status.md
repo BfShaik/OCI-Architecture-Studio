@@ -219,6 +219,7 @@ This progress is based on `docs/two-week-plan.md`.
   - slower stable-doc cadence guidance
   - rollback-safe snapshot backups
   - GitHub Actions knowledge refresh workflow
+  - optional OCI Functions + Resource Scheduler schedule scaffold for OCI-native recurring refresh
   - `docs/knowledge-refresh-policy.md`
 - Pushed current implementation to GitHub.
 
@@ -242,6 +243,8 @@ Last validation run: 2026-05-15
 - Knowledge ingestion smoke: passed, 13 chunks generated
 - Release ingestion smoke: passed, 3 release items generated
 - Knowledge refresh policy smoke: passed, forced selective refresh with post-refresh gates
+- Terraform validation: passed after optional knowledge refresh scheduler scaffold; staging plan currently should not be applied until existing backend replacement drift is resolved and the function image is available
+- OCI-native refresh scheduler scaffold: implemented with OCI Functions plus OCI Resource Scheduler; not applied yet because a published OCIR function image is required before enabling
 - Backend tests: passed, 46 tests
 - Frontend build: passed
 - Golden evals: passed, 6 of 6

@@ -82,3 +82,39 @@ variable "alarm_email" {
   type        = string
   default     = ""
 }
+
+variable "enable_knowledge_refresh_scheduler" {
+  description = "Enable OCI Resource Scheduler schedules for the knowledge refresh function."
+  type        = bool
+  default     = false
+}
+
+variable "knowledge_refresh_function_image" {
+  description = "Container image for the OCI Function that runs knowledge refresh. Required when scheduler is enabled."
+  type        = string
+  default     = ""
+}
+
+variable "knowledge_refresh_release_cron" {
+  description = "Cron expression for release-note refresh."
+  type        = string
+  default     = "17 */6 * * *"
+}
+
+variable "knowledge_refresh_stable_docs_cron" {
+  description = "Cron expression for stable OCI documentation refresh."
+  type        = string
+  default     = "23 2 * * 0"
+}
+
+variable "knowledge_refresh_function_memory_mbs" {
+  description = "Memory in MB for the knowledge refresh OCI Function."
+  type        = number
+  default     = 1024
+}
+
+variable "knowledge_refresh_function_timeout_seconds" {
+  description = "Timeout in seconds for the knowledge refresh OCI Function."
+  type        = number
+  default     = 900
+}

@@ -37,3 +37,15 @@ output "resource_lifecycle_event_rule_ocid" {
 output "app_config_secret_ocid" {
   value = module.foundation.app_config_secret_ocid
 }
+
+output "knowledge_refresh_function_ocid" {
+  value = module.foundation.knowledge_refresh_function_ocid
+}
+
+output "knowledge_refresh_release_schedule_ocid" {
+  value = module.foundation.knowledge_refresh_release_schedule_ocid
+}
+
+output "knowledge_refresh_stable_docs_schedule_ocid" {
+  value = module.foundation.knowledge_refresh_stable_docs_schedule_ocid
+}

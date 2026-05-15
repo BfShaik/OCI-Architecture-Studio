@@ -61,3 +61,15 @@ output "backend_dynamic_group_name" {
 output "backend_policy_ocid" {
   value = oci_identity_policy.backend_access.id
 }
+
+output "knowledge_refresh_function_ocid" {
+  value = var.enable_knowledge_refresh_scheduler ? oci_functions_function.knowledge_refresh[0].id : null
+}
+
+output "knowledge_refresh_release_schedule_ocid" {
+  value = var.enable_knowledge_refresh_scheduler ? oci_resource_scheduler_schedule.knowledge_refresh_release_watch[0].id : null
+}
+
+output "knowledge_refresh_stable_docs_schedule_ocid" {
+  value = var.enable_knowledge_refresh_scheduler ? oci_resource_scheduler_schedule.knowledge_refresh_stable_docs[0].id : null
+}

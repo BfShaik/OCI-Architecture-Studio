@@ -192,6 +192,101 @@ resource "oci_events_rule" "resource_lifecycle" {
   }
 }
 
+resource "oci_functions_application" "knowledge_refresh" {
+  count          = var.enable_knowledge_refresh_scheduler ? 1 : 0
+  compartment_id = oci_identity_compartment.project.id
+  display_name   = "${local.name_prefix}-knowledge-refresh"
+  subnet_ids     = [oci_core_subnet.public.id]
+  shape          = "GENERIC_X86"
+  freeform_tags  = local.common_tags
+
+  config = {
+    APP_ENV                      = var.environment
+    REFRESH_POLICY_PATH          = "/function/knowledge/refresh_policy.json"
+    KNOWLEDGE_INDEX_PATH         = "/function/knowledge/snapshots/oci-rag-index.json"
+    RELEASE_SNAPSHOT_PATH        = "/function/knowledge/snapshots/oci-release-snapshot.json"
+    RETRIEVAL_PROVIDER           = "local_json"
+    EMBEDDING_PROVIDER           = "local"
+    OCI_OBJECT_STORAGE_NAMESPACE = data.oci_objectstorage_namespace.namespace.namespace
+    OCI_VECTOR_BUCKET            = oci_objectstorage_bucket.snapshots.name
+    OCI_VECTOR_OBJECT_NAME       = "oci-rag-index.json"
+    OCI_AUTH_MODE                = "resource_principal"
+  }
+}
+
+resource "oci_functions_function" "knowledge_refresh" {
+  count              = var.enable_knowledge_refresh_scheduler ? 1 : 0
+  application_id     = oci_functions_application.knowledge_refresh[0].id
+  display_name       = "${local.name_prefix}-knowledge-refresh"
+  image              = var.knowledge_refresh_function_image
+  memory_in_mbs      = var.knowledge_refresh_function_memory_mbs
+  timeout_in_seconds = var.knowledge_refresh_function_timeout_seconds
+  freeform_tags      = local.common_tags
+
+  config = {
+    SNAPSHOTS_BUCKET = oci_objectstorage_bucket.snapshots.name
+  }
+
+  lifecycle {
+    precondition {
+      condition     = !var.enable_knowledge_refresh_scheduler || var.knowledge_refresh_function_image != ""
+      error_message = "knowledge_refresh_function_image is required when enable_knowledge_refresh_scheduler is true."
+    }
+  }
+}
+
+resource "oci_resource_scheduler_schedule" "knowledge_refresh_release_watch" {
+  count              = var.enable_knowledge_refresh_scheduler ? 1 : 0
+  compartment_id     = oci_identity_compartment.project.id
+  display_name       = "${local.name_prefix}-knowledge-refresh-release-watch"
+  description        = "Scheduled release-note refresh for OCI Architecture Studio."
+  action             = "START_RESOURCE"
+  recurrence_type    = "CRON"
+  recurrence_details = var.knowledge_refresh_release_cron
+  freeform_tags      = local.common_tags
+
+  resources {
+    id = oci_functions_function.knowledge_refresh[0].id
+
+    parameters {
+      parameter_type = "BODY"
+      value = [
+        jsonencode({
+          mode        = "release-watch"
+          upload      = true
+          quick_gates = false
+        })
+      ]
+    }
+  }
+}
+
+resource "oci_resource_scheduler_schedule" "knowledge_refresh_stable_docs" {
+  count              = var.enable_knowledge_refresh_scheduler ? 1 : 0
+  compartment_id     = oci_identity_compartment.project.id
+  display_name       = "${local.name_prefix}-knowledge-refresh-stable-docs"
+  description        = "Scheduled stable OCI documentation refresh for OCI Architecture Studio."
+  action             = "START_RESOURCE"
+  recurrence_type    = "CRON"
+  recurrence_details = var.knowledge_refresh_stable_docs_cron
+  freeform_tags      = local.common_tags
+
+  resources {
+    id = oci_functions_function.knowledge_refresh[0].id
+
+    parameters {
+      parameter_type = "BODY"
+      value = [
+        jsonencode({
+          mode        = "stable-docs"
+          upload      = true
+          quick_gates = false
+        })
+      ]
+    }
+  }
+}
+
 resource "oci_core_instance" "backend" {
   availability_domain = var.availability_domain != "" ? var.availability_domain : data.oci_identity_availability_domains.ads.availability_domains[0].name
   compartment_id      = oci_identity_compartment.project.id
@@ -243,6 +338,27 @@ resource "oci_identity_policy" "backend_access" {
     "Allow dynamic-group ${oci_identity_dynamic_group.backend_instances.name} to read secret-bundles in compartment ${oci_identity_compartment.project.name}",
     "Allow dynamic-group ${oci_identity_dynamic_group.backend_instances.name} to use keys in compartment ${oci_identity_compartment.project.name}",
     "Allow dynamic-group ${oci_identity_dynamic_group.backend_instances.name} to use metrics in compartment ${oci_identity_compartment.project.name}",
+  ]
+}
+
+resource "oci_identity_dynamic_group" "knowledge_refresh_schedules" {
+  count          = var.enable_knowledge_refresh_scheduler ? 1 : 0
+  compartment_id = var.tenancy_ocid
+  name           = "${local.name_prefix}-knowledge-refresh-schedules"
+  description    = "Resource Scheduler schedules that invoke OCI Architecture Studio knowledge refresh."
+  matching_rule  = "ANY {resource.id = '${oci_resource_scheduler_schedule.knowledge_refresh_release_watch[0].id}', resource.id = '${oci_resource_scheduler_schedule.knowledge_refresh_stable_docs[0].id}'}"
+  freeform_tags  = local.common_tags
+}
+
+resource "oci_identity_policy" "knowledge_refresh_schedule_access" {
+  count          = var.enable_knowledge_refresh_scheduler ? 1 : 0
+  compartment_id = var.parent_compartment_ocid
+  name           = "${local.name_prefix}-knowledge-refresh-schedule-access"
+  description    = "Allow OCI Resource Scheduler to invoke the knowledge refresh function."
+  freeform_tags  = local.common_tags
+
+  statements = [
+    "Allow dynamic-group ${oci_identity_dynamic_group.knowledge_refresh_schedules[0].name} to use functions-family in compartment ${oci_identity_compartment.project.name}",
   ]
 }
 

@@ -319,7 +319,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--embedding-provider", choices=("local", "oci_genai"), default="local")
     parser.add_argument("--oci-region")
     parser.add_argument("--oci-profile", default="DEFAULT")
-    parser.add_argument("--oci-auth-mode", choices=("config_file", "instance_principal"), default="config_file")
+    parser.add_argument("--oci-auth-mode", choices=("config_file", "instance_principal", "resource_principal"), default="config_file")
     parser.add_argument("--oci-genai-compartment-id")
     parser.add_argument("--oci-genai-embedding-model-id")
     parser.add_argument("--oci-genai-endpoint")

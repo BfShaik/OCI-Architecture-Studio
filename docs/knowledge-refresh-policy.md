@@ -121,3 +121,39 @@ Environment differences are config-only:
 - `.github/workflows/knowledge-refresh.yml`
 - `knowledge/ingestion/ingest.py`
 - `knowledge/refresh/ingest_releases.py`
+- `infra/terraform/modules/foundation/main.tf`
+- `infra/functions/knowledge-refresh/`
+
+## OCI-Native Schedule
+
+OCI recurring execution is implemented with OCI Resource Scheduler invoking an OCI Function. OCI Events remains in use for operational notifications and resource lifecycle visibility, but recurring cron-style execution is modeled as Resource Scheduler because OCI Events rules do not expose a cron schedule field in the Terraform provider.
+
+Terraform variables:
+
+```hcl
+enable_knowledge_refresh_scheduler = true
+knowledge_refresh_function_image   = "iad.ocir.io/<namespace>/oci-architecture-studio/knowledge-refresh:latest"
+knowledge_refresh_release_cron     = "17 */6 * * *"
+knowledge_refresh_stable_docs_cron = "23 2 * * 0"
+```
+
+Created resources when enabled:
+
+- OCI Functions application
+- OCI knowledge refresh function
+- release-note Resource Scheduler schedule
+- stable-docs Resource Scheduler schedule
+- dynamic group for the schedules
+- IAM policy allowing the schedules to invoke the function
+
+The function receives a JSON body:
+
+```json
+{"mode":"release-watch","upload":true}
+```
+
+or:
+
+```json
+{"mode":"stable-docs","upload":true}
+```

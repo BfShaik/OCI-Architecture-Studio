@@ -13,6 +13,7 @@ This scaffold is intentionally small:
 - Monitoring alarm
 - Notifications topic
 - Events rule for environment resource lifecycle notifications
+- optional OCI Functions + Resource Scheduler knowledge refresh schedules
 
 It is not a production HA design yet. It is the Phase 1 OCI deployment foundation for the validated MVP.
 
@@ -57,6 +58,7 @@ terraform apply
 - Commit `.terraform.lock.hcl` files when provider selections change.
 - Store production secrets in OCI Vault, not Terraform variables.
 - Use the generated Object Storage buckets for frontend assets, knowledge snapshots, release snapshots, and eval reports.
+- Enable `enable_knowledge_refresh_scheduler` only after the knowledge refresh function image is built and pushed to OCIR.
 - The backend instance is intentionally simple; move to Container Instances or a Load Balancer + instance pool only after the MVP deployment is stable.
 - Use `backend.object-storage.example.tf` as the starting point for remote Terraform state once a shared state bucket exists.
 - See `docs/oci-landing-zone-runbook.md` for the deployment and validation workflow.

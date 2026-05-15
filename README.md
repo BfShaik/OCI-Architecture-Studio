@@ -46,6 +46,7 @@ tests/                Backend and integration tests
   - retrieval regression reporting for citations, intents, and required service coverage
 - Separate local OCI release snapshot pipeline
 - Knowledge refresh policy for scheduled release-note watching, selective reindex, post-refresh eval gates, and rollback-safe snapshot updates
+- Optional OCI-native recurring refresh scaffold with OCI Functions and OCI Resource Scheduler
 - Intent-aware orchestration for:
   - product overview
   - architecture

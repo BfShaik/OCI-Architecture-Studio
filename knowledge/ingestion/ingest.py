@@ -379,6 +379,10 @@ def upload_index_to_object_storage(index: dict[str, object], args: argparse.Name
         signer = oci.auth.signers.InstancePrincipalsSecurityTokenSigner()
         client_config = {"region": args.oci_region} if args.oci_region else {}
         object_storage = oci.object_storage.ObjectStorageClient(client_config, signer=signer)
+    elif args.oci_auth_mode == "resource_principal":
+        signer = oci.auth.signers.get_resource_principals_signer()
+        client_config = {"region": args.oci_region} if args.oci_region else {}
+        object_storage = oci.object_storage.ObjectStorageClient(client_config, signer=signer)
     else:
         client_config = oci.config.from_file(profile_name=args.oci_profile)
         if args.oci_region:
@@ -410,7 +414,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--embedding-provider", choices=("local", "oci_genai"), default="local")
     parser.add_argument("--oci-region")
     parser.add_argument("--oci-profile", default="DEFAULT")
-    parser.add_argument("--oci-auth-mode", choices=("config_file", "instance_principal"), default="config_file")
+    parser.add_argument("--oci-auth-mode", choices=("config_file", "instance_principal", "resource_principal"), default="config_file")
     parser.add_argument("--oci-genai-compartment-id")
     parser.add_argument("--oci-genai-embedding-model-id")
     parser.add_argument("--oci-genai-endpoint")
