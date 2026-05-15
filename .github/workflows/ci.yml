@@ -66,6 +66,10 @@ jobs:
         run: |
           python evals/run_golden.py --cases evals/advisory-quality.jsonl --output-dir evals/reports/advisory-quality
 
+      - name: Supervised orchestration evals
+        run: |
+          python evals/run_golden.py --cases evals/orchestration-quality.jsonl --output-dir evals/reports/orchestration-quality
+
       - name: Upload eval reports
         if: always()
         uses: actions/upload-artifact@v4

@@ -202,3 +202,35 @@ Local = development and testing
 OCI = staging, demo, production
 Provider changes happen through config, not code forks.
 ```
+
+## 6. Supervised Advisory Orchestration
+
+The current agent foundation is supervised and in-process. It adds role boundaries and critic visibility while preserving the same retrieval, synthesis, and eval paths.
+
+```mermaid
+flowchart LR
+  Prompt["User prompt"]
+  Classifier["Intent classifier"]
+  Evidence["Shared retrieval evidence"]
+  Supervisor["Supervisor\nrouting decision"]
+  Specialist["One specialist advisor\narchitecture / migration / HA-DR / cost / release"]
+  Synth["Configured synthesis provider\ndeterministic or OCI GenAI"]
+  Quality["Citation + confidence analyzer"]
+  Critic["Validation critic\ngrounding, citations, freshness,\nunsupported claims"]
+  Response["Structured response\nactive agents, critic findings,\nconfidence, citations"]
+
+  Prompt --> Classifier --> Evidence --> Supervisor --> Specialist --> Synth --> Quality --> Critic --> Response
+```
+
+Rollback remains config-only:
+
+```text
+ADVISORY_ORCHESTRATION_MODE=single_pass
+```
+
+Deferred by design:
+
+- autonomous agent swarms
+- distributed orchestration frameworks
+- agent-specific memory
+- provider-specific agent code paths

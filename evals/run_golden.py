@@ -122,6 +122,11 @@ def response_text(response: dict[str, Any]) -> str:
     for key in ("quality_warnings", "unsupported_claims", "synthesis_warnings"):
         parts.append(key)
         parts.extend(str(item) for item in response.get(key, []))
+    for key in ("active_agents", "critic_findings", "orchestration_warnings"):
+        parts.append(key)
+        parts.extend(str(item) for item in response.get(key, []))
+    parts.append(str(response.get("orchestration_mode", "")))
+    parts.append(str(response.get("routing_decision", "")))
     confidence = response.get("confidence") or {}
     if isinstance(confidence, dict):
         parts.append("confidence")
@@ -184,6 +189,11 @@ def validate_structure(response: dict[str, Any]) -> EvalCheck:
     required_fields = {
         "intent": str,
         "prompt_template": str,
+        "orchestration_mode": str,
+        "active_agents": list,
+        "agent_trace": list,
+        "critic_findings": list,
+        "orchestration_warnings": list,
         "synthesis_provider": str,
         "synthesis_warnings": list,
         "synthesis_fallback_used": bool,
@@ -216,6 +226,30 @@ def validate_structure(response: dict[str, Any]) -> EvalCheck:
     if list_failures:
         details.append(f"empty sections: {', '.join(list_failures)}")
     return EvalCheck("structure", passed, 15 if passed else 0, 15, details)
+
+
+def validate_orchestration(case: dict[str, Any], response: dict[str, Any]) -> EvalCheck:
+    expected_mode = case.get("expected_orchestration_mode")
+    required_agents = list(case.get("required_agents", []))
+    if not expected_mode and not required_agents:
+        return EvalCheck("orchestration", True, 5, 5, ["orchestration not asserted"])
+
+    details: list[str] = []
+    mode = response.get("orchestration_mode")
+    if expected_mode and mode != expected_mode:
+        details.append(f"expected mode {expected_mode}, got {mode}")
+    active_agents = response.get("active_agents", [])
+    missing_agents = [agent for agent in required_agents if agent not in active_agents]
+    if missing_agents:
+        details.append(f"missing agents: {', '.join(missing_agents)}")
+    if expected_mode == "supervised" and not response.get("critic_findings"):
+        details.append("missing critic findings")
+    trace = response.get("agent_trace", [])
+    if expected_mode == "supervised" and not trace:
+        details.append("missing agent trace")
+
+    passed = not details
+    return EvalCheck("orchestration", passed, 5 if passed else 0, 5, details)
 
 
 def validate_intent(case: dict[str, Any], response: dict[str, Any]) -> EvalCheck:
@@ -477,6 +511,7 @@ def evaluate_case(client: TestClient, case: dict[str, Any]) -> dict[str, Any]:
     checks = [
         validate_structure(response),
         validate_intent(case, response),
+        validate_orchestration(case, response),
         validate_required_terms("required_services", case.get("required_services", []), text, 15),
         validate_required_terms("required_traits", case.get("required_traits", []), text, 20),
         validate_citations(case, response),
@@ -504,6 +539,7 @@ def evaluate_case(client: TestClient, case: dict[str, Any]) -> dict[str, Any]:
             "retrieval_support",
             "evidence_links",
             "confidence",
+            "orchestration",
             "non_hallucination",
             "stale_unverified_guidance",
         }

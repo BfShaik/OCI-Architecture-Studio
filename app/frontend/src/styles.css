@@ -231,6 +231,33 @@ h1 {
   gap: 12px;
 }
 
+.orchestration-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.orchestration-panel p {
+  margin-bottom: 0;
+  color: #52606d;
+  line-height: 1.55;
+}
+
+.agent-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.agent-row span {
+  border: 1px solid #d8dee8;
+  border-radius: 999px;
+  padding: 4px 10px;
+  color: #334155;
+  background: #f8fafc;
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
 .confidence-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));

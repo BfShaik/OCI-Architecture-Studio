@@ -11,6 +11,9 @@ from oci_arch_studio_backend.services.orchestrator import ArchitectureReviewOrch
 from oci_arch_studio_backend.services.releases import ReleaseSnapshotStore
 from oci_arch_studio_backend.services.retrieval import build_retriever
 from oci_arch_studio_backend.services.synthesis import build_synthesizer
+from oci_arch_studio_backend.services.supervised_orchestration import (
+    SupervisedAgentOrchestrator,
+)
 
 router = APIRouter()
 
@@ -42,6 +45,9 @@ async def architecture_review(
         retriever=retriever,
         release_store=release_store,
         synthesizer=synthesizer,
+        agent_orchestrator=SupervisedAgentOrchestrator(
+            mode=settings.advisory_orchestration_mode,
+        ),
     )
     return await orchestrator.review(request)
 
@@ -56,3 +62,16 @@ async def retrieval_health() -> dict[str, object]:
 @router.get("/advisory/quality")
 async def advisory_quality() -> dict[str, object]:
     return advisory_quality_metrics.snapshot()
+
+
+@router.get("/orchestration/health")
+async def orchestration_health() -> dict[str, object]:
+    snapshot = advisory_quality_metrics.snapshot()
+    return {
+        "mode": snapshot.get("last_orchestration_mode"),
+        "active_agents": snapshot.get("last_active_agents", []),
+        "last_routing_decision": snapshot.get("last_routing_decision"),
+        "critic_warning_count": snapshot.get("critic_warning_count", 0),
+        "orchestration_failure_count": snapshot.get("orchestration_failure_count", 0),
+        "request_count": snapshot.get("request_count", 0),
+    }

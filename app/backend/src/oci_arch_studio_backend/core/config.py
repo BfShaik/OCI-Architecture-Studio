@@ -18,6 +18,10 @@ class Settings(BaseSettings):
     vector_db_url: str | None = Field(default=None, alias="VECTOR_DB_URL")
     embedding_provider: str = Field(default="local", alias="EMBEDDING_PROVIDER")
     retrieval_provider: str = Field(default="local_json", alias="RETRIEVAL_PROVIDER")
+    advisory_orchestration_mode: str = Field(
+        default="supervised",
+        alias="ADVISORY_ORCHESTRATION_MODE",
+    )
     advisory_synthesis_provider: str = Field(
         default="deterministic",
         alias="ADVISORY_SYNTHESIS_PROVIDER",

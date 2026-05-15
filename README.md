@@ -14,10 +14,11 @@ OCI Architecture Studio currently supports a validated advisory flow in local de
 4. Retrieval runs through a config-selected provider.
 5. The active staging provider is `oci_object_storage`, reading the validated vector manifest from OCI Object Storage.
 6. `local_json` remains the tested config-only rollback provider.
-7. Intent-aware orchestration shapes a structured response from retrieved context and release-awareness checks.
-8. The UI renders intent, prompt template, recommendations, assumptions, risks, citations, and next steps.
+7. Supervised orchestration routes the intent to one bounded specialist advisor and runs a validation critic over evidence support, citations, freshness, and unsupported-claim risk.
+8. The configured synthesis provider generates the advisory response with deterministic rollback available.
+9. The UI renders intent, prompt template, active agents, critic findings, confidence, recommendations, assumptions, risks, citations, and next steps.
 
-LangGraph, advanced memory, full LLM synthesis, continuous release intelligence, and Oracle AI Vector Search active reads are intentionally deferred until the Object Storage provider has remained stable and the next vector-search parity gate is ready.
+LangGraph, advanced memory, autonomous agent swarms, continuous release intelligence, and Oracle AI Vector Search active reads are intentionally deferred until the bounded supervised workflow and the next vector-search parity gate are ready.
 
 ## Repository Layout
 
@@ -64,6 +65,12 @@ tests/                Backend and integration tests
 - Config-only staging promotion to `oci_object_storage` with rollback validation
 - Evidence-linked recommendations, confidence scoring, uncertainty flags, and advisory quality metrics
 - Config-selectable advisory synthesis with deterministic rollback and an OCI GenAI chat adapter
+- Supervised orchestration foundation with:
+  - one in-process supervisor
+  - architecture, migration, HA/DR, cost, and release-awareness specialist routing
+  - validation critic findings
+  - config-only rollback to `single_pass`
+  - `/orchestration/health` observability
 
 ## Run Locally
 
@@ -152,6 +159,7 @@ VITE_API_BASE_URL=http://localhost:8000 npm run dev
 app/backend/.venv/bin/python evals/run_golden.py --output-dir evals/reports/golden
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/edge-cases.jsonl --output-dir evals/reports/edge-cases
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/advisory-quality.jsonl --output-dir evals/reports/advisory-quality
+app/backend/.venv/bin/python evals/run_golden.py --cases evals/orchestration-quality.jsonl --output-dir evals/reports/orchestration-quality
 ```
 
 Reports are written to `evals/reports/` and ignored by git.
@@ -228,6 +236,8 @@ python3 infra/scripts/validate_deployment_config.py \
 ```bash
 app/backend/.venv/bin/python evals/run_golden.py --output-dir evals/reports/golden
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/edge-cases.jsonl --output-dir evals/reports/edge-cases
+app/backend/.venv/bin/python evals/run_golden.py --cases evals/advisory-quality.jsonl --output-dir evals/reports/advisory-quality
+app/backend/.venv/bin/python evals/run_golden.py --cases evals/orchestration-quality.jsonl --output-dir evals/reports/orchestration-quality
 app/backend/.venv/bin/python infra/scripts/retrieval_regression_check.py --cases evals/golden-prompts.jsonl --cases evals/edge-cases.jsonl --output-dir evals/reports/retrieval
 app/backend/.venv/bin/python infra/scripts/retrieval_parity_check.py --oci-region us-ashburn-1 --oci-profile DEFAULT --oci-namespace idsmrn7rvqb6 --oci-vector-bucket oci-architecture-studio-staging-knowledge-snapshots --oci-vector-object-name oci-rag-index.json --output-dir evals/reports/retrieval-parity
 app/backend/.venv/bin/python knowledge/ingestion/ingest.py --no-fetch
@@ -240,10 +250,11 @@ cd ../frontend && npm run build
 
 Latest full validation: 2026-05-15.
 
-- Local backend tests: `37 passed`
+- Local backend tests: `41 passed`
 - Golden evals: `6 passed, 0 failed`
 - Edge-case evals: `8 passed, 0 failed`
 - Advisory-quality evals: `5 passed, 0 failed`
+- Supervised orchestration evals: `5 passed, 0 failed`
 - Retrieval regression: `14 passed, 0 failed`
 - Knowledge ingestion: `13 chunks`
 - Release ingestion: `3 release items`

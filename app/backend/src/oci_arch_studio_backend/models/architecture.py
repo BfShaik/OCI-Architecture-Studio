@@ -54,9 +54,25 @@ class ConfidenceScore(BaseModel):
     notes: list[str] = Field(default_factory=list)
 
 
+class AgentTrace(BaseModel):
+    agent: str
+    role: str
+    status: str
+    latency_ms: float
+    evidence_count: int = 0
+    notes: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+
+
 class ArchitectureReviewResponse(BaseModel):
     intent: str
     prompt_template: str
+    orchestration_mode: str = "single_pass"
+    active_agents: list[str] = Field(default_factory=list)
+    routing_decision: str | None = None
+    agent_trace: list[AgentTrace] = Field(default_factory=list)
+    critic_findings: list[str] = Field(default_factory=list)
+    orchestration_warnings: list[str] = Field(default_factory=list)
     synthesis_provider: str = "deterministic"
     synthesis_model: str | None = None
     synthesis_warnings: list[str] = Field(default_factory=list)

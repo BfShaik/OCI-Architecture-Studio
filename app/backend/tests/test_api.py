@@ -23,6 +23,10 @@ def test_architecture_review() -> None:
     body = response.json()
     assert body["answer"]
     assert body["synthesis_provider"]
+    assert body["orchestration_mode"] in {"supervised", "single_pass"}
+    assert body["routing_decision"]
+    assert "validation_critic" in body["active_agents"]
+    assert body["critic_findings"]
     assert body["synthesis_warnings"] is not None
     assert body["recommendations"]
     assert body["citations"]
@@ -58,6 +62,7 @@ def test_advisory_quality_metrics_endpoint() -> None:
     body = response.json()
     assert body["request_count"] >= 1
     assert "average_citation_coverage" in body
+    assert body["last_orchestration_mode"] in {"supervised", "single_pass"}
 
 
 def test_retrieval_health() -> None:
@@ -69,3 +74,18 @@ def test_retrieval_health() -> None:
     assert body["embedding_model"].startswith("local-hashing-v1")
     assert body["store"]["exists"] is True
     assert "metrics" in body
+
+
+def test_orchestration_health() -> None:
+    client.post(
+        "/architecture-review",
+        json={"question": "Migrate EKS + RDS to OCI."},
+    )
+
+    response = client.get("/orchestration/health")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["mode"] == "supervised"
+    assert "supervisor" in body["active_agents"]
+    assert body["request_count"] >= 1

@@ -28,6 +28,12 @@ Advisory quality endpoint:
 http://193.122.149.102:8000/advisory/quality
 ```
 
+Orchestration health endpoint:
+
+```text
+http://193.122.149.102:8000/orchestration/health
+```
+
 ## Verify Deployment Health
 
 Run:
@@ -75,6 +81,7 @@ python3 infra/scripts/check_oci_access.py \
 app/backend/.venv/bin/python evals/run_golden.py --output-dir evals/reports/golden
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/edge-cases.jsonl --output-dir evals/reports/edge-cases
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/advisory-quality.jsonl --output-dir evals/reports/advisory-quality
+app/backend/.venv/bin/python evals/run_golden.py --cases evals/orchestration-quality.jsonl --output-dir evals/reports/orchestration-quality
 ```
 
 ## Rerun Retrieval Parity
@@ -191,6 +198,14 @@ If advisory confidence drops:
 - inspect `quality_warnings` and `evidence_links` in the API response
 - add source chunks when useful recommendations lack evidence
 - add a regression eval for any repeated failure pattern
+
+If supervised orchestration behaves unexpectedly:
+
+- check `/orchestration/health`
+- confirm `ADVISORY_ORCHESTRATION_MODE=supervised` for normal staging behavior
+- confirm `active_agents` includes `supervisor` and `validation_critic`
+- inspect `critic_findings`, `orchestration_warnings`, and `agent_trace` in the API response
+- roll back with `ADVISORY_ORCHESTRATION_MODE=single_pass` if agent metadata causes response or UI issues
 
 If GenAI synthesis needs rollback:
 

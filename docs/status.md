@@ -191,6 +191,17 @@ This progress is based on `docs/two-week-plan.md`.
   - synthesis fallback observability in `/advisory/quality`
   - versioned local and staging config examples
   - `docs/genai-advisory-hardening.md`
+- Added supervised orchestration foundation:
+  - config-selected orchestration mode through `ADVISORY_ORCHESTRATION_MODE`
+  - one in-process supervisor
+  - specialist routing for architecture, migration, HA/DR, cost, and release-awareness prompts
+  - shared retrieval/evidence layer with no agent-specific stores
+  - validation critic for evidence support, citation coverage, stale evidence, unsupported claims, and synthesis fallback
+  - additive response fields for active agents, routing decision, agent trace, critic findings, and orchestration warnings
+  - `/orchestration/health` endpoint for operational visibility
+  - orchestration-quality eval suite under `evals/orchestration-quality.jsonl`
+  - CI orchestration eval gate
+  - `docs/supervised-orchestration.md`
 - Pushed current implementation to GitHub.
 
 ## Latest Validation
@@ -212,14 +223,16 @@ Last validation run: 2026-05-15
 - Infrastructure Python script compile checks: passed
 - Knowledge ingestion smoke: passed, 13 chunks generated
 - Release ingestion smoke: passed, 3 release items generated
-- Backend tests: passed, 37 tests
+- Backend tests: passed, 41 tests
 - Frontend build: passed
 - Golden evals: passed, 6 of 6
 - Edge-case evals: passed, 8 of 8
 - Advisory-quality evals: passed, 5 of 5
+- Supervised orchestration evals: passed, 5 of 5
 - Retrieval health check: passed for `oci_object_storage`, 13 chunks
 - Retrieval regression check: passed, 14 of 14 golden + edge cases
 - Python compile checks: passed for backend, infra scripts, ingestion, and refresh code
+- Local API smoke: passed for `/health`, `/architecture-review`, and `/orchestration/health`
 - OCI local access check: passed, Object Storage namespace `idsmrn7rvqb6`
 - Local deployment smoke test: passed, including architecture and release-aware citation paths
 - Pre-migration readiness review: passed with a go decision for incremental OCI-native retrieval migration behind configuration
@@ -239,7 +252,7 @@ Last validation run: 2026-05-15
 - Post-promotion live scenario checks: passed for architecture, migration, HA/DR, cost, and release-awareness
 - Rollback validation: passed, `local_json` was restored and then `oci_object_storage` was restored without code or prompt changes
 - Presentation-friendly architecture diagrams: added in `docs/architecture-diagrams.md`
-- Documentation refresh: README, PRD, roadmap, vision, sprint docs, runbooks, demo readiness, architecture docs, and promotion report now reflect the current promoted staging state
+- Documentation refresh: README, PRD, roadmap, vision, sprint docs, runbooks, demo readiness, architecture docs, promotion report, GenAI hardening notes, and supervised orchestration notes now reflect the current promoted staging state
 
 ## Pending
 
@@ -261,10 +274,14 @@ Last validation run: 2026-05-15
 - Implement real release-awareness workflow:
   - architecture impact analysis
   - explicit current-vs-historical recommendation comparison
-- Add stronger response generation:
-  - actual prompt execution with an LLM
-  - richer citation-aware natural-language synthesis beyond deterministic intent-profile recommendations
-  - stronger unsupported-claim suppression beyond current requested-service warnings
+- Continue hardening advisory synthesis:
+  - enable OCI GenAI synthesis in staging through approved configuration where appropriate
+  - compare GenAI and deterministic behavior on regression scenarios
+  - strengthen unsupported-claim suppression beyond current requested-service warnings
+- Continue hardening supervised orchestration:
+  - keep agent routing deterministic and observable
+  - add policy-gate behavior only after enough critic failures appear in evals or staging telemetry
+  - avoid autonomous planning loops until the supervised flow has stable quality data
 - Add frontend improvements:
   - prompt history
 - Move Terraform state to OCI Object Storage before shared/team usage.
@@ -296,12 +313,18 @@ Last validation run: 2026-05-15
   - post-migration readiness report is captured in `docs/post-migration-readiness-report.md`
   - dual-provider parity report is captured in `docs/retrieval-parity-validation-report.md`
   - promotion report is captured in `docs/retrieval-provider-promotion-report.md`
+- Supervised orchestration:
+  - active as an additive backend response layer by default in local config
+  - rollback mode is `ADVISORY_ORCHESTRATION_MODE=single_pass`
+  - specialist agents are deterministic role boundaries, not autonomous workers
+  - validation critic currently reports findings and warnings; it does not block responses yet
 
 ## Current Known Limitations
 
 - The local RAG index is small and not a complete OCI documentation corpus.
 - Embeddings are deterministic local hash embeddings, useful for workflow validation but not production semantic retrieval.
 - Release awareness has a local release snapshot foundation, but it is not yet a full live release intelligence workflow.
-- The backend returns intent-profiled recommendations, but full LLM-based synthesis is not implemented yet.
+- OCI GenAI synthesis adapter exists, but deterministic synthesis remains the rollback-safe default unless enabled by environment configuration.
+- Supervised orchestration is currently an in-process control layer; it does not yet perform autonomous planning, tool use, or multi-step agent memory.
 - Generated vector snapshots are local and gitignored.
 - The first OCI deployment exposes the backend directly on port `8000`; this is acceptable for staging validation but should be replaced with HTTPS ingress before demo/prod.

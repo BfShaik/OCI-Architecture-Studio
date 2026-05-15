@@ -15,6 +15,9 @@ from oci_arch_studio_backend.services.synthesis import (
     DeterministicAdvisorySynthesizer,
     SynthesisRequest,
 )
+from oci_arch_studio_backend.services.supervised_orchestration import (
+    SupervisedAgentOrchestrator,
+)
 
 
 class ArchitectureReviewOrchestrator:
@@ -27,12 +30,14 @@ class ArchitectureReviewOrchestrator:
         release_store: ReleaseSnapshotStore | None = None,
         quality_analyzer: AdvisoryQualityAnalyzer | None = None,
         synthesizer: AdvisorySynthesizer | None = None,
+        agent_orchestrator: SupervisedAgentOrchestrator | None = None,
     ) -> None:
         self.retriever = retriever
         self.classifier = classifier or IntentClassifier()
         self.release_store = release_store
         self.quality_analyzer = quality_analyzer or AdvisoryQualityAnalyzer()
         self.synthesizer = synthesizer or DeterministicAdvisorySynthesizer()
+        self.agent_orchestrator = agent_orchestrator or SupervisedAgentOrchestrator()
 
     async def review(
         self,
@@ -73,13 +78,20 @@ class ArchitectureReviewOrchestrator:
             if release_note:
                 context_note += f" {release_note}"
 
+        orchestration_plan = self.agent_orchestrator.plan(
+            question=request.question,
+            profile=profile,
+            sources=sources,
+            context_note=context_note,
+        )
+
         synthesis = self.synthesizer.synthesize(
             SynthesisRequest(
                 question=request.question,
                 workload_context=request.workload_context,
                 profile=profile,
                 sources=sources,
-                context_note=context_note,
+                context_note=orchestration_plan.context_note,
             )
         )
         quality = self.quality_analyzer.assess(
@@ -99,6 +111,12 @@ class ArchitectureReviewOrchestrator:
                 " The prompt contains requested capabilities that are not supported by the "
                 "retrieved OCI evidence; they are flagged instead of accepted as valid OCI services."
             )
+        critique = self.agent_orchestrator.critique(
+            synthesis=synthesis,
+            quality=quality,
+            sources=sources,
+        )
+        orchestration_warnings = [*orchestration_plan.warnings, *critique.warnings]
 
         advisory_quality_metrics.record(
             intent=profile.intent.value,
@@ -112,12 +130,22 @@ class ArchitectureReviewOrchestrator:
             stale_evidence_count=len(stale_sources),
             synthesis_provider=synthesis.provider,
             synthesis_fallback_used=synthesis.used_fallback,
-            warnings=[*quality.quality_warnings, *synthesis.warnings],
+            orchestration_mode=orchestration_plan.mode,
+            active_agents=orchestration_plan.active_agents,
+            routing_decision=orchestration_plan.routing_decision,
+            critic_warnings=critique.warnings,
+            warnings=[*quality.quality_warnings, *synthesis.warnings, *orchestration_warnings],
         )
 
         return ArchitectureReviewResponse(
             intent=profile.intent.value,
             prompt_template=profile.prompt_template,
+            orchestration_mode=orchestration_plan.mode,
+            active_agents=orchestration_plan.active_agents,
+            routing_decision=orchestration_plan.routing_decision,
+            agent_trace=[*orchestration_plan.traces, *critique.traces],
+            critic_findings=critique.findings,
+            orchestration_warnings=orchestration_warnings,
             synthesis_provider=synthesis.provider,
             synthesis_model=synthesis.model,
             synthesis_warnings=synthesis.warnings,

@@ -17,6 +17,11 @@ class AdvisoryQualityMetrics:
     last_overall_confidence: float | None = None
     last_synthesis_provider: str | None = None
     synthesis_fallback_count: int = 0
+    last_orchestration_mode: str | None = None
+    last_active_agents: list[str] = field(default_factory=list)
+    last_routing_decision: str | None = None
+    orchestration_failure_count: int = 0
+    critic_warning_count: int = 0
     last_citation_coverage: float | None = None
     last_evidence_support: float | None = None
     warnings: list[str] = field(default_factory=list)
@@ -47,6 +52,11 @@ class AdvisoryQualityMetrics:
             "last_overall_confidence": self.last_overall_confidence,
             "last_synthesis_provider": self.last_synthesis_provider,
             "synthesis_fallback_count": self.synthesis_fallback_count,
+            "last_orchestration_mode": self.last_orchestration_mode,
+            "last_active_agents": list(self.last_active_agents),
+            "last_routing_decision": self.last_routing_decision,
+            "orchestration_failure_count": self.orchestration_failure_count,
+            "critic_warning_count": self.critic_warning_count,
             "last_citation_coverage": self.last_citation_coverage,
             "last_evidence_support": self.last_evidence_support,
             "warnings": list(self.warnings[-10:]),
@@ -71,7 +81,11 @@ class AdvisoryQualityMetricsRecorder:
         stale_evidence_count: int,
         synthesis_provider: str,
         synthesis_fallback_used: bool,
-        warnings: list[str],
+        orchestration_mode: str = "single_pass",
+        active_agents: list[str] | None = None,
+        routing_decision: str | None = None,
+        critic_warnings: list[str] | None = None,
+        warnings: list[str] | None = None,
     ) -> None:
         self.metrics.request_count += 1
         self.metrics.total_citation_coverage += citation_coverage
@@ -80,6 +94,9 @@ class AdvisoryQualityMetricsRecorder:
         self.metrics.last_confidence_level = confidence_level
         self.metrics.last_overall_confidence = overall_confidence
         self.metrics.last_synthesis_provider = synthesis_provider
+        self.metrics.last_orchestration_mode = orchestration_mode
+        self.metrics.last_active_agents = list(active_agents or [])
+        self.metrics.last_routing_decision = routing_decision
         self.metrics.last_citation_coverage = citation_coverage
         self.metrics.last_evidence_support = evidence_support
         if low_confidence:
@@ -92,7 +109,9 @@ class AdvisoryQualityMetricsRecorder:
             self.metrics.stale_evidence_count += 1
         if synthesis_fallback_used:
             self.metrics.synthesis_fallback_count += 1
-        self.metrics.warnings.extend(warnings)
+        if critic_warnings:
+            self.metrics.critic_warning_count += 1
+        self.metrics.warnings.extend(warnings or [])
 
     def snapshot(self) -> dict[str, object]:
         return self.metrics.as_dict()

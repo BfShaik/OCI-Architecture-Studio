@@ -40,6 +40,7 @@ export function ReviewResult({ result }: ReviewResultProps) {
             synthesis {result.synthesis_provider}
             {result.synthesis_fallback_used ? " fallback" : ""}
           </span>
+          <span>orchestration {result.orchestration_mode}</span>
           {confidence ? (
             <span className={`confidence-badge confidence-${confidence.level}`}>
               confidence {confidence.level} · {percent(confidence.overall)}
@@ -49,14 +50,37 @@ export function ReviewResult({ result }: ReviewResultProps) {
           <span>{result.prompt_template}</span>
         </div>
         <p>{result.answer}</p>
-        {result.quality_warnings.length || result.synthesis_warnings.length ? (
+        {result.quality_warnings.length ||
+        result.synthesis_warnings.length ||
+        result.orchestration_warnings.length ? (
           <div className="quality-warnings" aria-label="Quality warnings">
-            {[...result.quality_warnings, ...result.synthesis_warnings].map((warning) => (
+            {[...result.quality_warnings, ...result.synthesis_warnings, ...result.orchestration_warnings].map((warning) => (
               <span key={warning}>{warning}</span>
             ))}
           </div>
         ) : null}
       </section>
+
+      {result.active_agents.length || result.critic_findings.length ? (
+        <section className="result-section orchestration-panel">
+          <h3>Supervised Orchestration</h3>
+          {result.routing_decision ? <p>{result.routing_decision}</p> : null}
+          {result.active_agents.length ? (
+            <div className="agent-row">
+              {result.active_agents.map((agent) => (
+                <span key={agent}>{agent.replace(/_/g, " ")}</span>
+              ))}
+            </div>
+          ) : null}
+          {result.critic_findings.length ? (
+            <ul>
+              {result.critic_findings.map((finding) => (
+                <li key={finding}>{finding}</li>
+              ))}
+            </ul>
+          ) : null}
+        </section>
+      ) : null}
 
       {confidence ? (
         <section className="result-section confidence-panel">

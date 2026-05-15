@@ -35,6 +35,16 @@ export type ConfidenceScore = {
   notes: string[];
 };
 
+export type AgentTrace = {
+  agent: string;
+  role: string;
+  status: string;
+  latency_ms: number;
+  evidence_count: number;
+  notes: string[];
+  warnings: string[];
+};
+
 export type ArchitectureReviewRequest = {
   question: string;
   workload_context?: string;
@@ -43,6 +53,12 @@ export type ArchitectureReviewRequest = {
 export type ArchitectureReviewResponse = {
   intent: string;
   prompt_template: string;
+  orchestration_mode: string;
+  active_agents: string[];
+  routing_decision?: string | null;
+  agent_trace: AgentTrace[];
+  critic_findings: string[];
+  orchestration_warnings: string[];
   synthesis_provider: string;
   synthesis_model?: string | null;
   synthesis_warnings: string[];
