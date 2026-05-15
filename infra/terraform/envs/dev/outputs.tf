@@ -34,6 +34,18 @@ output "resource_lifecycle_event_rule_ocid" {
   value = module.foundation.resource_lifecycle_event_rule_ocid
 }
 
+output "api_gateway_ocid" {
+  value = module.foundation.api_gateway_ocid
+}
+
+output "api_gateway_endpoint" {
+  value = module.foundation.api_gateway_endpoint
+}
+
+output "api_gateway_deployment_ocid" {
+  value = module.foundation.api_gateway_deployment_ocid
+}
+
 output "app_config_secret_ocid" {
   value = module.foundation.app_config_secret_ocid
 }

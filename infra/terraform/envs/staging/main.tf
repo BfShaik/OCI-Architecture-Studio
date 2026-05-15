@@ -22,4 +22,8 @@ module "foundation" {
   deployment_profile                         = var.deployment_profile
   operational_diagnostics_enabled            = var.operational_diagnostics_enabled
   oci_connectivity_check_enabled             = var.oci_connectivity_check_enabled
+  enable_api_gateway                         = var.enable_api_gateway
+  api_gateway_path_prefix                    = var.api_gateway_path_prefix
+  oci_devops_project_ocid                    = var.oci_devops_project_ocid
+  oci_devops_deploy_pipeline_ocid            = var.oci_devops_deploy_pipeline_ocid
 }

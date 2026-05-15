@@ -10,6 +10,7 @@ from oci_arch_studio_backend.services.advisory_quality import AdvisoryQualityAna
 from oci_arch_studio_backend.services.architecture_consistency import ArchitectureConsistencyValidator
 from oci_arch_studio_backend.services.architecture_reasoning import ArchitectureDecisionReasoner
 from oci_arch_studio_backend.services.architecture_reasoning_engine import ArchitectureReasoningEngine
+from oci_arch_studio_backend.services.architecture_topology import ArchitectureTopologyBuilder
 from oci_arch_studio_backend.services.enterprise_governance import EnterpriseGovernanceAdvisor
 from oci_arch_studio_backend.services.intents import (
     IntentClassifier,
@@ -44,6 +45,7 @@ class ArchitectureReviewOrchestrator:
         decision_reasoner: ArchitectureDecisionReasoner | None = None,
         reasoning_engine: ArchitectureReasoningEngine | None = None,
         governance_advisor: EnterpriseGovernanceAdvisor | None = None,
+        topology_builder: ArchitectureTopologyBuilder | None = None,
         synthesis_debug_enabled: bool = False,
     ) -> None:
         self.retriever = retriever
@@ -56,6 +58,7 @@ class ArchitectureReviewOrchestrator:
         self.decision_reasoner = decision_reasoner or ArchitectureDecisionReasoner()
         self.reasoning_engine = reasoning_engine or ArchitectureReasoningEngine()
         self.governance_advisor = governance_advisor or EnterpriseGovernanceAdvisor()
+        self.topology_builder = topology_builder or ArchitectureTopologyBuilder()
         self.synthesis_debug_enabled = synthesis_debug_enabled
 
     async def review(
@@ -218,6 +221,13 @@ class ArchitectureReviewOrchestrator:
             quality_warnings=[*quality.quality_warnings, *synthesis.warnings, *consistency_warnings],
             unsupported_claims=quality.unsupported_claims,
         )
+        architecture_topology = self.topology_builder.build(
+            question=request.question,
+            workload_context=request.workload_context,
+            profile=profile,
+            sources=sources,
+            recommendations=quality.recommendations,
+        )
 
         advisory_quality_metrics.record(
             intent=profile.intent.value,
@@ -294,6 +304,7 @@ class ArchitectureReviewOrchestrator:
             release_context=release_context,
             knowledge_temporal_context=temporal_context,
             enterprise_governance=governance_assessment,
+            architecture_topology=architecture_topology,
             answer=synthesis.answer if not quality.not_enough_evidence else f"{synthesis.answer} {context_note}",
             recommendations=quality.recommendations,
             assumptions=synthesis.assumptions,

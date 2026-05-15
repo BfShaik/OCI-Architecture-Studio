@@ -19,4 +19,8 @@ module "foundation" {
   knowledge_refresh_stable_docs_cron         = var.knowledge_refresh_stable_docs_cron
   knowledge_refresh_function_memory_mbs      = var.knowledge_refresh_function_memory_mbs
   knowledge_refresh_function_timeout_seconds = var.knowledge_refresh_function_timeout_seconds
+  enable_api_gateway                         = var.enable_api_gateway
+  api_gateway_path_prefix                    = var.api_gateway_path_prefix
+  oci_devops_project_ocid                    = var.oci_devops_project_ocid
+  oci_devops_deploy_pipeline_ocid            = var.oci_devops_deploy_pipeline_ocid
 }

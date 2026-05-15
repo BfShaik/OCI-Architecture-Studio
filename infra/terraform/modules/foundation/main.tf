@@ -323,6 +323,10 @@ resource "oci_core_instance" "backend" {
         oci_logging_log_group_ocid      = oci_logging_log_group.app.id
         oci_notifications_topic_ocid    = oci_ons_notification_topic.alerts.id
         oci_events_rule_ocid            = oci_events_rule.resource_lifecycle.id
+        oci_api_gateway_ocid            = var.enable_api_gateway ? oci_apigateway_gateway.api[0].id : ""
+        oci_api_gateway_endpoint        = var.enable_api_gateway ? "https://${oci_apigateway_gateway.api[0].hostname}${var.api_gateway_path_prefix}" : ""
+        oci_devops_project_ocid         = var.oci_devops_project_ocid
+        oci_devops_deploy_pipeline_ocid = var.oci_devops_deploy_pipeline_ocid
         oci_monitoring_namespace        = "oci_architecture_studio"
         operational_diagnostics_enabled = var.operational_diagnostics_enabled
         oci_connectivity_check_enabled  = var.oci_connectivity_check_enabled
@@ -330,6 +334,36 @@ resource "oci_core_instance" "backend" {
         object_storage_namespace        = data.oci_objectstorage_namespace.namespace.namespace
       }
     ))
+  }
+}
+
+resource "oci_apigateway_gateway" "api" {
+  count          = var.enable_api_gateway ? 1 : 0
+  compartment_id = oci_identity_compartment.project.id
+  display_name   = "${local.name_prefix}-api-gateway"
+  endpoint_type  = "PUBLIC"
+  subnet_id      = oci_core_subnet.public.id
+  freeform_tags  = local.common_tags
+}
+
+resource "oci_apigateway_deployment" "backend" {
+  count          = var.enable_api_gateway ? 1 : 0
+  compartment_id = oci_identity_compartment.project.id
+  display_name   = "${local.name_prefix}-backend-api"
+  gateway_id     = oci_apigateway_gateway.api[0].id
+  path_prefix    = var.api_gateway_path_prefix
+  freeform_tags  = local.common_tags
+
+  specification {
+    routes {
+      path    = "/{path*}"
+      methods = ["GET", "POST", "OPTIONS"]
+
+      backend {
+        type = "HTTP_BACKEND"
+        url  = "http://${oci_core_instance.backend.public_ip}:8000/$${request.path[request.prefix]}"
+      }
+    }
   }
 }
 

@@ -42,6 +42,9 @@ def test_architecture_review() -> None:
     assert body["enterprise_governance"]["maturity_level"]
     assert body["enterprise_governance"]["executive_summary"]["business_impact"]
     assert body["enterprise_governance"]["auditability_trace"]["synthesis_provider"]
+    assert body["architecture_topology"]["topology_summary"]
+    assert body["architecture_topology"]["nodes"]
+    assert body["architecture_topology"]["mermaid_flow"].startswith("flowchart")
     assert body["release_context"] is not None
     assert body["knowledge_temporal_context"]["knowledge_mode"]
     assert body["recommendations"]
@@ -117,6 +120,18 @@ def test_advisory_quality_metrics_endpoint() -> None:
     assert "average_citation_coverage" in body
     assert "average_synthesis_latency_ms" in body
     assert body["last_orchestration_mode"] in {"multi_agent_pilot", "supervised", "single_pass"}
+
+
+def test_operations_readiness_endpoint_reports_platform_maturity_checks() -> None:
+    response = client.get("/operations/readiness")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] in {"ok", "warning", "critical"}
+    assert "api_gateway" in body["checks"]
+    assert "oci_devops" in body["checks"]
+    assert "runtime_safeguards" in body["checks"]
+    assert body["notes"]
 
 
 def test_retrieval_health() -> None:

@@ -17,8 +17,8 @@ OCI Architecture Studio currently supports a validated advisory flow in local de
 7. The controlled orchestration layer selects deterministic specialist roles, shares the same retrieved evidence across them, and runs a validation critic over evidence support, citations, freshness, and unsupported-claim risk. These are in-process role boundaries, not autonomous agents.
 8. One final synthesis step generates the advisory response through the configured provider with deterministic rollback available. Deterministic synthesis now uses lightweight architecture pattern profiles, retrieved evidence, workload heuristics, and consistency checks rather than only profile boilerplate. OCI GenAI synthesis can be enabled through configuration and uses the same retrieved context through a dedicated grounding prompt builder.
 9. Release-awareness uses local release snapshots, deterministic release classification, impact analysis, release overlays on affected chunks, and refresh-policy scaffolding. Scheduled refresh and promotion automation exist, but live release reconciliation is not part of request-time advisory behavior.
-10. The backend returns structured recommendations, concise decision reasoning metadata, consistency findings, confidence, evidence links, section citation metadata, deterministic enterprise-governance assessment metadata, optional retrieval debug traces, release context, temporal knowledge context, and standard architecture response sections. The current UI renders the main advisory fields and citation cards; full section-level citation, reasoning, governance, consistency, and release-context UI is future work.
-11. Operational diagnostics expose deployment profile, retrieval health, release refresh freshness, synthesis availability, OCI secret/config posture, governance/risk counters, and lightweight runtime analytics through additive endpoints. Live OCI connectivity checks are opt-in so local development stays offline-safe.
+10. The backend returns structured recommendations, concise decision reasoning metadata, consistency findings, confidence, evidence links, section citation metadata, deterministic enterprise-governance assessment metadata, lightweight architecture topology metadata, optional retrieval debug traces, release context, temporal knowledge context, and standard architecture response sections. The current UI renders the main advisory fields and citation cards; full section-level citation, reasoning, governance, topology, consistency, and release-context UI is future work.
+11. Operational diagnostics expose deployment profile, retrieval health, release refresh freshness, synthesis availability, OCI secret/config posture, API Gateway/OCI DevOps readiness metadata, governance/risk counters, runtime readiness, and lightweight runtime analytics through additive endpoints. Live OCI connectivity checks are opt-in so local development stays offline-safe.
 
 LangGraph, advanced memory, and autonomous agent execution remain deferred. Oracle AI Vector Search provider code and tooling exist, but staging active-read promotion is deferred until a real Oracle vector index is built and parity checks pass.
 
@@ -59,6 +59,7 @@ tests/                Backend and integration tests
 - Per-recommendation confidence indicators with reasoning basis, supporting chunk IDs, assumptions, and known limitations
 - Lightweight architecture consistency validation for conflicting requirements, migration mapping coverage, HA/DR alignment, observability coverage, security coverage, and simple unsupported combination risks
 - Deterministic enterprise governance assessment metadata with executive summary, governance annotations, security posture checks, risk classifications, recommendation priorities, architecture comparisons, enterprise review findings, and auditability trace
+- Lightweight architecture topology metadata with service nodes, dependencies, deployment topology, HA/DR topology, operational notes, and a simple Mermaid flow for future UI rendering
 - Expanded confidence sub-signals for service relevance, workload alignment, migration mapping certainty, and citation coverage
 - Release snapshot schema and temporal knowledge metadata schema for current-vs-historical scaffolding
 - Deterministic release intelligence for release normalization, change-category classification, impacted-service/source/chunk analysis, targeted eval impact reporting, and refresh action recommendations
@@ -73,8 +74,9 @@ tests/                Backend and integration tests
 - Optional OCI-native recurring refresh scaffold with OCI Functions and OCI Resource Scheduler; this is not active request-time release intelligence
 - Continuous intelligence status endpoint at `/knowledge/refresh/status`
 - OCI-native runtime profiles for `local_dev`, `oci_vm`, `oke`, and `oci_functions` under `infra/runtime-profiles/`
-- Additive operational diagnostics endpoints: `/operations/profile`, `/operations/health`, and `/operations/analytics`
-- Lightweight operational analytics for retrieval provider usage, synthesis provider usage, fallback events, hallucination findings, governance policy triggers, governance risk trends, workload-category usage, confidence distribution, and response latency
+- Additive operational diagnostics endpoints: `/operations/profile`, `/operations/health`, `/operations/readiness`, and `/operations/analytics`
+- Runtime readiness checks for startup paths, provider/dependency configuration, fallback paths, API Gateway readiness, OCI DevOps readiness, and runtime safeguards
+- Lightweight operational analytics for retrieval provider usage, synthesis provider usage, fallback events, hallucination findings, governance policy triggers, governance risk trends, runtime degradation events, workload-category usage, confidence distribution, and response latency
 - OCI Vault configuration-secret readiness checks, with local environment compatibility for development
 - OCI Logging, Audit, Monitoring, Notifications, and Events configuration visibility in operational diagnostics. Audit support is currently surfaced as platform-native OCI Audit posture metadata, not custom audit event export.
 - Operational readiness checker under `infra/scripts/operational_readiness_check.py`
@@ -98,6 +100,7 @@ tests/                Backend and integration tests
 - Local eval runner with JSON/Markdown reports, failure diagnostics, retrieval-support checks, and stale-guidance checks
 - Evaluation intelligence layer with multi-dimensional architecture scoring, hallucination findings, benchmark checks, response-quality analytics, and configurable quality gates
 - Enterprise governance eval dataset for security realism, migration governance, FinOps, auditability, operational ownership, and implementation-priority signals
+- Enterprise platform maturity eval dataset for topology, executive usability, runtime degradation handling, observability readiness, migration realism, and internal beta readiness signals
 - CI workflow for knowledge/release ingestion smoke tests, backend tests, golden/edge evals, and frontend build
 - Backend tests covering API, retrieval, and intent routing
 - OCI staging deployment with smoke tests, resource visibility checks, and rollback runbooks
@@ -392,7 +395,7 @@ cd ../frontend && npm run build
 
 Latest full validation: 2026-05-15.
 
-- Local backend tests: `114 passed`
+- Local backend tests: `117 passed`
 - Golden evals: `18 passed, 0 failed`
 - Edge-case evals: `8 passed, 0 failed`
 - Advisory-quality evals: `5 passed, 0 failed`
@@ -400,8 +403,9 @@ Latest full validation: 2026-05-15.
 - Architecture-realism evals: `4 passed, 0 failed`
 - Evaluation-intelligence evals: `9 passed, 0 failed`
 - Enterprise-governance evals: `5 passed, 0 failed`
+- Enterprise-platform-maturity evals: `4 passed, 0 failed`
 - Advisory quality gate: passed with MVP thresholds
-- Operational readiness check: passed locally and against staging
+- Operational readiness check: passed locally; API Gateway and OCI DevOps are reported as readiness warnings until configured
 - Retrieval regression: `18 passed, 0 failed`
 - Retrieval health: passed for local `local_json` and staging `oci_object_storage` with 44 chunks
 - Oracle AI Vector Search local fallback health: passed with fallback active when DB settings are absent

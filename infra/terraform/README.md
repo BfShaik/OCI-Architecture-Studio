@@ -13,10 +13,11 @@ This scaffold is intentionally small:
 - Monitoring alarm
 - Notifications topic
 - Events rule for environment resource lifecycle notifications
+- optional OCI API Gateway in front of the backend VM
 - optional OCI Functions + Resource Scheduler knowledge refresh schedules
 - runtime environment profile bootstrap for the backend VM
 - operational diagnostics configuration for OCI Vault, Logging, OCI Audit posture, Monitoring, Notifications, and Events
-- `governance_resource_summary` output for rebuild and audit review of IAM, Vault, logging, monitoring, notification, event, and scheduler resources
+- `governance_resource_summary` output for rebuild and audit review of IAM, Vault, logging, monitoring, notification, event, API Gateway, DevOps metadata, and scheduler resources
 
 It is not a production HA design yet. It is the Phase 1 OCI deployment foundation for the validated MVP.
 
@@ -62,6 +63,8 @@ terraform apply
 - Store production secrets in OCI Vault, not Terraform variables.
 - Use `deployment_profile`, `operational_diagnostics_enabled`, and `oci_connectivity_check_enabled` to control runtime diagnostics. Keep live OCI connectivity checks disabled until IAM policies and Vault access are verified.
 - Use the generated Object Storage buckets for frontend assets, knowledge snapshots, release snapshots, and eval reports.
+- Enable `enable_api_gateway` only when the backend VM exposure path is ready to move behind OCI API Gateway; it is default-off for staging stability.
+- Provide optional `oci_devops_project_ocid` and `oci_devops_deploy_pipeline_ocid` when deployment is managed through OCI DevOps; current operator-script deployment remains supported.
 - Enable `enable_knowledge_refresh_scheduler` only after the knowledge refresh function image is built and pushed to OCIR.
 - The backend instance is intentionally simple; move to Container Instances or a Load Balancer + instance pool only after the MVP deployment is stable.
 - Use `backend.object-storage.example.tf` as the starting point for remote Terraform state once a shared state bucket exists.

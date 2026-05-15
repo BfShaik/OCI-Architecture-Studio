@@ -28,6 +28,7 @@ def evaluate(base_url: str, *, require_oci_profile: bool = False) -> dict[str, A
     health = fetch_json(f"{base}/health")
     retrieval = fetch_json(f"{base}/retrieval/health")
     operations = fetch_json(f"{base}/operations/health")
+    readiness = fetch_json(f"{base}/operations/readiness")
     analytics = fetch_json(f"{base}/operations/analytics")
 
     failures: list[str] = []
@@ -41,6 +42,10 @@ def evaluate(base_url: str, *, require_oci_profile: bool = False) -> dict[str, A
         failures.append("operational health is critical")
     if operations.get("status") == "warning":
         warnings.append("operational health has warnings")
+    if readiness.get("status") == "critical":
+        failures.append("runtime readiness is critical")
+    if readiness.get("status") == "warning":
+        warnings.append("runtime readiness has warnings")
     deployment = operations.get("deployment", {}) if isinstance(operations.get("deployment"), dict) else {}
     if require_oci_profile and deployment.get("profile") == "local_dev":
         failures.append("OCI deployment profile required but runtime reports local_dev")
@@ -55,6 +60,8 @@ def evaluate(base_url: str, *, require_oci_profile: bool = False) -> dict[str, A
         "retrieval_provider": retrieval.get("provider"),
         "retrieval_chunk_count": store.get("chunk_count", 0),
         "operational_status": operations.get("status"),
+        "runtime_readiness_status": readiness.get("status"),
+        "runtime_readiness_warnings": readiness.get("warning_checks", []),
         "request_count": metrics.get("request_count", 0),
     }
 

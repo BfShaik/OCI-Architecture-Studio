@@ -45,12 +45,13 @@ Operational diagnostics endpoints:
 ```text
 http://193.122.149.102:8000/operations/profile
 http://193.122.149.102:8000/operations/health
+http://193.122.149.102:8000/operations/readiness
 http://193.122.149.102:8000/operations/analytics
 ```
 
 ## Operational Diagnostics
 
-Use the operational endpoints before promoting runtime changes. They summarize deployment profile, retrieval/vector health, release-refresh freshness, synthesis provider readiness, OCI Vault configuration-secret posture, OCI observability configuration, fallback events, hallucination findings, governance policy triggers, governance risk trends, confidence distribution, and provider usage.
+Use the operational endpoints before promoting runtime changes. They summarize deployment profile, retrieval/vector health, release-refresh freshness, synthesis provider readiness, OCI Vault configuration-secret posture, API Gateway readiness, OCI DevOps readiness, runtime safeguards, OCI observability configuration, fallback events, hallucination findings, governance policy triggers, governance risk trends, runtime degradation events, confidence distribution, and provider usage.
 
 Runtime profiles are configured with:
 
@@ -70,6 +71,21 @@ app/backend/.venv/bin/python infra/scripts/operational_readiness_check.py \
 For staging, add `--require-oci-profile` once the deployed runtime is expected to report an OCI profile instead of `local_dev`.
 
 Live OCI SDK connectivity checks are controlled by `OCI_CONNECTIVITY_CHECK_ENABLED`. Keep this disabled until IAM policies, dynamic groups, and Vault access are verified.
+
+## Internal Beta Readiness Checklist
+
+Before treating an environment as internal-beta ready:
+
+- `/health`, `/retrieval/health`, `/operations/health`, `/operations/readiness`, and `/operations/analytics` return successfully.
+- Runtime profile is an OCI profile for shared environments, usually `oci_vm` or later `oke`.
+- Retrieval provider is healthy and fallback state is understood.
+- Deterministic synthesis fallback remains available even if OCI GenAI is enabled.
+- OCI Vault, Logging, Monitoring, Notifications, and Events settings are visible in diagnostics.
+- OCI API Gateway readiness is either configured or explicitly accepted as a current staging limitation.
+- OCI DevOps readiness is either configured or explicitly accepted as operator-script deployment.
+- Knowledge and release snapshots can be rebuilt and synced to OCI Object Storage.
+- Terraform validate passes for the target environment.
+- Golden, advisory, governance, and platform-maturity evals pass.
 
 ## Verify Deployment Health
 
@@ -121,6 +137,7 @@ app/backend/.venv/bin/python evals/run_golden.py --cases evals/edge-cases.jsonl 
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/advisory-quality.jsonl --output-dir evals/reports/advisory-quality
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/orchestration-quality.jsonl --output-dir evals/reports/orchestration-quality
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/enterprise-governance.jsonl --output-dir evals/reports/enterprise-governance
+app/backend/.venv/bin/python evals/run_golden.py --cases evals/enterprise-platform-maturity.jsonl --output-dir evals/reports/enterprise-platform-maturity
 ```
 
 ## Run Knowledge Refresh Policy

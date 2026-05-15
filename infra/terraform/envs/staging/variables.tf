@@ -112,3 +112,27 @@ variable "oci_connectivity_check_enabled" {
   type        = bool
   default     = false
 }
+
+variable "enable_api_gateway" {
+  description = "Enable optional OCI API Gateway in front of the backend VM."
+  type        = bool
+  default     = false
+}
+
+variable "api_gateway_path_prefix" {
+  description = "Path prefix for optional OCI API Gateway deployment."
+  type        = string
+  default     = "/"
+}
+
+variable "oci_devops_project_ocid" {
+  description = "Optional OCI DevOps project OCID for deployment readiness metadata."
+  type        = string
+  default     = ""
+}
+
+variable "oci_devops_deploy_pipeline_ocid" {
+  description = "Optional OCI DevOps deploy pipeline OCID for deployment readiness metadata."
+  type        = string
+  default     = ""
+}

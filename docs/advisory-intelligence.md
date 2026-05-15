@@ -29,8 +29,9 @@ It adds a lightweight evidence, confidence, reasoning-profile, tradeoff, control
 11. Run deterministic tradeoff analysis for the selected reasoning profile.
 12. Run the validation critic over evidence, citation, freshness, unsupported-claim, and fallback signals.
 13. Build deterministic enterprise-governance metadata for executive summary, control annotations, security posture, risk classification, recommendation priority, comparison reasoning, enterprise review findings, and audit trace.
-14. Surface reasoning trace, tradeoffs, governance assessment, evidence gaps, unsupported requested services, stale evidence, synthesis warnings, critic findings, and missing-context warnings.
-15. Return the structured advisory response to the UI.
+14. Build lightweight architecture topology metadata for service nodes, relationships, deployment topology, HA/DR posture, operational notes, and Mermaid flow text.
+15. Surface reasoning trace, tradeoffs, governance assessment, topology summary, evidence gaps, unsupported requested services, stale evidence, synthesis warnings, critic findings, and missing-context warnings.
+16. Return the structured advisory response to the UI.
 
 This remains an MVP-friendly in-process pipeline. It does not add LangGraph, autonomous multi-agent planning, or a new distributed service.
 
@@ -154,6 +155,21 @@ It contains:
 
 This is deterministic advisory metadata for human review. It is not an automated approval workflow, does not enforce OCI policies, and does not integrate with an external governance platform.
 
+## Architecture Topology Metadata
+
+The backend now exposes an additive `architecture_topology` object in architecture-review responses.
+
+It contains:
+
+- `nodes`: OCI service or architecture components with roles such as ingress, application runtime, data, identity, security, observability, and DR orchestration.
+- `service_dependencies`: lightweight relationships between nodes, with rationale and source chunk IDs where available.
+- `deployment_topology`: a short deployment-oriented summary tied to the detected intent.
+- `ha_dr_topology`: a short resilience-oriented summary tied to RTO/RPO, failover, backup/restore, or provisional HA/DR needs.
+- `operational_notes`: review notes for observability, IAM/Vault, migration waves, and ownership gaps.
+- `mermaid_flow`: simple Mermaid text for future UI rendering.
+
+This is intentionally not a diagram engine. It is backend topology metadata that makes advisory responses easier to review and lays groundwork for a future visualization UI.
+
 ## Uncertainty Handling
 
 The response now exposes:
@@ -203,6 +219,14 @@ The backend also exposes:
 GET /orchestration/health
 ```
 
+Runtime readiness is exposed at:
+
+```text
+GET /operations/readiness
+```
+
+It checks startup paths, dependency configuration, API Gateway readiness, OCI DevOps readiness, runtime safeguards, fallback paths, and release-refresh state.
+
 This is intentionally simple and in-process for the MVP. Production observability should later export these fields to OCI Logging, Monitoring, and dashboards.
 
 ## Evaluation Coverage
@@ -240,6 +264,9 @@ app/backend/.venv/bin/python evals/run_golden.py \
 app/backend/.venv/bin/python evals/run_golden.py \
   --cases evals/enterprise-governance.jsonl \
   --output-dir evals/reports/enterprise-governance
+app/backend/.venv/bin/python evals/run_golden.py \
+  --cases evals/enterprise-platform-maturity.jsonl \
+  --output-dir evals/reports/enterprise-platform-maturity
 ```
 
 The eval runner now checks:

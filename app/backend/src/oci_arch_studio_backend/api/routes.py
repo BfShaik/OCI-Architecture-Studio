@@ -104,6 +104,17 @@ async def operations_health() -> dict[str, object]:
     )
 
 
+@router.get("/operations/readiness")
+async def operations_readiness() -> dict[str, object]:
+    settings = get_settings()
+    diagnostics = OperationalDiagnostics(settings)
+    retriever = build_retriever(settings)
+    return diagnostics.runtime_readiness(
+        retrieval=retriever.diagnostics(),
+        refresh_status=read_refresh_status(settings.knowledge_refresh_status_path),
+    )
+
+
 @router.get("/operations/analytics")
 async def operations_analytics() -> dict[str, object]:
     settings = get_settings()

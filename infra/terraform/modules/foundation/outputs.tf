@@ -50,6 +50,18 @@ output "resource_lifecycle_event_rule_ocid" {
   value = oci_events_rule.resource_lifecycle.id
 }
 
+output "api_gateway_ocid" {
+  value = var.enable_api_gateway ? oci_apigateway_gateway.api[0].id : null
+}
+
+output "api_gateway_endpoint" {
+  value = var.enable_api_gateway ? "https://${oci_apigateway_gateway.api[0].hostname}${var.api_gateway_path_prefix}" : null
+}
+
+output "api_gateway_deployment_ocid" {
+  value = var.enable_api_gateway ? oci_apigateway_deployment.backend[0].id : null
+}
+
 output "app_config_secret_ocid" {
   value = oci_vault_secret.app_config_placeholder.id
 }
@@ -87,6 +99,11 @@ output "governance_resource_summary" {
     notification_topic_ocid       = oci_ons_notification_topic.alerts.id
     resource_lifecycle_rule_ocid  = oci_events_rule.resource_lifecycle.id
     backend_cpu_alarm_ocid        = oci_monitoring_alarm.backend_cpu.id
+    api_gateway_ocid              = var.enable_api_gateway ? oci_apigateway_gateway.api[0].id : null
+    api_gateway_endpoint          = var.enable_api_gateway ? "https://${oci_apigateway_gateway.api[0].hostname}${var.api_gateway_path_prefix}" : null
+    api_gateway_deployment_ocid   = var.enable_api_gateway ? oci_apigateway_deployment.backend[0].id : null
+    oci_devops_project_ocid       = var.oci_devops_project_ocid != "" ? var.oci_devops_project_ocid : null
+    oci_devops_deploy_pipeline    = var.oci_devops_deploy_pipeline_ocid != "" ? var.oci_devops_deploy_pipeline_ocid : null
     knowledge_refresh_function    = var.enable_knowledge_refresh_scheduler ? oci_functions_function.knowledge_refresh[0].id : null
     release_refresh_schedule_ocid = var.enable_knowledge_refresh_scheduler ? oci_resource_scheduler_schedule.knowledge_refresh_release_watch[0].id : null
     stable_docs_schedule_ocid     = var.enable_knowledge_refresh_scheduler ? oci_resource_scheduler_schedule.knowledge_refresh_stable_docs[0].id : null

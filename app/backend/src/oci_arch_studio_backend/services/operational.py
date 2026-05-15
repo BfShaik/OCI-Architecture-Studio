@@ -61,6 +61,7 @@ class OperationalMetrics:
     hallucination_findings: Counter[str] = field(default_factory=Counter)
     governance_policy_triggers: Counter[str] = field(default_factory=Counter)
     governance_risk_trends: Counter[str] = field(default_factory=Counter)
+    runtime_degradation_events: Counter[str] = field(default_factory=Counter)
     total_response_latency_ms: float = 0.0
     last_response_latency_ms: float | None = None
     last_event_at: str | None = None
@@ -82,6 +83,7 @@ class OperationalMetrics:
             "hallucination_findings": dict(self.hallucination_findings),
             "governance_policy_triggers": dict(self.governance_policy_triggers),
             "governance_risk_trends": dict(self.governance_risk_trends),
+            "runtime_degradation_events": dict(self.runtime_degradation_events),
             "average_response_latency_ms": self.average_response_latency_ms,
             "last_response_latency_ms": self.last_response_latency_ms,
             "last_event_at": self.last_event_at,
@@ -115,9 +117,11 @@ class OperationalMetricsRecorder:
         self.metrics.synthesis_provider_usage[synthesis_provider] += 1
         if response.get("synthesis_fallback_used"):
             self.metrics.fallback_events["synthesis"] += 1
+            self.metrics.runtime_degradation_events["synthesis_fallback"] += 1
 
         if response.get("low_confidence"):
             self.metrics.fallback_events["low_confidence_response"] += 1
+            self.metrics.runtime_degradation_events["low_confidence_response"] += 1
         confidence = response.get("confidence") or {}
         level = str(confidence.get("level") or "unknown")
         self.metrics.confidence_distribution[level] += 1
@@ -243,9 +247,48 @@ class OperationalDiagnostics:
             "generated_at": now_iso(),
             "deployment": self.deployment_profile(),
             "checks": checks,
+            "runtime_readiness": self.runtime_readiness(retrieval=retrieval, refresh_status=refresh_status),
             "retrieval_metrics": retrieval_metrics.snapshot(),
             "advisory_metrics": advisory_quality_metrics.snapshot(),
             "operational_metrics": operational_metrics.snapshot(),
+        }
+
+    def runtime_readiness(
+        self,
+        *,
+        retrieval: dict[str, object],
+        refresh_status: dict[str, object],
+    ) -> dict[str, object]:
+        checks = {
+            "startup_environment": self._check_startup_environment(),
+            "dependency_configuration": self._check_dependency_configuration(),
+            "api_gateway": self._check_api_gateway(),
+            "oci_devops": self._check_oci_devops(),
+            "runtime_safeguards": self._check_runtime_safeguards(retrieval),
+            "fallback_paths": self._check_fallback_paths(),
+            "release_refresh": self._check_release_freshness(refresh_status),
+        }
+        critical = [
+            name
+            for name, check in checks.items()
+            if isinstance(check, dict) and check.get("status") == "critical"
+        ]
+        warnings = [
+            name
+            for name, check in checks.items()
+            if isinstance(check, dict) and check.get("status") == "warning"
+        ]
+        status = "critical" if critical else "warning" if warnings else "ok"
+        return {
+            "status": status,
+            "profile": self.settings.deployment_profile,
+            "checks": checks,
+            "critical_checks": critical,
+            "warning_checks": warnings,
+            "notes": [
+                "Runtime readiness is a deterministic operational diagnostic, not a production certification.",
+                "OCI API Gateway and OCI DevOps checks are readiness/configuration checks until their OCIDs or endpoints are provisioned.",
+            ],
         }
 
     def _check_retrieval(self, retrieval: dict[str, object]) -> dict[str, object]:
@@ -306,6 +349,115 @@ class OperationalDiagnostics:
             "provider": provider,
             "missing_config": missing,
             "fallback_mode": "deterministic_fail_closed" if provider == "oci_genai" else "deterministic_default",
+        }
+
+    def _check_startup_environment(self) -> dict[str, object]:
+        required_paths = {
+            "knowledge_index_path": self.settings.knowledge_index_path.exists(),
+            "release_snapshot_path": self.settings.release_snapshot_path.exists(),
+            "frontend_dist_path": self.settings.frontend_dist_path.exists(),
+        }
+        missing = [name for name, exists in required_paths.items() if not exists]
+        profile = self.settings.deployment_profile
+        warnings = []
+        if profile != "local_dev" and self.settings.oci_auth_mode == "config_file":
+            warnings.append("OCI runtime profiles should avoid config_file auth outside local development.")
+        return {
+            "status": "critical" if missing else "warning" if warnings else "ok",
+            "profile": profile,
+            "app_env": self.settings.app_env,
+            "paths": required_paths,
+            "missing": missing,
+            "warnings": warnings,
+        }
+
+    def _check_dependency_configuration(self) -> dict[str, object]:
+        missing: list[str] = []
+        if self.settings.retrieval_provider == "oci_object_storage":
+            for name, value in (
+                ("OCI_OBJECT_STORAGE_NAMESPACE", self.settings.oci_object_storage_namespace),
+                ("OCI_VECTOR_BUCKET", self.settings.oci_vector_bucket),
+            ):
+                if not value:
+                    missing.append(name)
+        if self.settings.retrieval_provider == "oracle_ai_vector_search":
+            for name, value in (
+                ("OCI_VECTOR_DB_DSN", self.settings.oci_vector_db_dsn),
+                ("OCI_VECTOR_DB_USER", self.settings.oci_vector_db_user),
+                ("OCI_VECTOR_DB_PASSWORD", self.settings.oci_vector_db_password),
+            ):
+                if not value:
+                    missing.append(name)
+        if self.settings.advisory_synthesis_provider == "oci_genai":
+            for name, value in (
+                ("OCI_GENAI_COMPARTMENT_ID", self.settings.oci_genai_compartment_id),
+                ("OCI_GENAI_CHAT_MODEL_ID", self.settings.oci_genai_chat_model_id),
+            ):
+                if not value:
+                    missing.append(name)
+        return {
+            "status": "warning" if missing else "ok",
+            "retrieval_provider": self.settings.retrieval_provider,
+            "synthesis_provider": self.settings.advisory_synthesis_provider,
+            "missing_config": missing,
+        }
+
+    def _check_api_gateway(self) -> dict[str, object]:
+        configured = bool(self.settings.oci_api_gateway_endpoint or self.settings.oci_api_gateway_ocid)
+        return {
+            "status": "ok" if configured else "warning",
+            "provider": "oci_api_gateway",
+            "configured": configured,
+            "endpoint_configured": bool(self.settings.oci_api_gateway_endpoint),
+            "gateway_ocid_configured": bool(self.settings.oci_api_gateway_ocid),
+            "message": (
+                "OCI API Gateway is configured as an API exposure layer."
+                if configured
+                else "OCI API Gateway is not configured; current staging exposes the backend VM directly."
+            ),
+        }
+
+    def _check_oci_devops(self) -> dict[str, object]:
+        configured = bool(self.settings.oci_devops_project_ocid or self.settings.oci_devops_deploy_pipeline_ocid)
+        return {
+            "status": "ok" if configured else "warning",
+            "provider": "oci_devops",
+            "configured": configured,
+            "project_ocid_configured": bool(self.settings.oci_devops_project_ocid),
+            "deploy_pipeline_ocid_configured": bool(self.settings.oci_devops_deploy_pipeline_ocid),
+            "message": (
+                "OCI DevOps deployment metadata is configured."
+                if configured
+                else "OCI DevOps is not configured; deployment currently uses operator scripts."
+            ),
+        }
+
+    def _check_runtime_safeguards(self, retrieval: dict[str, object]) -> dict[str, object]:
+        store = retrieval.get("store", {}) if isinstance(retrieval.get("store"), dict) else {}
+        fallback_active = bool(store.get("fallback_active"))
+        warnings = []
+        if fallback_active:
+            warnings.append("Retrieval fallback is active.")
+        if self.settings.deployment_profile != "local_dev" and not self.settings.oci_vault_config_secret_ocid:
+            warnings.append("OCI Vault config secret is not configured for this runtime profile.")
+        return {
+            "status": "warning" if warnings else "ok",
+            "retrieval_fallback_enabled": self.settings.retrieval_fallback_enabled,
+            "embedding_fallback_enabled": self.settings.embedding_fallback_enabled,
+            "deterministic_synthesis_available": True,
+            "warnings": warnings,
+        }
+
+    def _check_fallback_paths(self) -> dict[str, object]:
+        warnings = []
+        if self.settings.advisory_synthesis_provider == "oci_genai":
+            warnings.append("OCI GenAI synthesis must retain deterministic fail-closed fallback.")
+        return {
+            "status": "ok",
+            "deterministic_synthesis": "available",
+            "local_retrieval_fallback": self.settings.retrieval_fallback_enabled,
+            "embedding_fallback": self.settings.embedding_fallback_enabled,
+            "warnings": warnings,
         }
 
     def _check_oci_connectivity(self) -> dict[str, object]:

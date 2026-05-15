@@ -20,14 +20,15 @@ OCI Architecture Studio now has a validated working foundation:
 - deterministic architecture pattern profiles, reasoning profiles, and synthesis quality signals that make fallback responses more useful while remaining explainable
 - concise decision reasoning metadata, explicit tradeoff analysis, per-recommendation confidence indicators, and lightweight consistency validation for recommendation coherence
 - deterministic enterprise governance metadata for executive framing, security posture checks, risk classification, recommendation priority, architecture comparison, enterprise review findings, and auditability trace
+- lightweight architecture topology metadata for service relationships, deployment topology, HA/DR posture, operational notes, and future visualization
 - confidence sub-signals for retrieval grounding, service relevance, workload alignment, migration mapping certainty, and citation coverage
 - deterministic evaluation intelligence for advisory quality scoring, hallucination heuristics, benchmark expectation checks, provider comparison signals, and configurable quality gates
 - OCI Object Storage retrieval manifest as the active staging retrieval provider
 - optional Oracle AI Vector Search provider and index tooling for the next OCI-native retrieval step
 - local JSON retrieval preserved as the config-only rollback provider
 - point-in-time release snapshots, deterministic release impact metadata, selective refresh overlays, retained historical snapshots, and current-vs-historical schema scaffolding for release-aware guidance
-- OCI-native operational diagnostics, runtime profiles, and scheduled refresh scaffolding that prefer OCI Vault, IAM, Logging, Monitoring, Notifications, Events, Resource Scheduler, Functions, Object Storage, and Oracle AI Vector Search where applicable
-- golden, edge-case, advisory-quality, orchestration-quality, architecture-realism, evaluation-intelligence, enterprise-governance, retrieval regression, and parity validation gates
+- OCI-native operational diagnostics, runtime readiness checks, runtime profiles, API Gateway/OCI DevOps readiness metadata, and scheduled refresh scaffolding that prefer OCI Vault, IAM, Logging, Monitoring, Notifications, Events, Resource Scheduler, Functions, Object Storage, and Oracle AI Vector Search where applicable
+- golden, edge-case, advisory-quality, orchestration-quality, architecture-realism, evaluation-intelligence, enterprise-governance, enterprise-platform-maturity, retrieval regression, and parity validation gates
 - enterprise-governance evals for auditability, migration governance, security realism, operational realism, FinOps realism, and implementation practicality
 - Terraform-based OCI staging slice with Object Storage, Vault, Logging, Monitoring, Events, and Notifications
 
@@ -41,11 +42,15 @@ The current deterministic synthesis and reasoning layer is heuristic. It improve
 
 The enterprise governance layer is also heuristic and deterministic. It makes recommendations more reviewable by adding control annotations, risk signals, priority guidance, comparison reasoning, and audit trace metadata, but it does not enforce policies or replace human architecture/security approval.
 
+Architecture visualization support is foundational: backend topology metadata and Mermaid text exist, but a full diagram editor or frontend renderer is future work.
+
 The current evaluation intelligence layer is also heuristic. It provides reproducible regression signals for architecture realism, hallucination risk, provider comparisons, and recommendation quality, but it is not an objective measure of correctness and does not use LLM-as-judge scoring.
 
 Release-awareness is still foundational: the runtime can reference local release snapshots, classify release changes, surface impacted services/change categories, and retain historical snapshots for audit/context. It does not yet perform full automated release reconciliation or bi-temporal retrieval.
 
 Operational hardening is intentionally OCI-centric. The current implementation exposes diagnostics and config profiles, but it is not yet a production HA runtime, does not emit custom OCI Monitoring metrics automatically, and does not require live OCI checks in local development.
+
+Internal beta readiness is improving through runtime readiness diagnostics, API Gateway and OCI DevOps scaffolding, and stronger operational runbooks. Staging still exposes the backend VM directly unless API Gateway is explicitly enabled through Terraform.
 
 The corpus remains curated rather than comprehensive. Current quality work should be read as a controlled transition from deterministic OCI advisory scaffolding toward retrieval-grounded OCI GenAI-assisted synthesis, not as a claim of full OCI documentation coverage or autonomous documentation crawling.
 

@@ -261,6 +261,34 @@ class EnterpriseGovernanceAssessment(BaseModel):
     notes: list[str] = Field(default_factory=list)
 
 
+class ArchitectureTopologyNode(BaseModel):
+    node_id: str
+    label: str
+    service: str | None = None
+    category: str | None = None
+    role: str
+    source_chunk_ids: list[str] = Field(default_factory=list)
+
+
+class ArchitectureTopologyRelationship(BaseModel):
+    from_node: str
+    to_node: str
+    relationship: str
+    rationale: str
+    source_chunk_ids: list[str] = Field(default_factory=list)
+
+
+class ArchitectureTopologySummary(BaseModel):
+    topology_summary: str
+    deployment_topology: str
+    ha_dr_topology: str
+    service_dependencies: list[ArchitectureTopologyRelationship] = Field(default_factory=list)
+    nodes: list[ArchitectureTopologyNode] = Field(default_factory=list)
+    mermaid_flow: str | None = None
+    operational_notes: list[str] = Field(default_factory=list)
+    source_chunk_ids: list[str] = Field(default_factory=list)
+
+
 class ReleaseImpactSummary(BaseModel):
     snapshot_path: str | None = None
     snapshot_generated_at: str | None = None
@@ -325,6 +353,7 @@ class ArchitectureReviewResponse(BaseModel):
     recommendation_confidence: list[RecommendationConfidenceIndicator] = Field(default_factory=list)
     consistency_findings: list[ArchitectureConsistencyFinding] = Field(default_factory=list)
     enterprise_governance: EnterpriseGovernanceAssessment | None = None
+    architecture_topology: ArchitectureTopologySummary | None = None
     release_context: ReleaseImpactSummary | None = None
     knowledge_temporal_context: KnowledgeTemporalContext | None = None
     answer: str

@@ -180,6 +180,17 @@ def response_text(response: dict[str, Any]) -> str:
         audit = governance.get("auditability_trace") or {}
         if isinstance(audit, dict):
             parts.extend(str(value) for value in audit.values())
+    topology = response.get("architecture_topology") or {}
+    if isinstance(topology, dict):
+        for key in ("topology_summary", "deployment_topology", "ha_dr_topology", "mermaid_flow"):
+            parts.append(str(topology.get(key, "")))
+        for item in topology.get("nodes", []):
+            if isinstance(item, dict):
+                parts.extend(str(value) for value in item.values())
+        for item in topology.get("service_dependencies", []):
+            if isinstance(item, dict):
+                parts.extend(str(value) for value in item.values())
+        parts.extend(str(note) for note in topology.get("operational_notes", []))
     release_context = response.get("release_context") or {}
     if isinstance(release_context, dict):
         parts.extend(str(item) for item in release_context.get("architecture_affecting_services", []))
