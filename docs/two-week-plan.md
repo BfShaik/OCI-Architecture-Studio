@@ -4,7 +4,7 @@ Plan window: 2026-05-14 to 2026-05-28
 
 ## Goal
 
-Turn the current local RAG and intent-aware prototype into a stronger evaluation-driven foundation with cleaner ingestion, automated golden prompt checks, and a clearer path toward production retrieval.
+Completed the original foundation sprint and extended it into a validated staging baseline with OCI deployment, release-awareness scaffolding, retrieval regression, and dual-provider retrieval parity.
 
 ## Tracking Legend
 
@@ -45,21 +45,24 @@ Turn the current local RAG and intent-aware prototype into a stronger evaluation
 - 2026-05-26 release-awareness scaffold is `Done`: release-aware intent, prompt template, release source registry, release ingestion, release classification, and release snapshot reader exist. Actual impact comparison remains future work.
 - 2026-05-27 CI skeleton is `Done`: `.github/workflows/ci.yml` runs ingestion smoke test, backend tests, golden evals, and frontend build.
 - 2026-05-28 sprint review and backlog update is `Done`: status, roadmap, demo closeout, Phase 2 architecture, and OCI deployment execution docs are current.
+- Post-plan update: OCI staging deployment is live and validated.
+- Post-plan update: `oci_object_storage` retrieval parity passed against `local_json` and is ready for controlled config-only staging promotion.
 
 ## Priority Order
 
-1. Golden prompt eval runner
-2. Ingestion quality
-3. Source metadata and source expansion
-4. Frontend clarity
-5. CI skeleton
-6. Release-awareness scaffold
+1. Promote `oci_object_storage` in staging through configuration
+2. Rerun all smoke/eval/retrieval gates after promotion
+3. Expand OCI source coverage
+4. Prepare Oracle AI Vector Search schema and indexing prototype
+5. Improve release-impact extraction and evals
+6. Add HTTPS ingress for staging/demo
 
 ## Risks
 
 - Oracle documentation pages may include layout/navigation boilerplate that lowers retrieval quality.
 - The local hashing embedder is useful for workflow validation but may produce weak semantic ranking for nuanced prompts.
-- Release-awareness must not pretend to be current until live release sources and freshness metadata are implemented.
+- Release-awareness must not pretend to be live intelligence until watcher, impact analysis, and selective reindexing are implemented.
+- Oracle AI Vector Search should not become active until it passes parity against the Object Storage provider.
 
 ## Review Cadence
 

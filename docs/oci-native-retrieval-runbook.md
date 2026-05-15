@@ -4,7 +4,7 @@ Date: 2026-05-14
 
 ## Purpose
 
-This runbook controls the Sprint 2 migration from local prototype retrieval to OCI-native retrieval services while preserving the validated advisory workflow.
+This runbook controls the Sprint 2 migration from the validated local retrieval baseline to OCI-native retrieval services while preserving the advisory workflow.
 
 The default remains:
 

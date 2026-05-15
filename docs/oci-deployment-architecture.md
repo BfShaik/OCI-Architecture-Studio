@@ -4,7 +4,7 @@ Last updated: 2026-05-14
 
 ## Goal
 
-Deploy the validated MVP to OCI with minimal architectural change, then evolve the platform into an OCI-native, enterprise-ready RAG advisory system.
+Document the current OCI staging deployment and the incremental path to an OCI-native, enterprise-ready RAG advisory system.
 
 The guiding principle is:
 
@@ -14,7 +14,7 @@ Preserve the validated flow first, then replace local development pieces with OC
 
 Avoid premature microservices, Kubernetes, and complex orchestration until traffic, tenant needs, and operational requirements justify them.
 
-## Target MVP Deployment
+## Current Staging Deployment
 
 ```mermaid
 flowchart TD
@@ -75,7 +75,7 @@ Steps:
 7. Send logs to OCI Logging.
 8. Add Monitoring alarms and Notifications for API availability and instance health.
 
-Keep local JSON retrieval for this phase. The goal is deployment confidence, not retrieval replacement.
+This phase is complete in staging. The active provider is still `local_json`, and `oci_object_storage` has passed parity for config-only promotion.
 
 ### Phase 2 — Replace Local Embeddings/Vector Index
 
@@ -308,7 +308,7 @@ Scale path:
 
 ### HA/DR
 
-MVP:
+Current staging:
 - backup Object Storage snapshots
 - keep Terraform reproducible
 - keep app stateless
@@ -351,16 +351,19 @@ watch release sources -> classify update -> map affected services -> mark stale 
 
 ## Implementation Sequence
 
-1. Add Terraform foundation scaffold. — Done in this package.
-2. Validate Terraform locally with project-specific OCIDs.
-3. Add backend deployment script or container image.
-4. Add frontend upload script.
-5. Add Object Storage snapshot sync.
-6. Add Vault secret wiring.
-7. Deploy MVP backend to Compute.
-8. Run smoke tests against OCI endpoint.
-9. Add OCI embedding provider.
-10. Add vector store adapter spike.
+1. Add Terraform foundation scaffold. — Done
+2. Validate Terraform locally with project-specific OCIDs. — Done
+3. Add backend deployment script. — Done
+4. Add frontend upload script. — Done
+5. Add Object Storage snapshot sync. — Done
+6. Add Vault secret wiring. — Done
+7. Deploy backend to Compute. — Done
+8. Run smoke tests against OCI endpoint. — Done
+9. Add OCI embedding provider. — Done as guarded adapter
+10. Add Object Storage vector-manifest adapter. — Done
+11. Add dual-provider retrieval parity. — Done
+12. Promote Object Storage retrieval in staging. — Next
+13. Add Oracle AI Vector Search schema/index prototype. — Pending
 
 ## Top Risks And Mitigations
 
@@ -375,6 +378,6 @@ watch release sources -> classify update -> map affected services -> mark stale 
 
 ## Recommended Next Step
 
-Use the Terraform scaffold to stand up a `dev` OCI environment, then deploy the existing backend and frontend with no application architecture changes.
+Promote staging to `RETRIEVAL_PROVIDER=oci_object_storage` through configuration, then rerun staging smoke tests, golden evals, edge-case evals, retrieval regression, and parity checks.
 
-That proves the operating model before replacing local retrieval with OCI-native embeddings and vector search.
+That proves the first OCI-native retrieval read path before moving to Oracle AI Vector Search.

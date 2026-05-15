@@ -4,7 +4,7 @@ Last updated: 2026-05-14
 
 ## Purpose
 
-This runbook explains how to stand up the first OCI development landing zone and deploy the validated MVP with minimal application changes.
+This runbook explains how to stand up the first OCI development/staging landing zone and deploy the validated OCI Architecture Studio application with minimal application changes.
 
 ## Landing Zone Structure
 
@@ -211,12 +211,19 @@ Terraform:
 | Over-broad IAM starter policy | Tighten policy after first deployment using bucket/vault-specific access. |
 | Local state in shared use | Move Terraform state to Object Storage before team collaboration. |
 
+## Current Status
+
+- Staging Terraform apply is complete.
+- Backend/frontend staging deployment is working.
+- Object Storage snapshot bucket contains the knowledge and release snapshots.
+- OCI Object Storage retrieval has passed dual-provider parity against `local_json`.
+- Staging can be promoted to `RETRIEVAL_PROVIDER=oci_object_storage` through configuration.
+
 ## Next Implementation Steps
 
-1. Fill `terraform.tfvars` for real OCI dev tenancy.
-2. Apply Terraform in `envs/staging`.
-3. Deploy backend with `infra/scripts/deploy_backend_vm.sh`.
-4. Upload frontend assets to Object Storage.
-5. Run deployment smoke tests.
-6. Add systemd service file or container deployment script.
-7. Add CI workflow for Terraform validate and artifact packaging.
+1. Promote staging retrieval to `oci_object_storage` through configuration.
+2. Rerun deployment smoke tests and retrieval parity after promotion.
+3. Add HTTPS ingress with Load Balancer or API Gateway.
+4. Move Terraform state to OCI Object Storage before broader team usage.
+5. Tighten IAM policies after access patterns stabilize.
+6. Prepare Oracle AI Vector Search schema and indexing prototype.

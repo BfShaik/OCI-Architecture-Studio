@@ -2,7 +2,7 @@
 
 Date: 2026-05-15
 
-Commit validated: `2c99043`
+Current validated baseline: `d3292d6`
 
 Staging URL: `http://193.122.149.102:8000/`
 

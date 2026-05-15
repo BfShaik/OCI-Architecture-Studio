@@ -2,7 +2,7 @@
 
 Date: 2026-05-15
 
-Validated commit: `2c99043` plus local parity-gate updates
+Validated baseline: `d3292d6`
 
 ## Goal
 

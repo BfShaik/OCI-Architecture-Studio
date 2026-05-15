@@ -4,7 +4,7 @@ Date: 2026-05-14
 
 ## Working URLs
 
-Use the backend-hosted app URL for the current MVP staging baseline:
+Use the backend-hosted app URL for the current staging baseline:
 
 ```text
 http://193.122.149.102:8000/
@@ -67,6 +67,18 @@ python3 infra/scripts/check_oci_access.py \
 ```bash
 app/backend/.venv/bin/python evals/run_golden.py --output-dir evals/reports/golden
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/edge-cases.jsonl --output-dir evals/reports/edge-cases
+```
+
+## Rerun Retrieval Parity
+
+```bash
+app/backend/.venv/bin/python infra/scripts/retrieval_parity_check.py \
+  --oci-region us-ashburn-1 \
+  --oci-profile DEFAULT \
+  --oci-namespace idsmrn7rvqb6 \
+  --oci-vector-bucket oci-architecture-studio-staging-knowledge-snapshots \
+  --oci-vector-object-name oci-rag-index.json \
+  --output-dir evals/reports/retrieval-parity
 ```
 
 ## Rerun Local Quality Gates
@@ -165,6 +177,13 @@ If retrieval fails:
 - confirm chunk count is at least 13
 - rerun ingestion on the VM through the deploy script
 
+If `oci_object_storage` promotion fails:
+
+- set `RETRIEVAL_PROVIDER=local_json`
+- restart `oci-architecture-studio`
+- rerun baseline smoke tests
+- inspect `/retrieval/health`
+
 ## Rollback
 
 App-only rollback:
@@ -189,5 +208,6 @@ Use full destroy only for sandbox teardown. Capture logs and outputs first if de
 - placeholder Vault secret
 - no app log shipping into OCI Logging yet
 - no custom app metrics yet
+- active staging retrieval still uses `local_json` until config promotion
 
 The next hardening milestone is HTTPS ingress and restricted backend access.

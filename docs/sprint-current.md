@@ -2,9 +2,9 @@
 
 ## Sprint Goal
 
-Build the first working OCI Architecture Studio vertical slice with local RAG, intent-aware orchestration, golden/edge regression, release-awareness foundation, demo-ready UI, and a validated first OCI deployment scaffold.
+Maintain the validated OCI Architecture Studio staging baseline while advancing Sprint 2 retrieval promotion safely.
 
-Sprint 2 has started with an incremental OCI-native retrieval migration. The first slice keeps `local_json` as the default while adding OCI embedding/Object Storage hooks, a guarded Oracle AI Vector Search boundary, metadata-aware ranking, and retrieval regression checks.
+The current state keeps `local_json` as the active staging provider, while `oci_object_storage` has passed dual-provider parity and is ready for controlled config-only staging promotion. Oracle AI Vector Search remains guarded until schema, indexing, and live query parity are validated.
 
 ## Timebox
 
@@ -12,16 +12,12 @@ Sprint 2 has started with an incremental OCI-native retrieval migration. The fir
 
 ## Current Priorities
 
-1. Convert golden prompts to structured evals
-2. Build local eval runner
-3. Improve ingestion cleanup
-4. Add source metadata
-5. Expand source registry
-6. Improve frontend result cards
-7. Add CI skeleton
-8. Add release-awareness foundation
-9. Prepare demo readiness closeout
-10. Prepare first OCI deployment execution scaffold
+1. Promote staging retrieval to `oci_object_storage` through config only
+2. Rerun staging smoke, golden evals, edge evals, and retrieval regression after promotion
+3. Expand source registry for WAF, Vault, Cloud Guard, Logging, Monitoring, Budgets, IAM, Audit, and Data Guard
+4. Prepare Oracle AI Vector Search schema and indexing prototype
+5. Keep release-awareness snapshot flow honest and clearly point-in-time
+6. Add HTTPS ingress plan for staging/demo readiness
 
 ## Sprint Scope
 
@@ -31,19 +27,21 @@ In scope:
 - Local RAG index with source-shaped records
 - citation-friendly retrieval metadata
 - Intent-aware orchestration with structured response
-- release source registry and release snapshot prototype
+- release source registry and release snapshot foundation
 - Prompt templates and golden prompt assets
 - edge-case evals and validation reports
 - demo prompt shortcuts and polished source cards
 - Status and two-week tracking docs
 - first OCI landing-zone Terraform scaffold
 - deployment scripts, smoke tests, and staging workflow
+- dual-provider retrieval parity validation
+- Object Storage retrieval promotion runbook
 
 Out of scope:
 - production RAG/vector database cutover
 - LangGraph
 - advanced memory systems
-- production ingestion jobs beyond local CLI snapshots
+- production ingestion jobs beyond local CLI and Object Storage snapshots
 - production-grade cloud deployment beyond the current staging slice
 - HTTPS ingress and HA cloud runtime
 

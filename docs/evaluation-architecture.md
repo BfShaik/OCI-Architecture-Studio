@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The evaluation foundation prevents prompt, retrieval, and orchestration regressions as OCI Architecture Studio grows from a local RAG prototype into an enterprise advisory platform.
+The evaluation foundation prevents prompt, retrieval, orchestration, and provider-promotion regressions as OCI Architecture Studio grows from the validated staging baseline into an enterprise advisory platform.
 
 The first production-grade eval layer should stay simple:
 
@@ -61,7 +61,7 @@ Field guidance:
 
 ## Scoring Strategy
 
-The MVP runner uses deterministic heuristic scoring:
+The current runner uses deterministic heuristic scoring:
 
 | Check | Points |
 |---|---:|
@@ -104,7 +104,7 @@ Rules:
 
 ## Hallucination And Grounding Checks
 
-The MVP guardrails are practical heuristics:
+The current guardrails are practical heuristics:
 
 - Missing citations fail when `citation_required` is true.
 - Missing chunk ids, source URLs, or summaries fail citation validation.
@@ -127,6 +127,8 @@ CI should run:
 3. ingestion smoke test
 4. golden prompt eval runner
 5. edge-case eval runner
+6. retrieval regression
+7. retrieval parity before provider promotion
 
 The workflow in `.github/workflows/ci.yml` performs those steps. The eval runner writes JSON and Markdown reports to `evals/reports/`; CI uploads them as artifacts.
 
@@ -184,11 +186,12 @@ Phase 3:
 
 Phase 4:
 - Add trend reports and historical comparison.
-- Add production vector store and production embeddings.
+- Promote Object Storage retrieval after parity.
+- Add production embeddings and Oracle AI Vector Search after schema/query parity.
 
 ## Recommended Python Libraries
 
-Current MVP:
+Current foundation:
 
 - `fastapi`
 - `httpx`
@@ -207,7 +210,7 @@ Future:
 
 - Keyword checks can miss semantically correct answers with different wording.
 - Keyword checks can pass shallow answers that contain the right words.
-- Local hash embeddings are not production semantic retrieval.
+- Local hash embeddings are deterministic and useful for parity, but not production semantic retrieval.
 - Oracle documentation pages can include boilerplate that weakens chunks.
 - Release-awareness must not imply live freshness until release ingestion exists.
 

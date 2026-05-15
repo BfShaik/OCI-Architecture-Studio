@@ -209,6 +209,7 @@ Last validation run: 2026-05-15
 - Dual-provider retrieval parity validation: passed, 14 of 14 cases, comparing `local_json` with `oci_object_storage`
 - OCI Object Storage snapshot sync: passed for `oci-rag-index.json` and `oci-release-snapshot.json`
 - Presentation-friendly architecture diagrams: added in `docs/architecture-diagrams.md`
+- Documentation refresh: README, PRD, roadmap, vision, sprint docs, runbooks, demo readiness, and architecture docs now reflect the current staging and retrieval-parity state
 
 ## Pending
 

@@ -4,18 +4,20 @@ OCI Architecture Studio is an enterprise AI platform for OCI architecture guidan
 
 The project is monorepo-first, RAG-first, modular, and evaluation-driven. Prompts, retrieval code, evals, and application code are treated as first-class assets from the start.
 
-## Current Vertical Slice
+## Current Working Flow
 
-The initial working flow is intentionally simple:
+OCI Architecture Studio currently supports a validated advisory flow in local development and OCI staging:
 
-1. User asks an OCI architecture question in the React UI.
+1. User asks an OCI architecture, migration, DR, cost, security, or release-awareness question in the React UI.
 2. The frontend calls the FastAPI backend.
-3. The backend classifies the request intent.
-4. The backend retrieves relevant chunks from a small local OCI RAG index.
-5. Intent-aware orchestration shapes a structured response from that context.
-6. The UI renders intent, prompt template, recommendations, assumptions, risks, citations, and next steps.
+3. The backend classifies the request intent and applies the matching orchestration profile.
+4. Retrieval runs through a config-selected provider.
+5. The active staging provider is still `local_json`.
+6. The OCI Object Storage retrieval provider has passed dual-provider parity and is ready for controlled config-only promotion.
+7. Intent-aware orchestration shapes a structured response from retrieved context and release-awareness checks.
+8. The UI renders intent, prompt template, recommendations, assumptions, risks, citations, and next steps.
 
-LangGraph, advanced memory, production vector storage, full LLM synthesis, and production release intelligence are intentionally out of scope for this scaffold.
+LangGraph, advanced memory, full LLM synthesis, continuous release intelligence, and Oracle AI Vector Search active reads are intentionally deferred until the current validated flow is promoted safely.
 
 ## Repository Layout
 
@@ -23,7 +25,7 @@ LangGraph, advanced memory, production vector storage, full LLM synthesis, and p
 docs/                 Product, roadmap, sprint, and architecture docs
 app/backend/          Python 3.12 FastAPI backend
 app/frontend/         React + Vite frontend
-knowledge/            Future ingestion, classification, refresh, and snapshots
+knowledge/            Source registries, ingestion, release refresh, and snapshots
 prompts/              Versioned prompt templates
 evals/                Regression prompts and expected behavior
 infra/                Deployment and CI/CD assets
@@ -57,6 +59,8 @@ tests/                Backend and integration tests
 - Local eval runner with JSON/Markdown reports, failure diagnostics, retrieval-support checks, and stale-guidance checks
 - CI workflow for knowledge/release ingestion smoke tests, backend tests, golden/edge evals, and frontend build
 - Backend tests covering API, retrieval, and intent routing
+- OCI staging deployment with smoke tests, resource visibility checks, and rollback runbooks
+- Dual-provider retrieval parity gate comparing `local_json` and `oci_object_storage`
 
 ## Run Locally
 
@@ -131,11 +135,12 @@ VITE_API_BASE_URL=http://localhost:8000 npm run dev
 
 ## Recommended Next Steps
 
-1. Expand the source registry with dedicated WAF, Vault, Cloud Guard, Logging, Monitoring, and Budgets sources.
-2. Replace fallback release parsing with stronger extraction from official OCI release pages.
-3. Improve retrieval-support checks beyond required service terms.
-4. Add release-impact evals that assert service/domain/impact classification.
-5. Replace local hashing embeddings with the selected production embedding provider when the corpus grows.
+1. Promote staging to `RETRIEVAL_PROVIDER=oci_object_storage` through config only.
+2. Rerun staging smoke tests, golden evals, edge evals, and retrieval regression after promotion.
+3. Expand the source registry with dedicated WAF, Vault, Cloud Guard, Logging, Monitoring, Budgets, IAM, Audit, and Data Guard sources.
+4. Replace local hashing embeddings with OCI Generative AI embeddings once provider settings and cost controls are finalized.
+5. Validate Oracle AI Vector Search schema/query parity before enabling active reads.
+6. Replace fallback release parsing with stronger extraction from official OCI release pages.
 
 ## Run Evaluations
 
@@ -157,6 +162,20 @@ app/backend/.venv/bin/python infra/scripts/retrieval_regression_check.py \
 ```
 
 This checks retrieval health, intent alignment, citation availability, top chunks, stale citations, and required OCI service coverage before changing retrieval providers.
+
+## Run Retrieval Parity Checks
+
+```bash
+app/backend/.venv/bin/python infra/scripts/retrieval_parity_check.py \
+  --oci-region us-ashburn-1 \
+  --oci-profile DEFAULT \
+  --oci-namespace idsmrn7rvqb6 \
+  --oci-vector-bucket oci-architecture-studio-staging-knowledge-snapshots \
+  --oci-vector-object-name oci-rag-index.json \
+  --output-dir evals/reports/retrieval-parity
+```
+
+Use this before promoting or rolling back retrieval provider config.
 
 ## OCI Deployment
 
@@ -199,6 +218,7 @@ python3 infra/scripts/validate_deployment_config.py \
 app/backend/.venv/bin/python evals/run_golden.py --output-dir evals/reports/golden
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/edge-cases.jsonl --output-dir evals/reports/edge-cases
 app/backend/.venv/bin/python infra/scripts/retrieval_regression_check.py --cases evals/golden-prompts.jsonl --cases evals/edge-cases.jsonl --output-dir evals/reports/retrieval
+app/backend/.venv/bin/python infra/scripts/retrieval_parity_check.py --oci-region us-ashburn-1 --oci-profile DEFAULT --oci-namespace idsmrn7rvqb6 --oci-vector-bucket oci-architecture-studio-staging-knowledge-snapshots --oci-vector-object-name oci-rag-index.json --output-dir evals/reports/retrieval-parity
 app/backend/.venv/bin/python knowledge/ingestion/ingest.py --no-fetch
 app/backend/.venv/bin/python knowledge/refresh/ingest_releases.py --no-fetch
 cd app/backend && PYTHONPATH=src .venv/bin/pytest -q

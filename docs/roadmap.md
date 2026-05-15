@@ -26,7 +26,7 @@ Exit criteria:
 - A machine-readable eval runner exists. — Done
 
 ## Phase 2 — Grounded Retrieval
-Status: In Progress
+Status: In Progress — Object Storage parity validated
 
 Architecture plan: `docs/phase-2-architecture.md`
 OCI deployment plan: `docs/oci-deployment-architecture.md`
@@ -37,24 +37,30 @@ Deliverables:
 - document chunking — Done
 - metadata model — Done
 - local retrieval adapter — Done
+- OCI Object Storage retrieval adapter — Done
+- dual-provider retrieval parity gate — Done
 - citation display — Done
 - regression evals for grounded answers — Done
+- config-only promotion and rollback path — Done
 - production embedding provider — Pending
-- production vector store adapter — Pending
+- Oracle AI Vector Search active read path — Pending
 
 ## Phase 3 — Release-Aware Knowledge
-Status: Scaffolded
+Status: Point-in-time snapshots implemented
 
 Deliverables:
 - OCI release source registry — Done
 - refresh job scaffold — Done
 - snapshot freshness metadata — Done
 - change classification — MVP Done
+- release-aware intent routing — Done
+- release snapshot reader — Done
 - release impact summaries — Pending
 - stale-knowledge warnings — MVP Done
+- continuous release watcher — Pending
 
 ## Phase 4 — OCI Deployment Execution
-Status: Validated Scaffold
+Status: Staging deployed and validated
 
 Deliverables:
 - OCI-native deployment architecture — Done
@@ -67,5 +73,18 @@ Deliverables:
 - OCI access validation helper — Done
 - deployment smoke test for health, retrieval, and release-aware path — Done
 - GitHub Actions staging deployment workflow — Done
-- first Terraform apply to OCI — Pending
-- first backend/frontend cloud smoke test — Pending
+- first Terraform apply to OCI — Done
+- first backend/frontend cloud smoke test — Done
+- staging resource visibility checks — Done
+- staging baseline guardrail — Done
+
+## Phase 5 — Retrieval Promotion And Vector Search
+Status: Next
+
+Deliverables:
+- promote staging to `RETRIEVAL_PROVIDER=oci_object_storage` — Pending
+- post-promotion smoke/eval/retrieval regression — Pending
+- Oracle AI Vector Search schema design — Pending
+- Oracle AI Vector Search indexing prototype — Pending
+- Oracle AI Vector Search dual-run parity — Pending
+- controlled promotion from Object Storage manifest to Oracle AI Vector Search — Pending

@@ -4,7 +4,7 @@ Date: 2026-05-14
 
 ## Goal
 
-Move retrieval and knowledge storage from local prototype infrastructure to OCI-native managed services while preserving the validated advisory workflow.
+Move retrieval and knowledge storage from the validated local baseline to OCI-native managed services while preserving the advisory workflow.
 
 The migration is incremental:
 
@@ -25,7 +25,7 @@ Current local path:
 6. `OciKnowledgeRetriever` embeds the query, searches `JsonVectorStore`, applies intent-aware ranking, and returns `RetrievedSource` citations.
 7. The orchestrator uses retrieved citations, intent profile, and release snapshot context to produce the API response.
 
-What remains prototype:
+What remains pre-production:
 
 - Deterministic local hash embeddings.
 - Local JSON vector index.
