@@ -148,6 +148,8 @@ OCI API Gateway is scaffolded but default-off. Promote it only after the backend
 
 The backend Compute instance treats cloud-init `user_data` as bootstrap-only. Terraform intentionally ignores later `user_data` drift to avoid replacing the live backend VM during unrelated API Gateway, database, scheduler, or diagnostics updates. When enabling Gateway metadata, update `/etc/oci-architecture-studio.env` through the approved deployment/operator path and re-run readiness checks; do not rely on cloud-init to mutate an already-running instance.
 
+The public subnet security list allows HTTPS `443` for the Gateway endpoint and backend port `8000` for the direct rollback path. Keep the direct path until Gateway smoke is clean.
+
 Preflight:
 
 ```bash

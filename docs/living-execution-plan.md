@@ -90,7 +90,8 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | TASK-018 | Done | Add default-off Terraform scaffold for Oracle Autonomous AI Database vector-search shadow mode. | Passed `terraform fmt -recursive`, `git diff --check`, and Terraform validate for dev/test/staging. Non-mutating staging plan kept API Gateway and Autonomous Database disabled; existing backend replacement drift remains a known do-not-apply condition. |
 | TASK-019 | Done | Resolve staging Terraform drift before live API Gateway or database apply. | Added targeted `metadata["user_data"]` ignore for backend cloud-init bootstrap drift; passed Terraform fmt/check/validate; non-mutating staging plan now shows no real infrastructure changes, only new outputs. |
 | TASK-020 | Done | Run API Gateway live preflight plan without cutover apply. | API Gateway-enabled staging plan proposed only `oci_apigateway_gateway.api[0]` and `oci_apigateway_deployment.backend[0]` creates; backend and all existing resources were no-op. |
-| TASK-021 | Next | Apply OCI API Gateway and run smoke validation. | Gateway endpoint responds through smoke tests; direct backend VM remains healthy as rollback path; runtime docs note cloud-init metadata is not auto-mutated. |
+| TASK-021 | Done | Apply OCI API Gateway and run smoke validation. | Gateway and deployment applied; route backend context fixed to `${request.path[path]}`; subnet HTTPS 443 opened; Gateway smoke, Gateway operational readiness, direct backend rollback smoke, and post-apply Terraform no-change plan passed. Runtime diagnostics still report API Gateway warning until the running VM env is updated outside cloud-init. |
+| TASK-022 | Next | Update staging runtime API Gateway metadata without replacing backend VM. | `/operations/readiness` reports API Gateway configured/promotion-ready while direct backend rollback remains healthy. |
 
 ## Phase Gates
 
@@ -138,14 +139,13 @@ Run the appropriate subset after each increment; run the full matrix before a ne
 
 ## Next Actionable Increment
 
-Current task: `TASK-021`.
+Current task: `TASK-022`.
 
-Apply OCI API Gateway and run smoke validation:
+Update staging runtime API Gateway metadata without replacing backend VM:
 
-1. Apply only the reviewed API Gateway plan.
-2. Capture Gateway endpoint outputs.
-3. Smoke test Gateway and direct backend rollback path.
-4. Record validation evidence before any further promotion.
+1. Update the running backend configuration through the approved operator path, not cloud-init replacement.
+2. Re-run Gateway and direct backend smoke checks.
+3. Re-run operational readiness and confirm API Gateway diagnostics are clean.
 
 ## Operating Rules
 

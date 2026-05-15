@@ -419,6 +419,7 @@ Last validation run: 2026-05-15
 - Post-promotion live scenario checks: passed for architecture, migration, HA/DR, cost, and release-awareness
 - Rollback validation: passed, `local_json` was restored and then `oci_object_storage` was restored without code or prompt changes; the restore runbook now preserves or restores SELinux context on `/etc/oci-architecture-studio.env`
 - OCI Object Storage-provider eval parity: passed for golden evals, edge evals, and retrieval regression against the staging snapshot bucket
+- OCI API Gateway staging apply: passed for gateway and deployment; Gateway endpoint `https://pkgmvyyi3itxklv6knh4xfm6ca.apigateway.us-ashburn-1.oci.customer-oci.com/` smoke and operational readiness passed, direct backend VM rollback path remains healthy, and post-apply Terraform plan reports no changes
 - Presentation-friendly architecture diagrams: added in `docs/architecture-diagrams.md`
 - Documentation refresh: README, PRD, roadmap, vision, sprint docs, runbooks, demo readiness, architecture docs, promotion report, GenAI hardening notes, and supervised orchestration notes now reflect the current promoted staging state
 

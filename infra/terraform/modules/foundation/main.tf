@@ -73,6 +73,16 @@ resource "oci_core_security_list" "public" {
     source   = "0.0.0.0/0"
 
     tcp_options {
+      min = 443
+      max = 443
+    }
+  }
+
+  ingress_security_rules {
+    protocol = "6"
+    source   = "0.0.0.0/0"
+
+    tcp_options {
       min = 8000
       max = 8000
     }
@@ -370,7 +380,7 @@ resource "oci_apigateway_deployment" "backend" {
 
       backend {
         type = "HTTP_BACKEND"
-        url  = "http://${oci_core_instance.backend.public_ip}:8000/$${request.path[request.prefix]}"
+        url  = "http://${oci_core_instance.backend.public_ip}:8000/$${request.path[path]}"
       }
     }
   }
