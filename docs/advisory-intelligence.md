@@ -227,6 +227,14 @@ GET /operations/readiness
 
 It checks startup paths, dependency configuration, API Gateway readiness, OCI DevOps readiness, runtime safeguards, fallback paths, and release-refresh state.
 
+Runtime infrastructure visibility is exposed at:
+
+```text
+GET /operations/infrastructure
+```
+
+It reports configuration-derived OCI topology, active versus scaffolded providers, Object Storage snapshot posture, Vault/IAM posture, observability posture, scheduler and deployment workflow posture, rebuildability status, and operational gaps. It is read-only and does not replace live OCI reachability checks.
+
 This is intentionally simple and in-process for the MVP. Production observability should later export these fields to OCI Logging, Monitoring, and dashboards.
 
 ## Evaluation Coverage

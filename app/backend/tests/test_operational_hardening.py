@@ -31,6 +31,19 @@ def test_operations_health_endpoint_summarizes_runtime_checks() -> None:
     assert "retrieval_metrics" in body
 
 
+def test_operations_infrastructure_endpoint_reports_runtime_visibility() -> None:
+    response = client.get("/operations/infrastructure")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["environment"]["deployment_profile"] == "local_dev"
+    assert body["topology"]["api_exposure"] == "direct_backend_vm"
+    assert body["providers"]["retrieval"]["active_provider"] == "local_json"
+    assert body["rebuildability"]["status"] in {"ok", "warning"}
+    assert body["configured_resources"]["observability"]["monitoring_namespace"] == "oci_architecture_studio"
+    assert any(gap["area"] == "api_exposure" for gap in body["gaps"])
+
+
 def test_operations_analytics_records_architecture_review_usage() -> None:
     client.post(
         "/architecture-review",
@@ -88,6 +101,34 @@ def test_runtime_readiness_reports_api_gateway_and_devops_configuration() -> Non
     assert readiness["checks"]["api_gateway"]["status"] == "ok"
     assert readiness["checks"]["oci_devops"]["status"] == "ok"
     assert readiness["checks"]["runtime_safeguards"]["deterministic_synthesis_available"] is True
+
+
+def test_infrastructure_visibility_distinguishes_configured_and_scaffolded_oci_resources() -> None:
+    settings = Settings(
+        DEPLOYMENT_PROFILE="oci_vm",
+        OCI_AUTH_MODE="instance_principal",
+        OCI_REGION="us-ashburn-1",
+        OCI_COMPARTMENT_ID="ocid1.compartment.oc1..example",
+        OCI_VAULT_CONFIG_SECRET_OCID="ocid1.vaultsecret.oc1..example",
+        OCI_LOGGING_LOG_GROUP_OCID="ocid1.loggroup.oc1..example",
+        OCI_NOTIFICATIONS_TOPIC_OCID="ocid1.onstopic.oc1..example",
+        OCI_EVENTS_RULE_OCID="ocid1.eventrule.oc1..example",
+        OCI_OBJECT_STORAGE_NAMESPACE="example_namespace",
+        OCI_VECTOR_BUCKET="oci-architecture-studio-staging-knowledge-snapshots",
+        OCI_API_GATEWAY_ENDPOINT="https://example.apigateway.us-ashburn-1.oci.customer-oci.com",
+        OCI_DEVOPS_PROJECT_OCID="ocid1.devopsproject.oc1..example",
+    )
+
+    visibility = OperationalDiagnostics(settings).infrastructure_visibility(
+        retrieval={"provider": "oci_object_storage", "store": {"exists": True, "chunk_count": 44}},
+        refresh_status={"status": "succeeded"},
+    )
+
+    assert visibility["topology"]["api_exposure"] == "oci_api_gateway"
+    assert visibility["topology"]["runtime_compute"] == "oci_compute_vm"
+    assert visibility["configured_resources"]["storage"]["knowledge_bucket_configured"] is True
+    assert visibility["operational_workflows"]["deployment"]["provider"] == "oci_devops"
+    assert not any(gap["area"] == "identity" for gap in visibility["gaps"])
 
 
 def test_object_storage_retrieval_degrades_to_local_fallback_when_config_missing() -> None:

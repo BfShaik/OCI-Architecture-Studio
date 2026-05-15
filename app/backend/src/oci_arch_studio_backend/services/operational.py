@@ -253,6 +253,55 @@ class OperationalDiagnostics:
             "operational_metrics": operational_metrics.snapshot(),
         }
 
+    def infrastructure_visibility(
+        self,
+        *,
+        retrieval: dict[str, object],
+        refresh_status: dict[str, object],
+    ) -> dict[str, object]:
+        """Return an operator-readable view of OCI runtime topology and IaC maturity."""
+        api_gateway = self._check_api_gateway()
+        devops = self._check_oci_devops()
+        scheduler = self._scheduler_status()
+        configured_resources = self._configured_runtime_resources(api_gateway=api_gateway, devops=devops)
+        gaps = self._infrastructure_gaps(
+            api_gateway=api_gateway,
+            devops=devops,
+            scheduler=scheduler,
+            retrieval=retrieval,
+        )
+        return {
+            "generated_at": now_iso(),
+            "environment": {
+                "app_env": self.settings.app_env,
+                "deployment_profile": self.settings.deployment_profile,
+                "oci_region": self.settings.oci_region,
+                "oci_auth_mode": self.settings.oci_auth_mode,
+            },
+            "topology": self._runtime_topology(api_gateway=api_gateway),
+            "configured_resources": configured_resources,
+            "providers": {
+                "retrieval": self._retrieval_provider_visibility(retrieval),
+                "synthesis": self._synthesis_provider_visibility(),
+                "embeddings": self._embedding_provider_visibility(),
+            },
+            "operational_workflows": {
+                "release_refresh": self._check_release_freshness(refresh_status),
+                "scheduler": scheduler,
+                "deployment": {
+                    "provider": "oci_devops" if devops.get("configured") else "operator_scripts",
+                    "oci_devops_configured": bool(devops.get("configured")),
+                    "message": devops.get("message"),
+                },
+            },
+            "rebuildability": self._rebuildability_status(configured_resources=configured_resources, gaps=gaps),
+            "gaps": gaps,
+            "notes": [
+                "Infrastructure visibility is configuration-derived and read-only; it does not prove live OCI resource reachability unless connectivity checks are enabled.",
+                "Scaffolded resources are reported separately from active runtime providers to avoid overstating staging maturity.",
+            ],
+        }
+
     def runtime_readiness(
         self,
         *,
@@ -446,6 +495,235 @@ class OperationalDiagnostics:
             "embedding_fallback_enabled": self.settings.embedding_fallback_enabled,
             "deterministic_synthesis_available": True,
             "warnings": warnings,
+        }
+
+    def _runtime_topology(self, *, api_gateway: dict[str, object]) -> dict[str, object]:
+        profile = self.settings.deployment_profile
+        api_exposure = "oci_api_gateway" if api_gateway.get("configured") else "direct_backend_vm"
+        if profile == "oke":
+            runtime_compute = "oci_kubernetes_engine"
+        elif profile == "oci_functions":
+            runtime_compute = "oci_functions"
+        elif profile == "oci_vm":
+            runtime_compute = "oci_compute_vm"
+        else:
+            runtime_compute = "local_process"
+        return {
+            "api_exposure": api_exposure,
+            "runtime_compute": runtime_compute,
+            "network": {
+                "primary": "oci_vcn_public_subnet" if profile != "local_dev" else "local_loopback",
+                "ingress": "api_gateway_to_backend" if api_gateway.get("configured") else "public_backend_port",
+                "security_boundary": "oci_iam_dynamic_group_and_network_rules" if profile != "local_dev" else "local_dev_boundary",
+            },
+            "state": {
+                "knowledge_snapshots": (
+                    "oci_object_storage"
+                    if self.settings.oci_vector_bucket and self.settings.oci_object_storage_namespace
+                    else "local_filesystem"
+                ),
+                "release_snapshots": "local_filesystem_with_object_storage_sync_scaffold",
+            },
+            "observability": {
+                "logs": "oci_logging" if self.settings.oci_logging_log_group_ocid else "stdout",
+                "metrics": "oci_monitoring",
+                "notifications": "oci_notifications" if self.settings.oci_notifications_topic_ocid else "not_configured",
+                "events": "oci_events" if self.settings.oci_events_rule_ocid else "not_configured",
+            },
+        }
+
+    def _configured_runtime_resources(
+        self,
+        *,
+        api_gateway: dict[str, object],
+        devops: dict[str, object],
+    ) -> dict[str, object]:
+        return {
+            "networking": {
+                "vcn": "terraform_managed_when_deployed_to_oci",
+                "public_subnet": "terraform_managed_when_deployed_to_oci",
+                "api_gateway_configured": bool(api_gateway.get("configured")),
+            },
+            "runtime": {
+                "deployment_profile": self.settings.deployment_profile,
+                "api_gateway_endpoint_configured": bool(self.settings.oci_api_gateway_endpoint),
+                "oci_devops_configured": bool(devops.get("configured")),
+            },
+            "storage": {
+                "object_storage_namespace_configured": bool(self.settings.oci_object_storage_namespace),
+                "knowledge_bucket_configured": bool(self.settings.oci_vector_bucket),
+                "knowledge_object_name": self.settings.oci_vector_object_name,
+            },
+            "security": {
+                "vault_config_secret_configured": bool(self.settings.oci_vault_config_secret_ocid),
+                "auth_mode": self.settings.oci_auth_mode,
+                "compartment_configured": bool(self.settings.oci_compartment_id),
+            },
+            "observability": {
+                "logging_configured": bool(self.settings.oci_logging_log_group_ocid),
+                "monitoring_namespace": self.settings.oci_monitoring_namespace,
+                "notifications_configured": bool(self.settings.oci_notifications_topic_ocid),
+                "events_configured": bool(self.settings.oci_events_rule_ocid),
+            },
+            "ai": {
+                "genai_chat_configured": bool(
+                    self.settings.oci_genai_compartment_id and self.settings.oci_genai_chat_model_id
+                ),
+                "genai_embeddings_configured": bool(
+                    self.settings.oci_genai_compartment_id and self.settings.oci_genai_embedding_model_id
+                ),
+                "oracle_ai_vector_search_configured": bool(
+                    self.settings.oci_vector_db_dsn
+                    and self.settings.oci_vector_db_user
+                    and self.settings.oci_vector_db_password
+                ),
+            },
+        }
+
+    def _retrieval_provider_visibility(self, retrieval: dict[str, object]) -> dict[str, object]:
+        store = retrieval.get("store", {}) if isinstance(retrieval.get("store"), dict) else {}
+        return {
+            "active_provider": retrieval.get("provider") or self.settings.retrieval_provider,
+            "configured_provider": self.settings.retrieval_provider,
+            "chunk_count": store.get("chunk_count", 0),
+            "fallback_enabled": self.settings.retrieval_fallback_enabled,
+            "fallback_active": bool(store.get("fallback_active")),
+            "oracle_ai_vector_search_configured": bool(
+                self.settings.oci_vector_db_dsn
+                and self.settings.oci_vector_db_user
+                and self.settings.oci_vector_db_password
+            ),
+        }
+
+    def _synthesis_provider_visibility(self) -> dict[str, object]:
+        return {
+            "active_provider": self.settings.advisory_synthesis_provider,
+            "deterministic_fallback_available": True,
+            "oci_genai_configured": bool(
+                self.settings.oci_genai_compartment_id and self.settings.oci_genai_chat_model_id
+            ),
+        }
+
+    def _embedding_provider_visibility(self) -> dict[str, object]:
+        return {
+            "configured_provider": self.settings.embedding_provider,
+            "fallback_enabled": self.settings.embedding_fallback_enabled,
+            "oci_genai_embeddings_configured": bool(
+                self.settings.oci_genai_compartment_id and self.settings.oci_genai_embedding_model_id
+            ),
+        }
+
+    def _scheduler_status(self) -> dict[str, object]:
+        # Resource Scheduler and Functions are provisioned through Terraform when enabled.
+        configured = self.settings.deployment_profile == "oci_functions"
+        return {
+            "provider": "oci_resource_scheduler_to_oci_functions",
+            "configured": configured,
+            "message": (
+                "OCI Functions-compatible execution profile is selected."
+                if configured
+                else "OCI Resource Scheduler and Functions are scaffolded in Terraform and disabled unless explicitly enabled."
+            ),
+        }
+
+    def _infrastructure_gaps(
+        self,
+        *,
+        api_gateway: dict[str, object],
+        devops: dict[str, object],
+        scheduler: dict[str, object],
+        retrieval: dict[str, object],
+    ) -> list[dict[str, object]]:
+        gaps: list[dict[str, object]] = []
+        if self.settings.deployment_profile != "local_dev" and self.settings.oci_auth_mode == "config_file":
+            gaps.append(
+                {
+                    "severity": "high",
+                    "area": "identity",
+                    "message": "OCI runtime profile is using config-file auth instead of instance, resource, or workload identity.",
+                    "recommended_action": "Use OCI IAM dynamic groups, instance principals, resource principals, or OKE workload identity for deployed runtimes.",
+                }
+            )
+        if not api_gateway.get("configured"):
+            gaps.append(
+                {
+                    "severity": "medium",
+                    "area": "api_exposure",
+                    "message": "OCI API Gateway is not configured; the backend VM direct exposure path remains active.",
+                    "recommended_action": "Promote the default-off Terraform API Gateway scaffold when ingress hardening is ready.",
+                }
+            )
+        if not devops.get("configured"):
+            gaps.append(
+                {
+                    "severity": "medium",
+                    "area": "delivery",
+                    "message": "OCI DevOps deployment metadata is not configured; deployment currently relies on operator scripts.",
+                    "recommended_action": "Wire OCI DevOps project and deploy pipeline OCIDs into Terraform/env configuration when delivery automation is promoted.",
+                }
+            )
+        if not scheduler.get("configured"):
+            gaps.append(
+                {
+                    "severity": "low",
+                    "area": "operations",
+                    "message": "OCI Resource Scheduler and Functions refresh workflow is scaffolded but not active.",
+                    "recommended_action": "Enable the scheduler only after the refresh function image and permissions are ready.",
+                }
+            )
+        store = retrieval.get("store", {}) if isinstance(retrieval.get("store"), dict) else {}
+        if store.get("fallback_active"):
+            gaps.append(
+                {
+                    "severity": "medium",
+                    "area": "retrieval",
+                    "message": "Retrieval provider is using a fallback path.",
+                    "recommended_action": "Validate Object Storage or Oracle AI Vector Search configuration and re-run retrieval health checks.",
+                }
+            )
+        if self.settings.deployment_profile != "local_dev" and not self.settings.oci_vault_config_secret_ocid:
+            gaps.append(
+                {
+                    "severity": "medium",
+                    "area": "secrets",
+                    "message": "OCI Vault config secret is not configured for the runtime profile.",
+                    "recommended_action": "Store runtime configuration and sensitive provider settings in OCI Vault.",
+                }
+            )
+        return gaps
+
+    def _rebuildability_status(
+        self,
+        *,
+        configured_resources: dict[str, object],
+        gaps: list[dict[str, object]],
+    ) -> dict[str, object]:
+        observability = configured_resources.get("observability", {})
+        storage = configured_resources.get("storage", {})
+        security = configured_resources.get("security", {})
+        runtime = configured_resources.get("runtime", {})
+        checklist = {
+            "terraform_foundation_module": True,
+            "networking_iac": True,
+            "compute_profile_iac": self.settings.deployment_profile in {"oci_vm", "oke", "oci_functions"},
+            "object_storage_iac": bool(storage.get("knowledge_bucket_configured")) or self.settings.deployment_profile != "local_dev",
+            "vault_iac": bool(security.get("vault_config_secret_configured")) or self.settings.deployment_profile != "local_dev",
+            "observability_iac": bool(observability.get("logging_configured"))
+            or bool(observability.get("notifications_configured"))
+            or self.settings.deployment_profile != "local_dev",
+            "api_gateway_iac": bool(runtime.get("api_gateway_endpoint_configured")),
+            "oci_devops_iac": bool(runtime.get("oci_devops_configured")),
+        }
+        critical_or_high_gaps = [gap for gap in gaps if gap.get("severity") in {"critical", "high"}]
+        status = "warning" if critical_or_high_gaps or not all(checklist.values()) else "ok"
+        return {
+            "status": status,
+            "checklist": checklist,
+            "summary": (
+                "Core OCI rebuildability scaffolding is present; some promoted runtime integrations remain optional or unconfigured."
+                if status == "warning"
+                else "Runtime configuration indicates OCI rebuildability controls are configured."
+            ),
         }
 
     def _check_fallback_paths(self) -> dict[str, object]:

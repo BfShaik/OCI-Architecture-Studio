@@ -46,12 +46,13 @@ Operational diagnostics endpoints:
 http://193.122.149.102:8000/operations/profile
 http://193.122.149.102:8000/operations/health
 http://193.122.149.102:8000/operations/readiness
+http://193.122.149.102:8000/operations/infrastructure
 http://193.122.149.102:8000/operations/analytics
 ```
 
 ## Operational Diagnostics
 
-Use the operational endpoints before promoting runtime changes. They summarize deployment profile, retrieval/vector health, release-refresh freshness, synthesis provider readiness, OCI Vault configuration-secret posture, API Gateway readiness, OCI DevOps readiness, runtime safeguards, OCI observability configuration, fallback events, hallucination findings, governance policy triggers, governance risk trends, runtime degradation events, confidence distribution, and provider usage.
+Use the operational endpoints before promoting runtime changes. They summarize deployment profile, retrieval/vector health, release-refresh freshness, synthesis provider readiness, OCI Vault configuration-secret posture, API Gateway readiness, OCI DevOps readiness, runtime safeguards, OCI observability configuration, infrastructure topology visibility, rebuildability gaps, fallback events, hallucination findings, governance policy triggers, governance risk trends, runtime degradation events, confidence distribution, and provider usage.
 
 Runtime profiles are configured with:
 
@@ -76,7 +77,7 @@ Live OCI SDK connectivity checks are controlled by `OCI_CONNECTIVITY_CHECK_ENABL
 
 Before treating an environment as internal-beta ready:
 
-- `/health`, `/retrieval/health`, `/operations/health`, `/operations/readiness`, and `/operations/analytics` return successfully.
+- `/health`, `/retrieval/health`, `/operations/health`, `/operations/readiness`, `/operations/infrastructure`, and `/operations/analytics` return successfully.
 - Runtime profile is an OCI profile for shared environments, usually `oci_vm` or later `oke`.
 - Retrieval provider is healthy and fallback state is understood.
 - Deterministic synthesis fallback remains available even if OCI GenAI is enabled.
@@ -86,6 +87,7 @@ Before treating an environment as internal-beta ready:
 - Knowledge and release snapshots can be rebuilt and synced to OCI Object Storage.
 - Terraform validate passes for the target environment.
 - Golden, advisory, governance, and platform-maturity evals pass.
+- Runtime-production-readiness evals pass when runtime or deployment behavior changes.
 
 ## Verify Deployment Health
 

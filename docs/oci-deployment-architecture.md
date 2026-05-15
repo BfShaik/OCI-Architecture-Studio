@@ -1,6 +1,6 @@
 # OCI Architecture Studio — OCI Deployment Architecture
 
-Last updated: 2026-05-14
+Last updated: 2026-05-15
 
 ## Goal
 
@@ -20,7 +20,7 @@ Avoid premature microservices, Kubernetes, and complex orchestration until traff
 flowchart TD
   User["User / Architect"]
   Frontend["React Frontend\nObject Storage static site or build artifact"]
-  LB["Optional Public Load Balancer"]
+  API["Optional OCI API Gateway\ncurrently default-off"]
   Backend["FastAPI Backend\nCompute VM / container host"]
   Obj["Object Storage\nknowledge snapshots, eval reports, frontend assets"]
   Vault["OCI Vault\nAPI keys, app secrets"]
@@ -31,8 +31,9 @@ flowchart TD
   Vector["Oracle AI Vector Search\nPhase 2 vector retrieval"]
 
   User --> Frontend
-  Frontend --> LB
-  LB --> Backend
+  Frontend --> API
+  API --> Backend
+  Frontend -. current staging direct API .-> Backend
   Backend --> Obj
   Backend --> Vault
   Backend --> Logs
@@ -46,12 +47,13 @@ flowchart TD
 
 | Platform Need | Recommended OCI Service | Why |
 |---|---|---|
-| Backend API hosting | OCI Compute VM first; OCI Container Instances later | Lowest migration risk. The current FastAPI app can run as-is with `uvicorn` or a container. Container Instances are a good next step when image packaging is stable. |
+| Backend API hosting | OCI Compute VM first; OKE later when operational need justifies it | Lowest migration risk. The current FastAPI app runs as-is with `uvicorn`; OKE is a supported profile/scaffold, not the active staging runtime. |
+| API exposure | Direct backend VM in current staging; OCI API Gateway scaffolded default-off | Keeps staging stable while allowing a controlled move to API Gateway once ingress hardening is promoted. |
 | Frontend hosting | Object Storage static website or static assets behind CDN later | React build is static and can be uploaded with little operational overhead. |
 | Knowledge snapshots | Object Storage | Durable, low-cost storage for generated JSON indexes, eval reports, release snapshots, and raw source archives. |
 | Secrets | OCI Vault | Central place for API keys, database credentials, signing keys, and future model/provider credentials. |
 | Embeddings | OCI Generative AI | OCI-native embedding provider path for production semantic retrieval. |
-| Vector search | Oracle Database 23ai AI Vector Search or OCI Search with OpenSearch | Oracle AI Vector Search is a strong enterprise path when metadata, audit, and vectors should live close together. OpenSearch is a strong search-oriented path for hybrid retrieval and metadata filters. |
+| Vector search | Oracle AI Vector Search | Oracle AI Vector Search is the OCI-native enterprise path when metadata, audit, and vectors should live close together. Current staging retrieval uses Object Storage snapshots, not live Oracle AI Vector Search reads. |
 | Logging | OCI Logging | Centralized app, ingestion, and release job logs. |
 | Monitoring | OCI Monitoring | Metrics, alarms, health checks, ingestion failures, retrieval miss rate, eval pass/fail trend. |
 | Notifications | OCI Notifications | Alert routing for failed ingestion, failing evals, stale knowledge, and production health alarms. |
@@ -75,7 +77,7 @@ Steps:
 7. Send logs to OCI Logging.
 8. Add Monitoring alarms and Notifications for API availability and instance health.
 
-This phase is complete in staging. The active provider is still `local_json`, and `oci_object_storage` has passed parity for config-only promotion.
+This phase is complete in staging. The active staging retrieval provider is `oci_object_storage` backed by the Object Storage snapshot; `local_json` remains the deterministic rollback provider.
 
 ### Phase 2 — Replace Local Embeddings/Vector Index
 
@@ -83,13 +85,12 @@ Goal:
 - move from local hash embeddings and JSON vectors to OCI-native semantic retrieval.
 
 Steps:
-1. Add embedding provider abstraction in backend.
-2. Implement OCI Generative AI embedding provider.
-3. Add vector store abstraction.
-4. Spike Oracle AI Vector Search and/or OpenSearch with metadata filters.
-5. Persist chunk metadata, embeddings, source version, freshness, and trust level.
-6. Keep JSON vector store as local fallback.
-7. Add retrieval-quality eval suite.
+1. Keep embedding and vector provider abstractions behind configuration.
+2. Use OCI Generative AI embedding provider where configured, with local deterministic fallback.
+3. Use Oracle AI Vector Search where configured, with Object Storage/local JSON fallback.
+4. Persist chunk metadata, embeddings, source version, freshness, and trust level.
+5. Keep JSON vector store as local fallback.
+6. Continue retrieval-quality evals before promoting providers.
 
 ### Phase 3 — Productionize Ingestion And Release Intelligence
 
@@ -97,7 +98,7 @@ Goal:
 - make knowledge refresh and release awareness operational.
 
 Steps:
-1. Move ingestion jobs to scheduled OCI jobs or a simple Compute cron runner.
+1. Move ingestion jobs to OCI Resource Scheduler invoking OCI Functions when the function image and permissions are ready.
 2. Archive raw fetched docs and parsed snapshots in Object Storage.
 3. Add content hashing and selective reindexing.
 4. Add release impact classifier.
@@ -146,6 +147,9 @@ KNOWLEDGE_INDEX_PATH
 RELEASE_SNAPSHOT_PATH
 OCI_REGION
 OCI_PROFILE
+DEPLOYMENT_PROFILE
+RETRIEVAL_PROVIDER
+ADVISORY_SYNTHESIS_PROVIDER
 VECTOR_DB_URL
 ```
 
@@ -161,7 +165,7 @@ Secrets should not be committed. Use OCI Vault for:
 ### Current
 
 ```text
-source registry -> local ingestion -> local hash embeddings -> JSON vector index -> FastAPI retrieval
+source registry -> local ingestion -> local hash embeddings -> Object Storage or JSON vector snapshot -> FastAPI retrieval
 ```
 
 ### Phase 2
@@ -171,7 +175,7 @@ source registry
   -> ingestion cleanup
   -> chunk metadata/versioning
   -> OCI Generative AI embeddings
-  -> Oracle AI Vector Search / OpenSearch
+  -> Oracle AI Vector Search
   -> metadata-filtered retrieval
   -> citation-aware synthesis
 ```
@@ -244,12 +248,14 @@ cd app/frontend && npm run dev
 6. Upload frontend assets and generated snapshots to Object Storage.
 7. Deploy backend to Compute.
 8. Configure Vault secrets and IAM policies.
-9. Verify `/health`.
+9. Verify `/health`, `/retrieval/health`, `/operations/readiness`, and `/operations/infrastructure`.
 10. Run API smoke tests against OCI URL.
 
-### CI/CD Integration
+### Delivery Integration
 
-Current CI should remain the quality gate:
+Current promotion is operator-script driven with local validation. OCI DevOps metadata is scaffolded and should become the OCI-native delivery path when promoted. Operational orchestration should not use GitHub Actions.
+
+Required validation before promotion:
 
 - backend tests
 - frontend build
@@ -257,6 +263,7 @@ Current CI should remain the quality gate:
 - release ingestion smoke
 - golden evals
 - edge evals
+- runtime readiness and infrastructure visibility checks
 
 Next CI steps:
 

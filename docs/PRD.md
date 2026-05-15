@@ -39,7 +39,7 @@ OCI Architecture Studio is an AI-powered OCI architecture intelligence platform 
 - Confidence sub-signals for service relevance, workload alignment, migration mapping certainty, and citation coverage
 - Release snapshot and temporal knowledge schemas for current-vs-historical scaffolding
 - Deterministic release intelligence for release normalization, change-category classification, impacted service/source/chunk analysis, targeted eval impact detection, and refresh action recommendations
-- OCI-native operational diagnostics for deployment profiles, retrieval/vector health, release freshness, synthesis provider availability, secret/config posture, observability configuration, and runtime analytics
+- OCI-native operational diagnostics for deployment profiles, retrieval/vector health, release freshness, synthesis provider availability, secret/config posture, observability configuration, infrastructure visibility, rebuildability gaps, and runtime analytics
 - Runtime profile examples for local development, OCI VM, OKE, and OCI Functions-compatible execution
 - Retrieval regression and parity validation
 - OCI staging deployment
@@ -66,14 +66,15 @@ Operational flow:
 - Local development keeps deterministic local retrieval/synthesis and does not require OCI connectivity.
 - OCI VM and OKE profiles prefer OCI IAM-based runtime identity, OCI Vault for sensitive configuration, OCI Object Storage or Oracle AI Vector Search for retrieval, and OCI Logging/Monitoring/Notifications for operations.
 - OCI Functions-compatible execution is supported for scheduled refresh jobs through OCI Resource Scheduler invoking OCI Functions.
-- `/operations/profile`, `/operations/health`, `/operations/readiness`, and `/operations/analytics` expose additive diagnostics without changing the architecture-review API.
+- `/operations/profile`, `/operations/health`, `/operations/readiness`, `/operations/infrastructure`, and `/operations/analytics` expose additive diagnostics without changing the architecture-review API.
 - Operational analytics include deterministic governance policy-trigger and risk-trend counters from generated advisory metadata.
 - Runtime readiness diagnostics check startup paths, dependency configuration, API Gateway readiness, OCI DevOps readiness, runtime safeguards, fallback paths, and release-refresh state.
+- Infrastructure visibility diagnostics report the configured OCI runtime topology, API exposure mode, retrieval/synthesis/embedding providers, Object Storage snapshot posture, Vault/IAM posture, observability posture, scheduler/deployment workflow posture, and configuration-derived rebuildability gaps. This endpoint is read-only and does not prove live OCI resource reachability unless connectivity checks are enabled.
 - Live OCI SDK connectivity checks are disabled by default and should be enabled only after IAM policies and Vault access are ready.
 
 Evaluation flow:
 
-- Golden, edge-case, advisory-quality, orchestration-quality, architecture-realism, evaluation-intelligence, enterprise-governance, and enterprise-platform-maturity datasets can be run locally through the deterministic eval runner.
+- Golden, edge-case, advisory-quality, orchestration-quality, architecture-realism, evaluation-intelligence, enterprise-governance, enterprise-platform-maturity, and runtime-production-readiness datasets can be run locally through the deterministic eval runner.
 - Enterprise-governance and enterprise-platform-maturity evals measure governance annotations, auditability, risk classification, topology/explainability, migration governance, security realism, operational realism, runtime degradation handling, executive usability, and FinOps signals.
 - The evaluation-intelligence layer scores generated responses across OCI specificity, completeness, workload alignment, migration realism, HA/DR, cost, operations, security, observability, explainability, tradeoff quality, and consistency.
 - Hallucination heuristics flag invented OCI services, unsupported certainty claims, stale release claims, contradictory recommendations, and unsupported migration claims.

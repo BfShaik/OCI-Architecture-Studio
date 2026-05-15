@@ -29,6 +29,7 @@ def evaluate(base_url: str, *, require_oci_profile: bool = False) -> dict[str, A
     retrieval = fetch_json(f"{base}/retrieval/health")
     operations = fetch_json(f"{base}/operations/health")
     readiness = fetch_json(f"{base}/operations/readiness")
+    infrastructure = fetch_json(f"{base}/operations/infrastructure")
     analytics = fetch_json(f"{base}/operations/analytics")
 
     failures: list[str] = []
@@ -47,6 +48,18 @@ def evaluate(base_url: str, *, require_oci_profile: bool = False) -> dict[str, A
     if readiness.get("status") == "warning":
         warnings.append("runtime readiness has warnings")
     deployment = operations.get("deployment", {}) if isinstance(operations.get("deployment"), dict) else {}
+    infrastructure_environment = (
+        infrastructure.get("environment", {}) if isinstance(infrastructure.get("environment"), dict) else {}
+    )
+    if require_oci_profile and infrastructure_environment.get("deployment_profile") == "local_dev":
+        failures.append("OCI infrastructure visibility required but runtime reports local_dev")
+    rebuildability = (
+        infrastructure.get("rebuildability", {}) if isinstance(infrastructure.get("rebuildability"), dict) else {}
+    )
+    if rebuildability.get("status") == "warning":
+        warnings.append("infrastructure rebuildability has warnings")
+    if not infrastructure.get("topology"):
+        failures.append("infrastructure topology visibility is unavailable")
     if require_oci_profile and deployment.get("profile") == "local_dev":
         failures.append("OCI deployment profile required but runtime reports local_dev")
     observability = analytics.get("observability", {}) if isinstance(analytics.get("observability"), dict) else {}
@@ -62,6 +75,8 @@ def evaluate(base_url: str, *, require_oci_profile: bool = False) -> dict[str, A
         "operational_status": operations.get("status"),
         "runtime_readiness_status": readiness.get("status"),
         "runtime_readiness_warnings": readiness.get("warning_checks", []),
+        "infrastructure_rebuildability_status": rebuildability.get("status"),
+        "infrastructure_gap_count": len(infrastructure.get("gaps", [])) if isinstance(infrastructure.get("gaps"), list) else 0,
         "request_count": metrics.get("request_count", 0),
     }
 

@@ -65,3 +65,7 @@ output "knowledge_refresh_stable_docs_schedule_ocid" {
 output "governance_resource_summary" {
   value = module.foundation.governance_resource_summary
 }
+
+output "runtime_infrastructure_summary" {
+  value = module.foundation.runtime_infrastructure_summary
+}

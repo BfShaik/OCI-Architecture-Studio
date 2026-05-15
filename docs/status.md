@@ -310,9 +310,14 @@ This progress is based on `docs/two-week-plan.md`.
   - `/operations/readiness` endpoint with startup, dependency, API Gateway, OCI DevOps, runtime safeguard, fallback, and release-refresh checks
   - runtime degradation event counters in operational analytics
   - enterprise-platform-maturity eval suite under `evals/enterprise-platform-maturity.jsonl`
+- Added OCI runtime production-readiness foundation:
+  - additive `/operations/infrastructure` endpoint for configuration-derived OCI topology, provider, workflow, rebuildability, and gap visibility
+  - Terraform `runtime_infrastructure_summary` output for deployment review and rebuild documentation
+  - operational readiness checker now validates infrastructure visibility in addition to health/readiness/analytics endpoints
+  - runtime-production-readiness eval suite under `evals/runtime-production-readiness.jsonl`
 - Added OCI-native operational hardening foundation:
   - runtime deployment profiles for local development, OCI VM, OKE, and OCI Functions-compatible execution
-  - additive `/operations/profile`, `/operations/health`, `/operations/readiness`, and `/operations/analytics` endpoints
+  - additive `/operations/profile`, `/operations/health`, `/operations/readiness`, `/operations/infrastructure`, and `/operations/analytics` endpoints
   - operational metrics for provider usage, synthesis usage, fallback events, hallucination findings, governance policy triggers, governance risk trends, workload-category usage, confidence distribution, and response latency
   - OCI Vault configuration-secret readiness checks with local environment compatibility
   - OCI Logging, Audit posture, Monitoring, Notifications, and Events configuration visibility
@@ -344,7 +349,7 @@ Last validation run: 2026-05-15
 - Continuous intelligence hardening: candidate-first promotion, version lineage, rollback automation, and refresh status endpoint implemented
 - Terraform validation: passed after optional knowledge refresh scheduler scaffold; staging plan currently should not be applied until existing backend replacement drift is resolved and the function image is available
 - OCI-native refresh scheduler scaffold: implemented with OCI Functions plus OCI Resource Scheduler; not applied yet because a published OCIR function image is required before enabling
-- Backend tests: passed, 117 tests
+- Backend tests: passed, 119 tests
 - Frontend build: passed
 - Golden evals: passed, 18 of 18
 - Edge-case evals: passed, 8 of 8
@@ -354,9 +359,10 @@ Last validation run: 2026-05-15
 - Evaluation-intelligence evals: passed, 9 of 9
 - Enterprise-governance evals: passed, 5 of 5
 - Enterprise-platform-maturity evals: passed, 4 of 4
+- Runtime-production-readiness evals: passed, 3 of 3
 - Advisory quality gate: passed against the evaluation-intelligence report with MVP thresholds
 - Operational hardening tests: passed in targeted API/diagnostics suite
-- Operational readiness check: passed locally against `/health`, `/retrieval/health`, `/operations/health`, `/operations/readiness`, and `/operations/analytics`; API Gateway and OCI DevOps are expected readiness warnings until configured
+- Operational readiness check: passed locally against `/health`, `/retrieval/health`, `/operations/health`, `/operations/readiness`, `/operations/infrastructure`, and `/operations/analytics`; API Gateway and OCI DevOps are expected readiness warnings until configured
 - Runtime readiness endpoint: passed locally in targeted API tests
 - Retrieval health check: passed for `local_json`, 44 chunks
 - Retrieval health check with `EMBEDDING_PROVIDER=oci_genai` and missing OCI GenAI env vars: passed through deterministic embedding fallback
