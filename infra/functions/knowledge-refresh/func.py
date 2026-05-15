@@ -4,6 +4,7 @@ import io
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -20,7 +21,7 @@ def handler(ctx, data: io.BytesIO | None = None) -> dict[str, Any]:
 
     mode = str(payload.get("mode") or os.getenv("KNOWLEDGE_REFRESH_MODE") or "release-watch")
     command = [
-        "python",
+        sys.executable,
         str(REPO_ROOT / "knowledge" / "refresh" / "refresh_policy.py"),
         "--mode",
         mode,

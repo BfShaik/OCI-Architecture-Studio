@@ -79,8 +79,8 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | TASK-007 | Done | Validate Oracle AI Vector Search schema/index prerequisites without active-provider promotion. | Local index validation passed for 44 chunks at 256 dimensions; vector validation skip-safe report confirms missing Oracle DB config without active-provider promotion. |
 | TASK-008 | Done | Add Oracle AI Vector Search dual-read parity workflow against Object Storage retrieval. | `retrieval_parity_check.py` now supports `--oci-native-provider oracle_ai_vector_search`; skip-safe run used Object Storage baseline with 44 chunks and reported missing Oracle DB config. |
 | TASK-009 | Blocked | Promote semantic retrieval through configuration only after parity approval. | Blocked until Oracle DB vector config exists and Oracle AI Vector Search parity passes without skip; promotion and rollback runbook documented. |
-| TASK-010 | Next | Activate controlled OCI Functions knowledge-refresh invocation path. | Function invocation smoke passes; no automatic promotion of snapshots without gates. |
-| TASK-011 | Not Started | Activate OCI Resource Scheduler for release refresh after function readiness. | Schedule OCIDs visible in diagnostics; manual disable rollback documented. |
+| TASK-010 | Done | Activate controlled OCI Functions knowledge-refresh invocation path. | Local Function handler smoke passed with `no_fetch`, `quick_gates`, `upload=false`, `promoted=false`, and reports written under `/tmp`. |
+| TASK-011 | Next | Activate OCI Resource Scheduler for release refresh after function readiness. | Schedule OCIDs visible in diagnostics; manual disable rollback documented. |
 | TASK-012 | Not Started | Define OCI DevOps delivery contract around existing operator artifact flow. | Pipeline requirements documented; operator scripts remain usable. |
 | TASK-013 | Not Started | Wire OCI DevOps metadata into runtime readiness checks for active deployments. | Diagnostics distinguish configured vs inactive DevOps. |
 | TASK-014 | Not Started | Expand official OCI corpus for highest-value advisory gaps. | Retrieval regression and advisory evals do not regress. |
@@ -133,14 +133,14 @@ Run the appropriate subset after each increment; run the full matrix before a ne
 
 ## Next Actionable Increment
 
-Current task: `TASK-010`.
+Current task: `TASK-011`.
 
-Activate controlled OCI Functions knowledge-refresh invocation path:
+Activate OCI Resource Scheduler for release refresh after function readiness:
 
-1. Inspect Function scaffold and knowledge-refresh handler.
-2. Document or validate controlled invocation inputs.
-3. Ensure refresh remains candidate-first and does not promote snapshots without gates.
-4. Keep Resource Scheduler disabled until Function invocation is validated.
+1. Inspect Terraform scheduler resources and diagnostics.
+2. Document scheduler enablement prerequisites and rollback.
+3. Keep schedules disabled until Function image and OCIDs are validated.
+4. Confirm runtime diagnostics expose Function and schedule OCIDs when configured.
 
 ## Operating Rules
 

@@ -33,3 +33,32 @@ or:
 ```json
 {"mode":"stable-docs","upload":true}
 ```
+
+Controlled validation before enabling Resource Scheduler:
+
+```bash
+app/backend/.venv/bin/python - <<'PY'
+import io
+import importlib.util
+import json
+from pathlib import Path
+
+function_path = Path("infra/functions/knowledge-refresh/func.py")
+spec = importlib.util.spec_from_file_location("knowledge_refresh_function", function_path)
+module = importlib.util.module_from_spec(spec)
+assert spec.loader is not None
+spec.loader.exec_module(module)
+
+payload = {
+    "mode": "release-watch",
+    "no_fetch": True,
+    "quick_gates": True,
+    "upload": False,
+}
+result = module.handler(None, io.BytesIO(json.dumps(payload).encode("utf-8")))
+print(json.dumps(result, indent=2))
+raise SystemExit(0 if result["passed"] else 1)
+PY
+```
+
+This validates the Function invocation contract without fetching live documentation, uploading snapshots, promoting candidates, or enabling schedules. Keep Resource Scheduler disabled until this controlled invocation passes with the packaged image and runtime IAM policy.
