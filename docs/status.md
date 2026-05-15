@@ -376,7 +376,8 @@ Last validation run: 2026-05-15
 - Staging retrieval provider promotion: passed, active provider is now `oci_object_storage`
 - Staging redeploy from the latest audited working tree: passed
 - Staging endpoint parity: passed for `/health`, `/architecture-review`, `/retrieval/health`, `/advisory/quality`, `/orchestration/health`, and `/knowledge/refresh/status`
-- Staging retrieval snapshot: previously passed with `oci_object_storage`, 21 chunks, 21 services, and 11 service domains; the 44-source corpus expansion is validated locally and still needs staging snapshot promotion before it is a staging runtime claim
+- Staging retrieval snapshot: passed with `oci_object_storage`, 44 chunks, 41 services, and 14 service domains after Object Storage snapshot sync
+- Staging enterprise governance smoke: passed, including `enterprise_governance` response metadata and governance analytics counters
 - Post-promotion baseline guardrail: passed with expected provider `oci_object_storage`
 - Post-promotion deployment smoke: passed for backend, frontend, and OCI SDK tenancy access
 - Post-promotion OCI resource visibility smoke: passed for Object Storage bucket, Vault secret, Logging log group, Monitoring alarm, and Events rule

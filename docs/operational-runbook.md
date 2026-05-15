@@ -80,7 +80,7 @@ python3 infra/scripts/verify_staging_baseline.py \
   --api-base-url http://193.122.149.102:8000 \
   --frontend-url http://193.122.149.102:8000/ \
   --expected-retrieval-provider oci_object_storage \
-  --expected-chunks 21
+  --expected-chunks 44
 ```
 
 Expected result:

@@ -392,17 +392,18 @@ cd ../frontend && npm run build
 
 Latest full validation: 2026-05-15.
 
-- Local backend tests: `112 passed`
+- Local backend tests: `114 passed`
 - Golden evals: `18 passed, 0 failed`
 - Edge-case evals: `8 passed, 0 failed`
 - Advisory-quality evals: `5 passed, 0 failed`
 - Controlled orchestration evals: `5 passed, 0 failed`
 - Architecture-realism evals: `4 passed, 0 failed`
 - Evaluation-intelligence evals: `9 passed, 0 failed`
+- Enterprise-governance evals: `5 passed, 0 failed`
 - Advisory quality gate: passed with MVP thresholds
-- Operational readiness check: passed locally
-- Retrieval regression: `26 passed, 0 failed`
-- Retrieval health: passed for `local_json` with 44 chunks in the current branch; staging remains documented as `oci_object_storage`
+- Operational readiness check: passed locally and against staging
+- Retrieval regression: `18 passed, 0 failed`
+- Retrieval health: passed for local `local_json` and staging `oci_object_storage` with 44 chunks
 - Oracle AI Vector Search local fallback health: passed with fallback active when DB settings are absent
 - Oracle vector local-index validation: passed for 44 chunks at 256 dimensions
 - Vector retrieval validation: skip-safe report generated when Oracle DB settings are absent
@@ -414,6 +415,7 @@ Latest full validation: 2026-05-15.
 - Frontend build: passed
 - Terraform fmt/validate: passed for `dev`, `test`, and `staging`
 - OCI staging smoke: passed for backend, frontend, OCI SDK, retrieval, and resource visibility
+- Staging enterprise governance smoke: passed, including `enterprise_governance` response metadata and governance analytics counters
 - Dual-provider retrieval parity: passed, `14/14`, comparing `local_json` with `oci_object_storage`
 - Staging retrieval promotion: passed, active provider is `oci_object_storage`
 - Rollback validation: passed, `local_json` can be restored through config only and `oci_object_storage` was restored after the rollback test
