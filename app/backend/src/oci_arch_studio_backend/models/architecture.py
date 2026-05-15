@@ -330,6 +330,51 @@ class ExecutiveExperienceSummary(BaseModel):
     review_artifacts: list[ArchitectureReviewArtifact] = Field(default_factory=list)
 
 
+class MigrationPhasePlan(BaseModel):
+    phase: str
+    objective: str
+    actions: list[str] = Field(default_factory=list)
+    dependencies: list[str] = Field(default_factory=list)
+    rollback_considerations: list[str] = Field(default_factory=list)
+    readiness_checks: list[str] = Field(default_factory=list)
+
+
+class ModernizationOption(BaseModel):
+    approach: str
+    fit: str
+    tradeoffs: list[str] = Field(default_factory=list)
+    operational_implications: list[str] = Field(default_factory=list)
+    readiness_requirements: list[str] = Field(default_factory=list)
+
+
+class FinOpsRecommendation(BaseModel):
+    lever: str
+    recommendation: str
+    expected_cost_implication: str
+    performance_tradeoff: str
+    operational_savings: str
+    source_chunk_ids: list[str] = Field(default_factory=list)
+
+
+class WorkloadOptimizationSignal(BaseModel):
+    workload: str
+    service_priorities: list[str] = Field(default_factory=list)
+    scaling_guidance: str
+    governance_weighting: str
+    cost_performance_tradeoff: str
+
+
+class OptimizationPlanSummary(BaseModel):
+    maturity_level: str
+    migration_phases: list[MigrationPhasePlan] = Field(default_factory=list)
+    modernization_options: list[ModernizationOption] = Field(default_factory=list)
+    finops_recommendations: list[FinOpsRecommendation] = Field(default_factory=list)
+    workload_optimization_signals: list[WorkloadOptimizationSignal] = Field(default_factory=list)
+    optimization_comparisons: list[ArchitectureComparison] = Field(default_factory=list)
+    implementation_readiness: list[str] = Field(default_factory=list)
+    recommendation_additions: list[str] = Field(default_factory=list)
+
+
 class ReleaseImpactSummary(BaseModel):
     snapshot_path: str | None = None
     snapshot_generated_at: str | None = None
@@ -396,6 +441,7 @@ class ArchitectureReviewResponse(BaseModel):
     enterprise_governance: EnterpriseGovernanceAssessment | None = None
     architecture_topology: ArchitectureTopologySummary | None = None
     executive_experience: ExecutiveExperienceSummary | None = None
+    optimization_plan: OptimizationPlanSummary | None = None
     release_context: ReleaseImpactSummary | None = None
     knowledge_temporal_context: KnowledgeTemporalContext | None = None
     answer: str

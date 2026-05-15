@@ -65,6 +65,9 @@ def test_operations_analytics_records_architecture_review_usage() -> None:
     assert metrics["executive_summary_count"] >= 1
     assert metrics["visualization_generation_count"] >= 1
     assert metrics["review_artifact_count"] >= 1
+    assert "finops_recommendation_frequency" in metrics
+    assert "migration_recommendation_trends" in metrics
+    assert "workload_optimization_patterns" in metrics
 
 
 def test_oci_vm_profile_warns_when_using_config_file_auth() -> None:

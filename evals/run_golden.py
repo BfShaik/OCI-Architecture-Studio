@@ -32,13 +32,16 @@ SUPPORTED_OCI_TERMS = {
     "cdn",
     "cloud guard",
     "compute",
+    "container registry",
     "cost analysis",
     "cost management overview",
     "data guard",
+    "data safe",
     "database migration",
     "database services overview",
     "dns",
     "fastconnect",
+    "functions",
     "full stack disaster recovery",
     "iam",
     "identity",
@@ -49,6 +52,9 @@ SUPPORTED_OCI_TERMS = {
     "mysql heatwave",
     "network security groups",
     "object storage",
+    "oci container registry",
+    "oci data safe",
+    "oci functions",
     "oke",
     "oracle base database service",
     "oracle cloud infrastructure",
@@ -208,6 +214,21 @@ def response_text(response: dict[str, Any]) -> str:
                 parts.append(str(artifact.get("title", "")))
                 parts.append(str(artifact.get("markdown_summary", "")))
                 parts.extend(str(item) for item in artifact.get("review_checkpoints", []))
+    optimization = response.get("optimization_plan") or {}
+    if isinstance(optimization, dict):
+        parts.append(str(optimization.get("maturity_level", "")))
+        parts.extend(str(item) for item in optimization.get("implementation_readiness", []))
+        parts.extend(str(item) for item in optimization.get("recommendation_additions", []))
+        for key in (
+            "migration_phases",
+            "modernization_options",
+            "finops_recommendations",
+            "workload_optimization_signals",
+            "optimization_comparisons",
+        ):
+            for item in optimization.get(key, []):
+                if isinstance(item, dict):
+                    parts.extend(str(value) for value in item.values())
     release_context = response.get("release_context") or {}
     if isinstance(release_context, dict):
         parts.extend(str(item) for item in release_context.get("architecture_affecting_services", []))

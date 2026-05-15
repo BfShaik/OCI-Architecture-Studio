@@ -268,9 +268,21 @@ h1 {
 .sequence-panel,
 .topology-panel,
 .comparison-panel,
-.explainability-panel {
+.explainability-panel,
+.optimization-panel {
   display: grid;
   gap: 14px;
+}
+
+.optimization-subsection {
+  display: grid;
+  gap: 10px;
+}
+
+.optimization-subsection > h4 {
+  margin: 0;
+  color: #111827;
+  font-size: 0.96rem;
 }
 
 .decision-grid {

@@ -26,6 +26,7 @@ evals/
   executive-experience.jsonl
   enterprise-governance.jsonl
   enterprise-platform-maturity.jsonl
+  finops-migration-optimization.jsonl
   runtime-production-readiness.jsonl
   run_golden.py            Local eval runner
   reports/                 Generated reports, ignored by git
@@ -89,6 +90,8 @@ Field guidance:
 - `citation_required`: whether response must include valid citations/chunks
 - `minimum_architecture_quality`: optional quality gate threshold for advanced scoring
 - `minimum_score`: minimum passing score, 0-100
+
+FinOps and migration optimization cases also use the same schema to check phased sequencing, coexistence/rollback guidance, modernization options, rightsizing/autoscaling/storage lifecycle guidance, GPU/inference cost controls, DR cost tiering, workload optimization signals, and implementation-readiness language.
 
 ## Scoring Strategy
 
@@ -157,6 +160,7 @@ Implemented today:
 - configurable report-level quality gating through `infra/scripts/advisory_quality_gate.py`
 - provider comparison enrichment in `infra/scripts/genai_synthesis_parity_check.py`
 - executive-experience checks for review-ready summaries, implementation sequencing, comparison usefulness, visualization summary usefulness, and export-friendly Markdown content
+- FinOps/migration optimization checks for phased migration realism, rollback/coexistence planning, modernization guidance, cost-performance tradeoffs, workload optimization, and implementation practicality
 
 The layer is deterministic and regression-friendly. It does not use autonomous judges, fine-tuning, or LLM-as-judge scoring.
 

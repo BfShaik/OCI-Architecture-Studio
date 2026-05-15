@@ -295,7 +295,7 @@ class ExecutiveExperienceBuilder:
         sources: list[RetrievedSource],
     ) -> str:
         lines = [
-            "# OCI Architecture Review Summary",
+            "# Architecture Review Summary",
             "",
             "## Executive Summary",
             executive_summary,

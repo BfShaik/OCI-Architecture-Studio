@@ -17,7 +17,7 @@ OCI Architecture Studio currently supports a validated advisory flow in local de
 7. The controlled orchestration layer selects deterministic specialist roles, shares the same retrieved evidence across them, and runs a validation critic over evidence support, citations, freshness, and unsupported-claim risk. These are in-process role boundaries, not autonomous agents.
 8. One final synthesis step generates the advisory response through the configured provider with deterministic rollback available. Deterministic synthesis now uses lightweight architecture pattern profiles, retrieved evidence, workload heuristics, and consistency checks rather than only profile boilerplate. OCI GenAI synthesis can be enabled through configuration and uses the same retrieved context through a dedicated grounding prompt builder.
 9. Release-awareness uses local release snapshots, deterministic release classification, impact analysis, release overlays on affected chunks, and refresh-policy scaffolding. Scheduled refresh and promotion automation exist, but live release reconciliation is not part of request-time advisory behavior.
-10. The backend returns structured recommendations, concise decision reasoning metadata, consistency findings, confidence, evidence links, section citation metadata, deterministic enterprise-governance assessment metadata, lightweight architecture topology metadata, executive experience metadata, optional retrieval debug traces, release context, temporal knowledge context, and standard architecture response sections. The current UI renders the main advisory fields, executive brief, implementation sequence, topology/dependency summaries, comparison summaries, explainability highlights, exportable Markdown summary, and citation cards. Full section-level citation UI, live diagram rendering, and release-context UI are future work.
+10. The backend returns structured recommendations, concise decision reasoning metadata, consistency findings, confidence, evidence links, section citation metadata, deterministic enterprise-governance assessment metadata, lightweight architecture topology metadata, executive experience metadata, FinOps/migration optimization metadata, optional retrieval debug traces, release context, temporal knowledge context, and standard architecture response sections. The current UI renders the main advisory fields, executive brief, implementation sequence, topology/dependency summaries, comparison summaries, explainability highlights, migration/FinOps optimization summaries, exportable Markdown summary, and citation cards. Full section-level citation UI, live diagram rendering, and release-context UI are future work.
 11. Operational diagnostics expose deployment profile, retrieval health, release refresh freshness, synthesis availability, OCI secret/config posture, API Gateway/OCI DevOps readiness metadata, infrastructure visibility, governance/risk counters, runtime readiness, and lightweight runtime analytics through additive endpoints. Live OCI connectivity checks are opt-in so local development stays offline-safe.
 
 LangGraph, advanced memory, and autonomous agent execution remain deferred. Oracle AI Vector Search provider code and tooling exist, but staging active-read promotion is deferred until a real Oracle vector index is built and parity checks pass.
@@ -61,6 +61,8 @@ tests/                Backend and integration tests
 - Deterministic enterprise governance assessment metadata with executive summary, governance annotations, security posture checks, risk classifications, recommendation priorities, architecture comparisons, enterprise review findings, and auditability trace
 - Lightweight architecture topology metadata with service nodes, dependencies, deployment topology, HA/DR topology, operational notes, and a simple Mermaid flow for future UI rendering
 - Executive experience metadata and UI rendering for executive summaries, decision briefs, implementation sequencing, topology/dependency summaries, architecture comparisons, explainability highlights, and Markdown review export
+- Deterministic migration and FinOps optimization metadata with phased migration waves, modernization options, rightsizing/autoscaling/storage lifecycle guidance, workload optimization signals, implementation readiness checks, and cost-vs-resilience comparison reasoning
+- Frontend rendering for migration and FinOps optimization summaries, including phased migration steps, FinOps levers, workload-specific optimization signals, and implementation readiness notes
 - Expanded confidence sub-signals for service relevance, workload alignment, migration mapping certainty, and citation coverage
 - Release snapshot schema and temporal knowledge metadata schema for current-vs-historical scaffolding
 - Deterministic release intelligence for release normalization, change-category classification, impacted-service/source/chunk analysis, targeted eval impact reporting, and refresh action recommendations
@@ -103,6 +105,7 @@ tests/                Backend and integration tests
 - Enterprise governance eval dataset for security realism, migration governance, FinOps, auditability, operational ownership, and implementation-priority signals
 - Enterprise platform maturity eval dataset for topology, executive usability, runtime degradation handling, observability readiness, migration realism, and internal beta readiness signals
 - Executive experience eval dataset for executive-summary quality, recommendation readability, architecture visualization usefulness, comparison quality, migration presentation quality, operational guidance clarity, and export-friendly review artifacts
+- FinOps and migration optimization eval dataset for phased migration realism, modernization guidance, rightsizing/autoscaling/storage lifecycle guidance, cost-performance tradeoffs, workload optimization, rollback planning, and implementation readiness
 - CI workflow for knowledge/release ingestion smoke tests, backend tests, golden/edge evals, and frontend build
 - Backend tests covering API, retrieval, and intent routing
 - OCI staging deployment with smoke tests, resource visibility checks, and rollback runbooks
@@ -397,7 +400,7 @@ cd ../frontend && npm run build
 
 Latest full validation: 2026-05-15.
 
-- Local backend tests: `117 passed`
+- Local backend tests: `120 passed`
 - Golden evals: `18 passed, 0 failed`
 - Edge-case evals: `8 passed, 0 failed`
 - Advisory-quality evals: `5 passed, 0 failed`
@@ -406,6 +409,9 @@ Latest full validation: 2026-05-15.
 - Evaluation-intelligence evals: `9 passed, 0 failed`
 - Enterprise-governance evals: `5 passed, 0 failed`
 - Enterprise-platform-maturity evals: `4 passed, 0 failed`
+- Runtime-production-readiness evals: `3 passed, 0 failed`
+- Executive-experience evals: `3 passed, 0 failed`
+- FinOps-migration-optimization evals: `4 passed, 0 failed`
 - Advisory quality gate: passed with MVP thresholds
 - Operational readiness check: passed locally; API Gateway and OCI DevOps are reported as readiness warnings until configured
 - Retrieval regression: `18 passed, 0 failed`

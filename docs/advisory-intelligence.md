@@ -187,6 +187,21 @@ It includes:
 
 This is not a presentation engine and does not render live diagrams. It packages existing deterministic advisory metadata into a format that is easier for architecture review boards, platform teams, and engineering leadership to read.
 
+## Migration And FinOps Optimization Metadata
+
+The backend now exposes an additive `optimization_plan` object in architecture-review responses.
+
+It includes:
+
+- `migration_phases`: deterministic migration sequencing with discovery, coexistence/pilot, wave migration, dependency, rollback, and readiness-check guidance.
+- `modernization_options`: lift-and-shift, replatforming to managed OCI services, selective refactoring, and data-platform modernization options when relevant.
+- `finops_recommendations`: rightsizing, autoscaling/environment sizing, Object Storage lifecycle, GPU/inference cost control, and DR cost-tiering levers when the prompt and retrieved context support cost guidance.
+- `workload_optimization_signals`: workload-specific service priorities, scaling guidance, governance weighting, and cost/performance tradeoffs for ecommerce, fintech, SaaS, analytics, AI/ML inference, and observability scenarios.
+- `optimization_comparisons`: lightweight comparison reasoning for cost-optimized vs resilience-optimized design, managed vs self-managed services, serverless vs containers, and single-region vs multi-region topology where applicable.
+- `implementation_readiness`: practical checks for ownership, telemetry baselines, rollout gates, rollback validation, and OCI Budgets/Cost Analysis review cadence.
+
+The optimization layer is deterministic and heuristic. It improves migration planning, modernization framing, and FinOps review readiness, but it does not inspect live OCI billing data, call the OCI Cost Analysis APIs, or replace a formal migration factory or FinOps operating model.
+
 ## Uncertainty Handling
 
 The response now exposes:

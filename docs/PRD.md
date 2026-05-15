@@ -37,6 +37,7 @@ OCI Architecture Studio is an AI-powered OCI architecture intelligence platform 
 - Deterministic enterprise governance assessment metadata with executive summary, policy annotations, OCI security posture checks, risk classification, recommendation prioritization, comparison reasoning, enterprise review findings, and auditability trace
 - Lightweight architecture topology metadata with service nodes, dependency relationships, deployment topology, HA/DR topology, operational notes, and Mermaid flow text for future UI visualization
 - Executive experience metadata with review-ready summary, decision brief, implementation sequence, topology visualization summary, comparison summary, explainability highlights, and Markdown export artifact
+- Deterministic migration and FinOps optimization metadata with phased migration sequencing, modernization options, FinOps levers, workload optimization signals, optimization comparisons, and implementation readiness checks
 - Confidence sub-signals for service relevance, workload alignment, migration mapping certainty, and citation coverage
 - Release snapshot and temporal knowledge schemas for current-vs-historical scaffolding
 - Deterministic release intelligence for release normalization, change-category classification, impacted service/source/chunk analysis, targeted eval impact detection, and refresh action recommendations
@@ -58,8 +59,8 @@ User flow:
 6. The system retrieves OCI knowledge chunks through a config-selected retrieval provider and reranks candidates using semantic score, intent match, service relevance, metadata overlap, architecture pattern match, workload/domain relevance, topic match, migration mappings, reasoning-profile hints, and intent-critical service coverage.
 7. The system uses deterministic in-process orchestration metadata and a single synthesis step to produce a structured advisory response. The deterministic path applies lightweight architecture pattern profiles, reasoning profiles, retrieved services, workload/domain heuristics, citation metadata, tradeoff analysis, and consistency validation. The OCI GenAI path injects a retrieval-grounded prompt with intent, mappings, workload/domain profile, pattern hints, reasoning profile, and retrieved chunks.
 8. Release-aware prompts are checked against point-in-time release snapshots, freshness metadata, release change categories, and release impact summaries. Current release awareness is snapshot-based and deterministic; it is not live request-time reconciliation with OCI release feeds.
-9. The backend returns recommendations, assumptions, risks, citations, evidence links, confidence, reasoning trace metadata, tradeoff analysis, per-recommendation confidence, decision reasoning metadata, consistency findings, deterministic enterprise-governance metadata, architecture topology metadata, executive experience metadata, section citation metadata, release context, temporal knowledge context, and optional retrieval debug traces.
-10. The UI displays the main advisory fields, executive brief, implementation sequence, lightweight topology/dependency summaries, decision comparisons, explainability highlights, citation cards, and a Markdown export action. Full section-level citation UI, live diagram rendering, and release-context UI are not implemented yet.
+9. The backend returns recommendations, assumptions, risks, citations, evidence links, confidence, reasoning trace metadata, tradeoff analysis, per-recommendation confidence, decision reasoning metadata, consistency findings, deterministic enterprise-governance metadata, architecture topology metadata, executive experience metadata, migration/FinOps optimization metadata, section citation metadata, release context, temporal knowledge context, and optional retrieval debug traces.
+10. The UI displays the main advisory fields, executive brief, implementation sequence, lightweight topology/dependency summaries, decision comparisons, explainability highlights, migration/FinOps optimization summaries, citation cards, and a Markdown export action. Full section-level citation UI, live diagram rendering, and release-context UI are not implemented yet.
 
 Operational flow:
 
@@ -78,6 +79,7 @@ Evaluation flow:
 - Golden, edge-case, advisory-quality, orchestration-quality, architecture-realism, evaluation-intelligence, enterprise-governance, enterprise-platform-maturity, and runtime-production-readiness datasets can be run locally through the deterministic eval runner.
 - Enterprise-governance and enterprise-platform-maturity evals measure governance annotations, auditability, risk classification, topology/explainability, migration governance, security realism, operational realism, runtime degradation handling, executive usability, and FinOps signals.
 - Executive-experience evals measure executive-summary quality, presentation-oriented sequencing, comparison usefulness, visualization usefulness, operational-readiness clarity, and export-friendly report content.
+- FinOps-migration optimization evals measure phased sequencing, coexistence/rollback realism, modernization guidance, rightsizing/autoscaling/storage lifecycle recommendations, workload-specific optimization signals, cost-performance tradeoffs, and implementation readiness.
 - The evaluation-intelligence layer scores generated responses across OCI specificity, completeness, workload alignment, migration realism, HA/DR, cost, operations, security, observability, explainability, tradeoff quality, and consistency.
 - Hallucination heuristics flag invented OCI services, unsupported certainty claims, stale release claims, contradictory recommendations, and unsupported migration claims.
 - Provider comparison tooling can compare deterministic synthesis with OCI GenAI synthesis when live OCI GenAI configuration is available; without those settings it runs in skip-safe readiness mode.
@@ -161,6 +163,14 @@ Orchestration behavior:
 - It also adds lightweight reasoning profile metadata, tradeoff analysis, per-recommendation confidence indicators, consistency findings, and decision reasoning metadata.
 - Reasoning profiles are explainable heuristics, not hidden chain-of-thought or autonomous planner state.
 - It does not perform autonomous planning, external tool use, persistent agent memory, raw chain-of-thought exposure, or independent agent execution.
+
+FinOps and migration optimization behavior:
+
+- The optimization layer is deterministic and additive. It builds `optimization_plan` metadata after synthesis and before final advisory quality scoring.
+- Migration and modernization prompts can receive phased migration plans, coexistence/pilot guidance, rollback considerations, dependency sequencing, and modernization options such as lift-and-shift, replatforming to managed OCI services, and selective refactoring.
+- Cost-oriented prompts can receive rightsizing, autoscaling, environment sizing, storage lifecycle, GPU/inference, and DR cost-tiering guidance.
+- Workload optimization signals are heuristic and currently cover ecommerce, fintech, SaaS, analytics, AI/ML inference, and observability patterns.
+- OCI Budgets and Cost Analysis are referenced as recommended OCI-native operating controls. The current implementation does not call live OCI Cost Analysis APIs or calculate tenancy spend from billing data.
 
 ## Acceptance Criteria
 

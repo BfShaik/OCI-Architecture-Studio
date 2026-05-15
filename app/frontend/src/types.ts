@@ -243,6 +243,51 @@ export type ExecutiveExperienceSummary = {
   review_artifacts: ArchitectureReviewArtifact[];
 };
 
+export type MigrationPhasePlan = {
+  phase: string;
+  objective: string;
+  actions: string[];
+  dependencies: string[];
+  rollback_considerations: string[];
+  readiness_checks: string[];
+};
+
+export type ModernizationOption = {
+  approach: string;
+  fit: string;
+  tradeoffs: string[];
+  operational_implications: string[];
+  readiness_requirements: string[];
+};
+
+export type FinOpsRecommendation = {
+  lever: string;
+  recommendation: string;
+  expected_cost_implication: string;
+  performance_tradeoff: string;
+  operational_savings: string;
+  source_chunk_ids: string[];
+};
+
+export type WorkloadOptimizationSignal = {
+  workload: string;
+  service_priorities: string[];
+  scaling_guidance: string;
+  governance_weighting: string;
+  cost_performance_tradeoff: string;
+};
+
+export type OptimizationPlanSummary = {
+  maturity_level: string;
+  migration_phases: MigrationPhasePlan[];
+  modernization_options: ModernizationOption[];
+  finops_recommendations: FinOpsRecommendation[];
+  workload_optimization_signals: WorkloadOptimizationSignal[];
+  optimization_comparisons: ArchitectureComparison[];
+  implementation_readiness: string[];
+  recommendation_additions: string[];
+};
+
 export type ArchitectureReviewRequest = {
   question: string;
   workload_context?: string;
@@ -271,6 +316,7 @@ export type ArchitectureReviewResponse = {
   enterprise_governance?: EnterpriseGovernanceAssessment | null;
   architecture_topology?: ArchitectureTopologySummary | null;
   executive_experience?: ExecutiveExperienceSummary | null;
+  optimization_plan?: OptimizationPlanSummary | null;
   answer: string;
   recommendations: string[];
   assumptions: string[];

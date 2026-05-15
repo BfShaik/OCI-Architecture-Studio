@@ -65,6 +65,10 @@ class OperationalMetrics:
     architecture_comparison_usage: Counter[str] = field(default_factory=Counter)
     recommendation_category_trends: Counter[str] = field(default_factory=Counter)
     architecture_pattern_usage: Counter[str] = field(default_factory=Counter)
+    migration_recommendation_trends: Counter[str] = field(default_factory=Counter)
+    modernization_recommendation_trends: Counter[str] = field(default_factory=Counter)
+    finops_recommendation_frequency: Counter[str] = field(default_factory=Counter)
+    workload_optimization_patterns: Counter[str] = field(default_factory=Counter)
     executive_summary_count: int = 0
     visualization_generation_count: int = 0
     review_artifact_count: int = 0
@@ -93,6 +97,10 @@ class OperationalMetrics:
             "architecture_comparison_usage": dict(self.architecture_comparison_usage),
             "recommendation_category_trends": dict(self.recommendation_category_trends),
             "architecture_pattern_usage": dict(self.architecture_pattern_usage),
+            "migration_recommendation_trends": dict(self.migration_recommendation_trends),
+            "modernization_recommendation_trends": dict(self.modernization_recommendation_trends),
+            "finops_recommendation_frequency": dict(self.finops_recommendation_frequency),
+            "workload_optimization_patterns": dict(self.workload_optimization_patterns),
             "executive_summary_count": self.executive_summary_count,
             "visualization_generation_count": self.visualization_generation_count,
             "review_artifact_count": self.review_artifact_count,
@@ -180,6 +188,24 @@ class OperationalMetricsRecorder:
             artifacts = executive.get("review_artifacts", [])
             if isinstance(artifacts, list):
                 self.metrics.review_artifact_count += len(artifacts)
+
+        optimization = response.get("optimization_plan") or {}
+        if isinstance(optimization, dict):
+            for phase in optimization.get("migration_phases", []):
+                if isinstance(phase, dict):
+                    self.metrics.migration_recommendation_trends[str(phase.get("phase") or "unknown")] += 1
+            for option in optimization.get("modernization_options", []):
+                if isinstance(option, dict):
+                    self.metrics.modernization_recommendation_trends[str(option.get("approach") or "unknown")] += 1
+            for item in optimization.get("finops_recommendations", []):
+                if isinstance(item, dict):
+                    self.metrics.finops_recommendation_frequency[str(item.get("lever") or "unknown")] += 1
+            for signal in optimization.get("workload_optimization_signals", []):
+                if isinstance(signal, dict):
+                    self.metrics.workload_optimization_patterns[str(signal.get("workload") or "unknown")] += 1
+            for comparison in optimization.get("optimization_comparisons", []):
+                if isinstance(comparison, dict):
+                    self.metrics.architecture_comparison_usage[str(comparison.get("decision") or "unknown")] += 1
 
     def snapshot(self) -> dict[str, object]:
         return self.metrics.as_dict()

@@ -18,6 +18,7 @@ from oci_arch_studio_backend.services.intents import (
     get_intent_profile,
 )
 from oci_arch_studio_backend.services.operational import operational_metrics
+from oci_arch_studio_backend.services.optimization_advisor import OptimizationAdvisor
 from oci_arch_studio_backend.services.releases import ReleaseSnapshotStore
 from oci_arch_studio_backend.services.response_formatter import build_section_citations
 from oci_arch_studio_backend.services.retrieval import OciKnowledgeRetriever
@@ -48,6 +49,7 @@ class ArchitectureReviewOrchestrator:
         governance_advisor: EnterpriseGovernanceAdvisor | None = None,
         topology_builder: ArchitectureTopologyBuilder | None = None,
         executive_experience_builder: ExecutiveExperienceBuilder | None = None,
+        optimization_advisor: OptimizationAdvisor | None = None,
         synthesis_debug_enabled: bool = False,
     ) -> None:
         self.retriever = retriever
@@ -62,6 +64,7 @@ class ArchitectureReviewOrchestrator:
         self.governance_advisor = governance_advisor or EnterpriseGovernanceAdvisor()
         self.topology_builder = topology_builder or ArchitectureTopologyBuilder()
         self.executive_experience_builder = executive_experience_builder or ExecutiveExperienceBuilder()
+        self.optimization_advisor = optimization_advisor or OptimizationAdvisor()
         self.synthesis_debug_enabled = synthesis_debug_enabled
 
     async def review(
@@ -142,10 +145,21 @@ class ArchitectureReviewOrchestrator:
                 debug_enabled=bool(request.synthesis_debug or self.synthesis_debug_enabled),
             )
         )
+        optimization_plan = self.optimization_advisor.build(
+            question=request.question,
+            workload_context=request.workload_context,
+            profile=profile,
+            sources=sources,
+            base_recommendations=synthesis.recommendations,
+        )
+        enriched_recommendations = self._merge_recommendations(
+            synthesis.recommendations,
+            optimization_plan.recommendation_additions,
+        )
         quality = self.quality_analyzer.assess(
             question=request.question,
             profile=profile,
-            base_recommendations=synthesis.recommendations,
+            base_recommendations=enriched_recommendations,
             sources=sources,
             release_store=self.release_store,
         )
@@ -328,6 +342,7 @@ class ArchitectureReviewOrchestrator:
             enterprise_governance=governance_assessment,
             architecture_topology=architecture_topology,
             executive_experience=executive_experience,
+            optimization_plan=optimization_plan,
             answer=synthesis.answer if not quality.not_enough_evidence else f"{synthesis.answer} {context_note}",
             recommendations=quality.recommendations,
             assumptions=synthesis.assumptions,
@@ -348,3 +363,14 @@ class ArchitectureReviewOrchestrator:
             response=response.model_dump(),
         )
         return response
+
+    def _merge_recommendations(self, base: list[str], additions: list[str]) -> list[str]:
+        merged: list[str] = []
+        seen: set[str] = set()
+        for recommendation in (*base, *additions):
+            normalized = " ".join(recommendation.lower().split())
+            if normalized in seen:
+                continue
+            seen.add(normalized)
+            merged.append(recommendation)
+        return merged[:10]

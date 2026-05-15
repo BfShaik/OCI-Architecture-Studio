@@ -21,6 +21,7 @@ OCI Architecture Studio now has a validated working foundation:
 - concise decision reasoning metadata, explicit tradeoff analysis, per-recommendation confidence indicators, and lightweight consistency validation for recommendation coherence
 - deterministic enterprise governance metadata for executive framing, security posture checks, risk classification, recommendation priority, architecture comparison, enterprise review findings, and auditability trace
 - executive experience metadata for review-ready summaries, prioritized decisions, phased sequencing, topology summaries, comparison summaries, explainability highlights, and Markdown export artifacts
+- deterministic migration and FinOps optimization metadata for phased migration planning, modernization options, rightsizing/autoscaling/storage lifecycle guidance, workload optimization signals, cost-performance tradeoffs, and implementation readiness
 - lightweight architecture topology metadata for service relationships, deployment topology, HA/DR posture, operational notes, and future visualization
 - confidence sub-signals for retrieval grounding, service relevance, workload alignment, migration mapping certainty, and citation coverage
 - deterministic evaluation intelligence for advisory quality scoring, hallucination heuristics, benchmark expectation checks, provider comparison signals, and configurable quality gates
@@ -31,6 +32,7 @@ OCI Architecture Studio now has a validated working foundation:
 - OCI-native operational diagnostics, runtime readiness checks, runtime profiles, API Gateway/OCI DevOps readiness metadata, and scheduled refresh scaffolding that prefer OCI Vault, IAM, Logging, Monitoring, Notifications, Events, Resource Scheduler, Functions, Object Storage, and Oracle AI Vector Search where applicable
 - golden, edge-case, advisory-quality, orchestration-quality, architecture-realism, evaluation-intelligence, enterprise-governance, enterprise-platform-maturity, retrieval regression, and parity validation gates
 - enterprise-governance evals for auditability, migration governance, security realism, operational realism, FinOps realism, and implementation practicality
+- FinOps/migration optimization evals for phased sequencing, coexistence/rollback realism, modernization planning, cost-performance guidance, workload optimization, and implementation readiness
 - Terraform-based OCI staging slice with Object Storage, Vault, Logging, Monitoring, Events, and Notifications
 
 The next platform milestone is to keep improving advisory quality with richer official OCI corpus coverage, production-aligned embeddings/vector indexing, and stricter evaluation gates before promoting more GenAI-assisted or OCI-native retrieval behavior.
@@ -46,6 +48,8 @@ The enterprise governance layer is also heuristic and deterministic. It makes re
 The executive experience layer packages existing advisory metadata for review conversations and lightweight export. It improves readability and stakeholder usability, but it is not a full diagramming system, slide generator, or replacement for architecture review board materials.
 
 Architecture visualization support is foundational: backend topology metadata and Mermaid text exist, but a full diagram editor or frontend renderer is future work.
+
+The migration and FinOps optimization layer is deterministic. It adds practical planning metadata and OCI-native cost-governance guidance, including Budgets/Cost Analysis review cadence recommendations, but it does not read live billing data or perform automated cost optimization.
 
 The current evaluation intelligence layer is also heuristic. It provides reproducible regression signals for architecture realism, hallucination risk, provider comparisons, and recommendation quality, but it is not an objective measure of correctness and does not use LLM-as-judge scoring.
 

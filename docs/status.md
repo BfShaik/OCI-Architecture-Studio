@@ -320,6 +320,13 @@ This progress is based on `docs/two-week-plan.md`.
   - frontend review-board rendering for executive brief, implementation sequence, topology/dependency summaries, decision comparisons, explainability highlights, and Markdown export
   - operational analytics counters for executive summaries, visualization generation, review artifacts, architecture comparison usage, recommendation categories, and topology role usage
   - executive-experience eval suite under `evals/executive-experience.jsonl`
+- Added FinOps and migration optimization foundation:
+  - additive `optimization_plan` response object with phased migration plans, modernization options, FinOps levers, workload optimization signals, optimization comparisons, implementation readiness checks, and recommendation additions
+  - deterministic planning for discovery, coexistence/pilot, migration waves, rollback considerations, dependency sequencing, managed-service adoption, selective refactoring, and data-platform modernization
+  - FinOps guidance for rightsizing, autoscaling, environment sizing, Object Storage lifecycle, GPU/inference cost control, and DR cost tiering using OCI-native cost-governance framing
+  - frontend rendering for migration and FinOps optimization summaries
+  - operational analytics counters for migration, modernization, FinOps, and workload-optimization trends
+  - FinOps/migration optimization eval suite under `evals/finops-migration-optimization.jsonl`
 - Added OCI-native operational hardening foundation:
   - runtime deployment profiles for local development, OCI VM, OKE, and OCI Functions-compatible execution
   - additive `/operations/profile`, `/operations/health`, `/operations/readiness`, `/operations/infrastructure`, and `/operations/analytics` endpoints
@@ -354,7 +361,7 @@ Last validation run: 2026-05-15
 - Continuous intelligence hardening: candidate-first promotion, version lineage, rollback automation, and refresh status endpoint implemented
 - Terraform validation: passed after optional knowledge refresh scheduler scaffold; staging plan currently should not be applied until existing backend replacement drift is resolved and the function image is available
 - OCI-native refresh scheduler scaffold: implemented with OCI Functions plus OCI Resource Scheduler; not applied yet because a published OCIR function image is required before enabling
-- Backend tests: passed, 119 tests
+- Backend tests: passed, 120 tests
 - Frontend build: passed
 - Golden evals: passed, 18 of 18
 - Edge-case evals: passed, 8 of 8
@@ -366,6 +373,7 @@ Last validation run: 2026-05-15
 - Enterprise-platform-maturity evals: passed, 4 of 4
 - Runtime-production-readiness evals: passed, 3 of 3
 - Executive-experience evals: passed, 3 of 3
+- FinOps-migration-optimization evals: passed, 4 of 4
 - Advisory quality gate: passed against the evaluation-intelligence report with MVP thresholds
 - Operational hardening tests: passed in targeted API/diagnostics suite
 - Operational readiness check: passed locally against `/health`, `/retrieval/health`, `/operations/health`, `/operations/readiness`, `/operations/infrastructure`, and `/operations/analytics`; API Gateway and OCI DevOps are expected readiness warnings until configured
@@ -496,6 +504,7 @@ Last validation run: 2026-05-15
 - OCI GenAI synthesis adapter exists, but deterministic synthesis remains the rollback-safe default unless enabled by environment configuration.
 - Deterministic architecture patterns improve fallback usefulness but are still heuristic and bounded by the retrieved corpus.
 - Deterministic reasoning profiles improve explainability and tradeoff structure, but they are heuristic and do not replace expert OCI solution review.
+- FinOps and migration optimization metadata is deterministic and advisory. It recommends OCI-native cost-governance practices such as Budgets/Cost Analysis review cadence, but it does not call live billing APIs or calculate tenancy spend.
 - Evaluation intelligence uses deterministic heuristics and configurable thresholds. It is useful for regression control, hallucination risk detection, and provider comparison, but it is not an objective architecture correctness oracle or LLM-as-judge system.
 - Controlled multi-agent orchestration is currently an in-process control layer; it does not yet perform autonomous planning, tool use, or multi-step agent memory.
 - Operational diagnostics are additive and lightweight. They do not replace OCI Monitoring alarms, OCI Logging ingestion, or a production incident-management process.

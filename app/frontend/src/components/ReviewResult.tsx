@@ -53,6 +53,7 @@ export function ReviewResult({ result }: ReviewResultProps) {
   const experience = result.executive_experience;
   const visualization = experience?.architecture_visualization;
   const reviewArtifact = experience?.review_artifacts[0];
+  const optimization = result.optimization_plan;
 
   return (
     <div className="review-result">
@@ -84,8 +85,8 @@ export function ReviewResult({ result }: ReviewResultProps) {
         result.synthesis_warnings.length ||
         result.orchestration_warnings.length ? (
           <div className="quality-warnings" aria-label="Quality warnings">
-            {[...result.quality_warnings, ...result.synthesis_warnings, ...result.orchestration_warnings].map((warning) => (
-              <span key={warning}>{warning}</span>
+            {[...result.quality_warnings, ...result.synthesis_warnings, ...result.orchestration_warnings].map((warning, index) => (
+              <span key={`warning-${index}-${warning}`}>{warning}</span>
             ))}
           </div>
         ) : null}
@@ -166,8 +167,8 @@ export function ReviewResult({ result }: ReviewResultProps) {
           ) : null}
           {visualization.migration_flow.length ? (
             <ol className="migration-flow">
-              {visualization.migration_flow.map((step) => (
-                <li key={`flow-${step}`}>{step}</li>
+              {visualization.migration_flow.map((step, index) => (
+                <li key={`flow-${index}-${step}`}>{step}</li>
               ))}
             </ol>
           ) : null}
@@ -178,8 +179,8 @@ export function ReviewResult({ result }: ReviewResultProps) {
         <section className="result-section comparison-panel">
           <h3>Decision Comparisons</h3>
           <div className="comparison-list">
-            {experience.comparison_summary.map((comparison) => (
-              <article key={comparison.decision}>
+            {experience.comparison_summary.map((comparison, index) => (
+              <article key={`comparison-${index}-${comparison.decision}`}>
                 <div>
                   <strong>{comparison.decision}</strong>
                   <span>Prefer {comparison.preferred_option}</span>
@@ -192,6 +193,73 @@ export function ReviewResult({ result }: ReviewResultProps) {
               </article>
             ))}
           </div>
+        </section>
+      ) : null}
+
+      {optimization ? (
+        <section className="result-section optimization-panel">
+          <div className="section-heading-row">
+            <div>
+              <h3>Migration & FinOps Optimization</h3>
+              <p>{readable(optimization.maturity_level)}</p>
+            </div>
+          </div>
+          {optimization.migration_phases.length ? (
+            <div className="optimization-subsection">
+              <h4>Migration Phases</h4>
+              <div className="sequence-list">
+                {optimization.migration_phases.map((phase) => (
+                  <article key={phase.phase}>
+                    <strong>{phase.phase}</strong>
+                    <p>{phase.objective}</p>
+                    <ul>
+                      {phase.readiness_checks.slice(0, 2).map((check, index) => (
+                        <li key={`${phase.phase}-check-${index}`}>{check}</li>
+                      ))}
+                    </ul>
+                  </article>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {optimization.finops_recommendations.length ? (
+            <div className="optimization-subsection">
+              <h4>FinOps Levers</h4>
+              <div className="comparison-list">
+                {optimization.finops_recommendations.slice(0, 4).map((item) => (
+                  <article key={item.lever}>
+                    <div>
+                      <strong>{item.lever}</strong>
+                      <span>Cost control</span>
+                    </div>
+                    <p>{item.recommendation}</p>
+                    <small>{item.expected_cost_implication}</small>
+                  </article>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {optimization.workload_optimization_signals.length ? (
+            <div className="optimization-subsection">
+              <h4>Workload Optimization</h4>
+              <div className="topology-grid">
+                {optimization.workload_optimization_signals.map((signal) => (
+                  <div key={signal.workload}>
+                    <h4>{signal.workload}</h4>
+                    <p>{signal.scaling_guidance}</p>
+                    <small>{signal.cost_performance_tradeoff}</small>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {optimization.implementation_readiness.length ? (
+            <ul>
+              {optimization.implementation_readiness.map((item, index) => (
+                <li key={`readiness-${index}`}>{item}</li>
+              ))}
+            </ul>
+          ) : null}
         </section>
       ) : null}
 
@@ -220,8 +288,8 @@ export function ReviewResult({ result }: ReviewResultProps) {
           ) : null}
           {result.critic_findings.length ? (
             <ul>
-              {result.critic_findings.map((finding) => (
-                <li key={finding}>{finding}</li>
+              {result.critic_findings.map((finding, index) => (
+                <li key={`critic-${index}-${finding}`}>{finding}</li>
               ))}
             </ul>
           ) : null}
@@ -243,8 +311,8 @@ export function ReviewResult({ result }: ReviewResultProps) {
           </div>
           {confidence.notes.length ? (
             <ul>
-              {confidence.notes.map((note) => (
-                <li key={note}>{note}</li>
+              {confidence.notes.map((note, index) => (
+                <li key={`confidence-note-${index}-${note}`}>{note}</li>
               ))}
             </ul>
           ) : null}
@@ -300,8 +368,8 @@ export function ReviewResult({ result }: ReviewResultProps) {
 
       <section className="result-section citations">
         <h3>Sources</h3>
-        {result.citations.map((source) => (
-          <article key={source.chunk_id ?? source.title} className="source-item">
+        {result.citations.map((source, index) => (
+          <article key={`${source.chunk_id ?? source.title}-${index}`} className="source-item">
             <div>
               <strong>{source.title}</strong>
               {source.service ? <span>{source.service}</span> : null}
