@@ -44,6 +44,9 @@ def test_operations_analytics_records_architecture_review_usage() -> None:
     assert metrics["request_count"] >= 1
     assert metrics["synthesis_provider_usage"]
     assert metrics["workload_usage"]
+    assert "audit" in body["observability"]
+    assert "governance_policy_triggers" in metrics
+    assert "governance_risk_trends" in metrics
 
 
 def test_oci_vm_profile_warns_when_using_config_file_auth() -> None:

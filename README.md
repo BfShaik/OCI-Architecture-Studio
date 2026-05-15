@@ -17,8 +17,8 @@ OCI Architecture Studio currently supports a validated advisory flow in local de
 7. The controlled orchestration layer selects deterministic specialist roles, shares the same retrieved evidence across them, and runs a validation critic over evidence support, citations, freshness, and unsupported-claim risk. These are in-process role boundaries, not autonomous agents.
 8. One final synthesis step generates the advisory response through the configured provider with deterministic rollback available. Deterministic synthesis now uses lightweight architecture pattern profiles, retrieved evidence, workload heuristics, and consistency checks rather than only profile boilerplate. OCI GenAI synthesis can be enabled through configuration and uses the same retrieved context through a dedicated grounding prompt builder.
 9. Release-awareness uses local release snapshots, deterministic release classification, impact analysis, release overlays on affected chunks, and refresh-policy scaffolding. Scheduled refresh and promotion automation exist, but live release reconciliation is not part of request-time advisory behavior.
-10. The backend returns structured recommendations, concise decision reasoning metadata, consistency findings, confidence, evidence links, section citation metadata, optional retrieval debug traces, release context, temporal knowledge context, and standard architecture response sections. The current UI renders the main advisory fields and citation cards; full section-level citation, reasoning, consistency, and release-context UI is future work.
-11. Operational diagnostics expose deployment profile, retrieval health, release refresh freshness, synthesis availability, OCI secret/config posture, and lightweight runtime analytics through additive endpoints. Live OCI connectivity checks are opt-in so local development stays offline-safe.
+10. The backend returns structured recommendations, concise decision reasoning metadata, consistency findings, confidence, evidence links, section citation metadata, deterministic enterprise-governance assessment metadata, optional retrieval debug traces, release context, temporal knowledge context, and standard architecture response sections. The current UI renders the main advisory fields and citation cards; full section-level citation, reasoning, governance, consistency, and release-context UI is future work.
+11. Operational diagnostics expose deployment profile, retrieval health, release refresh freshness, synthesis availability, OCI secret/config posture, governance/risk counters, and lightweight runtime analytics through additive endpoints. Live OCI connectivity checks are opt-in so local development stays offline-safe.
 
 LangGraph, advanced memory, and autonomous agent execution remain deferred. Oracle AI Vector Search provider code and tooling exist, but staging active-read promotion is deferred until a real Oracle vector index is built and parity checks pass.
 
@@ -58,6 +58,7 @@ tests/                Backend and integration tests
 - Explicit architecture tradeoff analysis for cost/resilience, performance/complexity, managed/self-managed, latency/multi-region resilience, simplicity/scalability, and flexibility/operational overhead
 - Per-recommendation confidence indicators with reasoning basis, supporting chunk IDs, assumptions, and known limitations
 - Lightweight architecture consistency validation for conflicting requirements, migration mapping coverage, HA/DR alignment, observability coverage, security coverage, and simple unsupported combination risks
+- Deterministic enterprise governance assessment metadata with executive summary, governance annotations, security posture checks, risk classifications, recommendation priorities, architecture comparisons, enterprise review findings, and auditability trace
 - Expanded confidence sub-signals for service relevance, workload alignment, migration mapping certainty, and citation coverage
 - Release snapshot schema and temporal knowledge metadata schema for current-vs-historical scaffolding
 - Deterministic release intelligence for release normalization, change-category classification, impacted-service/source/chunk analysis, targeted eval impact reporting, and refresh action recommendations
@@ -73,9 +74,9 @@ tests/                Backend and integration tests
 - Continuous intelligence status endpoint at `/knowledge/refresh/status`
 - OCI-native runtime profiles for `local_dev`, `oci_vm`, `oke`, and `oci_functions` under `infra/runtime-profiles/`
 - Additive operational diagnostics endpoints: `/operations/profile`, `/operations/health`, and `/operations/analytics`
-- Lightweight operational analytics for retrieval provider usage, synthesis provider usage, fallback events, hallucination findings, workload-category usage, confidence distribution, and response latency
+- Lightweight operational analytics for retrieval provider usage, synthesis provider usage, fallback events, hallucination findings, governance policy triggers, governance risk trends, workload-category usage, confidence distribution, and response latency
 - OCI Vault configuration-secret readiness checks, with local environment compatibility for development
-- OCI Logging, Monitoring, Notifications, and Events configuration visibility in operational diagnostics
+- OCI Logging, Audit, Monitoring, Notifications, and Events configuration visibility in operational diagnostics. Audit support is currently surfaced as platform-native OCI Audit posture metadata, not custom audit event export.
 - Operational readiness checker under `infra/scripts/operational_readiness_check.py`
 - Intent-aware orchestration for:
   - product overview
@@ -96,6 +97,7 @@ tests/                Backend and integration tests
 - Negative and edge-case eval dataset
 - Local eval runner with JSON/Markdown reports, failure diagnostics, retrieval-support checks, and stale-guidance checks
 - Evaluation intelligence layer with multi-dimensional architecture scoring, hallucination findings, benchmark checks, response-quality analytics, and configurable quality gates
+- Enterprise governance eval dataset for security realism, migration governance, FinOps, auditability, operational ownership, and implementation-priority signals
 - CI workflow for knowledge/release ingestion smoke tests, backend tests, golden/edge evals, and frontend build
 - Backend tests covering API, retrieval, and intent routing
 - OCI staging deployment with smoke tests, resource visibility checks, and rollback runbooks
@@ -447,7 +449,7 @@ See `docs/retrieval-parity-validation-report.md` for dual-provider parity result
 
 See `docs/retrieval-provider-promotion-report.md` for the completed staging promotion, post-promotion validation results, rollback proof, and the next Oracle AI Vector Search boundary.
 
-See `docs/advisory-intelligence.md` for evidence-linked recommendations, confidence scoring, citation enforcement, uncertainty handling, and advisory-quality observability.
+See `docs/advisory-intelligence.md` for evidence-linked recommendations, confidence scoring, citation enforcement, enterprise-governance metadata, uncertainty handling, and advisory-quality observability.
 
 See `docs/genai-advisory-hardening.md` for GenAI synthesis configuration, fail-closed fallback behavior, citation enforcement, confidence scoring, eval strategy, and rollback guidance.
 

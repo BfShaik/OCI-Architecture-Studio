@@ -160,6 +160,26 @@ def response_text(response: dict[str, Any]) -> str:
         parts.append(str(item.get("level", "")))
         parts.extend(str(value) for value in item.get("known_limitations", []))
         parts.extend(str(value) for value in item.get("assumptions", []))
+    governance = response.get("enterprise_governance") or {}
+    if isinstance(governance, dict):
+        parts.append(str(governance.get("maturity_level", "")))
+        executive = governance.get("executive_summary") or {}
+        if isinstance(executive, dict):
+            parts.extend(str(value) for value in executive.values())
+        for key in (
+            "governance_annotations",
+            "security_posture_checks",
+            "risk_classifications",
+            "recommendation_priorities",
+            "architecture_comparisons",
+            "enterprise_review_findings",
+        ):
+            for item in governance.get(key, []):
+                if isinstance(item, dict):
+                    parts.extend(str(value) for value in item.values())
+        audit = governance.get("auditability_trace") or {}
+        if isinstance(audit, dict):
+            parts.extend(str(value) for value in audit.values())
     release_context = response.get("release_context") or {}
     if isinstance(release_context, dict):
         parts.extend(str(item) for item in release_context.get("architecture_affecting_services", []))

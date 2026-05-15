@@ -34,6 +34,7 @@ OCI Architecture Studio is an AI-powered OCI architecture intelligence platform 
 - Concise architecture decision reasoning metadata for major recommendations
 - Explicit architecture tradeoff analysis and per-recommendation confidence indicators
 - Lightweight architecture consistency findings before final response return
+- Deterministic enterprise governance assessment metadata with executive summary, policy annotations, OCI security posture checks, risk classification, recommendation prioritization, comparison reasoning, enterprise review findings, and auditability trace
 - Confidence sub-signals for service relevance, workload alignment, migration mapping certainty, and citation coverage
 - Release snapshot and temporal knowledge schemas for current-vs-historical scaffolding
 - Deterministic release intelligence for release normalization, change-category classification, impacted service/source/chunk analysis, targeted eval impact detection, and refresh action recommendations
@@ -55,8 +56,8 @@ User flow:
 6. The system retrieves OCI knowledge chunks through a config-selected retrieval provider and reranks candidates using semantic score, intent match, service relevance, metadata overlap, architecture pattern match, workload/domain relevance, topic match, migration mappings, reasoning-profile hints, and intent-critical service coverage.
 7. The system uses deterministic in-process orchestration metadata and a single synthesis step to produce a structured advisory response. The deterministic path applies lightweight architecture pattern profiles, reasoning profiles, retrieved services, workload/domain heuristics, citation metadata, tradeoff analysis, and consistency validation. The OCI GenAI path injects a retrieval-grounded prompt with intent, mappings, workload/domain profile, pattern hints, reasoning profile, and retrieved chunks.
 8. Release-aware prompts are checked against point-in-time release snapshots, freshness metadata, release change categories, and release impact summaries. Current release awareness is snapshot-based and deterministic; it is not live request-time reconciliation with OCI release feeds.
-9. The backend returns recommendations, assumptions, risks, citations, evidence links, confidence, reasoning trace metadata, tradeoff analysis, per-recommendation confidence, decision reasoning metadata, consistency findings, section citation metadata, release context, temporal knowledge context, and optional retrieval debug traces.
-10. The UI displays the main advisory fields and citation cards. Full section-level citation, reasoning, tradeoff, consistency, and release-context UI is not implemented yet.
+9. The backend returns recommendations, assumptions, risks, citations, evidence links, confidence, reasoning trace metadata, tradeoff analysis, per-recommendation confidence, decision reasoning metadata, consistency findings, deterministic enterprise-governance metadata, section citation metadata, release context, temporal knowledge context, and optional retrieval debug traces.
+10. The UI displays the main advisory fields and citation cards. Full section-level citation, reasoning, tradeoff, governance, consistency, and release-context UI is not implemented yet.
 
 Operational flow:
 
@@ -65,11 +66,13 @@ Operational flow:
 - OCI VM and OKE profiles prefer OCI IAM-based runtime identity, OCI Vault for sensitive configuration, OCI Object Storage or Oracle AI Vector Search for retrieval, and OCI Logging/Monitoring/Notifications for operations.
 - OCI Functions-compatible execution is supported for scheduled refresh jobs through OCI Resource Scheduler invoking OCI Functions.
 - `/operations/profile`, `/operations/health`, and `/operations/analytics` expose additive diagnostics without changing the architecture-review API.
+- Operational analytics include deterministic governance policy-trigger and risk-trend counters from generated advisory metadata.
 - Live OCI SDK connectivity checks are disabled by default and should be enabled only after IAM policies and Vault access are ready.
 
 Evaluation flow:
 
-- Golden, edge-case, advisory-quality, orchestration-quality, architecture-realism, and evaluation-intelligence datasets can be run locally through the deterministic eval runner.
+- Golden, edge-case, advisory-quality, orchestration-quality, architecture-realism, evaluation-intelligence, and enterprise-governance datasets can be run locally through the deterministic eval runner.
+- Enterprise-governance evals measure governance annotations, auditability, risk classification, migration governance, security realism, operational realism, and FinOps signals.
 - The evaluation-intelligence layer scores generated responses across OCI specificity, completeness, workload alignment, migration realism, HA/DR, cost, operations, security, observability, explainability, tradeoff quality, and consistency.
 - Hallucination heuristics flag invented OCI services, unsupported certainty claims, stale release claims, contradictory recommendations, and unsupported migration claims.
 - Provider comparison tooling can compare deterministic synthesis with OCI GenAI synthesis when live OCI GenAI configuration is available; without those settings it runs in skip-safe readiness mode.
@@ -170,6 +173,7 @@ Orchestration behavior:
 - Reasoning trace metadata can show the selected reasoning profile, triggered heuristics, pattern hints, retrieval terms, service priorities, risk emphasis, and synthesis provider.
 - Architecture tradeoff metadata can show explicit decision guidance for cost/resilience, performance/complexity, managed/self-managed, latency/resilience, simplicity/scalability, and flexibility/overhead dimensions.
 - Consistency validation can flag conflicting requirements, migration mapping coverage gaps, HA/DR alignment gaps, observability gaps, and security coverage gaps.
+- Enterprise governance assessment can classify recommendation risks, annotate policy/control implications, prioritize recommendations, provide comparison reasoning, and preserve an auditability trace from retrieval sources through synthesis provider and confidence signals.
 - Architecture quality scoring can report deterministic dimension scores, benchmark expectation matches, hallucination findings, response-quality analytics, and configurable advisory quality-gate failures.
 - Prompt templates and golden eval prompts exist in source control.
 - Golden prompts route to expected intents.
@@ -184,6 +188,7 @@ Orchestration behavior:
 - No advanced memory or bi-temporal storage implementation yet.
 - No autonomous multi-agent execution yet.
 - No architecture reasoning engine based on hidden chain-of-thought, self-planning, or autonomous tool use.
+- No automated policy enforcement, approval workflow, or external governance platform integration in the enterprise governance layer; it is deterministic advisory metadata for human review.
 - No LLM-as-judge scoring, model fine-tuning, or autonomous evaluation agent in the current evaluation intelligence layer.
 - No always-on live LLM synthesis by default.
 - No promotion of OCI GenAI mode without parity and operational validation.

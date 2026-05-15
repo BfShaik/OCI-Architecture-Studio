@@ -15,7 +15,8 @@ This scaffold is intentionally small:
 - Events rule for environment resource lifecycle notifications
 - optional OCI Functions + Resource Scheduler knowledge refresh schedules
 - runtime environment profile bootstrap for the backend VM
-- operational diagnostics configuration for OCI Vault, Logging, Monitoring, Notifications, and Events
+- operational diagnostics configuration for OCI Vault, Logging, OCI Audit posture, Monitoring, Notifications, and Events
+- `governance_resource_summary` output for rebuild and audit review of IAM, Vault, logging, monitoring, notification, event, and scheduler resources
 
 It is not a production HA design yet. It is the Phase 1 OCI deployment foundation for the validated MVP.
 

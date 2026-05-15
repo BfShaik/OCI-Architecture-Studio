@@ -59,6 +59,8 @@ class OperationalMetrics:
     confidence_distribution: Counter[str] = field(default_factory=Counter)
     fallback_events: Counter[str] = field(default_factory=Counter)
     hallucination_findings: Counter[str] = field(default_factory=Counter)
+    governance_policy_triggers: Counter[str] = field(default_factory=Counter)
+    governance_risk_trends: Counter[str] = field(default_factory=Counter)
     total_response_latency_ms: float = 0.0
     last_response_latency_ms: float | None = None
     last_event_at: str | None = None
@@ -78,6 +80,8 @@ class OperationalMetrics:
             "confidence_distribution": dict(self.confidence_distribution),
             "fallback_events": dict(self.fallback_events),
             "hallucination_findings": dict(self.hallucination_findings),
+            "governance_policy_triggers": dict(self.governance_policy_triggers),
+            "governance_risk_trends": dict(self.governance_risk_trends),
             "average_response_latency_ms": self.average_response_latency_ms,
             "last_response_latency_ms": self.last_response_latency_ms,
             "last_event_at": self.last_event_at,
@@ -124,6 +128,19 @@ class OperationalMetricsRecorder:
         findings = HallucinationDetector().detect(response)
         for finding in findings:
             self.metrics.hallucination_findings[f"{finding.severity}:{finding.category}"] += 1
+
+        governance = response.get("enterprise_governance") or {}
+        if isinstance(governance, dict):
+            for annotation in governance.get("governance_annotations", []):
+                if isinstance(annotation, dict):
+                    trigger = annotation.get("policy_signal")
+                    if trigger:
+                        self.metrics.governance_policy_triggers[str(trigger)] += 1
+            for risk in governance.get("risk_classifications", []):
+                if isinstance(risk, dict):
+                    level = str(risk.get("level") or "unknown")
+                    category = str(risk.get("category") or "unknown")
+                    self.metrics.governance_risk_trends[f"{level}:{category}"] += 1
 
     def snapshot(self) -> dict[str, object]:
         return self.metrics.as_dict()
@@ -180,6 +197,11 @@ class OperationalDiagnostics:
             "logging": {
                 "provider": "oci_logging" if self.settings.oci_logging_log_group_ocid else "stdout",
                 "log_group_ocid_configured": bool(self.settings.oci_logging_log_group_ocid),
+            },
+            "audit": {
+                "provider": "oci_audit",
+                "mode": "platform_native",
+                "message": "OCI Audit is treated as a native tenancy service; advisory trace events remain in-process until log export is enabled.",
             },
             "monitoring": {
                 "provider": "oci_monitoring",

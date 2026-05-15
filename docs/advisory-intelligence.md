@@ -12,7 +12,7 @@ The current implementation keeps the existing flow:
 user prompt -> intent classifier -> retrieval -> controlled multi-agent routing -> final synthesis -> critic -> structured response
 ```
 
-It adds a lightweight evidence, confidence, reasoning-profile, tradeoff, controlled routing, specialist contribution, aggregation, and critic layer before the response is returned.
+It adds a lightweight evidence, confidence, reasoning-profile, tradeoff, controlled routing, specialist contribution, aggregation, critic, and enterprise-governance metadata layer before the response is returned.
 
 ## Current Synthesis Pipeline
 
@@ -28,8 +28,9 @@ It adds a lightweight evidence, confidence, reasoning-profile, tradeoff, control
 10. Compute confidence scores and per-recommendation confidence indicators.
 11. Run deterministic tradeoff analysis for the selected reasoning profile.
 12. Run the validation critic over evidence, citation, freshness, unsupported-claim, and fallback signals.
-13. Surface reasoning trace, tradeoffs, evidence gaps, unsupported requested services, stale evidence, synthesis warnings, critic findings, and missing-context warnings.
-14. Return the structured advisory response to the UI.
+13. Build deterministic enterprise-governance metadata for executive summary, control annotations, security posture, risk classification, recommendation priority, comparison reasoning, enterprise review findings, and audit trace.
+14. Surface reasoning trace, tradeoffs, governance assessment, evidence gaps, unsupported requested services, stale evidence, synthesis warnings, critic findings, and missing-context warnings.
+15. Return the structured advisory response to the UI.
 
 This remains an MVP-friendly in-process pipeline. It does not add LangGraph, autonomous multi-agent planning, or a new distributed service.
 
@@ -136,6 +137,23 @@ The backend now exposes additive reasoning metadata:
 
 Reasoning profiles are deterministic heuristics. They improve explainability and recommendation structure, but they do not expose raw chain-of-thought and do not perform autonomous planning.
 
+## Enterprise Governance Metadata
+
+The backend now exposes an additive `enterprise_governance` object in architecture-review responses.
+
+It contains:
+
+- `executive_summary`: business-impact framing, governance posture, risk summary, and implementation guidance.
+- `governance_annotations`: per-recommendation control signals for security, resilience, FinOps, operations, migration governance, and production readiness.
+- `security_posture_checks`: deterministic checks for OCI IAM, Vault/encryption, network segmentation, audit/logging, and security-zone/security-service coverage.
+- `risk_classifications`: low, moderate, elevated operational, elevated security, elevated migration, and elevated cost risk signals with mitigation guidance.
+- `recommendation_priorities`: recommended immediately, recommended later, optional optimizations, and advanced enterprise enhancements.
+- `architecture_comparisons`: lightweight comparison reasoning such as OKE vs Compute, Autonomous Database vs Base Database, Functions vs Kubernetes, and DR topology options when relevant.
+- `enterprise_review_findings`: review-oriented checks for SPOFs, weak DR posture, missing observability, IAM gaps, cost-governance gaps, and consistency findings.
+- `auditability_trace`: retrieval chunk IDs, selected reasoning profile, heuristics, release influence, synthesis provider, fallback events, confidence level, and evaluation signals.
+
+This is deterministic advisory metadata for human review. It is not an automated approval workflow, does not enforce OCI policies, and does not integrate with an external governance platform.
+
 ## Uncertainty Handling
 
 The response now exposes:
@@ -177,6 +195,8 @@ The endpoint reports:
 - critic warning count
 - recent warnings
 
+Operational analytics also track governance policy triggers and governance risk trends from the generated advisory metadata.
+
 The backend also exposes:
 
 ```text
@@ -217,6 +237,9 @@ app/backend/.venv/bin/python evals/run_golden.py \
 app/backend/.venv/bin/python evals/run_golden.py \
   --cases evals/architecture-realism.jsonl \
   --output-dir evals/reports/architecture-realism
+app/backend/.venv/bin/python evals/run_golden.py \
+  --cases evals/enterprise-governance.jsonl \
+  --output-dir evals/reports/enterprise-governance
 ```
 
 The eval runner now checks:

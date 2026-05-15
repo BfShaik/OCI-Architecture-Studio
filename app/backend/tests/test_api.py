@@ -39,6 +39,9 @@ def test_architecture_review() -> None:
     assert body["recommendation_confidence"]
     assert body["recommendation_confidence"][0]["reasoning_basis"]
     assert body["consistency_findings"] is not None
+    assert body["enterprise_governance"]["maturity_level"]
+    assert body["enterprise_governance"]["executive_summary"]["business_impact"]
+    assert body["enterprise_governance"]["auditability_trace"]["synthesis_provider"]
     assert body["release_context"] is not None
     assert body["knowledge_temporal_context"]["knowledge_mode"]
     assert body["recommendations"]

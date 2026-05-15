@@ -50,7 +50,7 @@ http://193.122.149.102:8000/operations/analytics
 
 ## Operational Diagnostics
 
-Use the operational endpoints before promoting runtime changes. They summarize deployment profile, retrieval/vector health, release-refresh freshness, synthesis provider readiness, OCI Vault configuration-secret posture, OCI observability configuration, fallback events, hallucination findings, confidence distribution, and provider usage.
+Use the operational endpoints before promoting runtime changes. They summarize deployment profile, retrieval/vector health, release-refresh freshness, synthesis provider readiness, OCI Vault configuration-secret posture, OCI observability configuration, fallback events, hallucination findings, governance policy triggers, governance risk trends, confidence distribution, and provider usage.
 
 Runtime profiles are configured with:
 
@@ -120,6 +120,7 @@ app/backend/.venv/bin/python evals/run_golden.py --output-dir evals/reports/gold
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/edge-cases.jsonl --output-dir evals/reports/edge-cases
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/advisory-quality.jsonl --output-dir evals/reports/advisory-quality
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/orchestration-quality.jsonl --output-dir evals/reports/orchestration-quality
+app/backend/.venv/bin/python evals/run_golden.py --cases evals/enterprise-governance.jsonl --output-dir evals/reports/enterprise-governance
 ```
 
 ## Run Knowledge Refresh Policy

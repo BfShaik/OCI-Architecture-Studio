@@ -182,6 +182,85 @@ class ArchitectureConsistencyFinding(BaseModel):
     source_chunk_ids: list[str] = Field(default_factory=list)
 
 
+class GovernanceAnnotation(BaseModel):
+    recommendation_index: int | None = None
+    control_area: str
+    policy_signal: str
+    guidance: str
+    confidence: float = 0.0
+    source_chunk_ids: list[str] = Field(default_factory=list)
+
+
+class ArchitectureRiskClassification(BaseModel):
+    risk_id: str
+    level: str
+    category: str
+    summary: str
+    impacted_areas: list[str] = Field(default_factory=list)
+    operational_implication: str
+    mitigation: str
+    source_chunk_ids: list[str] = Field(default_factory=list)
+
+
+class RecommendationPriority(BaseModel):
+    recommendation_index: int
+    priority: str
+    implementation_phase: str
+    rationale: str
+
+
+class ArchitectureComparison(BaseModel):
+    decision: str
+    preferred_option: str
+    alternatives: list[str] = Field(default_factory=list)
+    pros: list[str] = Field(default_factory=list)
+    cons: list[str] = Field(default_factory=list)
+    governance_implications: list[str] = Field(default_factory=list)
+    cost_implications: str
+    operational_complexity: str
+    source_chunk_ids: list[str] = Field(default_factory=list)
+
+
+class EnterpriseReviewFinding(BaseModel):
+    check: str
+    severity: str
+    finding: str
+    impacted_area: str
+    mitigation: str
+    source_chunk_ids: list[str] = Field(default_factory=list)
+
+
+class AuditabilityTrace(BaseModel):
+    retrieval_source_chunk_ids: list[str] = Field(default_factory=list)
+    reasoning_profile: str | None = None
+    heuristics_applied: list[str] = Field(default_factory=list)
+    release_influence: list[str] = Field(default_factory=list)
+    synthesis_provider: str
+    fallback_events: list[str] = Field(default_factory=list)
+    confidence_level: str | None = None
+    evaluation_signals: dict[str, object] = Field(default_factory=dict)
+
+
+class ExecutiveAdvisorySummary(BaseModel):
+    business_impact: str
+    governance_posture: str
+    risk_summary: str
+    implementation_guidance: str
+
+
+class EnterpriseGovernanceAssessment(BaseModel):
+    maturity_level: str
+    executive_summary: ExecutiveAdvisorySummary
+    governance_annotations: list[GovernanceAnnotation] = Field(default_factory=list)
+    security_posture_checks: list[GovernanceAnnotation] = Field(default_factory=list)
+    risk_classifications: list[ArchitectureRiskClassification] = Field(default_factory=list)
+    recommendation_priorities: list[RecommendationPriority] = Field(default_factory=list)
+    architecture_comparisons: list[ArchitectureComparison] = Field(default_factory=list)
+    enterprise_review_findings: list[EnterpriseReviewFinding] = Field(default_factory=list)
+    auditability_trace: AuditabilityTrace
+    notes: list[str] = Field(default_factory=list)
+
+
 class ReleaseImpactSummary(BaseModel):
     snapshot_path: str | None = None
     snapshot_generated_at: str | None = None
@@ -245,6 +324,7 @@ class ArchitectureReviewResponse(BaseModel):
     architecture_tradeoffs: list[ArchitectureTradeoffAnalysis] = Field(default_factory=list)
     recommendation_confidence: list[RecommendationConfidenceIndicator] = Field(default_factory=list)
     consistency_findings: list[ArchitectureConsistencyFinding] = Field(default_factory=list)
+    enterprise_governance: EnterpriseGovernanceAssessment | None = None
     release_context: ReleaseImpactSummary | None = None
     knowledge_temporal_context: KnowledgeTemporalContext | None = None
     answer: str

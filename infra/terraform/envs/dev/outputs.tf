@@ -49,3 +49,7 @@ output "knowledge_refresh_release_schedule_ocid" {
 output "knowledge_refresh_stable_docs_schedule_ocid" {
   value = module.foundation.knowledge_refresh_stable_docs_schedule_ocid
 }
+
+output "governance_resource_summary" {
+  value = module.foundation.governance_resource_summary
+}

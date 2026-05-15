@@ -10,6 +10,7 @@ from oci_arch_studio_backend.services.advisory_quality import AdvisoryQualityAna
 from oci_arch_studio_backend.services.architecture_consistency import ArchitectureConsistencyValidator
 from oci_arch_studio_backend.services.architecture_reasoning import ArchitectureDecisionReasoner
 from oci_arch_studio_backend.services.architecture_reasoning_engine import ArchitectureReasoningEngine
+from oci_arch_studio_backend.services.enterprise_governance import EnterpriseGovernanceAdvisor
 from oci_arch_studio_backend.services.intents import (
     IntentClassifier,
     get_intent_profile,
@@ -42,6 +43,7 @@ class ArchitectureReviewOrchestrator:
         consistency_validator: ArchitectureConsistencyValidator | None = None,
         decision_reasoner: ArchitectureDecisionReasoner | None = None,
         reasoning_engine: ArchitectureReasoningEngine | None = None,
+        governance_advisor: EnterpriseGovernanceAdvisor | None = None,
         synthesis_debug_enabled: bool = False,
     ) -> None:
         self.retriever = retriever
@@ -53,6 +55,7 @@ class ArchitectureReviewOrchestrator:
         self.consistency_validator = consistency_validator or ArchitectureConsistencyValidator()
         self.decision_reasoner = decision_reasoner or ArchitectureDecisionReasoner()
         self.reasoning_engine = reasoning_engine or ArchitectureReasoningEngine()
+        self.governance_advisor = governance_advisor or EnterpriseGovernanceAdvisor()
         self.synthesis_debug_enabled = synthesis_debug_enabled
 
     async def review(
@@ -198,6 +201,23 @@ class ArchitectureReviewOrchestrator:
             if self.release_store is not None
             else None
         )
+        governance_assessment = self.governance_advisor.assess(
+            question=request.question,
+            workload_context=request.workload_context,
+            profile=profile,
+            sources=sources,
+            recommendations=quality.recommendations,
+            decision_reasoning=decision_reasoning,
+            reasoning_result=reasoning_result,
+            consistency_findings=consistency_findings,
+            release_context=release_context,
+            temporal_context=temporal_context,
+            confidence=quality.confidence,
+            synthesis_provider=synthesis.provider,
+            synthesis_fallback_used=synthesis.used_fallback,
+            quality_warnings=[*quality.quality_warnings, *synthesis.warnings, *consistency_warnings],
+            unsupported_claims=quality.unsupported_claims,
+        )
 
         advisory_quality_metrics.record(
             intent=profile.intent.value,
@@ -273,6 +293,7 @@ class ArchitectureReviewOrchestrator:
             consistency_findings=consistency_findings,
             release_context=release_context,
             knowledge_temporal_context=temporal_context,
+            enterprise_governance=governance_assessment,
             answer=synthesis.answer if not quality.not_enough_evidence else f"{synthesis.answer} {context_note}",
             recommendations=quality.recommendations,
             assumptions=synthesis.assumptions,
