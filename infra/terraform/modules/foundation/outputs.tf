@@ -132,11 +132,14 @@ output "runtime_infrastructure_summary" {
       backend_direct_port  = 8000
     }
     runtime = {
-      backend_instance_ocid = oci_core_instance.backend.id
-      backend_shape         = var.backend_shape
-      backend_ocpus         = var.backend_ocpus
-      backend_memory_gbs    = var.backend_memory_gbs
-      functions_scheduler   = var.enable_knowledge_refresh_scheduler ? "enabled" : "disabled"
+      backend_instance_ocid           = oci_core_instance.backend.id
+      backend_shape                   = var.backend_shape
+      backend_ocpus                   = var.backend_ocpus
+      backend_memory_gbs              = var.backend_memory_gbs
+      functions_scheduler             = var.enable_knowledge_refresh_scheduler ? "enabled" : "disabled"
+      knowledge_refresh_function_ocid = var.enable_knowledge_refresh_scheduler ? oci_functions_function.knowledge_refresh[0].id : null
+      release_refresh_schedule_ocid   = var.enable_knowledge_refresh_scheduler ? oci_resource_scheduler_schedule.knowledge_refresh_release_watch[0].id : null
+      stable_docs_schedule_ocid       = var.enable_knowledge_refresh_scheduler ? oci_resource_scheduler_schedule.knowledge_refresh_stable_docs[0].id : null
     }
     storage = {
       frontend_bucket  = oci_objectstorage_bucket.frontend.name

@@ -626,6 +626,11 @@ class OperationalDiagnostics:
                 "notifications_configured": bool(self.settings.oci_notifications_topic_ocid),
                 "events_configured": bool(self.settings.oci_events_rule_ocid),
             },
+            "workflows": {
+                "knowledge_refresh_function_configured": bool(self.settings.oci_knowledge_refresh_function_ocid),
+                "release_schedule_configured": bool(self.settings.oci_knowledge_refresh_release_schedule_ocid),
+                "stable_docs_schedule_configured": bool(self.settings.oci_knowledge_refresh_stable_docs_schedule_ocid),
+            },
             "ai": {
                 "genai_chat_configured": bool(
                     self.settings.oci_genai_compartment_id and self.settings.oci_genai_chat_model_id
@@ -676,14 +681,25 @@ class OperationalDiagnostics:
 
     def _scheduler_status(self) -> dict[str, object]:
         # Resource Scheduler and Functions are provisioned through Terraform when enabled.
-        configured = self.settings.deployment_profile == "oci_functions"
+        configured = bool(
+            self.settings.oci_knowledge_refresh_function_ocid
+            and (
+                self.settings.oci_knowledge_refresh_release_schedule_ocid
+                or self.settings.oci_knowledge_refresh_stable_docs_schedule_ocid
+            )
+        )
+        profile_compatible = self.settings.deployment_profile in {"oci_vm", "oke", "oci_functions"}
         return {
             "provider": "oci_resource_scheduler_to_oci_functions",
             "configured": configured,
+            "profile_compatible": profile_compatible,
+            "function_ocid_configured": bool(self.settings.oci_knowledge_refresh_function_ocid),
+            "release_schedule_ocid_configured": bool(self.settings.oci_knowledge_refresh_release_schedule_ocid),
+            "stable_docs_schedule_ocid_configured": bool(self.settings.oci_knowledge_refresh_stable_docs_schedule_ocid),
             "message": (
-                "OCI Functions-compatible execution profile is selected."
+                "OCI Resource Scheduler and Functions refresh workflow is configured."
                 if configured
-                else "OCI Resource Scheduler and Functions are scaffolded in Terraform and disabled unless explicitly enabled."
+                else "OCI Resource Scheduler and Functions are scaffolded in Terraform and disabled unless explicitly enabled with Function and Schedule OCIDs."
             ),
         }
 
@@ -774,6 +790,11 @@ class OperationalDiagnostics:
             or self.settings.deployment_profile != "local_dev",
             "api_gateway_iac": bool(runtime.get("api_gateway_endpoint_configured")),
             "oci_devops_iac": bool(runtime.get("oci_devops_configured")),
+            "refresh_scheduler_iac": bool(
+                configured_resources.get("workflows", {})
+                .get("release_schedule_configured")
+            )
+            or self.settings.deployment_profile != "local_dev",
         }
         critical_or_high_gaps = [gap for gap in gaps if gap.get("severity") in {"critical", "high"}]
         status = "warning" if critical_or_high_gaps or not all(checklist.values()) else "ok"

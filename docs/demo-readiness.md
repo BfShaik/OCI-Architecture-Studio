@@ -12,7 +12,7 @@ Last updated: 2026-05-15
 | Release awareness | Ready for foundation demo | Point-in-time release snapshot ingestion exists and release-aware prompts separate current-release context from historical/local guidance. |
 | Evals | Ready | Golden and edge-case evals pass. |
 | Tests/build | Ready | Backend tests and frontend build pass. |
-| Known caveat | Accepted | No full LLM synthesis, production semantic embeddings, Oracle AI Vector Search active reads, HTTPS ingress, or live release-impact comparison yet. |
+| Known caveat | Accepted | OCI GenAI synthesis is optional rather than default; production semantic embeddings, Oracle AI Vector Search active reads, HTTPS ingress, and full live release reconciliation remain deferred. |
 
 ## Recommended Demo Prompts
 
@@ -163,8 +163,8 @@ OCI staging smoke tests: passed
 
 - Production semantic embeddings are not active.
 - Oracle AI Vector Search active reads are not implemented.
-- Full LLM-based synthesis is not implemented.
-- Release impact comparison is not implemented.
+- OCI GenAI synthesis is implemented as a configurable path with deterministic fallback, but it is not the default staging mode.
+- Release impact analysis exists for snapshots and affected sources/chunks, but full live release reconciliation is not implemented.
 - OCI corpus coverage is still small.
 - Release parsing is heuristic-based.
 - UI does not yet include prompt history or saved reviews.
@@ -182,15 +182,15 @@ OCI staging smoke tests: passed
 1. Add dedicated OCI sources for WAF, Vault, Cloud Guard, Logging, Monitoring, Budgets, IAM, Audit, and Data Guard.
 2. Replace local hash embeddings with the selected production embedding provider.
 3. Implement Oracle AI Vector Search indexing and dual-run parity.
-4. Implement citation-aware LLM synthesis with strict grounding instructions.
-5. Add release impact comparison between release snapshots and architecture recommendations.
-6. Add release-impact eval cases.
+4. Run live OCI GenAI synthesis parity with approved model configuration before activation.
+5. Add full current-vs-historical release comparison in release-aware responses.
+6. Expand release-impact eval cases as the corpus grows.
 7. Improve frontend source cards with grouped evidence and prompt history.
 8. Add HTTPS ingress for staging/demo.
 
 ## Top Risks
 
-- Recommendations may still sound template-driven until LLM synthesis is added.
+- Some recommendations may still sound template-driven while deterministic synthesis remains the default.
 - Retrieval quality will degrade as the corpus grows without production embeddings.
 - Release-awareness can still be misread as live intelligence unless the UI clearly marks snapshot-based context.
 - OCI source coverage gaps can cause incomplete advice for security, observability, and DR scenarios.

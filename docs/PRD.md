@@ -72,6 +72,7 @@ Operational flow:
 - Operational analytics include deterministic governance policy-trigger and risk-trend counters from generated advisory metadata.
 - Runtime readiness diagnostics check startup paths, dependency configuration, API Gateway readiness, OCI DevOps readiness, runtime safeguards, fallback paths, and release-refresh state.
 - Infrastructure visibility diagnostics report the configured OCI runtime topology, API exposure mode, retrieval/synthesis/embedding providers, Object Storage snapshot posture, Vault/IAM posture, observability posture, scheduler/deployment workflow posture, and configuration-derived rebuildability gaps. This endpoint is read-only and does not prove live OCI resource reachability unless connectivity checks are enabled.
+- The internal beta readiness gate validates deployed endpoints, retrieval health, operational diagnostics, governance/executive/topology metadata, migration/FinOps optimization metadata, release/temporal metadata, citations, and accepted staging warnings.
 - Live OCI SDK connectivity checks are disabled by default and should be enabled only after IAM policies and Vault access are ready.
 
 Evaluation flow:

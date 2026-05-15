@@ -327,6 +327,11 @@ This progress is based on `docs/two-week-plan.md`.
   - frontend rendering for migration and FinOps optimization summaries
   - operational analytics counters for migration, modernization, FinOps, and workload-optimization trends
   - FinOps/migration optimization eval suite under `evals/finops-migration-optimization.jsonl`
+- Added internal beta completion foundation:
+  - internal beta gap assessment and readiness summary under `docs/internal-beta-readiness-summary.md`
+  - deployed-environment readiness gate under `infra/scripts/internal_beta_readiness_check.py`
+  - OCI Resource Scheduler/Functions diagnostics now report configured Function and Schedule OCIDs instead of inferring readiness from runtime profile alone
+  - Terraform cloud-init and runtime profile examples expose knowledge-refresh Function/Schedule OCIDs when the OCI-native scheduler is enabled
 - Added OCI-native operational hardening foundation:
   - runtime deployment profiles for local development, OCI VM, OKE, and OCI Functions-compatible execution
   - additive `/operations/profile`, `/operations/health`, `/operations/readiness`, `/operations/infrastructure`, and `/operations/analytics` endpoints
@@ -361,7 +366,7 @@ Last validation run: 2026-05-15
 - Continuous intelligence hardening: candidate-first promotion, version lineage, rollback automation, and refresh status endpoint implemented
 - Terraform validation: passed after optional knowledge refresh scheduler scaffold; staging plan currently should not be applied until existing backend replacement drift is resolved and the function image is available
 - OCI-native refresh scheduler scaffold: implemented with OCI Functions plus OCI Resource Scheduler; not applied yet because a published OCIR function image is required before enabling
-- Backend tests: passed, 120 tests
+- Backend tests: passed, 121 tests
 - Frontend build: passed
 - Golden evals: passed, 18 of 18
 - Edge-case evals: passed, 8 of 8
@@ -375,6 +380,7 @@ Last validation run: 2026-05-15
 - Executive-experience evals: passed, 3 of 3
 - FinOps-migration-optimization evals: passed, 4 of 4
 - Advisory quality gate: passed against the evaluation-intelligence report with MVP thresholds
+- Internal beta readiness gate: passed locally against governance, executive, topology, migration/FinOps, release, retrieval, and operational diagnostics checks
 - Operational hardening tests: passed in targeted API/diagnostics suite
 - Operational readiness check: passed locally against `/health`, `/retrieval/health`, `/operations/health`, `/operations/readiness`, `/operations/infrastructure`, and `/operations/analytics`; API Gateway and OCI DevOps are expected readiness warnings until configured
 - Runtime readiness endpoint: passed locally in targeted API tests

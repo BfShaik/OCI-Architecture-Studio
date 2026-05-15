@@ -25,6 +25,18 @@ class Settings(BaseSettings):
     oci_api_gateway_ocid: str | None = Field(default=None, alias="OCI_API_GATEWAY_OCID")
     oci_devops_project_ocid: str | None = Field(default=None, alias="OCI_DEVOPS_PROJECT_OCID")
     oci_devops_deploy_pipeline_ocid: str | None = Field(default=None, alias="OCI_DEVOPS_DEPLOY_PIPELINE_OCID")
+    oci_knowledge_refresh_function_ocid: str | None = Field(
+        default=None,
+        alias="OCI_KNOWLEDGE_REFRESH_FUNCTION_OCID",
+    )
+    oci_knowledge_refresh_release_schedule_ocid: str | None = Field(
+        default=None,
+        alias="OCI_KNOWLEDGE_REFRESH_RELEASE_SCHEDULE_OCID",
+    )
+    oci_knowledge_refresh_stable_docs_schedule_ocid: str | None = Field(
+        default=None,
+        alias="OCI_KNOWLEDGE_REFRESH_STABLE_DOCS_SCHEDULE_OCID",
+    )
     operational_diagnostics_enabled: bool = Field(default=True, alias="OPERATIONAL_DIAGNOSTICS_ENABLED")
     oci_connectivity_check_enabled: bool = Field(default=False, alias="OCI_CONNECTIVITY_CHECK_ENABLED")
     openai_api_key: str | None = Field(default=None, alias="OPENAI_API_KEY")

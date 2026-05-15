@@ -154,7 +154,7 @@ Mitigation:
 
 ### Stale Knowledge Risks
 
-- Release snapshot exists but is not yet a full watcher/intelligence/refresh workflow.
+- Release snapshot, release watcher scaffolding, deterministic impact analysis, overlays, and refresh-policy gates exist, but the workflow is not yet a fully automated live release reconciliation system.
 - Current release-impact analysis is advisory and cautionary, not authoritative.
 
 Mitigation:
@@ -166,13 +166,13 @@ Mitigation:
 
 - Corpus is still intentionally small.
 - Required service coverage is checked heuristically, not semantically.
-- Full citation-aware LLM synthesis is not implemented yet.
+- OCI GenAI synthesis has a retrieval-grounded prompt path and deterministic fallback, but live GenAI activation still requires parity validation.
 
 Mitigation:
 
 - Expand official OCI sources.
 - Add retrieval diff reports between `local_json`, Object Storage manifest, and Oracle AI Vector Search.
-- Add unsupported-claim suppression before full LLM synthesis.
+- Keep unsupported-claim suppression and GenAI parity checks in the promotion gate before enabling live GenAI by default.
 
 ## Rollback Considerations
 

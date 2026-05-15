@@ -137,6 +137,28 @@ def test_infrastructure_visibility_distinguishes_configured_and_scaffolded_oci_r
     assert not any(gap["area"] == "identity" for gap in visibility["gaps"])
 
 
+def test_scheduler_diagnostics_use_configured_function_and_schedule_ocids() -> None:
+    settings = Settings(
+        DEPLOYMENT_PROFILE="oci_vm",
+        OCI_KNOWLEDGE_REFRESH_FUNCTION_OCID="ocid1.fnfunc.oc1..example",
+        OCI_KNOWLEDGE_REFRESH_RELEASE_SCHEDULE_OCID="ocid1.resourceschedulerschedule.oc1..release",
+        OCI_KNOWLEDGE_REFRESH_STABLE_DOCS_SCHEDULE_OCID="ocid1.resourceschedulerschedule.oc1..docs",
+    )
+
+    visibility = OperationalDiagnostics(settings).infrastructure_visibility(
+        retrieval={"provider": "local_json", "store": {"exists": True, "chunk_count": 44}},
+        refresh_status={"status": "succeeded"},
+    )
+
+    scheduler = visibility["operational_workflows"]["scheduler"]
+    workflows = visibility["configured_resources"]["workflows"]
+    assert scheduler["configured"] is True
+    assert scheduler["function_ocid_configured"] is True
+    assert workflows["release_schedule_configured"] is True
+    assert visibility["rebuildability"]["checklist"]["refresh_scheduler_iac"] is True
+    assert not any(gap["area"] == "operations" for gap in visibility["gaps"])
+
+
 def test_object_storage_retrieval_degrades_to_local_fallback_when_config_missing() -> None:
     settings = Settings(RETRIEVAL_PROVIDER="oci_object_storage", RETRIEVAL_FALLBACK_ENABLED=True)
 

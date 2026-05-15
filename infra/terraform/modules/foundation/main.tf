@@ -315,23 +315,26 @@ resource "oci_core_instance" "backend" {
     user_data = base64encode(templatefile(
       "${path.root}/cloud-init.yaml.tftpl",
       {
-        app_env                         = var.environment
-        deployment_profile              = var.deployment_profile
-        oci_region                      = var.region
-        oci_compartment_id              = oci_identity_compartment.project.id
-        oci_vault_config_secret_ocid    = oci_vault_secret.app_config_placeholder.id
-        oci_logging_log_group_ocid      = oci_logging_log_group.app.id
-        oci_notifications_topic_ocid    = oci_ons_notification_topic.alerts.id
-        oci_events_rule_ocid            = oci_events_rule.resource_lifecycle.id
-        oci_api_gateway_ocid            = var.enable_api_gateway ? oci_apigateway_gateway.api[0].id : ""
-        oci_api_gateway_endpoint        = var.enable_api_gateway ? "https://${oci_apigateway_gateway.api[0].hostname}${var.api_gateway_path_prefix}" : ""
-        oci_devops_project_ocid         = var.oci_devops_project_ocid
-        oci_devops_deploy_pipeline_ocid = var.oci_devops_deploy_pipeline_ocid
-        oci_monitoring_namespace        = "oci_architecture_studio"
-        operational_diagnostics_enabled = var.operational_diagnostics_enabled
-        oci_connectivity_check_enabled  = var.oci_connectivity_check_enabled
-        snapshots_bucket_name           = oci_objectstorage_bucket.snapshots.name
-        object_storage_namespace        = data.oci_objectstorage_namespace.namespace.namespace
+        app_env                                         = var.environment
+        deployment_profile                              = var.deployment_profile
+        oci_region                                      = var.region
+        oci_compartment_id                              = oci_identity_compartment.project.id
+        oci_vault_config_secret_ocid                    = oci_vault_secret.app_config_placeholder.id
+        oci_logging_log_group_ocid                      = oci_logging_log_group.app.id
+        oci_notifications_topic_ocid                    = oci_ons_notification_topic.alerts.id
+        oci_events_rule_ocid                            = oci_events_rule.resource_lifecycle.id
+        oci_api_gateway_ocid                            = var.enable_api_gateway ? oci_apigateway_gateway.api[0].id : ""
+        oci_api_gateway_endpoint                        = var.enable_api_gateway ? "https://${oci_apigateway_gateway.api[0].hostname}${var.api_gateway_path_prefix}" : ""
+        oci_devops_project_ocid                         = var.oci_devops_project_ocid
+        oci_devops_deploy_pipeline_ocid                 = var.oci_devops_deploy_pipeline_ocid
+        oci_knowledge_refresh_function_ocid             = var.enable_knowledge_refresh_scheduler ? oci_functions_function.knowledge_refresh[0].id : ""
+        oci_knowledge_refresh_release_schedule_ocid     = var.enable_knowledge_refresh_scheduler ? oci_resource_scheduler_schedule.knowledge_refresh_release_watch[0].id : ""
+        oci_knowledge_refresh_stable_docs_schedule_ocid = var.enable_knowledge_refresh_scheduler ? oci_resource_scheduler_schedule.knowledge_refresh_stable_docs[0].id : ""
+        oci_monitoring_namespace                        = "oci_architecture_studio"
+        operational_diagnostics_enabled                 = var.operational_diagnostics_enabled
+        oci_connectivity_check_enabled                  = var.oci_connectivity_check_enabled
+        snapshots_bucket_name                           = oci_objectstorage_bucket.snapshots.name
+        object_storage_namespace                        = data.oci_objectstorage_namespace.namespace.namespace
       }
     ))
   }

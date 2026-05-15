@@ -71,6 +71,15 @@ app/backend/.venv/bin/python infra/scripts/operational_readiness_check.py \
 
 For staging, add `--require-oci-profile` once the deployed runtime is expected to report an OCI profile instead of `local_dev`.
 
+Run the internal beta gate before tagging a baseline:
+
+```bash
+PYTHONPATH=app/backend/src app/backend/.venv/bin/python infra/scripts/internal_beta_readiness_check.py \
+  --api-base-url http://193.122.149.102:8000 \
+  --require-oci-profile \
+  --output-dir evals/reports/internal-beta-readiness
+```
+
 Live OCI SDK connectivity checks are controlled by `OCI_CONNECTIVITY_CHECK_ENABLED`. Keep this disabled until IAM policies, dynamic groups, and Vault access are verified.
 
 ## Internal Beta Readiness Checklist
@@ -88,6 +97,7 @@ Before treating an environment as internal-beta ready:
 - Terraform validate passes for the target environment.
 - Golden, advisory, governance, and platform-maturity evals pass.
 - Runtime-production-readiness evals pass when runtime or deployment behavior changes.
+- `infra/scripts/internal_beta_readiness_check.py` passes against the target environment before a milestone tag is created.
 
 ## Verify Deployment Health
 

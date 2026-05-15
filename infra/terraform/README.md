@@ -67,6 +67,7 @@ terraform apply
 - Enable `enable_api_gateway` only when the backend VM exposure path is ready to move behind OCI API Gateway; it is default-off for staging stability.
 - Provide optional `oci_devops_project_ocid` and `oci_devops_deploy_pipeline_ocid` when deployment is managed through OCI DevOps; current operator-script deployment remains supported.
 - Enable `enable_knowledge_refresh_scheduler` only after the knowledge refresh function image is built and pushed to OCIR.
+- When `enable_knowledge_refresh_scheduler` is enabled, Terraform passes the Function and Resource Scheduler OCIDs into cloud-init so runtime diagnostics can report the OCI-native refresh workflow accurately.
 - Use `terraform output runtime_infrastructure_summary` during deployment reviews to distinguish active resources from default-off scaffolding.
 - The backend instance is intentionally simple; move to Container Instances or a Load Balancer + instance pool only after the MVP deployment is stable.
 - Use `backend.object-storage.example.tf` as the starting point for remote Terraform state once a shared state bucket exists.

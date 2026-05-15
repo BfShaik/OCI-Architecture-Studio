@@ -83,6 +83,7 @@ tests/                Backend and integration tests
 - OCI Vault configuration-secret readiness checks, with local environment compatibility for development
 - OCI Logging, Audit, Monitoring, Notifications, and Events configuration visibility in operational diagnostics. Audit support is currently surfaced as platform-native OCI Audit posture metadata, not custom audit event export.
 - Operational readiness checker under `infra/scripts/operational_readiness_check.py`
+- Internal beta readiness gate under `infra/scripts/internal_beta_readiness_check.py` for deployed endpoint, retrieval, operational diagnostics, governance, executive, topology, migration/FinOps, and release-context validation
 - Intent-aware orchestration for:
   - product overview
   - architecture
@@ -400,7 +401,7 @@ cd ../frontend && npm run build
 
 Latest full validation: 2026-05-15.
 
-- Local backend tests: `120 passed`
+- Local backend tests: `121 passed`
 - Golden evals: `18 passed, 0 failed`
 - Edge-case evals: `8 passed, 0 failed`
 - Advisory-quality evals: `5 passed, 0 failed`
@@ -413,6 +414,7 @@ Latest full validation: 2026-05-15.
 - Executive-experience evals: `3 passed, 0 failed`
 - FinOps-migration-optimization evals: `4 passed, 0 failed`
 - Advisory quality gate: passed with MVP thresholds
+- Internal beta readiness gate: passed locally; staging gate should pass before tagging a baseline
 - Operational readiness check: passed locally; API Gateway and OCI DevOps are reported as readiness warnings until configured
 - Retrieval regression: `18 passed, 0 failed`
 - Retrieval health: passed for local `local_json` and staging `oci_object_storage` with 44 chunks
@@ -436,6 +438,8 @@ Latest full validation: 2026-05-15.
 - Live post-promotion scenario checks: passed for architecture, migration, HA/DR, cost, and release-awareness prompts
 
 See `docs/status.md` for the current completed work, pending work, and known limitations.
+
+See `docs/internal-beta-readiness-summary.md` for the internal beta gap assessment, accepted limitations, validation baseline, and milestone tagging guidance.
 
 See `docs/architecture-diagrams.md` for presentation-friendly diagrams covering current staging, dual-provider retrieval parity, target OCI-native retrieval, release-awareness, and operational control points.
 
