@@ -2,7 +2,11 @@ from pathlib import Path
 from time import perf_counter
 
 from oci_arch_studio_backend.core.config import Settings
-from oci_arch_studio_backend.models.architecture import RetrievedSource
+from oci_arch_studio_backend.models.architecture import RetrievedSource, RetrievalDebugTrace, RetrievalScoreTrace
+from oci_arch_studio_backend.services.architecture_heuristics import (
+    ArchitectureDomainHeuristics,
+    ArchitectureHeuristicClassifier,
+)
 from oci_arch_studio_backend.services.embeddings import (
     Embedder,
     LocalHashingEmbedder,
@@ -12,6 +16,7 @@ from oci_arch_studio_backend.services.embeddings import (
 from oci_arch_studio_backend.services.freshness import is_stale_source
 from oci_arch_studio_backend.services.intents import IntentProfile
 from oci_arch_studio_backend.services.retrieval_metrics import retrieval_metrics
+from oci_arch_studio_backend.services.retrieval_reranker import RetrievalReranker
 from oci_arch_studio_backend.services.service_mapping import OciServiceMapper
 from oci_arch_studio_backend.services.vector_store import (
     JsonVectorStore,
@@ -126,19 +131,30 @@ class OciKnowledgeRetriever:
         embedder: Embedder | None = None,
         store: VectorStore | None = None,
         provider_name: str = "local_json",
+        debug_enabled: bool = False,
+        candidate_multiplier: int = 3,
     ) -> None:
         self.store = store or JsonVectorStore(index_path=index_path)
         self.top_k = top_k
         self.embedder = embedder or LocalHashingEmbedder()
         self.provider_name = provider_name
         self.service_mapper = OciServiceMapper()
+        self.heuristic_classifier = ArchitectureHeuristicClassifier()
+        self.reranker = RetrievalReranker()
+        self.debug_enabled = debug_enabled
+        self.candidate_multiplier = max(candidate_multiplier, 1)
+        self.last_debug_trace: RetrievalDebugTrace | None = None
 
     async def retrieve(
         self,
         question: str,
         intent_profile: IntentProfile | None = None,
+        *,
+        workload_context: str | None = None,
+        debug_enabled: bool | None = None,
     ) -> list[RetrievedSource]:
         started_at = retrieval_metrics.start()
+        self.last_debug_trace = None
         intent = intent_profile.intent.value if intent_profile else None
         if not self.store.exists:
             sources = self._missing_index_sources()
@@ -153,17 +169,22 @@ class OciKnowledgeRetriever:
             )
             return sources
 
-        service_mapping = self.service_mapper.map_text(question)
+        combined_text = " ".join(part for part in (question, workload_context) if part)
+        service_mapping = self.service_mapper.map_text(combined_text)
+        heuristics = self.heuristic_classifier.detect(combined_text)
         retrieval_query = self._build_retrieval_query(question, intent_profile)
         if service_mapping.retrieval_terms:
             retrieval_query = " ".join((retrieval_query, *service_mapping.retrieval_terms))
+        if heuristics.retrieval_terms:
+            retrieval_query = " ".join((retrieval_query, *heuristics.retrieval_terms))
         embedding_started_at = perf_counter()
         query_embedding = self.embedder.embed(retrieval_query)
         embedding_latency_ms = round((perf_counter() - embedding_started_at) * 1000, 2)
-        filters = self._build_filters(question, intent_profile, service_mapping.mapped_services)
+        filters = self._build_filters(question, intent_profile, service_mapping.mapped_services, heuristics)
+        candidate_count = max(self.top_k * self.candidate_multiplier, self.top_k + 4)
         results = self.store.search(
             query_embedding=query_embedding,
-            top_k=self.top_k,
+            top_k=candidate_count,
             filters=filters,
         )
 
@@ -182,7 +203,33 @@ class OciKnowledgeRetriever:
             )
             return sources
 
-        sources = [self._to_retrieved_source(chunk, score) for chunk, score in results]
+        reranked, rerank_traces = self.reranker.rerank(
+            results,
+            filters=filters,
+            service_mapping=service_mapping,
+            heuristics=heuristics,
+        )
+        selected = reranked[: self.top_k]
+        sources = [self._to_retrieved_source(chunk, score) for chunk, score in selected]
+        if self._debug_requested(debug_enabled):
+            self.last_debug_trace = RetrievalDebugTrace(
+                detected_intent=intent,
+                mapped_oci_services=list(service_mapping.mapped_services),
+                mapped_service_summary=service_mapping.summary(),
+                domain_heuristics=list(heuristics.domains),
+                retrieved_chunk_ids=[chunk.id for chunk, _score in results],
+                retrieval_scores=[
+                    RetrievalScoreTrace(
+                        chunk_id=trace.chunk_id,
+                        title=trace.title,
+                        base_score=trace.base_score,
+                        final_score=trace.final_score,
+                        adjustments=trace.adjustments,
+                    )
+                    for trace in rerank_traces
+                ],
+                selected_final_chunks=[source.chunk_id or source.title for source in sources],
+            )
         retrieval_metrics.record(
             started_at=started_at,
             provider=self.provider_name,
@@ -267,6 +314,7 @@ class OciKnowledgeRetriever:
         question: str,
         intent_profile: IntentProfile | None,
         mapped_services: tuple[str, ...] = (),
+        heuristics: ArchitectureDomainHeuristics | None = None,
     ) -> VectorSearchFilters:
         if intent_profile is None:
             return VectorSearchFilters()
@@ -277,31 +325,21 @@ class OciKnowledgeRetriever:
             if any(term in normalized_question for term in terms)
         )
         services = tuple(dict.fromkeys((*explicit_services, *mapped_services)))
+        hints = INTENT_RETRIEVAL_HINTS.get(intent_profile.intent.value, {})
+        heuristics = heuristics or ArchitectureDomainHeuristics()
         return VectorSearchFilters(
             intent=intent_profile.intent.value,
-            service_domains=INTENT_RETRIEVAL_HINTS.get(intent_profile.intent.value, {}).get(
-                "service_domains",
-                (),
-            ),
-            architecture_patterns=INTENT_RETRIEVAL_HINTS.get(intent_profile.intent.value, {}).get(
-                "architecture_patterns",
-                (),
-            ),
-            workload_types=INTENT_RETRIEVAL_HINTS.get(intent_profile.intent.value, {}).get(
-                "workload_types",
-                (),
-            ),
-            domain_tags=INTENT_RETRIEVAL_HINTS.get(intent_profile.intent.value, {}).get(
-                "domain_tags",
-                (),
-            ),
-            topics=INTENT_RETRIEVAL_HINTS.get(intent_profile.intent.value, {}).get(
-                "topics",
-                (),
-            ),
+            service_domains=tuple(dict.fromkeys((*hints.get("service_domains", ()), *heuristics.service_domains))),
+            architecture_patterns=tuple(dict.fromkeys((*hints.get("architecture_patterns", ()), *heuristics.architecture_patterns))),
+            workload_types=tuple(dict.fromkeys((*hints.get("workload_types", ()), *heuristics.workload_types))),
+            domain_tags=tuple(dict.fromkeys((*hints.get("domain_tags", ()), *heuristics.domain_tags))),
+            topics=tuple(dict.fromkeys((*hints.get("topics", ()), *heuristics.topics))),
             services=services,
             release_aware=intent_profile.intent.value == "release_awareness",
         )
+
+    def _debug_requested(self, request_debug: bool | None) -> bool:
+        return self.debug_enabled if request_debug is None else bool(request_debug or self.debug_enabled)
 
 
 def build_retriever(settings: Settings, top_k: int = 6) -> OciKnowledgeRetriever:
@@ -362,6 +400,8 @@ def build_retriever(settings: Settings, top_k: int = 6) -> OciKnowledgeRetriever
         embedder=embedder,
         store=store,
         provider_name=provider_name,
+        debug_enabled=settings.retrieval_debug_enabled,
+        candidate_multiplier=settings.retrieval_candidate_multiplier,
     )
 
 

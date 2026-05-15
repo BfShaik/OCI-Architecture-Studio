@@ -9,6 +9,7 @@ from oci_arch_studio_backend.services.intents import (
     get_intent_profile,
 )
 from oci_arch_studio_backend.services.releases import ReleaseSnapshotStore
+from oci_arch_studio_backend.services.response_formatter import build_section_citations
 from oci_arch_studio_backend.services.retrieval import OciKnowledgeRetriever
 from oci_arch_studio_backend.services.synthesis import (
     AdvisorySynthesizer,
@@ -52,6 +53,8 @@ class ArchitectureReviewOrchestrator:
         sources = await self.retriever.retrieve(
             request.question,
             intent_profile=profile,
+            workload_context=request.workload_context,
+            debug_enabled=request.retrieval_debug,
         )
         source_titles = sorted({source.title for source in sources})
         has_index = all(source.source_type != "missing_index" for source in sources)
@@ -159,6 +162,8 @@ class ArchitectureReviewOrchestrator:
             assumptions=synthesis.assumptions,
             risks=synthesis.risks,
             citations=sources,
+            section_citations=build_section_citations(sources),
+            retrieval_debug=self.retriever.last_debug_trace,
             evidence_links=quality.evidence_links,
             confidence=quality.confidence,
             quality_warnings=[*quality.quality_warnings, *synthesis.warnings],

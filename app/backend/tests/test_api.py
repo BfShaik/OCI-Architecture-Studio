@@ -32,10 +32,29 @@ def test_architecture_review() -> None:
     assert body["synthesis_warnings"] is not None
     assert body["recommendations"]
     assert body["citations"]
+    assert body["section_citations"]
+    assert body["section_citations"][0]["section"] == "Executive Summary"
     assert "summary" in body["citations"][0]
     assert body["evidence_links"]
     assert body["confidence"]["overall"] >= 0
     assert body["quality_warnings"] is not None
+
+
+def test_architecture_review_optional_retrieval_debug() -> None:
+    response = client.post(
+        "/architecture-review",
+        json={
+            "question": "Migrate CloudWatch and IAM controls for a SaaS platform to OCI.",
+            "retrieval_debug": True,
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["retrieval_debug"]["detected_intent"]
+    assert "Logging" in body["retrieval_debug"]["mapped_oci_services"]
+    assert body["retrieval_debug"]["retrieval_scores"]
+    assert body["retrieval_debug"]["selected_final_chunks"]
 
 
 def test_architecture_review_flags_low_context_uncertainty() -> None:

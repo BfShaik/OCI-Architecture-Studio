@@ -6,6 +6,7 @@ from time import perf_counter
 from typing import Protocol
 
 from oci_arch_studio_backend.models.architecture import RetrievedSource
+from oci_arch_studio_backend.services.architecture_heuristics import ArchitectureHeuristicClassifier
 from oci_arch_studio_backend.services.intents import IntentProfile
 from oci_arch_studio_backend.services.response_formatter import (
     STANDARD_RESPONSE_SECTIONS,
@@ -49,14 +50,18 @@ class DeterministicAdvisorySynthesizer:
 
     def synthesize(self, request: SynthesisRequest) -> SynthesisResult:
         profile = request.profile
+        heuristics = ArchitectureHeuristicClassifier().detect(
+            " ".join(part for part in (request.question, request.workload_context) if part)
+        )
         return SynthesisResult(
             answer=format_standard_answer(
                 profile=profile,
                 context_note=request.context_note,
                 sources=request.sources,
                 workload_context=request.workload_context,
+                question=request.question,
             ),
-            recommendations=list(profile.recommendations),
+            recommendations=[*profile.recommendations, *heuristics.recommendations],
             assumptions=list(profile.assumptions),
             risks=list(profile.risks),
             next_steps=list(profile.next_steps),
@@ -189,6 +194,10 @@ class OciGenAiAdvisorySynthesizer:
                         f"title: {source.title}",
                         f"service: {source.service}",
                         f"domain: {source.service_domain}",
+                        f"service_category: {source.service_category or source.category}",
+                        f"workload_types: {', '.join(source.workload_types)}",
+                        f"domain_tags: {', '.join(source.domain_tags)}",
+                        f"architecture_patterns: {', '.join(source.architecture_patterns)}",
                         f"stale: {source.is_stale}",
                         f"url: {source.source_url or source.url}",
                         f"summary: {source.summary[:1200]}",
@@ -202,6 +211,15 @@ class OciGenAiAdvisorySynthesizer:
                 f"Intent: {request.profile.intent.value}",
                 f"Prompt template: {request.profile.prompt_template}",
                 f"Focus: {request.profile.focus}",
+                "Architecture domain heuristics: "
+                + (
+                    " ".join(
+                        ArchitectureHeuristicClassifier()
+                        .detect(" ".join(part for part in (request.question, request.workload_context) if part))
+                        .recommendations
+                    )
+                    or "none detected"
+                ),
                 f"Context note: {request.context_note}",
                 "Retrieved evidence:",
                 "\n---\n".join(source_blocks),

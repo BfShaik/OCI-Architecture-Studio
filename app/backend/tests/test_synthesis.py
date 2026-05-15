@@ -66,6 +66,22 @@ def test_oci_genai_synthesizer_fails_closed_to_deterministic() -> None:
     assert any("fallback" in warning.lower() for warning in result.warnings)
 
 
+def test_deterministic_synthesizer_adds_domain_heuristics() -> None:
+    profile = get_intent_profile(Intent.ARCHITECTURE)
+    result = DeterministicAdvisorySynthesizer().synthesize(
+        SynthesisRequest(
+            question="Design an ecommerce platform on OCI.",
+            workload_context=None,
+            profile=profile,
+            sources=[],
+            context_note="Retrieved ecommerce context.",
+        )
+    )
+
+    assert any("For ecommerce" in recommendation for recommendation in result.recommendations)
+    assert "checkout consistency" in result.answer
+
+
 def test_build_synthesizer_requires_genai_settings() -> None:
     with pytest.raises(ValueError, match="OCI_GENAI_COMPARTMENT_ID"):
         build_synthesizer(

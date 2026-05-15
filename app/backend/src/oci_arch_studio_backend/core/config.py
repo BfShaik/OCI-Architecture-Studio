@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     vector_db_url: str | None = Field(default=None, alias="VECTOR_DB_URL")
     embedding_provider: str = Field(default="local", alias="EMBEDDING_PROVIDER")
     retrieval_provider: str = Field(default="local_json", alias="RETRIEVAL_PROVIDER")
+    retrieval_debug_enabled: bool = Field(default=False, alias="RETRIEVAL_DEBUG_ENABLED")
+    retrieval_candidate_multiplier: int = Field(default=3, alias="RETRIEVAL_CANDIDATE_MULTIPLIER")
     advisory_orchestration_mode: str = Field(
         default="multi_agent_pilot",
         alias="ADVISORY_ORCHESTRATION_MODE",

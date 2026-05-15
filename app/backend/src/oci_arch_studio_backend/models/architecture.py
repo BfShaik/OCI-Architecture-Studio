@@ -15,6 +15,10 @@ class ArchitectureReviewRequest(BaseModel):
         default=None,
         description="Optional workload, constraints, or business context.",
     )
+    retrieval_debug: bool = Field(
+        default=False,
+        description="Include backend retrieval trace details for diagnostics.",
+    )
 
 
 class RetrievedSource(BaseModel):
@@ -52,6 +56,36 @@ class EvidenceLink(BaseModel):
     source_chunk_ids: list[str] = Field(default_factory=list)
     source_titles: list[str] = Field(default_factory=list)
     rationale: str
+
+
+class SectionCitationSource(BaseModel):
+    chunk_id: str | None = None
+    source_document: str
+    oci_service_category: str | None = None
+    service: str | None = None
+
+
+class SectionCitation(BaseModel):
+    section: str
+    sources: list[SectionCitationSource] = Field(default_factory=list)
+
+
+class RetrievalScoreTrace(BaseModel):
+    chunk_id: str
+    title: str
+    base_score: float
+    final_score: float
+    adjustments: dict[str, float] = Field(default_factory=dict)
+
+
+class RetrievalDebugTrace(BaseModel):
+    detected_intent: str | None = None
+    mapped_oci_services: list[str] = Field(default_factory=list)
+    mapped_service_summary: str | None = None
+    domain_heuristics: list[str] = Field(default_factory=list)
+    retrieved_chunk_ids: list[str] = Field(default_factory=list)
+    retrieval_scores: list[RetrievalScoreTrace] = Field(default_factory=list)
+    selected_final_chunks: list[str] = Field(default_factory=list)
 
 
 class ConfidenceScore(BaseModel):
@@ -104,6 +138,8 @@ class ArchitectureReviewResponse(BaseModel):
     assumptions: list[str]
     risks: list[str]
     citations: list[RetrievedSource]
+    section_citations: list[SectionCitation] = Field(default_factory=list)
+    retrieval_debug: RetrievalDebugTrace | None = None
     evidence_links: list[EvidenceLink] = Field(default_factory=list)
     confidence: ConfidenceScore | None = None
     quality_warnings: list[str] = Field(default_factory=list)

@@ -242,6 +242,78 @@ def test_service_mapping_biases_migration_retrieval(tmp_path) -> None:
     assert results[0].migration_mappings == {"EKS": "OKE"}
 
 
+def test_retriever_debug_trace_explains_reranking(tmp_path) -> None:
+    embedder = LocalHashingEmbedder()
+    index_path = tmp_path / "index.json"
+    generic_text = "OCI architecture guidance should consider availability and operations."
+    cloudwatch_text = "OCI Logging and Monitoring provide logs, metrics, alarms, and operational visibility."
+    index_path.write_text(
+        json.dumps(
+            {
+                "chunks": [
+                    {
+                        "id": "generic::1",
+                        "title": "OCI Architecture Overview",
+                        "url": "https://example.com/architecture",
+                        "source_type": "oci_doc",
+                        "text": generic_text,
+                        "embedding": embedder.embed(generic_text),
+                        "metadata": {
+                            "service": "Architecture Center",
+                            "service_domain": "architecture",
+                            "intent_tags": ["architecture"],
+                            "freshness_score": 0.9,
+                            "trust_level": "official",
+                            "architecture_patterns": ["reference-architecture"],
+                        },
+                    },
+                    {
+                        "id": "observability::1",
+                        "title": "OCI Logging and Monitoring",
+                        "url": "https://example.com/observability",
+                        "source_type": "oci_doc",
+                        "text": cloudwatch_text,
+                        "embedding": embedder.embed(cloudwatch_text),
+                        "metadata": {
+                            "service": "Logging",
+                            "service_domain": "observability",
+                            "intent_tags": ["observability", "architecture"],
+                            "freshness_score": 0.9,
+                            "trust_level": "official",
+                            "architecture_patterns": ["operational-visibility", "alarms"],
+                            "workload_types": ["enterprise-app"],
+                            "domain_tags": ["enterprise"],
+                        },
+                    },
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    retriever = OciKnowledgeRetriever(index_path=index_path, embedder=embedder)
+
+    import asyncio
+
+    results = asyncio.run(
+        retriever.retrieve(
+            "Migrate CloudWatch alarms to OCI observability.",
+            get_intent_profile(Intent.OBSERVABILITY),
+            debug_enabled=True,
+        )
+    )
+
+    assert results[0].chunk_id == "observability::1"
+    assert retriever.last_debug_trace is not None
+    assert retriever.last_debug_trace.detected_intent == "observability"
+    assert "Logging" in retriever.last_debug_trace.mapped_oci_services
+    assert retriever.last_debug_trace.selected_final_chunks[0] == "observability::1"
+    assert any(
+        "intent_match" in score.adjustments
+        for score in retriever.last_debug_trace.retrieval_scores
+        if score.chunk_id == "observability::1"
+    )
+
+
 def test_build_retriever_requires_oci_vector_settings(tmp_path) -> None:
     settings = Settings(
         KNOWLEDGE_INDEX_PATH=tmp_path / "index.json",

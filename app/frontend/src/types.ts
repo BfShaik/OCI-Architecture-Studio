@@ -6,6 +6,17 @@ export type RetrievedSource = {
   source_url?: string | null;
   service?: string | null;
   service_domain?: string | null;
+  service_category?: string | null;
+  category?: string | null;
+  pattern?: string | null;
+  workload?: string | null;
+  workload_types: string[];
+  domain?: string | null;
+  domain_tags: string[];
+  topic?: string | null;
+  migration_mappings: Record<string, string>;
+  ha_dr_tags: string[];
+  cost_optimization_tags: string[];
   intent_tags: string[];
   fetched_timestamp?: string | null;
   freshness_score?: number | null;
@@ -22,6 +33,36 @@ export type EvidenceLink = {
   source_chunk_ids: string[];
   source_titles: string[];
   rationale: string;
+};
+
+export type SectionCitationSource = {
+  chunk_id?: string | null;
+  source_document: string;
+  oci_service_category?: string | null;
+  service?: string | null;
+};
+
+export type SectionCitation = {
+  section: string;
+  sources: SectionCitationSource[];
+};
+
+export type RetrievalScoreTrace = {
+  chunk_id: string;
+  title: string;
+  base_score: number;
+  final_score: number;
+  adjustments: Record<string, number>;
+};
+
+export type RetrievalDebugTrace = {
+  detected_intent?: string | null;
+  mapped_oci_services: string[];
+  mapped_service_summary?: string | null;
+  domain_heuristics: string[];
+  retrieved_chunk_ids: string[];
+  retrieval_scores: RetrievalScoreTrace[];
+  selected_final_chunks: string[];
 };
 
 export type ConfidenceScore = {
@@ -57,6 +98,7 @@ export type AgentContribution = {
 export type ArchitectureReviewRequest = {
   question: string;
   workload_context?: string;
+  retrieval_debug?: boolean;
 };
 
 export type ArchitectureReviewResponse = {
@@ -79,6 +121,8 @@ export type ArchitectureReviewResponse = {
   assumptions: string[];
   risks: string[];
   citations: RetrievedSource[];
+  section_citations: SectionCitation[];
+  retrieval_debug?: RetrievalDebugTrace | null;
   evidence_links: EvidenceLink[];
   confidence?: ConfidenceScore | null;
   quality_warnings: string[];
