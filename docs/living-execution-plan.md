@@ -64,6 +64,29 @@ The plan favors OCI-native services, Terraform-managed infrastructure, determini
    - OCI-native target: Object Storage snapshots and Oracle AI Vector Search indexes built from curated official OCI sources.
    - Initial increment: expand official OCI corpus by workload gaps, then rerun retrieval and advisory-quality evaluations.
 
+## Linear Task Queue
+
+Execute one task at a time. A task can move to `Done` only after its validation evidence is captured in this plan or a linked report.
+
+| ID | Status | Task | Validation Gate |
+|---|---|---|---|
+| TASK-001 | Done | Add read-only Terraform remote state readiness checker for OCI Object Storage backend. | Passed `python3 -m py_compile infra/scripts/check_terraform_remote_state_readiness.py`; passed local `--skip-oci` readiness mode. |
+| TASK-002 | Next | Document manual remote state migration workflow and rollback checklist. | Terraform README/runbook updated; no state migration performed by automation. |
+| TASK-003 | Not Started | Add API Gateway readiness validation for configured endpoint and OCIDs. | Readiness check reports direct VM vs API Gateway posture clearly. |
+| TASK-004 | Not Started | Prepare API Gateway staging cutover checklist and rollback path. | Terraform validate; smoke command documented. |
+| TASK-005 | Not Started | Run OCI GenAI synthesis readiness/parity in skip-safe mode, then live mode when config exists. | Parity report generated; deterministic fallback preserved. |
+| TASK-006 | Not Started | Add OCI GenAI embedding activation checklist and diagnostics expectations. | Retrieval health exposes provider/fallback state; regression gate documented. |
+| TASK-007 | Not Started | Validate Oracle AI Vector Search schema/index prerequisites without active-provider promotion. | Vector validation reports configured/unconfigured state cleanly. |
+| TASK-008 | Not Started | Add Oracle AI Vector Search dual-read parity workflow against Object Storage retrieval. | Retrieval parity report covers golden, edge, and regression prompts. |
+| TASK-009 | Not Started | Promote semantic retrieval through configuration only after parity approval. | Staging smoke, retrieval regression, vector validation, rollback drill pass. |
+| TASK-010 | Not Started | Activate controlled OCI Functions knowledge-refresh invocation path. | Function invocation smoke passes; no automatic promotion of snapshots without gates. |
+| TASK-011 | Not Started | Activate OCI Resource Scheduler for release refresh after function readiness. | Schedule OCIDs visible in diagnostics; manual disable rollback documented. |
+| TASK-012 | Not Started | Define OCI DevOps delivery contract around existing operator artifact flow. | Pipeline requirements documented; operator scripts remain usable. |
+| TASK-013 | Not Started | Wire OCI DevOps metadata into runtime readiness checks for active deployments. | Diagnostics distinguish configured vs inactive DevOps. |
+| TASK-014 | Not Started | Expand official OCI corpus for highest-value advisory gaps. | Retrieval regression and advisory evals do not regress. |
+| TASK-015 | Not Started | Harden release-intelligence freshness and selective reindex reporting. | Release refresh report shows candidate, gate, and promotion state. |
+| TASK-016 | Not Started | Cut a new internal beta baseline after all active gates pass. | Full validation matrix passes; docs updated; commit, push, and tag. |
+
 ## Phase Gates
 
 | Phase | Status | Promotion gate | Rollback path |
@@ -110,15 +133,16 @@ Run the appropriate subset after each increment; run the full matrix before a ne
 
 ## Next Actionable Increment
 
-Create a Terraform remote-state readiness slice:
+Current task: `TASK-002`.
 
-1. Add `infra/scripts/check_terraform_remote_state_readiness.py`.
-2. Validate that `infra/terraform/backend.object-storage.example.tf` exists.
-3. Validate OCI CLI/SDK access to the target namespace and bucket when configuration is provided.
-4. Report whether env-level `backend.tf` exists, but do not create or migrate state.
-5. Update `infra/terraform/README.md` and operational docs with the readiness workflow.
-6. Run script compile/checks, Terraform fmt/validate, and relevant docs review.
-7. Commit and push after validation.
+Document the manual Terraform remote-state migration workflow and rollback checklist:
+
+1. Add a reviewed sequence for backing up local state.
+2. Add a controlled `backend.tf` creation step from `backend.object-storage.example.tf`.
+3. Document `terraform init -migrate-state` as an operator-run command, not automation.
+4. Add rollback guidance for returning to local state if migration fails before promotion.
+5. Keep real namespace, bucket, and state keys out of committed files.
+6. Validate docs and commit after review.
 
 ## Operating Rules
 

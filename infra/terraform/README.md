@@ -71,4 +71,24 @@ terraform apply
 - Use `terraform output runtime_infrastructure_summary` during deployment reviews to distinguish active resources from default-off scaffolding.
 - The backend instance is intentionally simple; move to Container Instances or a Load Balancer + instance pool only after the MVP deployment is stable.
 - Use `backend.object-storage.example.tf` as the starting point for remote Terraform state once a shared state bucket exists.
+- Before copying the backend template into an environment, run the read-only readiness check. It validates the local backend template and can optionally verify OCI Object Storage namespace and state-bucket access without migrating state:
+
+```bash
+python3 infra/scripts/check_terraform_remote_state_readiness.py \
+  --env staging \
+  --skip-oci
+```
+
+For live OCI validation, provide the expected namespace and state bucket:
+
+```bash
+python3 infra/scripts/check_terraform_remote_state_readiness.py \
+  --env staging \
+  --profile DEFAULT \
+  --namespace <object-storage-namespace> \
+  --bucket-name <terraform-state-bucket> \
+  --region us-ashburn-1
+```
+
+This script is intentionally non-mutating. It does not create `backend.tf`, create buckets, run `terraform init -migrate-state`, or modify state files.
 - See `docs/oci-landing-zone-runbook.md` for the deployment and validation workflow.

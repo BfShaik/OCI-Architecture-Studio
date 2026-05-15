@@ -218,6 +218,31 @@ terraform fmt -check -recursive infra/terraform
 terraform -chdir=infra/terraform/envs/staging validate
 ```
 
+## Check Terraform Remote State Readiness
+
+Use this before moving an environment to the OCI Object Storage Terraform backend. The check is read-only and does not create `backend.tf`, create buckets, or migrate state.
+
+Local file-only check:
+
+```bash
+python3 infra/scripts/check_terraform_remote_state_readiness.py \
+  --env staging \
+  --skip-oci
+```
+
+Live OCI Object Storage check:
+
+```bash
+python3 infra/scripts/check_terraform_remote_state_readiness.py \
+  --env staging \
+  --profile DEFAULT \
+  --namespace <object-storage-namespace> \
+  --bucket-name <terraform-state-bucket> \
+  --region us-ashburn-1
+```
+
+Only run manual state migration after the readiness check passes, the backend bucket is confirmed, the current local state is backed up, and the rollback plan has been reviewed.
+
 ## Inspect Backend Service
 
 SSH to the VM:
