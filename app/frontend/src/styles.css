@@ -258,6 +258,41 @@ h1 {
   font-weight: 750;
 }
 
+.agent-contributions {
+  display: grid;
+  gap: 10px;
+}
+
+.agent-contributions article {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px;
+  background: #f8fafc;
+}
+
+.agent-contributions strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #111827;
+  font-size: 0.88rem;
+  text-transform: capitalize;
+}
+
+.agent-contributions span {
+  display: inline-block;
+  margin-bottom: 6px;
+  color: #52606d;
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.agent-contributions p {
+  margin: 0;
+  color: #334155;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
 .confidence-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));

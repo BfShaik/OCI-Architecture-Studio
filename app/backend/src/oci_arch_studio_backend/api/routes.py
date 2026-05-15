@@ -71,6 +71,8 @@ async def orchestration_health() -> dict[str, object]:
         "mode": snapshot.get("last_orchestration_mode"),
         "active_agents": snapshot.get("last_active_agents", []),
         "last_routing_decision": snapshot.get("last_routing_decision"),
+        "last_aggregation_decision": snapshot.get("last_aggregation_decision"),
+        "last_agent_count": snapshot.get("last_agent_count", 0),
         "critic_warning_count": snapshot.get("critic_warning_count", 0),
         "orchestration_failure_count": snapshot.get("orchestration_failure_count", 0),
         "request_count": snapshot.get("request_count", 0),

@@ -9,23 +9,25 @@ Improve advisory quality without changing the stable deployment model or introdu
 The current implementation keeps the existing flow:
 
 ```text
-user prompt -> intent classifier -> retrieval -> supervised routing -> synthesis -> critic -> structured response
+user prompt -> intent classifier -> retrieval -> controlled multi-agent routing -> final synthesis -> critic -> structured response
 ```
 
-It adds a lightweight evidence, confidence, supervised routing, and critic layer before the response is returned.
+It adds a lightweight evidence, confidence, controlled routing, specialist contribution, aggregation, and critic layer before the response is returned.
 
 ## Current Synthesis Pipeline
 
 1. Classify the prompt into an intent.
 2. Retrieve OCI evidence through the configured retrieval provider.
 3. Load the matching intent profile and prompt template.
-4. Route the prompt to one supervised specialist advisor.
-5. Run the configured synthesis provider.
-6. Link each synthesized recommendation to retrieved citations.
-7. Compute confidence scores.
-8. Run the validation critic over evidence, citation, freshness, unsupported-claim, and fallback signals.
-9. Surface evidence gaps, unsupported requested services, stale evidence, synthesis warnings, critic findings, and missing-context warnings.
-10. Return the structured advisory response to the UI.
+4. Select one or more bounded specialist advisors.
+5. Share the same retrieved evidence set with every selected specialist.
+6. Aggregate specialist contributions into one final synthesis step.
+7. Run the configured synthesis provider.
+8. Link each synthesized recommendation to retrieved citations.
+9. Compute confidence scores.
+10. Run the validation critic over evidence, citation, freshness, unsupported-claim, and fallback signals.
+11. Surface evidence gaps, unsupported requested services, stale evidence, synthesis warnings, critic findings, and missing-context warnings.
+12. Return the structured advisory response to the UI.
 
 This remains an MVP-friendly in-process pipeline. It does not add LangGraph, autonomous multi-agent planning, or a new distributed service.
 
@@ -40,17 +42,18 @@ The deterministic provider remains the rollback path. The OCI GenAI provider fai
 Orchestration is also config-selected:
 
 ```text
-ADVISORY_ORCHESTRATION_MODE=supervised|single_pass
+ADVISORY_ORCHESTRATION_MODE=multi_agent_pilot|supervised|single_pass
 ```
 
-`supervised` adds the bounded supervisor, specialist advisor, and validation critic. `single_pass` is the rollback mode.
+`multi_agent_pilot` selects bounded specialists, records their contributions, and keeps one final synthesis step. `supervised` is the single-specialist rollback path. `single_pass` is the original advisory rollback path.
 
-## Supervised Orchestration Design
+## Controlled Multi-Agent Design
 
-The initial agent layer is deliberately small:
+The pilot agent layer is deliberately small:
 
 - `supervisor` routes based on the already-classified intent.
-- one specialist advisor adds intent-specific focus.
+- selected specialists add intent-specific focus without mutating retrieved evidence.
+- `final_synthesizer` preserves single-writer final response generation through the configured synthesis provider.
 - `validation_critic` reviews the final response for grounding and quality risks.
 
 The specialist roles are:
@@ -62,6 +65,15 @@ The specialist roles are:
 - `release_awareness_advisor`
 
 All roles share the same retrieval evidence, synthesis provider, citation analyzer, confidence scorer, and eval framework.
+
+Centralized single-writer boundaries remain:
+
+- intent classification
+- retrieval provider selection
+- citation linking
+- confidence scoring
+- final response synthesis
+- quality metrics
 
 ## Citation Enforcement Design
 
@@ -128,6 +140,8 @@ The endpoint reports:
 - latest orchestration mode
 - latest active agents
 - latest routing decision
+- latest aggregation decision
+- latest agent count
 - critic warning count
 - recent warnings
 
@@ -177,7 +191,9 @@ The eval runner now checks:
 - not-enough-evidence behavior
 - stale or unverified guidance
 - hallucination and unsupported OCI service patterns
-- supervised routing mode and required active agents
+- controlled routing mode and required active agents
+- specialist contribution count
+- aggregation decision presence
 - critic findings and agent trace presence
 
 ## Operational Guidance
@@ -186,9 +202,9 @@ When a response is weak:
 
 1. Check `/retrieval/health` for active provider, chunk count, and retrieval warnings.
 2. Check `/advisory/quality` for low-confidence and not-enough-evidence trends.
-3. Check `/orchestration/health` for the active mode, agents, and routing decision.
+3. Check `/orchestration/health` for the active mode, agents, routing decision, and aggregation decision.
 4. Inspect `evidence_links` to see which recommendation lacks support.
-5. Inspect `critic_findings` for evidence, citation, freshness, or unsupported-claim concerns.
+5. Inspect `agent_contributions` and `critic_findings` for evidence, citation, freshness, unsupported-claim, or specialist coverage concerns.
 6. Add or improve OCI source chunks when a useful recommendation lacks evidence.
 7. Tighten the intent profile when the advice is correct but too generic.
 8. Add an eval case when a real prompt exposes a new failure mode.
@@ -200,7 +216,7 @@ When a response is weak:
 - The corpus is still small.
 - Local hashing embeddings are still active for deterministic parity.
 - OCI GenAI synthesis is adapter-backed and config-gated; deterministic synthesis remains the rollback-safe default.
-- Supervised orchestration is a bounded control layer, not autonomous multi-step planning.
+- The multi-agent pilot is a bounded control layer, not autonomous multi-step planning.
 - Oracle AI Vector Search active reads remain guarded.
 
 ## Next Milestone
@@ -209,5 +225,6 @@ Strengthen the validation critic into a more explicit advisory policy gate:
 
 - suppress or demote unsupported recommendations more aggressively
 - require explicit release evidence for current-impact claims
+- detect specialist disagreement or missing specialist coverage
 - track critic outcomes in operational dashboards
 - keep config-only rollback and eval compatibility intact

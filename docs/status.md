@@ -202,6 +202,15 @@ This progress is based on `docs/two-week-plan.md`.
   - orchestration-quality eval suite under `evals/orchestration-quality.jsonl`
   - CI orchestration eval gate
   - `docs/supervised-orchestration.md`
+- Added controlled multi-agent pilot:
+  - default local orchestration mode is now `multi_agent_pilot`
+  - deterministic specialist selection can include architecture, migration, HA/DR, cost, and release-awareness advisors
+  - all specialists share the same retrieved evidence and cannot mutate retrieval, citations, confidence, or final response fields
+  - one final synthesis step remains the single writer for the advisory response
+  - additive response fields for `agent_contributions` and `aggregation_decision`
+  - `/orchestration/health` now includes aggregation decision and active agent count
+  - orchestration evals now validate multi-agent mode, specialist contribution counts, aggregation, critic findings, and rollback-safe metadata
+  - `docs/controlled-multi-agent-pilot.md`
 - Pushed current implementation to GitHub.
 
 ## Latest Validation
@@ -223,16 +232,16 @@ Last validation run: 2026-05-15
 - Infrastructure Python script compile checks: passed
 - Knowledge ingestion smoke: passed, 13 chunks generated
 - Release ingestion smoke: passed, 3 release items generated
-- Backend tests: passed, 41 tests
+- Backend tests: passed, 42 tests
 - Frontend build: passed
 - Golden evals: passed, 6 of 6
 - Edge-case evals: passed, 8 of 8
 - Advisory-quality evals: passed, 5 of 5
-- Supervised orchestration evals: passed, 5 of 5
+- Controlled orchestration evals: passed, 5 of 5
 - Retrieval health check: passed for `oci_object_storage`, 13 chunks
 - Retrieval regression check: passed, 14 of 14 golden + edge cases
 - Python compile checks: passed for backend, infra scripts, ingestion, and refresh code
-- Local API smoke: passed for `/health`, `/architecture-review`, and `/orchestration/health`
+- Local API smoke: passed for `/health`, `/architecture-review`, and `/orchestration/health`, including `multi_agent_pilot` with 3 specialist contributions
 - OCI local access check: passed, Object Storage namespace `idsmrn7rvqb6`
 - Local deployment smoke test: passed, including architecture and release-aware citation paths
 - Pre-migration readiness review: passed with a go decision for incremental OCI-native retrieval migration behind configuration
@@ -278,9 +287,9 @@ Last validation run: 2026-05-15
   - enable OCI GenAI synthesis in staging through approved configuration where appropriate
   - compare GenAI and deterministic behavior on regression scenarios
   - strengthen unsupported-claim suppression beyond current requested-service warnings
-- Continue hardening supervised orchestration:
+- Continue hardening controlled orchestration:
   - keep agent routing deterministic and observable
-  - add policy-gate behavior only after enough critic failures appear in evals or staging telemetry
+  - add policy-gate behavior only after enough critic or specialist disagreement failures appear in evals or staging telemetry
   - avoid autonomous planning loops until the supervised flow has stable quality data
 - Add frontend improvements:
   - prompt history
@@ -313,11 +322,12 @@ Last validation run: 2026-05-15
   - post-migration readiness report is captured in `docs/post-migration-readiness-report.md`
   - dual-provider parity report is captured in `docs/retrieval-parity-validation-report.md`
   - promotion report is captured in `docs/retrieval-provider-promotion-report.md`
-- Supervised orchestration:
-  - active as an additive backend response layer by default in local config
-  - rollback mode is `ADVISORY_ORCHESTRATION_MODE=single_pass`
+- Controlled orchestration:
+  - active as an additive backend response layer by default in local config through `multi_agent_pilot`
+  - rollback modes are `ADVISORY_ORCHESTRATION_MODE=supervised` and `ADVISORY_ORCHESTRATION_MODE=single_pass`
   - specialist agents are deterministic role boundaries, not autonomous workers
   - validation critic currently reports findings and warnings; it does not block responses yet
+  - final response synthesis remains single-writer through the configured synthesis provider
 
 ## Current Known Limitations
 
@@ -325,6 +335,6 @@ Last validation run: 2026-05-15
 - Embeddings are deterministic local hash embeddings, useful for workflow validation but not production semantic retrieval.
 - Release awareness has a local release snapshot foundation, but it is not yet a full live release intelligence workflow.
 - OCI GenAI synthesis adapter exists, but deterministic synthesis remains the rollback-safe default unless enabled by environment configuration.
-- Supervised orchestration is currently an in-process control layer; it does not yet perform autonomous planning, tool use, or multi-step agent memory.
+- Controlled multi-agent orchestration is currently an in-process control layer; it does not yet perform autonomous planning, tool use, or multi-step agent memory.
 - Generated vector snapshots are local and gitignored.
 - The first OCI deployment exposes the backend directly on port `8000`; this is acceptable for staging validation but should be replaced with HTTPS ingress before demo/prod.

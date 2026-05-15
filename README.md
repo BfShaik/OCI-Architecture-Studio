@@ -14,11 +14,11 @@ OCI Architecture Studio currently supports a validated advisory flow in local de
 4. Retrieval runs through a config-selected provider.
 5. The active staging provider is `oci_object_storage`, reading the validated vector manifest from OCI Object Storage.
 6. `local_json` remains the tested config-only rollback provider.
-7. Supervised orchestration routes the intent to one bounded specialist advisor and runs a validation critic over evidence support, citations, freshness, and unsupported-claim risk.
-8. The configured synthesis provider generates the advisory response with deterministic rollback available.
-9. The UI renders intent, prompt template, active agents, critic findings, confidence, recommendations, assumptions, risks, citations, and next steps.
+7. The controlled multi-agent pilot selects bounded specialist advisors, shares the same retrieved evidence across them, and runs a validation critic over evidence support, citations, freshness, and unsupported-claim risk.
+8. One final synthesis step generates the advisory response through the configured provider with deterministic rollback available.
+9. The UI renders intent, prompt template, active agents, specialist contributions, aggregation decision, critic findings, confidence, recommendations, assumptions, risks, citations, and next steps.
 
-LangGraph, advanced memory, autonomous agent swarms, continuous release intelligence, and Oracle AI Vector Search active reads are intentionally deferred until the bounded supervised workflow and the next vector-search parity gate are ready.
+LangGraph, advanced memory, autonomous agent swarms, continuous release intelligence, and Oracle AI Vector Search active reads are intentionally deferred until the controlled pilot and the next vector-search parity gate are ready.
 
 ## Repository Layout
 
@@ -65,11 +65,15 @@ tests/                Backend and integration tests
 - Config-only staging promotion to `oci_object_storage` with rollback validation
 - Evidence-linked recommendations, confidence scoring, uncertainty flags, and advisory quality metrics
 - Config-selectable advisory synthesis with deterministic rollback and an OCI GenAI chat adapter
-- Supervised orchestration foundation with:
+- Controlled multi-agent pilot with:
   - one in-process supervisor
-  - architecture, migration, HA/DR, cost, and release-awareness specialist routing
+  - deterministic specialist selection for architecture, migration, HA/DR, cost, and release-awareness advisors
+  - shared retrieval evidence across all agents
+  - one final synthesis step
+  - specialist contribution metadata
+  - aggregation decision visibility
   - validation critic findings
-  - config-only rollback to `single_pass`
+  - config-only rollback to `supervised` or `single_pass`
   - `/orchestration/health` observability
 
 ## Run Locally
@@ -250,11 +254,11 @@ cd ../frontend && npm run build
 
 Latest full validation: 2026-05-15.
 
-- Local backend tests: `41 passed`
+- Local backend tests: `42 passed`
 - Golden evals: `6 passed, 0 failed`
 - Edge-case evals: `8 passed, 0 failed`
 - Advisory-quality evals: `5 passed, 0 failed`
-- Supervised orchestration evals: `5 passed, 0 failed`
+- Controlled orchestration evals: `5 passed, 0 failed`
 - Retrieval regression: `14 passed, 0 failed`
 - Knowledge ingestion: `13 chunks`
 - Release ingestion: `3 release items`

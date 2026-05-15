@@ -63,12 +63,24 @@ export function ReviewResult({ result }: ReviewResultProps) {
 
       {result.active_agents.length || result.critic_findings.length ? (
         <section className="result-section orchestration-panel">
-          <h3>Supervised Orchestration</h3>
+          <h3>Controlled Orchestration</h3>
           {result.routing_decision ? <p>{result.routing_decision}</p> : null}
+          {result.aggregation_decision ? <p>{result.aggregation_decision}</p> : null}
           {result.active_agents.length ? (
             <div className="agent-row">
               {result.active_agents.map((agent) => (
                 <span key={agent}>{agent.replace(/_/g, " ")}</span>
+              ))}
+            </div>
+          ) : null}
+          {result.agent_contributions.length ? (
+            <div className="agent-contributions">
+              {result.agent_contributions.map((contribution) => (
+                <article key={contribution.agent}>
+                  <strong>{contribution.agent.replace(/_/g, " ")}</strong>
+                  <span>{contribution.evidence_count} evidence chunks</span>
+                  <p>{contribution.summary}</p>
+                </article>
               ))}
             </div>
           ) : null}

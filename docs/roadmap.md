@@ -51,7 +51,7 @@ Deliverables:
 - Oracle AI Vector Search active read path — Pending
 
 ## Phase 2B — Advisory Intelligence Quality
-Status: In Progress — supervised orchestration foundation added
+Status: In Progress — controlled multi-agent pilot added
 
 Deliverables:
 - recommendation-to-citation evidence links — Done
@@ -65,6 +65,9 @@ Deliverables:
 - citation-aware GenAI synthesis hardening — MVP Done
 - supervised orchestration mode — Done
 - supervisor routing and specialist advisor boundaries — Done
+- controlled multi-agent pilot mode — Done
+- specialist contribution records — Done
+- final synthesis aggregation decision — Done
 - validation critic findings — Done
 - orchestration observability endpoint — Done
 - orchestration-quality eval suite — Done
@@ -73,7 +76,7 @@ Deliverables:
 - quality trend dashboard — Pending
 
 ## Phase 2C — Supervised Agent Evolution
-Status: Foundation Complete
+Status: Controlled Multi-Agent Pilot Complete
 
 Deliverables:
 - one supervisor/orchestrator — Done
@@ -83,6 +86,9 @@ Deliverables:
 - bounded cost advisor — Done
 - bounded release-awareness advisor — Done
 - validation/critic agent — Done
+- deterministic multi-agent specialist selection — Done
+- shared evidence layer across agents — Done
+- one final synthesis step — Done
 - config-only rollback to single-pass flow — Done
 - provider-agnostic synthesis boundary — Done
 - autonomous planning loops — Deferred

@@ -203,9 +203,9 @@ OCI = staging, demo, production
 Provider changes happen through config, not code forks.
 ```
 
-## 6. Supervised Advisory Orchestration
+## 6. Controlled Multi-Agent Advisory Orchestration
 
-The current agent foundation is supervised and in-process. It adds role boundaries and critic visibility while preserving the same retrieval, synthesis, and eval paths.
+The current agent foundation is controlled and in-process. It adds bounded specialist collaboration and critic visibility while preserving the same retrieval, synthesis, and eval paths.
 
 ```mermaid
 flowchart LR
@@ -213,18 +213,20 @@ flowchart LR
   Classifier["Intent classifier"]
   Evidence["Shared retrieval evidence"]
   Supervisor["Supervisor\nrouting decision"]
-  Specialist["One specialist advisor\narchitecture / migration / HA-DR / cost / release"]
+  Specialists["Selected specialists\narchitecture / migration / HA-DR / cost / release"]
+  Aggregator["Final synthesizer\nsingle-writer response"]
   Synth["Configured synthesis provider\ndeterministic or OCI GenAI"]
   Quality["Citation + confidence analyzer"]
   Critic["Validation critic\ngrounding, citations, freshness,\nunsupported claims"]
   Response["Structured response\nactive agents, critic findings,\nconfidence, citations"]
 
-  Prompt --> Classifier --> Evidence --> Supervisor --> Specialist --> Synth --> Quality --> Critic --> Response
+  Prompt --> Classifier --> Evidence --> Supervisor --> Specialists --> Aggregator --> Synth --> Quality --> Critic --> Response
 ```
 
 Rollback remains config-only:
 
 ```text
+ADVISORY_ORCHESTRATION_MODE=supervised
 ADVISORY_ORCHESTRATION_MODE=single_pass
 ```
 

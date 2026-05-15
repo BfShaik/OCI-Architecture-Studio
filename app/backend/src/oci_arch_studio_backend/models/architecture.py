@@ -64,6 +64,15 @@ class AgentTrace(BaseModel):
     warnings: list[str] = Field(default_factory=list)
 
 
+class AgentContribution(BaseModel):
+    agent: str
+    focus: str
+    evidence_count: int
+    summary: str
+    recommendations: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+
+
 class ArchitectureReviewResponse(BaseModel):
     intent: str
     prompt_template: str
@@ -71,6 +80,8 @@ class ArchitectureReviewResponse(BaseModel):
     active_agents: list[str] = Field(default_factory=list)
     routing_decision: str | None = None
     agent_trace: list[AgentTrace] = Field(default_factory=list)
+    agent_contributions: list[AgentContribution] = Field(default_factory=list)
+    aggregation_decision: str | None = None
     critic_findings: list[str] = Field(default_factory=list)
     orchestration_warnings: list[str] = Field(default_factory=list)
     synthesis_provider: str = "deterministic"

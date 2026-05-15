@@ -133,6 +133,7 @@ class ArchitectureReviewOrchestrator:
             orchestration_mode=orchestration_plan.mode,
             active_agents=orchestration_plan.active_agents,
             routing_decision=orchestration_plan.routing_decision,
+            aggregation_decision=orchestration_plan.aggregation_decision,
             critic_warnings=critique.warnings,
             warnings=[*quality.quality_warnings, *synthesis.warnings, *orchestration_warnings],
         )
@@ -144,6 +145,8 @@ class ArchitectureReviewOrchestrator:
             active_agents=orchestration_plan.active_agents,
             routing_decision=orchestration_plan.routing_decision,
             agent_trace=[*orchestration_plan.traces, *critique.traces],
+            agent_contributions=orchestration_plan.contributions,
+            aggregation_decision=orchestration_plan.aggregation_decision,
             critic_findings=critique.findings,
             orchestration_warnings=orchestration_warnings,
             synthesis_provider=synthesis.provider,

@@ -199,12 +199,13 @@ If advisory confidence drops:
 - add source chunks when useful recommendations lack evidence
 - add a regression eval for any repeated failure pattern
 
-If supervised orchestration behaves unexpectedly:
+If controlled orchestration behaves unexpectedly:
 
 - check `/orchestration/health`
-- confirm `ADVISORY_ORCHESTRATION_MODE=supervised` for normal staging behavior
-- confirm `active_agents` includes `supervisor` and `validation_critic`
-- inspect `critic_findings`, `orchestration_warnings`, and `agent_trace` in the API response
+- confirm `ADVISORY_ORCHESTRATION_MODE=multi_agent_pilot` for normal pilot behavior
+- confirm `active_agents` includes `supervisor`, `validation_critic`, and `final_synthesizer`
+- inspect `agent_contributions`, `aggregation_decision`, `critic_findings`, `orchestration_warnings`, and `agent_trace` in the API response
+- roll back to `ADVISORY_ORCHESTRATION_MODE=supervised` if multi-agent contribution metadata causes response quality issues
 - roll back with `ADVISORY_ORCHESTRATION_MODE=single_pass` if agent metadata causes response or UI issues
 
 If GenAI synthesis needs rollback:

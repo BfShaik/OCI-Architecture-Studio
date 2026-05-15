@@ -20,6 +20,8 @@ class AdvisoryQualityMetrics:
     last_orchestration_mode: str | None = None
     last_active_agents: list[str] = field(default_factory=list)
     last_routing_decision: str | None = None
+    last_aggregation_decision: str | None = None
+    last_agent_count: int = 0
     orchestration_failure_count: int = 0
     critic_warning_count: int = 0
     last_citation_coverage: float | None = None
@@ -55,6 +57,8 @@ class AdvisoryQualityMetrics:
             "last_orchestration_mode": self.last_orchestration_mode,
             "last_active_agents": list(self.last_active_agents),
             "last_routing_decision": self.last_routing_decision,
+            "last_aggregation_decision": self.last_aggregation_decision,
+            "last_agent_count": self.last_agent_count,
             "orchestration_failure_count": self.orchestration_failure_count,
             "critic_warning_count": self.critic_warning_count,
             "last_citation_coverage": self.last_citation_coverage,
@@ -84,6 +88,7 @@ class AdvisoryQualityMetricsRecorder:
         orchestration_mode: str = "single_pass",
         active_agents: list[str] | None = None,
         routing_decision: str | None = None,
+        aggregation_decision: str | None = None,
         critic_warnings: list[str] | None = None,
         warnings: list[str] | None = None,
     ) -> None:
@@ -97,6 +102,8 @@ class AdvisoryQualityMetricsRecorder:
         self.metrics.last_orchestration_mode = orchestration_mode
         self.metrics.last_active_agents = list(active_agents or [])
         self.metrics.last_routing_decision = routing_decision
+        self.metrics.last_aggregation_decision = aggregation_decision
+        self.metrics.last_agent_count = len(active_agents or [])
         self.metrics.last_citation_coverage = citation_coverage
         self.metrics.last_evidence_support = evidence_support
         if low_confidence:

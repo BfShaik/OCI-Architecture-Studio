@@ -125,6 +125,12 @@ def response_text(response: dict[str, Any]) -> str:
     for key in ("active_agents", "critic_findings", "orchestration_warnings"):
         parts.append(key)
         parts.extend(str(item) for item in response.get(key, []))
+    parts.append(str(response.get("aggregation_decision", "")))
+    for contribution in response.get("agent_contributions", []):
+        parts.append(str(contribution.get("agent", "")))
+        parts.append(str(contribution.get("focus", "")))
+        parts.append(str(contribution.get("summary", "")))
+        parts.extend(str(item) for item in contribution.get("recommendations", []))
     parts.append(str(response.get("orchestration_mode", "")))
     parts.append(str(response.get("routing_decision", "")))
     confidence = response.get("confidence") or {}
@@ -192,6 +198,7 @@ def validate_structure(response: dict[str, Any]) -> EvalCheck:
         "orchestration_mode": str,
         "active_agents": list,
         "agent_trace": list,
+        "agent_contributions": list,
         "critic_findings": list,
         "orchestration_warnings": list,
         "synthesis_provider": str,
@@ -231,6 +238,7 @@ def validate_structure(response: dict[str, Any]) -> EvalCheck:
 def validate_orchestration(case: dict[str, Any], response: dict[str, Any]) -> EvalCheck:
     expected_mode = case.get("expected_orchestration_mode")
     required_agents = list(case.get("required_agents", []))
+    minimum_contributions = int(case.get("minimum_agent_contributions", 0))
     if not expected_mode and not required_agents:
         return EvalCheck("orchestration", True, 5, 5, ["orchestration not asserted"])
 
@@ -244,8 +252,15 @@ def validate_orchestration(case: dict[str, Any], response: dict[str, Any]) -> Ev
         details.append(f"missing agents: {', '.join(missing_agents)}")
     if expected_mode == "supervised" and not response.get("critic_findings"):
         details.append("missing critic findings")
+    if expected_mode == "multi_agent_pilot" and not response.get("aggregation_decision"):
+        details.append("missing aggregation decision")
+    contributions = response.get("agent_contributions", [])
+    if minimum_contributions and len(contributions) < minimum_contributions:
+        details.append(f"expected at least {minimum_contributions} agent contributions, got {len(contributions)}")
+    if expected_mode in {"supervised", "multi_agent_pilot"} and not response.get("critic_findings"):
+        details.append("missing critic findings")
     trace = response.get("agent_trace", [])
-    if expected_mode == "supervised" and not trace:
+    if expected_mode in {"supervised", "multi_agent_pilot"} and not trace:
         details.append("missing agent trace")
 
     passed = not details

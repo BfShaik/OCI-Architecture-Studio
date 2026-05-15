@@ -79,3 +79,50 @@ def test_single_pass_mode_preserves_rollback_path() -> None:
     assert plan.mode == "single_pass"
     assert plan.active_agents == []
     assert plan.context_note == "Retrieved context."
+
+
+def test_multi_agent_pilot_selects_supporting_specialists() -> None:
+    profile = get_intent_profile(Intent.MIGRATION)
+    sources = [
+        RetrievedSource(
+            chunk_id="oke::1",
+            title="OCI Kubernetes Engine",
+            source_type="oci_doc",
+            source_url="https://example.com/oke",
+            service="OKE",
+            service_domain="containers",
+            intent_tags=["migration"],
+            freshness_score=0.9,
+            trust_level="official",
+            summary="OCI Kubernetes Engine supports managed Kubernetes clusters.",
+            relevance_score=0.4,
+        ),
+        RetrievedSource(
+            chunk_id="cost::1",
+            title="OCI Cost Management",
+            source_type="oci_doc",
+            source_url="https://example.com/cost",
+            service="Cost Management",
+            service_domain="cost",
+            intent_tags=["cost"],
+            freshness_score=0.9,
+            trust_level="official",
+            summary="OCI Budgets and usage monitoring support cost governance.",
+            relevance_score=0.3,
+        ),
+    ]
+
+    plan = SupervisedAgentOrchestrator(mode="multi_agent_pilot").plan(
+        question="Migrate EKS to OCI and optimize cost.",
+        profile=profile,
+        sources=sources,
+        context_note="Retrieved context.",
+    )
+
+    assert plan.mode == "multi_agent_pilot"
+    assert "migration_advisor" in plan.active_agents
+    assert "cost_advisor" in plan.active_agents
+    assert "final_synthesizer" in plan.active_agents
+    assert len(plan.contributions) >= 2
+    assert plan.aggregation_decision
+    assert "one final synthesis" in plan.routing_decision

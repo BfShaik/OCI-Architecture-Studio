@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     embedding_provider: str = Field(default="local", alias="EMBEDDING_PROVIDER")
     retrieval_provider: str = Field(default="local_json", alias="RETRIEVAL_PROVIDER")
     advisory_orchestration_mode: str = Field(
-        default="supervised",
+        default="multi_agent_pilot",
         alias="ADVISORY_ORCHESTRATION_MODE",
     )
     advisory_synthesis_provider: str = Field(

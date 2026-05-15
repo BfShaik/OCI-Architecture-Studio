@@ -45,6 +45,15 @@ export type AgentTrace = {
   warnings: string[];
 };
 
+export type AgentContribution = {
+  agent: string;
+  focus: string;
+  evidence_count: number;
+  summary: string;
+  recommendations: string[];
+  warnings: string[];
+};
+
 export type ArchitectureReviewRequest = {
   question: string;
   workload_context?: string;
@@ -57,6 +66,8 @@ export type ArchitectureReviewResponse = {
   active_agents: string[];
   routing_decision?: string | null;
   agent_trace: AgentTrace[];
+  agent_contributions: AgentContribution[];
+  aggregation_decision?: string | null;
   critic_findings: string[];
   orchestration_warnings: string[];
   synthesis_provider: string;
