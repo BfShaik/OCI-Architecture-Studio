@@ -94,6 +94,23 @@ app/backend/.venv/bin/python infra/scripts/oracle_vector_index.py print-schema
 app/backend/.venv/bin/python infra/scripts/vector_retrieval_validation.py --allow-skip
 ```
 
+Dual-read parity against the active Object Storage baseline can be run before Oracle AI Vector Search is configured. It should skip cleanly rather than silently falling back:
+
+```bash
+app/backend/.venv/bin/python infra/scripts/retrieval_parity_check.py \
+  --baseline-provider oci_object_storage \
+  --oci-native-provider oracle_ai_vector_search \
+  --allow-skip \
+  --oci-region "$OCI_REGION" \
+  --oci-profile "$OCI_PROFILE" \
+  --oci-namespace "$OCI_OBJECT_STORAGE_NAMESPACE" \
+  --oci-vector-bucket "$OCI_VECTOR_BUCKET" \
+  --oci-vector-object-name "$OCI_VECTOR_OBJECT_NAME" \
+  --output-dir evals/reports/retrieval-oracle-vector-parity
+```
+
+When Oracle DB settings exist, provide `OCI_VECTOR_DB_DSN`, `OCI_VECTOR_DB_USER`, and `OCI_VECTOR_DB_PASSWORD` through the matching CLI flags or environment wrapper and rerun the same parity gate. Do not promote `RETRIEVAL_PROVIDER=oracle_ai_vector_search` until parity passes without fallback.
+
 ## Migration Gates
 
 Do not switch a staging provider until all are true:

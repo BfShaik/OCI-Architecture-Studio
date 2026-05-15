@@ -74,11 +74,12 @@ def build_settings(
     provider: str,
     args: argparse.Namespace,
     object_name: str | None = None,
+    fallback_enabled: bool | None = None,
 ) -> Settings:
     return Settings(
         KNOWLEDGE_INDEX_PATH=args.index_path,
         RETRIEVAL_PROVIDER=provider,
-        RETRIEVAL_FALLBACK_ENABLED=args.retrieval_fallback_enabled,
+        RETRIEVAL_FALLBACK_ENABLED=args.retrieval_fallback_enabled if fallback_enabled is None else fallback_enabled,
         EMBEDDING_PROVIDER=args.embedding_provider,
         EMBEDDING_FALLBACK_ENABLED=args.embedding_fallback_enabled,
         OCI_REGION=args.oci_region,
@@ -213,7 +214,14 @@ def health_summary(retriever) -> dict[str, Any]:
     }
 
 
-def write_reports(results: list[dict[str, Any]], health: dict[str, Any], output_dir: Path) -> None:
+def write_reports(
+    results: list[dict[str, Any]],
+    health: dict[str, Any],
+    output_dir: Path,
+    *,
+    status: str,
+    skip_reason: str | None = None,
+) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     passed = sum(1 for result in results if result["passed"])
     failed = len(results) - passed
@@ -221,6 +229,8 @@ def write_reports(results: list[dict[str, Any]], health: dict[str, Any], output_
     avg_oci_latency = round(mean(float(result["oci_native"]["latency_ms"]) for result in results), 2) if results else 0.0
     avg_overlap = round(mean(float(result["top_chunk_overlap"]) for result in results), 3) if results else 0.0
     report = {
+        "status": status,
+        "skip_reason": skip_reason,
         "summary": {
             "total": len(results),
             "passed": passed,
@@ -249,6 +259,7 @@ def write_reports(results: list[dict[str, Any]], health: dict[str, Any], output_
     lines = [
         "# Retrieval Parity Report",
         "",
+        f"- Status: `{status}`",
         f"- Total cases: {len(results)}",
         f"- Passed: {passed}",
         f"- Failed: {failed}",
@@ -273,6 +284,8 @@ def write_reports(results: list[dict[str, Any]], health: dict[str, Any], output_
         "## Cases",
         "",
     ]
+    if skip_reason:
+        lines.extend([f"- Skip reason: {skip_reason}", ""])
     for result in results:
         status = "PASS" if result["passed"] else "FAIL"
         lines.extend(
@@ -301,14 +314,26 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--cases", type=Path, action="append", default=None)
     parser.add_argument("--output-dir", type=Path, default=REPO_ROOT / "evals" / "reports" / "retrieval-parity")
     parser.add_argument("--index-path", type=Path, default=REPO_ROOT / "knowledge" / "snapshots" / "oci-rag-index.json")
+    parser.add_argument(
+        "--baseline-provider",
+        choices=("local_json", "oci_object_storage"),
+        default="local_json",
+        help="Provider to use as the known-good baseline.",
+    )
+    parser.add_argument(
+        "--oci-native-provider",
+        choices=("oci_object_storage", "oracle_ai_vector_search"),
+        default="oci_object_storage",
+        help="OCI-native provider to compare against the baseline.",
+    )
     parser.add_argument("--embedding-provider", choices=("local", "oci_genai"), default="local")
     parser.add_argument("--retrieval-fallback-enabled", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--oci-region")
     parser.add_argument("--oci-profile", default="DEFAULT")
     parser.add_argument("--oci-auth-mode", choices=("config_file", "instance_principal", "resource_principal"), default="config_file")
     parser.add_argument("--embedding-fallback-enabled", action=argparse.BooleanOptionalAction, default=True)
-    parser.add_argument("--oci-namespace", required=True)
-    parser.add_argument("--oci-vector-bucket", required=True)
+    parser.add_argument("--oci-namespace")
+    parser.add_argument("--oci-vector-bucket")
     parser.add_argument("--oci-vector-object-name", default="oci-rag-index.json")
     parser.add_argument("--oci-genai-compartment-id")
     parser.add_argument("--oci-genai-embedding-model-id")
@@ -323,6 +348,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--oci-vector-distance-metric", default="COSINE")
     parser.add_argument("--min-top-overlap", type=float, default=0.8)
     parser.add_argument("--max-latency-ms", type=float, default=250.0)
+    parser.add_argument("--allow-skip", action="store_true")
     return parser.parse_args()
 
 
@@ -335,24 +361,51 @@ async def async_main() -> int:
     cases = load_cases(case_paths)
     classifier = IntentClassifier()
 
-    local_retriever = build_retriever(build_settings("local_json", args))
-    oci_retriever = build_retriever(build_settings("oci_object_storage", args))
+    if args.oci_native_provider == "oci_object_storage" and (not args.oci_namespace or not args.oci_vector_bucket):
+        health = {
+            "local": {},
+            "oci_native": {
+                "provider": args.oci_native_provider,
+                "exists": False,
+                "missing_config": ["OCI_OBJECT_STORAGE_NAMESPACE", "OCI_VECTOR_BUCKET"],
+            },
+        }
+        write_reports(
+            [],
+            health,
+            args.output_dir,
+            status="skipped" if args.allow_skip else "failed",
+            skip_reason="OCI Object Storage namespace and bucket are required for Object Storage parity.",
+        )
+        print(json.dumps(health, indent=2))
+        return 0 if args.allow_skip else 1
+
+    local_retriever = build_retriever(build_settings(args.baseline_provider, args, fallback_enabled=True))
+    oci_retriever = build_retriever(build_settings(args.oci_native_provider, args, fallback_enabled=False))
     health = {
         "local": health_summary(local_retriever),
         "oci_native": health_summary(oci_retriever),
     }
     print(json.dumps(health, indent=2))
     if not health["local"]["exists"] or not health["oci_native"]["exists"]:
-        print("FAIL one or more retrieval providers are unavailable", file=sys.stderr)
-        return 1
+        skip_reason = "one or more retrieval providers are unavailable"
+        write_reports(
+            [],
+            health,
+            args.output_dir,
+            status="skipped" if args.allow_skip else "failed",
+            skip_reason=skip_reason,
+        )
+        print(f"{'SKIP' if args.allow_skip else 'FAIL'} {skip_reason}", file=sys.stderr)
+        return 0 if args.allow_skip else 1
     if health["local"]["chunk_count"] != health["oci_native"]["chunk_count"]:
         print("FAIL provider chunk counts differ", file=sys.stderr)
         return 1
 
     results: list[dict[str, Any]] = []
     for case in cases:
-        local = await run_provider_case(case, "local_json", local_retriever, classifier)
-        oci_native = await run_provider_case(case, "oci_object_storage", oci_retriever, classifier)
+        local = await run_provider_case(case, args.baseline_provider, local_retriever, classifier)
+        oci_native = await run_provider_case(case, args.oci_native_provider, oci_retriever, classifier)
         results.append(
             compare_results(
                 case=case,
@@ -363,8 +416,8 @@ async def async_main() -> int:
             )
         )
 
-    write_reports(results, health, args.output_dir)
     failed = [result for result in results if not result["passed"]]
+    write_reports(results, health, args.output_dir, status="passed" if not failed else "failed")
     if failed:
         print(f"FAIL {len(failed)} parity case(s) failed", file=sys.stderr)
         for result in failed:

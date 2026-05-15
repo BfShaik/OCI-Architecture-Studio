@@ -77,8 +77,8 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | TASK-005 | Done | Run OCI GenAI synthesis readiness/parity in skip-safe mode, then live mode when config exists. | Skip-safe parity run wrote `evals/reports/genai-synthesis-parity`; status skipped because `OCI_GENAI_COMPARTMENT_ID` and `OCI_GENAI_CHAT_MODEL_ID` are absent; deterministic default preserved. |
 | TASK-006 | Done | Add OCI GenAI embedding activation checklist and diagnostics expectations. | Passed `tests/test_operational_hardening.py`, `tests/test_api.py`, and `git diff --check`; activation gates documented. |
 | TASK-007 | Done | Validate Oracle AI Vector Search schema/index prerequisites without active-provider promotion. | Local index validation passed for 44 chunks at 256 dimensions; vector validation skip-safe report confirms missing Oracle DB config without active-provider promotion. |
-| TASK-008 | Next | Add Oracle AI Vector Search dual-read parity workflow against Object Storage retrieval. | Retrieval parity report covers golden, edge, and regression prompts. |
-| TASK-009 | Not Started | Promote semantic retrieval through configuration only after parity approval. | Staging smoke, retrieval regression, vector validation, rollback drill pass. |
+| TASK-008 | Done | Add Oracle AI Vector Search dual-read parity workflow against Object Storage retrieval. | `retrieval_parity_check.py` now supports `--oci-native-provider oracle_ai_vector_search`; skip-safe run used Object Storage baseline with 44 chunks and reported missing Oracle DB config. |
+| TASK-009 | Next | Promote semantic retrieval through configuration only after parity approval. | Staging smoke, retrieval regression, vector validation, rollback drill pass. |
 | TASK-010 | Not Started | Activate controlled OCI Functions knowledge-refresh invocation path. | Function invocation smoke passes; no automatic promotion of snapshots without gates. |
 | TASK-011 | Not Started | Activate OCI Resource Scheduler for release refresh after function readiness. | Schedule OCIDs visible in diagnostics; manual disable rollback documented. |
 | TASK-012 | Not Started | Define OCI DevOps delivery contract around existing operator artifact flow. | Pipeline requirements documented; operator scripts remain usable. |
@@ -133,14 +133,14 @@ Run the appropriate subset after each increment; run the full matrix before a ne
 
 ## Next Actionable Increment
 
-Current task: `TASK-008`.
+Current task: `TASK-009`.
 
-Add Oracle AI Vector Search dual-read parity workflow against Object Storage retrieval:
+Promote semantic retrieval through configuration only after parity approval:
 
-1. Inspect current retrieval parity script and Object Storage provider options.
-2. Run parity in skip-safe or configured mode without changing active staging provider.
-3. Ensure the report compares Object Storage baseline with Oracle AI Vector Search when DB config exists.
-4. Preserve `oci_object_storage` as the active retrieval provider until parity is approved.
+1. Do not change staging provider until Oracle AI Vector Search parity passes without skip.
+2. Document the configuration-only promotion steps for `RETRIEVAL_PROVIDER=oracle_ai_vector_search`.
+3. Document rollback to `oci_object_storage` and `local_json`.
+4. Require staging smoke, retrieval regression, vector validation, and rollback drill before promotion.
 
 ## Operating Rules
 
