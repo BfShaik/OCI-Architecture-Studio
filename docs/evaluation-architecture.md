@@ -19,6 +19,10 @@ evals/
   golden-prompts.md        Human-readable regression suite
   golden-prompts.jsonl     Machine-readable golden eval cases
   edge-cases.jsonl         Negative and stress eval cases
+  advisory-quality.jsonl   Advisory grounding and confidence cases
+  orchestration-quality.jsonl
+  architecture-realism.jsonl
+  evaluation-intelligence.jsonl
   run_golden.py            Local eval runner
   reports/                 Generated reports, ignored by git
 
@@ -40,9 +44,16 @@ Each JSONL record is one eval case:
   "expected_intent": "migration",
   "required_services": ["EKS", "OKE", "RDS", "OCI database"],
   "required_traits": ["migration waves", "dependency mapping", "cutover"],
+  "expected_oci_services": ["OCI Kubernetes Engine", "Database Migration"],
+  "expected_tradeoffs": ["managed", "operational overhead"],
+  "expected_risks": ["compatibility", "cutover"],
+  "expected_migration_phases": ["validation", "cutover", "rollback"],
+  "expected_security_guidance": ["IAM", "Vault"],
+  "expected_observability_guidance": ["Logging", "Monitoring"],
   "forbidden_patterns": ["guaranteed no downtime"],
   "grounding_required": true,
   "citation_required": true,
+  "minimum_architecture_quality": 0.62,
   "minimum_score": 80
 }
 ```
@@ -55,13 +66,20 @@ Field guidance:
 - `required_services`: OCI services or service mappings expected in the response
 - `required_traits`: behavior, structure, or domain-specific concepts expected in the response
 - `forbidden_patterns`: phrases that indicate hallucination, unsafe certainty, or bad guidance
+- `expected_oci_services`: service expectations for benchmarking recommendation realism
+- `expected_tradeoffs`: tradeoff concepts expected in reasoning output
+- `expected_risks`: risk concepts expected for the workload
+- `expected_migration_phases`: migration phase expectations when applicable
+- `expected_security_guidance`: security controls expected for the workload
+- `expected_observability_guidance`: logging, monitoring, alarm, dashboard, or runbook expectations
 - `grounding_required`: whether retrieved context must be present and plausible
 - `citation_required`: whether response must include valid citations/chunks
+- `minimum_architecture_quality`: optional quality gate threshold for advanced scoring
 - `minimum_score`: minimum passing score, 0-100
 
 ## Scoring Strategy
 
-The current runner uses deterministic heuristic scoring:
+The current runner uses deterministic heuristic scoring. It still checks structure and grounding, but now also adds architecture-advisory scoring for enterprise realism.
 
 | Check | Points |
 |---|---:|
@@ -75,6 +93,24 @@ The current runner uses deterministic heuristic scoring:
 | Forbidden/suspicious patterns | 10 |
 | Unsupported OCI claim heuristic | 5 |
 | Stale/unverified guidance | 5 |
+| Architecture quality | 20 |
+
+Architecture quality is scored across deterministic dimensions:
+
+- OCI specificity
+- architecture completeness
+- workload alignment
+- migration realism
+- HA/DR quality
+- cost optimization quality
+- operational realism
+- security realism
+- observability realism
+- recommendation explainability
+- tradeoff quality
+- architecture consistency
+
+The score is explainable: each dimension includes a numeric value and rationale in the JSON report. It is a heuristic benchmark, not a statistical quality model.
 
 A case passes only when:
 
@@ -86,8 +122,29 @@ A case passes only when:
 - retrieved evidence supports required service recommendations
 - no forbidden/suspicious pattern is detected
 - release-aware answers avoid unverified current-release claims
+- architecture-quality gates meet configured thresholds for the case
 
 This favors reliability over sophistication. When real LLM synthesis is added, the same schema can be extended with LLM-as-judge fields, but deterministic checks should remain the first gate.
+
+## Evaluation Intelligence
+
+The advanced evaluation layer lives in:
+
+```text
+app/backend/src/oci_arch_studio_backend/services/evaluation_intelligence.py
+infra/scripts/advisory_quality_gate.py
+```
+
+Implemented today:
+
+- multi-dimensional architecture scoring
+- hallucination detection for invented OCI services, unsafe certainty, stale release claims, contradictions, and unsupported migration claims
+- benchmark comparison against expected services, tradeoffs, risks, migration phases, security guidance, and observability guidance
+- response quality analytics for repeated recommendations, generic filler, service frequency, pattern coverage, citation coverage, workload quality, retrieval influence, and hallucination trends
+- configurable report-level quality gating through `infra/scripts/advisory_quality_gate.py`
+- provider comparison enrichment in `infra/scripts/genai_synthesis_parity_check.py`
+
+The layer is deterministic and regression-friendly. It does not use autonomous judges, fine-tuning, or LLM-as-judge scoring.
 
 ## Regression Strategy
 
@@ -112,6 +169,9 @@ The current guardrails are practical heuristics:
 - Retrieval support checks compare required service claims against retrieved citation summaries.
 - Forbidden phrases catch unsafe certainty, such as `guaranteed zero downtime`.
 - Invented OCI service patterns catch obvious fake services.
+- Unsupported OCI phrase heuristics flag possible non-existent OCI service or feature claims for review.
+- Contradiction checks flag common conflicts such as active-active plus cheapest-possible goals or multi-region resilience with no replication.
+- Unsupported migration checks look for migration prompts that lack recommendation evidence links.
 - Release-awareness prompts must not claim latest truth without provided release context.
 - Stale guidance patterns catch claims that imply live freshness without release evidence.
 - Failed checks in passing cases are reported as quality warnings; failed checks in failing cases are reported as failure reasons.
@@ -127,8 +187,10 @@ CI should run:
 3. ingestion smoke test
 4. golden prompt eval runner
 5. edge-case eval runner
-6. retrieval regression
-7. retrieval parity before provider promotion
+6. advisory, orchestration, architecture-realism, and evaluation-intelligence suites
+7. retrieval regression
+8. advisory quality gate for promotion candidates
+9. retrieval parity before provider promotion
 
 The workflow in `.github/workflows/ci.yml` performs those steps. The eval runner writes JSON and Markdown reports to `evals/reports/`; CI uploads them as artifacts.
 
@@ -188,6 +250,7 @@ Phase 4:
 - Add trend reports and historical comparison.
 - Keep Object Storage retrieval under regression after promotion.
 - Add production embeddings and Oracle AI Vector Search after schema/query parity.
+- Add stronger longitudinal dashboards from generated report artifacts.
 
 ## Recommended Python Libraries
 
@@ -210,6 +273,8 @@ Future:
 
 - Keyword checks can miss semantically correct answers with different wording.
 - Keyword checks can pass shallow answers that contain the right words.
+- Quality scores are deterministic heuristics and should be treated as promotion guardrails, not objective truth.
+- Hallucination detection can produce false positives on uncommon but real OCI names until the supported-term list is expanded.
 - Local hash embeddings are deterministic and useful for parity, but not production semantic retrieval.
 - Oracle documentation pages can include boilerplate that weakens chunks.
 - Release-awareness must not imply live freshness until release ingestion exists.

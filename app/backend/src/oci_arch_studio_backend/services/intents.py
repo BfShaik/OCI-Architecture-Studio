@@ -464,16 +464,20 @@ class IntentClassifier:
             return Intent.AI_ML
         if any(token in normalized for token in ("saas", "tenant", "multi-tenant", "multi tenant", "multi-region", "multi region")):
             return Intent.SAAS_PLATFORM
-        if any(token in normalized for token in ("dr", "disaster recovery", "rto", "rpo", "failover", "fintech")):
+        if any(token in normalized for token in ("disaster recovery", "rto", "rpo", "failover", "fintech")) or re.search(r"\bdr\b", normalized):
             return Intent.DR
         if any(token in normalized for token in ("analytics", "data platform", "data lake", "warehouse", "reporting", "pipeline scaling")):
             return Intent.ANALYTICS
+        if any(token in normalized for token in ("ecommerce", "checkout", "storefront")) and any(
+            token in normalized for token in ("design", "architecture", "highly available", "ha")
+        ):
+            return Intent.ARCHITECTURE
         if any(token in normalized for token in ("cost", "cost-optimized", "budget", "right-size", "right sized", "cheap")):
             return Intent.COST
-        if any(token in normalized for token in ("observability", "logging", "monitoring", "metrics", "alarms", "dashboard", "audit trail")):
-            return Intent.OBSERVABILITY
         if any(token in normalized for token in ("security", "secure", "iam", "vault", "encryption", "compliance")):
             return Intent.SECURITY
+        if any(token in normalized for token in ("observability", "logging", "monitoring", "metrics", "alarms", "dashboard", "audit trail")):
+            return Intent.OBSERVABILITY
         if any(token in normalized for token in ("modernize", "modernization", "refactor", "replatform", "managed database")):
             return Intent.MODERNIZATION
         if any(token in normalized for token in ("design", "architecture", "architect", "highly available", "ecommerce", "platform")):

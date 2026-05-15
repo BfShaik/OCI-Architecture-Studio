@@ -16,6 +16,12 @@ sys.path.insert(0, str(BACKEND_SRC))
 
 from fastapi.testclient import TestClient  # noqa: E402
 from oci_arch_studio_backend.main import app  # noqa: E402
+from oci_arch_studio_backend.services.evaluation_intelligence import (  # noqa: E402
+    ArchitectureQualityScorer,
+    QualityGateEvaluator,
+    QualityGateThresholds,
+    ResponseQualityAnalytics,
+)
 
 
 SUPPORTED_OCI_TERMS = {
@@ -27,6 +33,7 @@ SUPPORTED_OCI_TERMS = {
     "cloud guard",
     "compute",
     "cost analysis",
+    "cost management overview",
     "data guard",
     "database migration",
     "database services overview",
@@ -34,6 +41,7 @@ SUPPORTED_OCI_TERMS = {
     "fastconnect",
     "full stack disaster recovery",
     "iam",
+    "identity",
     "kubernetes engine",
     "load balancer",
     "logging",
@@ -44,7 +52,10 @@ SUPPORTED_OCI_TERMS = {
     "oke",
     "oracle base database service",
     "oracle cloud infrastructure",
+    "reference architecture",
     "security zones",
+    "service",
+    "services",
     "security services overview",
     "vault",
     "virtual cloud network",
@@ -132,6 +143,23 @@ def response_text(response: dict[str, Any]) -> str:
         parts.append(str(finding.get("check", "")))
         parts.append(str(finding.get("message", "")))
         parts.append(str(finding.get("recommendation", "")))
+    reasoning_trace = response.get("reasoning_trace") or {}
+    if isinstance(reasoning_trace, dict):
+        parts.append(str(reasoning_trace.get("profile", "")))
+        for key in ("heuristics_triggered", "pattern_hints", "retrieval_terms", "service_priorities", "risk_emphasis"):
+            parts.extend(str(item) for item in reasoning_trace.get(key, []))
+    for tradeoff in response.get("architecture_tradeoffs", []):
+        parts.append(str(tradeoff.get("dimension", "")))
+        parts.append(str(tradeoff.get("decision", "")))
+        parts.append(str(tradeoff.get("benefit", "")))
+        parts.append(str(tradeoff.get("cost_or_risk", "")))
+        parts.append(str(tradeoff.get("guidance", "")))
+    for item in response.get("recommendation_confidence", []):
+        parts.append(str(item.get("recommendation", "")))
+        parts.append(str(item.get("reasoning_basis", "")))
+        parts.append(str(item.get("level", "")))
+        parts.extend(str(value) for value in item.get("known_limitations", []))
+        parts.extend(str(value) for value in item.get("assumptions", []))
     release_context = response.get("release_context") or {}
     if isinstance(release_context, dict):
         parts.extend(str(item) for item in release_context.get("architecture_affecting_services", []))
@@ -505,6 +533,29 @@ def validate_consistency_metadata(case: dict[str, Any], response: dict[str, Any]
     )
 
 
+def validate_architecture_quality(case: dict[str, Any], response: dict[str, Any]) -> EvalCheck:
+    quality = ArchitectureQualityScorer().score(response, case)
+    thresholds = QualityGateThresholds(
+        min_overall=float(case.get("minimum_architecture_quality", 0.55)),
+        min_oci_specificity=float(case.get("minimum_oci_specificity", 0.45)),
+        min_architecture_completeness=float(case.get("minimum_architecture_completeness", 0.45)),
+        min_tradeoff_quality=float(case.get("minimum_tradeoff_quality", 0.35)),
+        max_high_hallucinations=int(case.get("max_high_hallucinations", 0)),
+        max_medium_hallucinations=int(case.get("max_medium_hallucinations", 3)),
+    )
+    gate = QualityGateEvaluator().evaluate(quality, thresholds)
+    score = round(20 * quality.overall)
+    details = list(gate.failures)
+    if quality.hallucination_findings:
+        details.extend(
+            f"{finding.severity}:{finding.category}:{finding.impacted_section}"
+            for finding in quality.hallucination_findings
+        )
+    if not details:
+        details.append(f"overall architecture quality {quality.overall}")
+    return EvalCheck("architecture_quality", gate.passed, score if gate.passed else max(score - 5, 0), 20, details)
+
+
 def validate_forbidden_patterns(case: dict[str, Any], text: str) -> EvalCheck:
     patterns = list(case.get("forbidden_patterns", []))
     patterns.extend(SUSPICIOUS_PATTERNS)
@@ -576,6 +627,7 @@ def validate_stale_or_unverified_guidance(case: dict[str, Any], text: str) -> Ev
 def evaluate_case(client: TestClient, case: dict[str, Any]) -> dict[str, Any]:
     response = execute_prompt(client, case["prompt"])
     text = response_text(response)
+    architecture_quality = ArchitectureQualityScorer().score(response, case)
     checks = [
         validate_structure(response),
         validate_intent(case, response),
@@ -589,6 +641,7 @@ def evaluate_case(client: TestClient, case: dict[str, Any]) -> dict[str, Any]:
         validate_confidence(case, response),
         validate_reasoning_metadata(case, response),
         validate_consistency_metadata(case, response),
+        validate_architecture_quality(case, response),
         validate_forbidden_patterns(case, text),
         validate_unsupported_oci_claims(text),
         validate_stale_or_unverified_guidance(case, text),
@@ -612,6 +665,7 @@ def evaluate_case(client: TestClient, case: dict[str, Any]) -> dict[str, Any]:
             "orchestration",
             "non_hallucination",
             "stale_unverified_guidance",
+            "architecture_quality",
         }
     )
     failure_reasons = [
@@ -639,6 +693,8 @@ def evaluate_case(client: TestClient, case: dict[str, Any]) -> dict[str, Any]:
             }
             for check in checks
         ],
+        "architecture_quality": architecture_quality.as_dict(),
+        "response": response,
         "top_citations": [
             {
                 "title": citation.get("title"),
@@ -658,6 +714,11 @@ def summarize_results(results: list[dict[str, Any]]) -> dict[str, Any]:
     check_counter: Counter[str] = Counter()
     retrieval_gaps: list[dict[str, str]] = []
     scores = [int(result["score"]) for result in results]
+    architecture_scores = [
+        float(result.get("architecture_quality", {}).get("overall", 0.0))
+        for result in results
+        if isinstance(result.get("architecture_quality"), dict)
+    ]
 
     for result in results:
         intent = result.get("actual_intent") or "unknown"
@@ -694,6 +755,8 @@ def summarize_results(results: list[dict[str, Any]]) -> dict[str, Any]:
         recommendations.append("Tighten hallucination guardrails and review unsupported OCI service claims.")
     if check_counter["stale_unverified_guidance"]:
         recommendations.append("Strengthen release-awareness prompts so current guidance requires explicit release context.")
+    if check_counter["architecture_quality"]:
+        recommendations.append("Review architecture-quality dimensions, hallucination findings, and benchmark gaps before promotion.")
     if not recommendations:
         recommendations.append("No immediate eval failures. Add harder cases from real product failures.")
 
@@ -704,11 +767,17 @@ def summarize_results(results: list[dict[str, Any]]) -> dict[str, Any]:
             "minimum": min(scores) if scores else 0,
             "maximum": max(scores) if scores else 0,
         },
+        "architecture_quality_summary": {
+            "average": round(sum(architecture_scores) / len(architecture_scores), 3) if architecture_scores else 0.0,
+            "minimum": round(min(architecture_scores), 3) if architecture_scores else 0.0,
+            "maximum": round(max(architecture_scores), 3) if architecture_scores else 0.0,
+        },
         "top_failure_reasons": failure_counter.most_common(10),
         "top_quality_warnings": warning_counter.most_common(10),
         "retrieval_gaps": retrieval_gaps,
         "failed_checks": dict(check_counter),
         "recommendations": recommendations,
+        "quality_analytics": ResponseQualityAnalytics().summarize(results),
     }
 
 
@@ -751,9 +820,11 @@ def write_reports(results: list[dict[str, Any]], output_dir: Path) -> None:
         "failed": sum(1 for result in results if not result["passed"]),
         "by_intent": diagnostics["by_intent"],
         "score_summary": diagnostics["score_summary"],
+        "architecture_quality_summary": diagnostics["architecture_quality_summary"],
         "top_failure_reasons": diagnostics["top_failure_reasons"],
         "top_quality_warnings": diagnostics["top_quality_warnings"],
         "retrieval_gaps": diagnostics["retrieval_gaps"],
+        "quality_analytics": diagnostics["quality_analytics"],
         "recommendations": diagnostics["recommendations"],
         "results": results,
     }
@@ -785,6 +856,8 @@ def write_reports(results: list[dict[str, Any]], output_dir: Path) -> None:
         f"| Average | {summary['score_summary']['average']} |",
         f"| Minimum | {summary['score_summary']['minimum']} |",
         f"| Maximum | {summary['score_summary']['maximum']} |",
+        f"| Architecture Quality Avg | {summary['architecture_quality_summary']['average']} |",
+        f"| Architecture Quality Min | {summary['architecture_quality_summary']['minimum']} |",
         "",
         "## Per-Intent Breakdown",
         "",
@@ -829,6 +902,24 @@ def write_reports(results: list[dict[str, Any]], output_dir: Path) -> None:
             lines.append(f"- `{gap['id']}`: {gap['detail']}")
     else:
         lines.append("- None")
+    lines.extend(
+        [
+            "",
+            "## Quality Analytics",
+            "",
+            f"- Average citation coverage: `{summary['quality_analytics']['average_citation_coverage']}`",
+            f"- Average retrieval influence: `{summary['quality_analytics']['average_retrieval_influence']}`",
+            "- Top OCI service recommendations:",
+        ]
+    )
+    for service, count in summary["quality_analytics"]["oci_service_recommendation_frequency"][:10]:
+        lines.append(f"  - {count}x {service}")
+    lines.append("- Hallucination trends:")
+    if summary["quality_analytics"]["hallucination_trends"]:
+        for category, count in summary["quality_analytics"]["hallucination_trends"]:
+            lines.append(f"  - {count}x {category}")
+    else:
+        lines.append("  - None")
     lines.extend(
         [
             "",

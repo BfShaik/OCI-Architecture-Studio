@@ -88,6 +88,7 @@ tests/                Backend and integration tests
 - Machine-readable golden eval dataset
 - Negative and edge-case eval dataset
 - Local eval runner with JSON/Markdown reports, failure diagnostics, retrieval-support checks, and stale-guidance checks
+- Evaluation intelligence layer with multi-dimensional architecture scoring, hallucination findings, benchmark checks, response-quality analytics, and configurable quality gates
 - CI workflow for knowledge/release ingestion smoke tests, backend tests, golden/edge evals, and frontend build
 - Backend tests covering API, retrieval, and intent routing
 - OCI staging deployment with smoke tests, resource visibility checks, and rollback runbooks
@@ -251,6 +252,7 @@ VITE_API_BASE_URL=http://localhost:8000 npm run dev
 5. Build and validate the Oracle AI Vector Search table/index with production embeddings before enabling staging active reads.
 6. Run Oracle AI Vector Search dual-run checks against local JSON and the Object Storage provider before any active-read promotion.
 7. Replace fallback release parsing with stronger extraction from official OCI release pages and keep impact-category mappings under review.
+8. Use the evaluation-intelligence suite and advisory quality gate before promoting retrieval, synthesis, prompt, or provider changes.
 
 ## Run Evaluations
 
@@ -260,6 +262,13 @@ app/backend/.venv/bin/python evals/run_golden.py --cases evals/edge-cases.jsonl 
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/advisory-quality.jsonl --output-dir evals/reports/advisory-quality
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/orchestration-quality.jsonl --output-dir evals/reports/orchestration-quality
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/architecture-realism.jsonl --output-dir evals/reports/architecture-realism
+app/backend/.venv/bin/python evals/run_golden.py --cases evals/evaluation-intelligence.jsonl --output-dir evals/reports/evaluation-intelligence
+app/backend/.venv/bin/python infra/scripts/advisory_quality_gate.py \
+  --report evals/reports/evaluation-intelligence/evaluation-intelligence-report.json \
+  --min-overall 0.55 \
+  --min-oci-specificity 0.45 \
+  --min-architecture-completeness 0.45 \
+  --min-tradeoff-quality 0.35
 app/backend/.venv/bin/python infra/scripts/genai_synthesis_parity_check.py --cases evals/genai-comparison.jsonl --output-dir evals/reports/genai-comparison --allow-skip
 app/backend/.venv/bin/python infra/scripts/genai_synthesis_parity_check.py --cases evals/golden-prompts.jsonl --output-dir evals/reports/genai-parity --allow-skip
 ```
@@ -355,6 +364,8 @@ app/backend/.venv/bin/python evals/run_golden.py --cases evals/edge-cases.jsonl 
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/advisory-quality.jsonl --output-dir evals/reports/advisory-quality
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/orchestration-quality.jsonl --output-dir evals/reports/orchestration-quality
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/architecture-realism.jsonl --output-dir evals/reports/architecture-realism
+app/backend/.venv/bin/python evals/run_golden.py --cases evals/evaluation-intelligence.jsonl --output-dir evals/reports/evaluation-intelligence
+app/backend/.venv/bin/python infra/scripts/advisory_quality_gate.py --report evals/reports/evaluation-intelligence/evaluation-intelligence-report.json --min-overall 0.55 --min-oci-specificity 0.45 --min-architecture-completeness 0.45 --min-tradeoff-quality 0.35
 app/backend/.venv/bin/python infra/scripts/retrieval_regression_check.py --cases evals/golden-prompts.jsonl --cases evals/edge-cases.jsonl --output-dir evals/reports/retrieval
 app/backend/.venv/bin/python infra/scripts/retrieval_parity_check.py --oci-region us-ashburn-1 --oci-profile DEFAULT --oci-namespace idsmrn7rvqb6 --oci-vector-bucket oci-architecture-studio-staging-knowledge-snapshots --oci-vector-object-name oci-rag-index.json --output-dir evals/reports/retrieval-parity
 app/backend/.venv/bin/python knowledge/ingestion/ingest.py --no-fetch
@@ -369,12 +380,14 @@ cd ../frontend && npm run build
 
 Latest full validation: 2026-05-15.
 
-- Local backend tests: `101 passed`
+- Local backend tests: `105 passed`
 - Golden evals: `18 passed, 0 failed`
 - Edge-case evals: `8 passed, 0 failed`
 - Advisory-quality evals: `5 passed, 0 failed`
 - Controlled orchestration evals: `5 passed, 0 failed`
 - Architecture-realism evals: `4 passed, 0 failed`
+- Evaluation-intelligence evals: `9 passed, 0 failed`
+- Advisory quality gate: passed with MVP thresholds
 - Retrieval regression: `26 passed, 0 failed`
 - Retrieval health: passed for `local_json` with 44 chunks in the current branch; staging remains documented as `oci_object_storage`
 - Oracle AI Vector Search local fallback health: passed with fallback active when DB settings are absent

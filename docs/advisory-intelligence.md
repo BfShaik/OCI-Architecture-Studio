@@ -237,6 +237,22 @@ The eval runner now checks:
 - aggregation decision presence
 - critic findings and agent trace presence
 - reasoning profile and tradeoff language in architecture-realism prompts
+- deterministic architecture-quality dimensions for OCI specificity, completeness, workload alignment, migration realism, HA/DR, cost, operations, security, observability, explainability, tradeoffs, and consistency
+- hallucination heuristics for invented OCI services, unsupported certainty claims, stale release claims, contradictions, and unsupported migration claims
+- response-quality analytics for repetition, generic filler, OCI service frequency, pattern coverage, citation coverage, workload quality, retrieval influence, and hallucination trends
+
+The advanced advisory quality gate is available as a local report gate:
+
+```bash
+app/backend/.venv/bin/python infra/scripts/advisory_quality_gate.py \
+  --report evals/reports/evaluation-intelligence/evaluation-intelligence-report.json \
+  --min-overall 0.55 \
+  --min-oci-specificity 0.45 \
+  --min-architecture-completeness 0.45 \
+  --min-tradeoff-quality 0.35
+```
+
+These checks are deterministic heuristics intended for regression control. They are not LLM-as-judge scoring, fine-tuning feedback, or autonomous architecture approval.
 
 ## Operational Guidance
 
@@ -250,6 +266,7 @@ When a response is weak:
 6. Add or improve OCI source chunks when a useful recommendation lacks evidence.
 7. Tighten the intent profile when the advice is correct but too generic.
 8. Add an eval case when a real prompt exposes a new failure mode.
+9. Review `architecture_quality`, hallucination findings, benchmark gaps, and quality analytics in the JSON report before promoting provider or prompt changes.
 
 ## Current Limits
 
@@ -261,6 +278,7 @@ When a response is weak:
 - OCI GenAI synthesis is adapter-backed and config-gated; deterministic synthesis remains the rollback-safe default.
 - The multi-agent pilot is a bounded control layer, not autonomous multi-step planning.
 - Oracle AI Vector Search active reads remain guarded.
+- Evaluation intelligence scores are deterministic guardrails, not objective architecture truth.
 
 ## Next Milestone
 

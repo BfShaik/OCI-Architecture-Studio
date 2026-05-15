@@ -20,20 +20,23 @@ OCI Architecture Studio now has a validated working foundation:
 - deterministic architecture pattern profiles, reasoning profiles, and synthesis quality signals that make fallback responses more useful while remaining explainable
 - concise decision reasoning metadata, explicit tradeoff analysis, per-recommendation confidence indicators, and lightweight consistency validation for recommendation coherence
 - confidence sub-signals for retrieval grounding, service relevance, workload alignment, migration mapping certainty, and citation coverage
+- deterministic evaluation intelligence for advisory quality scoring, hallucination heuristics, benchmark expectation checks, provider comparison signals, and configurable quality gates
 - OCI Object Storage retrieval manifest as the active staging retrieval provider
 - optional Oracle AI Vector Search provider and index tooling for the next OCI-native retrieval step
 - local JSON retrieval preserved as the config-only rollback provider
 - point-in-time release snapshots, deterministic release impact metadata, selective refresh overlays, retained historical snapshots, and current-vs-historical schema scaffolding for release-aware guidance
-- golden, edge-case, retrieval regression, and parity validation gates
+- golden, edge-case, advisory-quality, orchestration-quality, architecture-realism, evaluation-intelligence, retrieval regression, and parity validation gates
 - Terraform-based OCI staging slice with Object Storage, Vault, Logging, Monitoring, Events, and Notifications
 
-The next platform milestone is to build the Oracle AI Vector Search index with production-aligned embeddings, then validate live query parity against local JSON and the active Object Storage provider before any staging active-read cutover.
+The next platform milestone is to keep improving advisory quality with richer official OCI corpus coverage, production-aligned embeddings/vector indexing, and stricter evaluation gates before promoting more GenAI-assisted or OCI-native retrieval behavior.
 
 The current orchestration layer is deterministic and in-process. Autonomous agent planning, persistent agent memory, and independent tool-using agents are future research and productization items, not current runtime behavior.
 
 OCI GenAI embeddings and synthesis are available as configurable paths with deterministic fallback. Deterministic synthesis remains the safe default unless live GenAI configuration and parity validation are provided.
 
 The current deterministic synthesis and reasoning layer is heuristic. It improves structure, workload specificity, tradeoff visibility, grounding fidelity, and recommendation explainability, but it is not a substitute for a full OCI design review or live GenAI reasoning.
+
+The current evaluation intelligence layer is also heuristic. It provides reproducible regression signals for architecture realism, hallucination risk, provider comparisons, and recommendation quality, but it is not an objective measure of correctness and does not use LLM-as-judge scoring.
 
 Release-awareness is still foundational: the runtime can reference local release snapshots, classify release changes, surface impacted services/change categories, and retain historical snapshots for audit/context. It does not yet perform full automated release reconciliation or bi-temporal retrieval.
 

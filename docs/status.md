@@ -293,6 +293,14 @@ This progress is based on `docs/two-week-plan.md`.
   - per-recommendation confidence indicators with reasoning basis, supporting chunk IDs, known limitations, and assumptions
   - reasoning trace metadata for selected profile, triggered heuristics, pattern hints, retrieval terms, service priorities, risk emphasis, and synthesis provider
   - architecture realism eval suite under `evals/architecture-realism.jsonl`
+- Added evaluation intelligence foundation:
+  - deterministic multidimensional architecture scoring for OCI specificity, completeness, workload alignment, migration realism, HA/DR, cost, operations, security, observability, explainability, tradeoffs, and consistency
+  - hallucination heuristics for invented OCI services, unsupported certainty, stale/unverified release claims, contradictions, and unsupported migration claims
+  - benchmark checks for expected services, tradeoffs, risks, migration phases, observability guidance, and security guidance
+  - response-quality analytics for recommendation repetition, generic filler, OCI service frequency, pattern coverage, citation coverage, retrieval influence, workload quality, and hallucination trends
+  - configurable advisory quality gate under `infra/scripts/advisory_quality_gate.py`
+  - provider comparison signals in the GenAI parity checker for architecture quality, hallucination deltas, tradeoff quality, and operational realism
+  - evaluation-intelligence dataset under `evals/evaluation-intelligence.jsonl`
 
 ## Latest Validation
 
@@ -318,13 +326,15 @@ Last validation run: 2026-05-15
 - Continuous intelligence hardening: candidate-first promotion, version lineage, rollback automation, and refresh status endpoint implemented
 - Terraform validation: passed after optional knowledge refresh scheduler scaffold; staging plan currently should not be applied until existing backend replacement drift is resolved and the function image is available
 - OCI-native refresh scheduler scaffold: implemented with OCI Functions plus OCI Resource Scheduler; not applied yet because a published OCIR function image is required before enabling
-- Backend tests: passed, 101 tests
+- Backend tests: passed, 105 tests
 - Frontend build: passed
 - Golden evals: passed, 18 of 18
 - Edge-case evals: passed, 8 of 8
 - Advisory-quality evals: passed, 5 of 5
 - Controlled orchestration evals: passed, 5 of 5
 - Architecture-realism evals: passed, 4 of 4
+- Evaluation-intelligence evals: passed, 9 of 9
+- Advisory quality gate: passed against the evaluation-intelligence report with MVP thresholds
 - Retrieval health check: passed for `local_json`, 44 chunks
 - Retrieval health check with `EMBEDDING_PROVIDER=oci_genai` and missing OCI GenAI env vars: passed through deterministic embedding fallback
 - Retrieval regression check: passed for `local_json`, 26 of 26 golden + edge cases
@@ -450,6 +460,7 @@ Last validation run: 2026-05-15
 - OCI GenAI synthesis adapter exists, but deterministic synthesis remains the rollback-safe default unless enabled by environment configuration.
 - Deterministic architecture patterns improve fallback usefulness but are still heuristic and bounded by the retrieved corpus.
 - Deterministic reasoning profiles improve explainability and tradeoff structure, but they are heuristic and do not replace expert OCI solution review.
+- Evaluation intelligence uses deterministic heuristics and configurable thresholds. It is useful for regression control, hallucination risk detection, and provider comparison, but it is not an objective architecture correctness oracle or LLM-as-judge system.
 - Controlled multi-agent orchestration is currently an in-process control layer; it does not yet perform autonomous planning, tool use, or multi-step agent memory.
 - Generated vector snapshots are local and gitignored.
 - The first OCI deployment exposes the backend directly on port `8000`; this is acceptable for staging validation but should be replaced with HTTPS ingress before demo/prod.

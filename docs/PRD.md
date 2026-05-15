@@ -30,6 +30,7 @@ OCI Architecture Studio is an AI-powered OCI architecture intelligence platform 
 - Deterministic architecture pattern profiles for common OCI advisory scenarios
 - Deterministic architecture reasoning profiles for HA/DR, migration, SaaS, fintech, AI/ML inference, analytics/data, observability, and cost-optimized workloads
 - Lightweight synthesis quality scoring
+- Deterministic evaluation intelligence for architecture realism, OCI specificity, hallucination risk, recommendation explainability, tradeoff quality, and regression gating
 - Concise architecture decision reasoning metadata for major recommendations
 - Explicit architecture tradeoff analysis and per-recommendation confidence indicators
 - Lightweight architecture consistency findings before final response return
@@ -54,6 +55,14 @@ User flow:
 8. Release-aware prompts are checked against point-in-time release snapshots, freshness metadata, release change categories, and release impact summaries. Current release awareness is snapshot-based and deterministic; it is not live request-time reconciliation with OCI release feeds.
 9. The backend returns recommendations, assumptions, risks, citations, evidence links, confidence, reasoning trace metadata, tradeoff analysis, per-recommendation confidence, decision reasoning metadata, consistency findings, section citation metadata, release context, temporal knowledge context, and optional retrieval debug traces.
 10. The UI displays the main advisory fields and citation cards. Full section-level citation, reasoning, tradeoff, consistency, and release-context UI is not implemented yet.
+
+Evaluation flow:
+
+- Golden, edge-case, advisory-quality, orchestration-quality, architecture-realism, and evaluation-intelligence datasets can be run locally through the deterministic eval runner.
+- The evaluation-intelligence layer scores generated responses across OCI specificity, completeness, workload alignment, migration realism, HA/DR, cost, operations, security, observability, explainability, tradeoff quality, and consistency.
+- Hallucination heuristics flag invented OCI services, unsupported certainty claims, stale release claims, contradictory recommendations, and unsupported migration claims.
+- Provider comparison tooling can compare deterministic synthesis with OCI GenAI synthesis when live OCI GenAI configuration is available; without those settings it runs in skip-safe readiness mode.
+- The scoring layer is a regression guardrail, not an autonomous judge, fine-tuning loop, or substitute for OCI expert review.
 
 Current active staging retrieval:
 
@@ -150,6 +159,7 @@ Orchestration behavior:
 - Reasoning trace metadata can show the selected reasoning profile, triggered heuristics, pattern hints, retrieval terms, service priorities, risk emphasis, and synthesis provider.
 - Architecture tradeoff metadata can show explicit decision guidance for cost/resilience, performance/complexity, managed/self-managed, latency/resilience, simplicity/scalability, and flexibility/overhead dimensions.
 - Consistency validation can flag conflicting requirements, migration mapping coverage gaps, HA/DR alignment gaps, observability gaps, and security coverage gaps.
+- Architecture quality scoring can report deterministic dimension scores, benchmark expectation matches, hallucination findings, response-quality analytics, and configurable advisory quality-gate failures.
 - Prompt templates and golden eval prompts exist in source control.
 - Golden prompts route to expected intents.
 - Golden evals, edge-case evals, retrieval regression, and dual-provider parity can be run locally.
@@ -162,6 +172,7 @@ Orchestration behavior:
 - No advanced memory or bi-temporal storage implementation yet.
 - No autonomous multi-agent execution yet.
 - No architecture reasoning engine based on hidden chain-of-thought, self-planning, or autonomous tool use.
+- No LLM-as-judge scoring, model fine-tuning, or autonomous evaluation agent in the current evaluation intelligence layer.
 - No always-on live LLM synthesis by default.
 - No promotion of OCI GenAI mode without parity and operational validation.
 - No continuous live release intelligence beyond scheduled snapshot refresh, deterministic impact analysis, and gated promotion.

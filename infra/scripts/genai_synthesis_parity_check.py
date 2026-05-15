@@ -18,6 +18,7 @@ sys.path.insert(0, str(BACKEND_SRC))
 from fastapi.testclient import TestClient  # noqa: E402
 from oci_arch_studio_backend.core.config import get_settings  # noqa: E402
 from oci_arch_studio_backend.main import app  # noqa: E402
+from oci_arch_studio_backend.services.evaluation_intelligence import ArchitectureQualityScorer  # noqa: E402
 
 
 GENAI_REQUIRED_ENV = (
@@ -66,6 +67,7 @@ def summarize_response(response: dict[str, Any]) -> dict[str, Any]:
     confidence = response.get("confidence") or {}
     synthesis_quality = response.get("synthesis_quality") or {}
     synthesis_debug = response.get("synthesis_debug") or {}
+    architecture_quality = ArchitectureQualityScorer().score(response).as_dict()
     return {
         "intent": response.get("intent"),
         "synthesis_provider": response.get("synthesis_provider"),
@@ -89,6 +91,23 @@ def summarize_response(response: dict[str, Any]) -> dict[str, Any]:
         "recommendation_diversity": synthesis_quality.get("recommendation_diversity"),
         "citation_coverage": synthesis_quality.get("citation_coverage"),
         "synthesis_quality_overall": synthesis_quality.get("overall"),
+        "architecture_quality_overall": architecture_quality.get("overall"),
+        "hallucination_count": len(architecture_quality.get("hallucination_findings", [])),
+        "high_hallucination_count": sum(
+            1
+            for finding in architecture_quality.get("hallucination_findings", [])
+            if finding.get("severity") == "high"
+        ),
+        "tradeoff_quality": (
+            architecture_quality.get("dimensions", {})
+            .get("tradeoff_quality", {})
+            .get("score")
+        ),
+        "operational_realism": (
+            architecture_quality.get("dimensions", {})
+            .get("operational_realism", {})
+            .get("score")
+        ),
         "prompt_sections": synthesis_debug.get("grounding_prompt_sections", []),
         "estimated_input_tokens": synthesis_debug.get("estimated_input_tokens"),
         "token_usage": synthesis_debug.get("token_usage", {}),
@@ -156,11 +175,18 @@ def compare_results(
             warnings.append("GenAI fallback was used")
         if candidate_summary.get("unsupported_claim_count", 0) > base_summary.get("unsupported_claim_count", 0):
             warnings.append("unsupported claim count increased")
+        if candidate_summary.get("hallucination_count", 0) > base_summary.get("hallucination_count", 0):
+            warnings.append("hallucination finding count increased")
+        if candidate_summary.get("high_hallucination_count", 0) > 0:
+            warnings.append("high-severity hallucination finding present")
         for metric in (
             "grounding_quality",
             "oci_specificity",
             "migration_accuracy",
             "synthesis_quality_overall",
+            "architecture_quality_overall",
+            "tradeoff_quality",
+            "operational_realism",
         ):
             base_value = _float_or_none(base_summary.get(metric))
             candidate_value = _float_or_none(candidate_summary.get(metric))
