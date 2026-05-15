@@ -294,6 +294,68 @@ If local `terraform.tfstate` changed during the failed migration, restore the la
 
 Do not run `terraform apply` until the backend posture is clear.
 
+## Promote OCI API Gateway In Staging
+
+Use this only when staging is ready to move from direct backend VM exposure to OCI API Gateway. The Terraform scaffold is default-off; leave it disabled until the cutover is explicitly approved.
+
+Preflight:
+
+```bash
+terraform -chdir=infra/terraform/envs/staging validate
+python3 infra/scripts/operational_readiness_check.py \
+  --api-base-url http://<backend-public-ip>:8000 \
+  --require-oci-profile
+```
+
+Enable in local `infra/terraform/envs/staging/terraform.tfvars`:
+
+```hcl
+enable_api_gateway      = true
+api_gateway_path_prefix = "/"
+```
+
+Review and apply:
+
+```bash
+terraform -chdir=infra/terraform/envs/staging plan
+terraform -chdir=infra/terraform/envs/staging apply
+```
+
+Capture outputs:
+
+```bash
+terraform -chdir=infra/terraform/envs/staging output -raw api_gateway_endpoint
+terraform -chdir=infra/terraform/envs/staging output -raw api_gateway_ocid
+terraform -chdir=infra/terraform/envs/staging output -raw api_gateway_deployment_ocid
+```
+
+Gateway smoke:
+
+```bash
+python3 infra/scripts/smoke_oci_deployment.py \
+  --api-base-url "$(terraform -chdir=infra/terraform/envs/staging output -raw api_gateway_endpoint)" \
+  --frontend-url http://<backend-public-ip>:8000/ \
+  --check-oci-sdk
+```
+
+Readiness confirmation:
+
+```bash
+python3 infra/scripts/operational_readiness_check.py \
+  --api-base-url "$(terraform -chdir=infra/terraform/envs/staging output -raw api_gateway_endpoint)" \
+  --require-oci-profile
+```
+
+Confirm the report shows `api_gateway.promotion_ready=true` and `api_exposure=oci_api_gateway`.
+
+Rollback:
+
+1. Restore `enable_api_gateway = false` in local staging `terraform.tfvars`.
+2. Run `terraform -chdir=infra/terraform/envs/staging plan`.
+3. Apply only if the plan removes/disables API Gateway resources without unrelated changes.
+4. Re-run smoke and readiness against `http://<backend-public-ip>:8000`.
+5. Record the rollback in the deployment report or status log.
+
 ## Inspect Backend Service
 
 SSH to the VM:

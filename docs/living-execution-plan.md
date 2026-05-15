@@ -73,8 +73,8 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | TASK-001 | Done | Add read-only Terraform remote state readiness checker for OCI Object Storage backend. | Passed `python3 -m py_compile infra/scripts/check_terraform_remote_state_readiness.py`; passed local `--skip-oci` readiness mode. |
 | TASK-002 | Done | Document manual remote state migration workflow and rollback checklist. | Terraform README/runbook updated; migration remains operator-run and non-automated. |
 | TASK-003 | Done | Add API Gateway readiness validation for configured endpoint and OCIDs. | Passed `tests/test_operational_hardening.py`, `tests/test_api.py`, `py_compile` for operational readiness script, and `git diff --check`. |
-| TASK-004 | Next | Prepare API Gateway staging cutover checklist and rollback path. | Terraform validate; smoke command documented. |
-| TASK-005 | Not Started | Run OCI GenAI synthesis readiness/parity in skip-safe mode, then live mode when config exists. | Parity report generated; deterministic fallback preserved. |
+| TASK-004 | Done | Prepare API Gateway staging cutover checklist and rollback path. | Terraform validate and Gateway smoke commands documented; default-off behavior preserved. |
+| TASK-005 | Next | Run OCI GenAI synthesis readiness/parity in skip-safe mode, then live mode when config exists. | Parity report generated; deterministic fallback preserved. |
 | TASK-006 | Not Started | Add OCI GenAI embedding activation checklist and diagnostics expectations. | Retrieval health exposes provider/fallback state; regression gate documented. |
 | TASK-007 | Not Started | Validate Oracle AI Vector Search schema/index prerequisites without active-provider promotion. | Vector validation reports configured/unconfigured state cleanly. |
 | TASK-008 | Not Started | Add Oracle AI Vector Search dual-read parity workflow against Object Storage retrieval. | Retrieval parity report covers golden, edge, and regression prompts. |
@@ -133,15 +133,14 @@ Run the appropriate subset after each increment; run the full matrix before a ne
 
 ## Next Actionable Increment
 
-Current task: `TASK-004`.
+Current task: `TASK-005`.
 
-Prepare API Gateway staging cutover checklist and rollback path:
+Run OCI GenAI synthesis readiness/parity in skip-safe mode, then live mode when config exists:
 
-1. Inspect Terraform API Gateway variables and outputs.
-2. Document required inputs and preflight checks for enabling API Gateway.
-3. Add smoke validation commands for the Gateway endpoint.
-4. Document rollback by disabling `enable_api_gateway` and returning to direct backend VM exposure.
-5. Preserve default-off behavior until the cutover is explicitly approved.
+1. Inspect current GenAI parity script behavior and required environment variables.
+2. Run skip-safe readiness mode without live GenAI credentials.
+3. Capture report output under `evals/reports/genai-synthesis-parity`.
+4. Keep deterministic synthesis as default unless live parity is later approved.
 
 ## Operating Rules
 

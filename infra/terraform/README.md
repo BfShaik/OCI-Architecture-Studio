@@ -142,4 +142,64 @@ Rollback before promotion:
 4. Re-run `terraform init` against the local backend and confirm `terraform plan` works.
 5. Record the failure in the operational log before retrying.
 
+## API Gateway Staging Cutover
+
+OCI API Gateway is scaffolded but default-off. Promote it only after the backend VM health endpoint is stable and the operator accepts the ingress change.
+
+Preflight:
+
+```bash
+terraform -chdir=infra/terraform/envs/staging validate
+python3 infra/scripts/operational_readiness_check.py \
+  --api-base-url http://<backend-public-ip>:8000 \
+  --require-oci-profile
+```
+
+Cutover plan:
+
+1. In the local, uncommitted staging `terraform.tfvars`, set:
+
+```hcl
+enable_api_gateway      = true
+api_gateway_path_prefix = "/"
+```
+
+2. Review the planned Gateway, deployment, and cloud-init changes:
+
+```bash
+terraform -chdir=infra/terraform/envs/staging plan
+```
+
+3. Apply only after the plan shows the expected API Gateway resources and no unrelated destructive changes.
+4. Capture the new outputs:
+
+```bash
+terraform -chdir=infra/terraform/envs/staging output -raw api_gateway_endpoint
+terraform -chdir=infra/terraform/envs/staging output -raw api_gateway_ocid
+terraform -chdir=infra/terraform/envs/staging output -raw api_gateway_deployment_ocid
+```
+
+5. Smoke test through the Gateway endpoint:
+
+```bash
+python3 infra/scripts/smoke_oci_deployment.py \
+  --api-base-url "$(terraform -chdir=infra/terraform/envs/staging output -raw api_gateway_endpoint)" \
+  --frontend-url http://<backend-public-ip>:8000/ \
+  --check-oci-sdk
+```
+
+6. Confirm runtime diagnostics show:
+
+- `api_gateway.active=true`
+- `api_gateway.promotion_ready=true`
+- `api_exposure=oci_api_gateway`
+
+Rollback:
+
+1. Set `enable_api_gateway = false` in local staging `terraform.tfvars`.
+2. Run `terraform -chdir=infra/terraform/envs/staging plan` and verify only API Gateway resources are removed or disabled.
+3. Apply the rollback only if the direct backend VM endpoint is healthy.
+4. Re-run smoke and operational readiness against `http://<backend-public-ip>:8000`.
+5. Keep direct VM exposure as the accepted staging path until Gateway smoke and diagnostics are clean.
+
 - See `docs/oci-landing-zone-runbook.md` for the deployment and validation workflow.
