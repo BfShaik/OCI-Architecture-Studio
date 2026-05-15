@@ -208,6 +208,7 @@ Last validation run: 2026-05-15
 - Post-migration readiness review: passed with a go decision for continued Sprint 2 development; active staging retrieval remains `local_json` until OCI-native provider parity is proven
 - Dual-provider retrieval parity validation: passed, 14 of 14 cases, comparing `local_json` with `oci_object_storage`
 - OCI Object Storage snapshot sync: passed for `oci-rag-index.json` and `oci-release-snapshot.json`
+- Presentation-friendly architecture diagrams: added in `docs/architecture-diagrams.md`
 
 ## Pending
 

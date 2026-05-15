@@ -223,6 +223,8 @@ Latest full validation: 2026-05-15.
 
 See `docs/status.md` for the current completed work, pending work, and known limitations.
 
+See `docs/architecture-diagrams.md` for presentation-friendly diagrams covering current staging, dual-provider retrieval parity, target OCI-native retrieval, release-awareness, and operational control points.
+
 See `docs/two-week-plan.md` for the active two-week execution plan.
 
 See `docs/demo-readiness.md` for the demo checklist, recommended demo prompts, Sprint 2 backlog, and closeout notes.
