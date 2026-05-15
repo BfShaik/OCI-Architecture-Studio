@@ -165,3 +165,51 @@ variable "oci_devops_deploy_pipeline_ocid" {
   type        = string
   default     = ""
 }
+
+variable "enable_autonomous_vector_database" {
+  description = "Enable optional Oracle Autonomous AI Database for Oracle AI Vector Search shadow mode. Default false to avoid provisioning database cost until explicitly approved."
+  type        = bool
+  default     = false
+}
+
+variable "autonomous_vector_db_name" {
+  description = "Oracle Autonomous Database DB name for vector-search shadow mode. Use letters and numbers only."
+  type        = string
+  default     = "OCIARCHVEC"
+
+  validation {
+    condition     = can(regex("^[A-Za-z][A-Za-z0-9]{1,13}$", var.autonomous_vector_db_name))
+    error_message = "autonomous_vector_db_name must start with a letter and contain 2-14 letters or numbers."
+  }
+}
+
+variable "autonomous_vector_db_admin_password" {
+  description = "Admin password for the optional Autonomous AI Database. Required only when enable_autonomous_vector_database is true. This value is sensitive and will still be present in Terraform state."
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "autonomous_vector_db_compute_count" {
+  description = "ECPU compute count for the optional Autonomous AI Database."
+  type        = number
+  default     = 2
+}
+
+variable "autonomous_vector_db_storage_tbs" {
+  description = "Storage size in TB for the optional Autonomous AI Database."
+  type        = number
+  default     = 1
+}
+
+variable "autonomous_vector_db_version" {
+  description = "Autonomous Database version for vector-search shadow mode."
+  type        = string
+  default     = "26ai"
+}
+
+variable "autonomous_vector_db_license_model" {
+  description = "License model for the optional Autonomous AI Database."
+  type        = string
+  default     = "LICENSE_INCLUDED"
+}

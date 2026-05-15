@@ -19,3 +19,14 @@ knowledge_refresh_function_timeout_seconds  = 900
 deployment_profile                          = "oci_vm"
 operational_diagnostics_enabled             = true
 oci_connectivity_check_enabled              = false
+
+enable_api_gateway                          = false
+api_gateway_path_prefix                     = "/"
+
+enable_autonomous_vector_database           = false
+autonomous_vector_db_name                   = "OCIARCHVEC"
+autonomous_vector_db_admin_password         = "REPLACE_WITH_STRONG_PASSWORD"
+autonomous_vector_db_compute_count          = 2
+autonomous_vector_db_storage_tbs            = 1
+autonomous_vector_db_version                = "26ai"
+autonomous_vector_db_license_model          = "LICENSE_INCLUDED"

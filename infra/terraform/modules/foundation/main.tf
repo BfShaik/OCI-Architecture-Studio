@@ -370,6 +370,59 @@ resource "oci_apigateway_deployment" "backend" {
   }
 }
 
+resource "oci_core_network_security_group" "autonomous_vector_db" {
+  count          = var.enable_autonomous_vector_database ? 1 : 0
+  compartment_id = oci_identity_compartment.project.id
+  vcn_id         = oci_core_vcn.main.id
+  display_name   = "${local.name_prefix}-vector-db-nsg"
+  freeform_tags  = local.common_tags
+}
+
+resource "oci_core_network_security_group_security_rule" "backend_to_autonomous_vector_db" {
+  count                     = var.enable_autonomous_vector_database ? 1 : 0
+  network_security_group_id = oci_core_network_security_group.autonomous_vector_db[0].id
+  direction                 = "INGRESS"
+  protocol                  = "6"
+  source                    = var.public_subnet_cidr
+  source_type               = "CIDR_BLOCK"
+  description               = "Allow backend subnet access to Autonomous Database private endpoint over TCPS."
+
+  tcp_options {
+    destination_port_range {
+      min = 1522
+      max = 1522
+    }
+  }
+}
+
+resource "oci_database_autonomous_database" "vector_search" {
+  count                       = var.enable_autonomous_vector_database ? 1 : 0
+  compartment_id              = oci_identity_compartment.project.id
+  db_name                     = var.autonomous_vector_db_name
+  display_name                = "${local.name_prefix}-vector-db"
+  admin_password              = var.autonomous_vector_db_admin_password
+  compute_model               = "ECPU"
+  compute_count               = var.autonomous_vector_db_compute_count
+  data_storage_size_in_tbs    = var.autonomous_vector_db_storage_tbs
+  db_version                  = var.autonomous_vector_db_version
+  db_workload                 = "OLTP"
+  is_auto_scaling_enabled     = true
+  is_mtls_connection_required = true
+  license_model               = var.autonomous_vector_db_license_model
+  subnet_id                   = oci_core_subnet.public.id
+  nsg_ids                     = [oci_core_network_security_group.autonomous_vector_db[0].id]
+  private_endpoint_label      = "${var.environment}vectordb"
+  whitelisted_ips             = []
+  freeform_tags               = merge(local.common_tags, { purpose = "oracle-ai-vector-search" })
+
+  lifecycle {
+    precondition {
+      condition     = !var.enable_autonomous_vector_database || var.autonomous_vector_db_admin_password != ""
+      error_message = "autonomous_vector_db_admin_password is required when enable_autonomous_vector_database is true."
+    }
+  }
+}
+
 resource "oci_identity_dynamic_group" "backend_instances" {
   compartment_id = var.tenancy_ocid
   name           = "${local.name_prefix}-backend-instances"

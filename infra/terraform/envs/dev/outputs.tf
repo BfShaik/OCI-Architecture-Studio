@@ -69,3 +69,11 @@ output "governance_resource_summary" {
 output "runtime_infrastructure_summary" {
   value = module.foundation.runtime_infrastructure_summary
 }
+
+output "autonomous_vector_database_ocid" {
+  value = module.foundation.autonomous_vector_database_ocid
+}
+
+output "autonomous_vector_database_private_endpoint" {
+  value = module.foundation.autonomous_vector_database_private_endpoint
+}

@@ -202,4 +202,49 @@ Rollback:
 4. Re-run smoke and operational readiness against `http://<backend-public-ip>:8000`.
 5. Keep direct VM exposure as the accepted staging path until Gateway smoke and diagnostics are clean.
 
+## Autonomous AI Database Vector Search Scaffold
+
+Oracle Autonomous AI Database is scaffolded as the OCI-native target for Oracle AI Vector Search shadow mode. It is default-off and should not be enabled until the operator has approved database cost, password/state handling, and a shadow-read parity plan.
+
+The scaffold creates, only when explicitly enabled:
+
+- an OCI Network Security Group for the database private endpoint
+- an ingress rule allowing backend subnet TCPS access on port `1522`
+- an Oracle Autonomous Database configured for private endpoint access, mTLS, ECPU compute, and `26ai` by default
+- outputs for the database OCID and private endpoint
+
+Do not enable this resource in committed environment files. Use a local, uncommitted `terraform.tfvars` override:
+
+```hcl
+enable_autonomous_vector_database   = true
+autonomous_vector_db_name           = "OCIARCHVEC"
+autonomous_vector_db_admin_password = "REPLACE_WITH_STRONG_PASSWORD"
+autonomous_vector_db_compute_count  = 2
+autonomous_vector_db_storage_tbs    = 1
+autonomous_vector_db_version        = "26ai"
+autonomous_vector_db_license_model  = "LICENSE_INCLUDED"
+```
+
+Security and state notes:
+
+- `autonomous_vector_db_admin_password` is marked sensitive, but Terraform state can still contain sensitive values. Move state to the OCI Object Storage backend, restrict state access, and review the state plan before shared/team operation.
+- The database is intended for shadow validation first. Keep `RETRIEVAL_PROVIDER=oci_object_storage` until Oracle AI Vector Search parity passes without skip.
+- After apply, store runtime connection details in OCI Vault or the approved deployment secret path instead of plaintext shell files.
+
+Preflight:
+
+```bash
+terraform fmt -check -recursive infra/terraform
+terraform -chdir=infra/terraform/envs/staging validate
+terraform -chdir=infra/terraform/envs/staging plan
+```
+
+Promotion gate:
+
+1. Apply only after the plan shows the expected Autonomous Database and NSG resources.
+2. Confirm `autonomous_vector_database_ocid` and `autonomous_vector_database_private_endpoint` outputs are populated.
+3. Create/load the vector schema and index.
+4. Run Oracle AI Vector Search parity against the active Object Storage baseline without `--allow-skip`.
+5. Keep active retrieval on Object Storage until parity, staging smoke, retrieval regression, and rollback checks pass.
+
 - See `docs/oci-landing-zone-runbook.md` for the deployment and validation workflow.

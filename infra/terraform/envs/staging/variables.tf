@@ -136,3 +136,46 @@ variable "oci_devops_deploy_pipeline_ocid" {
   type        = string
   default     = ""
 }
+
+variable "enable_autonomous_vector_database" {
+  description = "Enable optional Oracle Autonomous AI Database for Oracle AI Vector Search shadow mode."
+  type        = bool
+  default     = false
+}
+
+variable "autonomous_vector_db_name" {
+  description = "Oracle Autonomous Database DB name for vector-search shadow mode."
+  type        = string
+  default     = "OCIARCHVEC"
+}
+
+variable "autonomous_vector_db_admin_password" {
+  description = "Admin password for the optional Autonomous AI Database. Required only when enabled."
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "autonomous_vector_db_compute_count" {
+  description = "ECPU compute count for the optional Autonomous AI Database."
+  type        = number
+  default     = 2
+}
+
+variable "autonomous_vector_db_storage_tbs" {
+  description = "Storage size in TB for the optional Autonomous AI Database."
+  type        = number
+  default     = 1
+}
+
+variable "autonomous_vector_db_version" {
+  description = "Autonomous Database version for vector-search shadow mode."
+  type        = string
+  default     = "26ai"
+}
+
+variable "autonomous_vector_db_license_model" {
+  description = "License model for the optional Autonomous AI Database."
+  type        = string
+  default     = "LICENSE_INCLUDED"
+}

@@ -86,7 +86,9 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | TASK-014 | Done | Expand official OCI corpus for highest-value advisory gaps. | Added Budgets, Security Zones, and Compute Autoscaling sources; offline index rebuild produced 47 chunks; retrieval regression 18/18, advisory-quality 5/5, golden 18/18 passed. |
 | TASK-015 | Done | Harden release-intelligence freshness and selective reindex reporting. | Added refresh `lifecycle` summary covering candidate, gate, promotion, upload, rollback, and query-time refresh state; passed `tests/test_refresh_policy.py`, `git diff --check`, and no-fetch release-watch validation with 47 chunks. |
 | TASK-016 | Done | Cut a new internal beta baseline after all active gates pass. | Local/backend/frontend/eval/Terraform gates passed; staging Object Storage refreshed to 47 chunks; staging smoke, retrieval health, operational readiness, and internal beta readiness passed with expected API Gateway/OCI DevOps warnings. |
-| TASK-017 | Next | Select and execute the next OCI-native promotion increment. | New task is added before implementation; blocked live promotions remain default-off until required OCI config and parity evidence exist. |
+| TASK-017 | Done | Select and execute the next OCI-native promotion increment. | Chose default-off Terraform readiness for API Gateway plus Oracle Autonomous AI Database/Vector Search rather than any live promotion. |
+| TASK-018 | Done | Add default-off Terraform scaffold for Oracle Autonomous AI Database vector-search shadow mode. | Passed `terraform fmt -recursive`, `git diff --check`, and Terraform validate for dev/test/staging. Non-mutating staging plan kept API Gateway and Autonomous Database disabled; existing backend replacement drift remains a known do-not-apply condition. |
+| TASK-019 | Next | Resolve staging Terraform drift before live API Gateway or database apply. | Staging plan no longer proposes unintended backend replacement, or a controlled replacement window/rollback plan is documented and approved. |
 
 ## Phase Gates
 
@@ -134,13 +136,13 @@ Run the appropriate subset after each increment; run the full matrix before a ne
 
 ## Next Actionable Increment
 
-Current task: `TASK-017`.
+Current task: `TASK-019`.
 
-Select the next OCI-native promotion increment:
+Resolve staging Terraform drift before live API Gateway or database apply:
 
-1. Review blocked promotion gates for Oracle AI Vector Search, OCI GenAI, Resource Scheduler, API Gateway, and OCI DevOps.
-2. Pick the highest-value task that can move forward without violating default-off or parity rules.
-3. Add the task to the linear queue before implementation.
+1. Inspect the existing backend replacement drift caused by cloud-init/user-data differences.
+2. Decide whether to import/ignore/update state or schedule a controlled backend replacement.
+3. Do not apply API Gateway or Autonomous Database resources until the drift is understood.
 
 ## Operating Rules
 

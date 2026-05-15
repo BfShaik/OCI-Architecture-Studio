@@ -86,6 +86,19 @@ output "knowledge_refresh_stable_docs_schedule_ocid" {
   value = var.enable_knowledge_refresh_scheduler ? oci_resource_scheduler_schedule.knowledge_refresh_stable_docs[0].id : null
 }
 
+output "autonomous_vector_database_ocid" {
+  value = var.enable_autonomous_vector_database ? oci_database_autonomous_database.vector_search[0].id : null
+}
+
+output "autonomous_vector_database_private_endpoint" {
+  value = var.enable_autonomous_vector_database ? oci_database_autonomous_database.vector_search[0].private_endpoint : null
+}
+
+output "autonomous_vector_database_connection_strings" {
+  value     = var.enable_autonomous_vector_database ? oci_database_autonomous_database.vector_search[0].connection_strings : null
+  sensitive = true
+}
+
 output "governance_resource_summary" {
   description = "OCI-native governance and operations resources managed by Terraform for rebuild/audit review."
   value = {
@@ -107,6 +120,7 @@ output "governance_resource_summary" {
     knowledge_refresh_function    = var.enable_knowledge_refresh_scheduler ? oci_functions_function.knowledge_refresh[0].id : null
     release_refresh_schedule_ocid = var.enable_knowledge_refresh_scheduler ? oci_resource_scheduler_schedule.knowledge_refresh_release_watch[0].id : null
     stable_docs_schedule_ocid     = var.enable_knowledge_refresh_scheduler ? oci_resource_scheduler_schedule.knowledge_refresh_stable_docs[0].id : null
+    autonomous_vector_database    = var.enable_autonomous_vector_database ? oci_database_autonomous_database.vector_search[0].id : null
   }
 }
 
@@ -162,6 +176,13 @@ output "runtime_infrastructure_summary" {
     delivery = {
       oci_devops_project_ocid         = var.oci_devops_project_ocid != "" ? var.oci_devops_project_ocid : null
       oci_devops_deploy_pipeline_ocid = var.oci_devops_deploy_pipeline_ocid != "" ? var.oci_devops_deploy_pipeline_ocid : null
+    }
+    vector_search = {
+      provider_ready                     = var.enable_autonomous_vector_database
+      autonomous_database_ocid           = var.enable_autonomous_vector_database ? oci_database_autonomous_database.vector_search[0].id : null
+      autonomous_database_private_ep     = var.enable_autonomous_vector_database ? oci_database_autonomous_database.vector_search[0].private_endpoint : null
+      autonomous_database_version        = var.enable_autonomous_vector_database ? oci_database_autonomous_database.vector_search[0].db_version : null
+      autonomous_database_private_access = var.enable_autonomous_vector_database
     }
   }
 }
