@@ -2,6 +2,8 @@
 
 OCI Architecture Studio is an enterprise AI platform for OCI architecture guidance, migration advisory, cost optimization, and release-aware OCI knowledge synchronization.
 
+Current version: `1.0.0`
+
 The project is monorepo-first, RAG-first, modular, and evaluation-driven. Prompts, retrieval code, evals, and application code are treated as first-class assets from the start.
 
 ## Current Working Flow
