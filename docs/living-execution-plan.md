@@ -95,7 +95,8 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | TASK-023 | Done | Run Oracle Autonomous AI Database / AI Vector Search live preflight plan. | Passed Terraform validate; staging plan with database enablement proposed exactly 3 creates, 0 changes, 0 destroys: vector DB NSG, TCPS ingress rule, and Autonomous Database. Binary plan artifact was removed because it can carry sensitive values. |
 | TASK-024 | Done | Harden Autonomous Database admin secret handling before apply. | Added generated password support and OCI Vault secret storage for the vector database admin password; dev/test/staging Terraform init, fmt, and validate passed; staging preflight now shows 5 creates, 0 changes, 0 destroys. |
 | TASK-025 | Done | Apply Oracle Autonomous AI Database vector-search shadow infrastructure. | Applied exactly 5 resources, 0 changes, 0 destroys: generated password, Vault secret, vector DB NSG, TCPS ingress rule, and Autonomous Database. Post-apply no-change plan, Gateway smoke, operational readiness, and backend regression tests passed. Active retrieval remains `oci_object_storage`. |
-| TASK-026 | Next | Validate live Oracle AI Vector Search connectivity and schema/index prerequisites. | Retrieve connection metadata through approved OCI-native paths, validate database reachability from the backend network, and prepare schema/index loading without promoting active retrieval. |
+| TASK-026 | Done | Validate live Oracle AI Vector Search connectivity and schema/index prerequisites. | Added wallet-aware Oracle vector configuration, validated mTLS connectivity from the backend VM to the Autonomous Database private endpoint, and confirmed the vector table is not created yet. Active retrieval remains `oci_object_storage`. |
+| TASK-027 | Next | Create Oracle AI Vector Search schema and load shadow index. | Use the live wallet/secret path from the backend VM, create the vector table/index, rebuild chunks into Oracle AI Vector Search, then run vector health and parity checks without promoting active retrieval. |
 
 ## Phase Gates
 
@@ -143,13 +144,13 @@ Run the appropriate subset after each increment; run the full matrix before a ne
 
 ## Next Actionable Increment
 
-Current task: `TASK-026`.
+Current task: `TASK-027`.
 
-Validate live Oracle AI Vector Search connectivity and schema/index prerequisites:
+Create Oracle AI Vector Search schema and load shadow index:
 
-1. Inspect the existing Oracle vector validation/index scripts and required runtime environment variables.
-2. Retrieve database connection metadata and credentials through approved OCI-native paths without committing secrets.
-3. Run live connectivity/schema validation from the appropriate network location and keep active retrieval on Object Storage until parity passes.
+1. Stage wallet and runtime secrets through the approved OCI-native/operator path without committing credentials.
+2. Run `oracle_vector_index.py rebuild` from the backend VM to create schema and upsert chunks.
+3. Run Oracle vector health and retrieval parity checks; keep `RETRIEVAL_PROVIDER=oci_object_storage` until parity passes.
 
 ## Operating Rules
 

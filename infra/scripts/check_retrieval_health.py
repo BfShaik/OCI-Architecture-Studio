@@ -38,6 +38,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--oci-vector-db-dsn")
     parser.add_argument("--oci-vector-db-user")
     parser.add_argument("--oci-vector-db-password")
+    parser.add_argument("--oci-vector-wallet-location")
+    parser.add_argument("--oci-vector-wallet-password")
     parser.add_argument("--oci-vector-table-name", default="OCI_ARCHITECTURE_CHUNKS")
     parser.add_argument("--oci-vector-index-name", default="OCI_ARCH_CHUNKS_VEC_IDX")
     parser.add_argument("--oci-vector-dimensions", type=int, default=256)
@@ -66,6 +68,8 @@ def main() -> int:
         OCI_VECTOR_DB_DSN=args.oci_vector_db_dsn,
         OCI_VECTOR_DB_USER=args.oci_vector_db_user,
         OCI_VECTOR_DB_PASSWORD=args.oci_vector_db_password,
+        OCI_VECTOR_WALLET_LOCATION=args.oci_vector_wallet_location,
+        OCI_VECTOR_WALLET_PASSWORD=args.oci_vector_wallet_password,
         OCI_VECTOR_TABLE_NAME=args.oci_vector_table_name,
         OCI_VECTOR_INDEX_NAME=args.oci_vector_index_name,
         OCI_VECTOR_DIMENSIONS=args.oci_vector_dimensions,

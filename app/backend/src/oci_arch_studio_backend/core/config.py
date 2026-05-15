@@ -90,6 +90,8 @@ class Settings(BaseSettings):
     oci_vector_db_dsn: str | None = Field(default=None, alias="OCI_VECTOR_DB_DSN")
     oci_vector_db_user: str | None = Field(default=None, alias="OCI_VECTOR_DB_USER")
     oci_vector_db_password: str | None = Field(default=None, alias="OCI_VECTOR_DB_PASSWORD")
+    oci_vector_wallet_location: str | None = Field(default=None, alias="OCI_VECTOR_WALLET_LOCATION")
+    oci_vector_wallet_password: str | None = Field(default=None, alias="OCI_VECTOR_WALLET_PASSWORD")
     oci_vector_table_name: str = Field(
         default="OCI_ARCHITECTURE_CHUNKS",
         alias="OCI_VECTOR_TABLE_NAME",

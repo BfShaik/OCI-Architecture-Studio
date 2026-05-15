@@ -63,6 +63,8 @@ def build_store(args: argparse.Namespace) -> OracleAiVectorSearchStore:
             dsn=args.oci_vector_db_dsn,
             username=args.oci_vector_db_user,
             password=args.oci_vector_db_password,
+            wallet_location=args.oci_vector_wallet_location,
+            wallet_password=args.oci_vector_wallet_password,
             table_name=args.oci_vector_table_name,
             index_name=args.oci_vector_index_name,
             dimensions=args.oci_vector_dimensions,
@@ -81,6 +83,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--oci-vector-db-dsn")
     parser.add_argument("--oci-vector-db-user")
     parser.add_argument("--oci-vector-db-password")
+    parser.add_argument("--oci-vector-wallet-location")
+    parser.add_argument("--oci-vector-wallet-password")
     parser.add_argument("--oci-vector-table-name", default="OCI_ARCHITECTURE_CHUNKS")
     parser.add_argument("--oci-vector-index-name", default="OCI_ARCH_CHUNKS_VEC_IDX")
     parser.add_argument("--oci-vector-dimensions", type=int, default=256)

@@ -499,6 +499,8 @@ class OperationalDiagnostics:
             ):
                 if not value:
                     missing.append(name)
+            if self.settings.oci_vector_wallet_location and not self.settings.oci_vector_wallet_password:
+                missing.append("OCI_VECTOR_WALLET_PASSWORD")
         if self.settings.advisory_synthesis_provider == "oci_genai":
             for name, value in (
                 ("OCI_GENAI_COMPARTMENT_ID", self.settings.oci_genai_compartment_id),
@@ -897,6 +899,7 @@ class OperationalDiagnostics:
         present = []
         for name, value in (
             ("OCI_VECTOR_DB_PASSWORD", self.settings.oci_vector_db_password),
+            ("OCI_VECTOR_WALLET_PASSWORD", self.settings.oci_vector_wallet_password),
             ("OPENAI_API_KEY", self.settings.openai_api_key),
         ):
             if value:

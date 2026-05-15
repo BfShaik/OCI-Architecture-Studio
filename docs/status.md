@@ -46,6 +46,16 @@ Last updated: 2026-05-15
 - Gateway smoke, operational readiness, and backend operational/API regression tests passed.
 - Active retrieval remains `oci_object_storage`; Oracle AI Vector Search is infrastructure-ready but not promoted.
 
+## Latest Vector Search Connectivity Validation
+
+- `TASK-026` completed.
+- Backend code and validation scripts now accept `OCI_VECTOR_WALLET_LOCATION` and `OCI_VECTOR_WALLET_PASSWORD` for Autonomous Database mTLS connections.
+- The staging Autonomous Database reports `AVAILABLE`.
+- Backend VM TCP connectivity to the private endpoint IP `10.20.10.68:1522` passed.
+- Live mTLS connection from the backend VM succeeded as `ADMIN` against service `G4454520BBA5B2F_OCIARCHVEC_low.adb.oraclecloud.com`.
+- The target vector table `OCI_ARCHITECTURE_CHUNKS` does not exist yet; next task is schema creation and shadow index loading.
+- Active retrieval remains `oci_object_storage`; no production read path was promoted.
+
 ## Active Plan
 
 - Living execution plan: `docs/living-execution-plan.md`

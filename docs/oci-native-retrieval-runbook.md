@@ -78,6 +78,8 @@ RETRIEVAL_PROVIDER=oracle_ai_vector_search
 OCI_VECTOR_DB_DSN=...
 OCI_VECTOR_DB_USER=...
 OCI_VECTOR_DB_PASSWORD=...
+OCI_VECTOR_WALLET_LOCATION=...
+OCI_VECTOR_WALLET_PASSWORD=...
 OCI_VECTOR_TABLE_NAME=OCI_ARCHITECTURE_CHUNKS
 OCI_VECTOR_DIMENSIONS=256
 OCI_VECTOR_DISTANCE_METRIC=COSINE
@@ -131,6 +133,8 @@ RETRIEVAL_FALLBACK_ENABLED=true
 OCI_VECTOR_DB_DSN=<vault/runtime value>
 OCI_VECTOR_DB_USER=<vault/runtime value>
 OCI_VECTOR_DB_PASSWORD=<vault/runtime value>
+OCI_VECTOR_WALLET_LOCATION=<runtime wallet directory>
+OCI_VECTOR_WALLET_PASSWORD=<vault/runtime value>
 OCI_VECTOR_TABLE_NAME=OCI_ARCHITECTURE_CHUNKS
 OCI_VECTOR_INDEX_NAME=OCI_ARCH_CHUNKS_VEC_IDX
 OCI_VECTOR_DIMENSIONS=256
@@ -144,7 +148,9 @@ app/backend/.venv/bin/python infra/scripts/check_retrieval_health.py \
   --provider oracle_ai_vector_search \
   --oci-vector-db-dsn "$OCI_VECTOR_DB_DSN" \
   --oci-vector-db-user "$OCI_VECTOR_DB_USER" \
-  --oci-vector-db-password "$OCI_VECTOR_DB_PASSWORD"
+  --oci-vector-db-password "$OCI_VECTOR_DB_PASSWORD" \
+  --oci-vector-wallet-location "$OCI_VECTOR_WALLET_LOCATION" \
+  --oci-vector-wallet-password "$OCI_VECTOR_WALLET_PASSWORD"
 
 app/backend/.venv/bin/python infra/scripts/retrieval_regression_check.py \
   --provider oracle_ai_vector_search \

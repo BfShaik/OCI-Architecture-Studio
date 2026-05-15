@@ -1,4 +1,6 @@
 import json
+import sys
+import types
 
 from oci_arch_studio_backend.core.config import Settings
 from oci_arch_studio_backend.services.embeddings import LocalHashingEmbedder
@@ -188,6 +190,33 @@ def test_oracle_vector_retriever_uses_local_fallback_when_unconfigured(tmp_path)
     assert diagnostics["provider"] == "oracle_ai_vector_search"
     assert diagnostics["store"]["fallback_enabled"] is True
     assert diagnostics["store"]["fallback_active"] is True
+
+
+def test_oracle_vector_store_passes_wallet_connection_arguments(monkeypatch) -> None:
+    captured = {}
+
+    def fake_connect(**kwargs):
+        captured.update(kwargs)
+        return FakeConnection()
+
+    monkeypatch.setitem(sys.modules, "oracledb", types.SimpleNamespace(connect=fake_connect))
+    store = OracleAiVectorSearchStore(
+        OracleAiVectorSearchConfig(
+            dsn="ociarchvec_high",
+            username="ADMIN",
+            password="pw",
+            wallet_location="/opt/oci-architecture-studio/secrets/wallet",
+            wallet_password="wallet-pw",
+        )
+    )
+
+    connection = store._connect()
+
+    assert isinstance(connection, FakeConnection)
+    assert captured["dsn"] == "ociarchvec_high"
+    assert captured["config_dir"] == "/opt/oci-architecture-studio/secrets/wallet"
+    assert captured["wallet_location"] == "/opt/oci-architecture-studio/secrets/wallet"
+    assert captured["wallet_password"] == "wallet-pw"
 
 
 class FakeConnection:

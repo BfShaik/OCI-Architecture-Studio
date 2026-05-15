@@ -347,6 +347,8 @@ class OracleAiVectorSearchConfig:
     dsn: str | None = None
     username: str | None = None
     password: str | None = None
+    wallet_location: str | None = None
+    wallet_password: str | None = None
     table_name: str = "OCI_ARCHITECTURE_CHUNKS"
     index_name: str = "OCI_ARCH_CHUNKS_VEC_IDX"
     embedding_column: str = "EMBEDDING"
@@ -527,6 +529,8 @@ class OracleAiVectorSearchStore:
             "service_count": service_count,
             "service_domain_count": service_domain_count,
             "missing_config": missing,
+            "wallet_location_configured": bool(self.config.wallet_location),
+            "wallet_password_configured": bool(self.config.wallet_password),
             "schema": schema,
             "last_error": self._last_error,
             "last_query": self._last_query,
@@ -781,12 +785,18 @@ FETCH FIRST {limit} ROWS ONLY""".strip()
             import oracledb
         except ImportError as exc:
             raise RuntimeError("python-oracledb is required for Oracle AI Vector Search retrieval.") from exc
-        return oracledb.connect(
-            user=self.config.username,
-            password=self.config.password,
-            dsn=self.config.dsn,
-            tcp_connect_timeout=self.config.connect_timeout_seconds,
-        )
+        connect_args: dict[str, object] = {
+            "user": self.config.username,
+            "password": self.config.password,
+            "dsn": self.config.dsn,
+            "tcp_connect_timeout": self.config.connect_timeout_seconds,
+        }
+        if self.config.wallet_location:
+            connect_args["config_dir"] = self.config.wallet_location
+            connect_args["wallet_location"] = self.config.wallet_location
+        if self.config.wallet_password:
+            connect_args["wallet_password"] = self.config.wallet_password
+        return oracledb.connect(**connect_args)
 
     def _is_configured(self) -> bool:
         return not self._missing_config()
