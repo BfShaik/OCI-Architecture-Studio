@@ -54,7 +54,7 @@
       "title": "OCI Database Services Overview",
       "url": "https://docs.oracle.com/en-us/iaas/Content/Database/Concepts/overview.htm",
       "source_type": "oci_service_doc",
-      "fallback_text": "OCI database services include managed Oracle Database options and supporting capabilities for resilient data tiers. Architecture recommendations should clarify data durability, backup, recovery, high availability, connectivity, and operational ownership."
+      "fallback_text": "OCI database services include managed Oracle Database options and supporting capabilities for resilient data tiers. Architecture recommendations should clarify data durability, backup, recovery, high availability, Data Guard-style protection where appropriate, connectivity, and operational ownership."
     },
     {
       "id": "oci-kubernetes-engine-overview",
@@ -75,7 +75,7 @@
       "title": "OCI Full Stack Disaster Recovery Overview",
       "url": "https://docs.oracle.com/en-us/iaas/disaster-recovery/doc/disaster-recovery-overview.html",
       "source_type": "oci_service_doc",
-      "fallback_text": "OCI disaster recovery design should define RTO and RPO targets, application criticality tiers, cross-region topology, database replication, backups, DNS or traffic failover, runbooks, monitoring, security controls, and regular DR drills. Fintech DR designs also need auditability, key management, and evidence of tested recovery."
+      "fallback_text": "OCI disaster recovery design should define RTO and RPO targets, application criticality tiers, cross-region topology, database replication, Data Guard-style database protection where appropriate, backups, DNS or traffic failover, runbooks, monitoring, security controls, and regular DR drills. Fintech DR designs also need auditability, key management, and evidence of tested recovery."
     },
     {
       "id": "oci-cost-management-overview",

@@ -1,6 +1,6 @@
 # OCI Architecture Studio — Status Log
 
-Last updated: 2026-05-14
+Last updated: 2026-05-15
 
 ## Active Plan
 
@@ -136,6 +136,14 @@ This progress is based on `docs/two-week-plan.md`.
   - ingestion support for OCI embedding generation and Object Storage vector manifest upload
   - retrieval health validation script
   - `docs/oci-native-retrieval-migration.md`
+- Started Sprint 2 OCI-native retrieval migration while preserving the local default:
+  - added metadata-aware retrieval boosts for intent, service domain, architecture pattern, trust, freshness, and release-aware prompts
+  - added per-chunk `content_hash`, `chunk_word_count`, and `vector_ready` metadata during ingestion
+  - added a guarded `oracle_ai_vector_search` retrieval provider boundary for Phase 2 schema validation
+  - added vector DB environment settings without hardcoded secrets
+  - added retrieval regression reporting under `infra/scripts/retrieval_regression_check.py`
+  - added `docs/oci-native-retrieval-runbook.md`
+  - added retrieval regression checks to CI and staging deployment validation workflows
 - Completed the staging Terraform planning phase before first apply:
   - `terraform fmt -check -recursive` passed
   - `terraform init -input=false` passed
@@ -164,7 +172,7 @@ This progress is based on `docs/two-week-plan.md`.
 
 ## Latest Validation
 
-Last validation run: 2026-05-14
+Last validation run: 2026-05-15
 
 - Terraform formatting: passed
 - Terraform validation:
@@ -181,26 +189,29 @@ Last validation run: 2026-05-14
 - Infrastructure Python script compile checks: passed
 - Knowledge ingestion smoke: passed, 13 chunks generated
 - Release ingestion smoke: passed, 3 release items generated
-- Backend tests: passed, 26 tests
+- Backend tests: passed, 29 tests
 - Frontend build: passed
 - Golden evals: passed, 6 of 6
 - Edge-case evals: passed, 8 of 8
 - Retrieval health check: passed for `local_json`, 13 chunks
+- Retrieval regression check: passed, 14 of 14 golden + edge cases
+- Python compile checks: passed for backend, infra scripts, ingestion, and refresh code
 - OCI local access check: passed, Object Storage namespace `idsmrn7rvqb6`
 - Local deployment smoke test: passed, including architecture and release-aware citation paths
 - Pre-migration readiness review: passed with a go decision for incremental OCI-native retrieval migration behind configuration
 - OCI staging apply: passed, 19 resources added
 - OCI staging backend smoke: passed, including architecture and release-aware citations
 - OCI staging frontend smoke: passed
-- OCI staging resource visibility smoke: passed
-- OCI staging baseline guardrail: passed
+- OCI staging baseline guardrail: passed against `http://193.122.149.102:8000/`
+- OCI staging deployment smoke: passed for backend, frontend, and OCI SDK tenancy access
+- OCI staging resource visibility smoke: passed for Object Storage bucket, Vault secret, Logging log group, Monitoring alarm, and Events rule
 
 ## Pending
 
 - Replace deterministic local hash embeddings with a production embedding provider when model/provider decisions are finalized.
-- Add a production vector store adapter while keeping the current JSON vector store for local development.
-- Add an OCI-native retrieval adapter behind configuration and dual-run it against the current local JSON vector store before changing defaults.
-- Implement the Oracle AI Vector Search adapter after Object Storage manifest parity is validated.
+- Run OCI Generative AI embedding ingestion against the approved staging compartment and upload the vector manifest to Object Storage.
+- Dual-run Object Storage manifest retrieval against the current local JSON vector store before changing defaults.
+- Validate the Oracle AI Vector Search table schema and enable read-path implementation only after manifest parity is proven.
 - Expand OCI source coverage for:
   - dedicated WAF
   - dedicated Vault
@@ -242,8 +253,11 @@ Last validation run: 2026-05-14
   - impact comparison is not implemented yet
 - OCI deployment execution:
   - Terraform, scripts, config templates, workflow, and docs exist
-  - staging values and plan are prepared locally and ignored by git
-  - actual cloud apply/deploy is the next operator step and requires explicit approval
+  - staging values, plan files, and secrets are ignored by git
+  - initial staging cloud apply/deploy is complete and baseline-frozen
+- OCI-native retrieval migration:
+  - Phase 1 configuration hooks, metadata enrichment, Object Storage manifest path, health checks, and regression checks exist
+  - Oracle AI Vector Search read path is intentionally guarded until schema validation and parity checks are complete
 
 ## Current Known Limitations
 

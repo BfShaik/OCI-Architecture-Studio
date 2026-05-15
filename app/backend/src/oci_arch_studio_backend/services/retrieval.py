@@ -1,4 +1,5 @@
 from pathlib import Path
+from time import perf_counter
 
 from oci_arch_studio_backend.core.config import Settings
 from oci_arch_studio_backend.models.architecture import RetrievedSource
@@ -13,11 +14,41 @@ from oci_arch_studio_backend.services.intents import IntentProfile
 from oci_arch_studio_backend.services.retrieval_metrics import retrieval_metrics
 from oci_arch_studio_backend.services.vector_store import (
     JsonVectorStore,
+    OracleAiVectorSearchConfig,
+    OracleAiVectorSearchStore,
     OciObjectStorageVectorConfig,
     OciObjectStorageVectorStore,
     VectorSearchFilters,
     VectorStore,
 )
+
+
+INTENT_RETRIEVAL_HINTS: dict[str, dict[str, tuple[str, ...]]] = {
+    "architecture": {
+        "service_domains": ("architecture", "networking", "compute", "database", "storage", "edge"),
+        "architecture_patterns": ("reference-architecture", "high-availability", "public-ingress", "data-tier"),
+    },
+    "migration": {
+        "service_domains": ("containers", "database"),
+        "architecture_patterns": ("migration-waves", "cutover", "container-platform"),
+    },
+    "dr": {
+        "service_domains": ("resilience", "database", "security", "networking", "storage"),
+        "architecture_patterns": ("disaster-recovery", "failover-runbook", "backup-recovery"),
+    },
+    "cost": {
+        "service_domains": ("cost", "compute", "storage", "database"),
+        "architecture_patterns": ("budgets", "rightsizing", "lifecycle-management", "autoscaling"),
+    },
+    "security": {
+        "service_domains": ("security", "networking"),
+        "architecture_patterns": ("least-privilege", "auditability", "network-isolation"),
+    },
+    "release_awareness": {
+        "service_domains": ("architecture", "resilience", "database", "networking", "compute", "storage"),
+        "architecture_patterns": ("well-architected", "operational-excellence"),
+    },
+}
 
 
 class OciKnowledgeRetriever:
@@ -57,7 +88,9 @@ class OciKnowledgeRetriever:
             return sources
 
         retrieval_query = self._build_retrieval_query(question, intent_profile)
+        embedding_started_at = perf_counter()
         query_embedding = self.embedder.embed(retrieval_query)
+        embedding_latency_ms = round((perf_counter() - embedding_started_at) * 1000, 2)
         filters = self._build_filters(intent_profile)
         results = self.store.search(
             query_embedding=query_embedding,
@@ -73,7 +106,9 @@ class OciKnowledgeRetriever:
                 embedding_model=self.embedder.model_name,
                 result_count=0,
                 intent=intent,
+                embedding_latency_ms=embedding_latency_ms,
                 missing_index=True,
+                no_results=True,
                 warning="retrieval returned no matching chunks",
             )
             return sources
@@ -85,6 +120,7 @@ class OciKnowledgeRetriever:
             embedding_model=self.embedder.model_name,
             result_count=len(sources),
             intent=intent,
+            embedding_latency_ms=embedding_latency_ms,
         )
         return sources
 
@@ -151,6 +187,14 @@ class OciKnowledgeRetriever:
             return VectorSearchFilters()
         return VectorSearchFilters(
             intent=intent_profile.intent.value,
+            service_domains=INTENT_RETRIEVAL_HINTS.get(intent_profile.intent.value, {}).get(
+                "service_domains",
+                (),
+            ),
+            architecture_patterns=INTENT_RETRIEVAL_HINTS.get(intent_profile.intent.value, {}).get(
+                "architecture_patterns",
+                (),
+            ),
             release_aware=intent_profile.intent.value == "release_awareness",
         )
 
@@ -193,6 +237,16 @@ def build_retriever(settings: Settings, top_k: int = 6) -> OciKnowledgeRetriever
             )
         )
         provider_name = "oci_object_storage"
+    elif settings.retrieval_provider == "oracle_ai_vector_search":
+        store = OracleAiVectorSearchStore(
+            OracleAiVectorSearchConfig(
+                dsn=settings.oci_vector_db_dsn,
+                username=settings.oci_vector_db_user,
+                password=settings.oci_vector_db_password,
+                table_name=settings.oci_vector_table_name,
+            )
+        )
+        provider_name = "oracle_ai_vector_search"
     else:
         store = JsonVectorStore(index_path=settings.knowledge_index_path)
         provider_name = "local_json"

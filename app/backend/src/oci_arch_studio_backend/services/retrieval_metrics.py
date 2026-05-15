@@ -8,8 +8,11 @@ from time import perf_counter
 class RetrievalMetrics:
     request_count: int = 0
     missing_index_count: int = 0
+    no_result_count: int = 0
     total_latency_ms: float = 0.0
+    total_embedding_latency_ms: float = 0.0
     last_latency_ms: float | None = None
+    last_embedding_latency_ms: float | None = None
     last_result_count: int = 0
     last_provider: str = "unknown"
     last_embedding_model: str = "unknown"
@@ -22,12 +25,21 @@ class RetrievalMetrics:
             return 0.0
         return round(self.total_latency_ms / self.request_count, 2)
 
+    @property
+    def average_embedding_latency_ms(self) -> float:
+        if self.request_count == 0:
+            return 0.0
+        return round(self.total_embedding_latency_ms / self.request_count, 2)
+
     def as_dict(self) -> dict[str, object]:
         return {
             "request_count": self.request_count,
             "missing_index_count": self.missing_index_count,
+            "no_result_count": self.no_result_count,
             "average_latency_ms": self.average_latency_ms,
+            "average_embedding_latency_ms": self.average_embedding_latency_ms,
             "last_latency_ms": self.last_latency_ms,
+            "last_embedding_latency_ms": self.last_embedding_latency_ms,
             "last_result_count": self.last_result_count,
             "last_provider": self.last_provider,
             "last_embedding_model": self.last_embedding_model,
@@ -50,19 +62,26 @@ class RetrievalMetricsRecorder:
         embedding_model: str,
         result_count: int,
         intent: str | None,
+        embedding_latency_ms: float | None = None,
         missing_index: bool = False,
+        no_results: bool = False,
         warning: str | None = None,
     ) -> None:
         latency_ms = round((perf_counter() - started_at) * 1000, 2)
         self.metrics.request_count += 1
         self.metrics.total_latency_ms += latency_ms
+        if embedding_latency_ms is not None:
+            self.metrics.total_embedding_latency_ms += embedding_latency_ms
         self.metrics.last_latency_ms = latency_ms
+        self.metrics.last_embedding_latency_ms = embedding_latency_ms
         self.metrics.last_result_count = result_count
         self.metrics.last_provider = provider
         self.metrics.last_embedding_model = embedding_model
         self.metrics.last_intent = intent
         if missing_index:
             self.metrics.missing_index_count += 1
+        if no_results:
+            self.metrics.no_result_count += 1
         if warning:
             self.metrics.warnings.append(warning)
 

@@ -30,6 +30,8 @@ What remains prototype:
 - Deterministic local hash embeddings.
 - Local JSON vector index.
 - Small OCI source corpus.
+- Object Storage vector manifest is a migration-safe managed copy, not the final production vector engine.
+- Oracle AI Vector Search is now represented as a guarded adapter boundary; read cutover remains disabled until schema and parity validation are complete.
 - Release awareness uses local snapshots rather than live watcher/refresh intelligence.
 - Response synthesis is template/profile-driven rather than full LLM synthesis.
 
@@ -81,6 +83,10 @@ Backend configuration:
 - `OCI_VECTOR_BUCKET`
 - `OCI_VECTOR_OBJECT_NAME`
 - `OCI_VECTOR_INDEX_NAME`
+- `OCI_VECTOR_DB_DSN`
+- `OCI_VECTOR_DB_USER`
+- `OCI_VECTOR_DB_PASSWORD`
+- `OCI_VECTOR_TABLE_NAME`
 
 Backend adapters:
 
@@ -88,12 +94,14 @@ Backend adapters:
 - `OciGenerativeAiEmbedder`
 - `JsonVectorStore`
 - `OciObjectStorageVectorStore`
+- `OracleAiVectorSearchStore` guarded Phase 2 boundary
 - `build_retriever(settings)`
 
 Health and diagnostics:
 
 - `GET /retrieval/health`
 - `infra/scripts/check_retrieval_health.py`
+- `infra/scripts/retrieval_regression_check.py`
 
 Ingestion updates:
 
@@ -105,6 +113,18 @@ Ingestion updates:
   - `embedding_model`
   - `metadata_schema_version`
   - `vector_migration`
+  - per-chunk `content_hash`
+  - per-chunk `chunk_word_count`
+  - per-chunk `vector_ready`
+
+Retrieval ranking now uses lightweight metadata boosts for:
+
+- intent tags
+- service domains
+- architecture pattern tags
+- official-source trust level
+- freshness score
+- release-aware retrieval hints
 
 ## Phased Migration Plan
 
@@ -172,11 +192,29 @@ Purpose: replace manifest search with production vector retrieval.
 
 Implementation work:
 
-- Define vector table/index schema.
+- Define vector table/index schema. Proposed first table shape:
+  - `chunk_id`
+  - `source_id`
+  - `title`
+  - `source_url`
+  - `source_type`
+  - `text`
+  - `embedding`
+  - `metadata_json`
+  - `content_hash`
+  - `fetched_timestamp`
+  - `release_version`
 - Preserve chunk ID, source URL, title, service, service domain, intent tags, trust level, freshness score, release version, and fetched timestamp.
 - Add metadata filters for service domain, intent, freshness, trust, and architecture pattern.
 - Add side-by-side retrieval diff reports.
 - Switch default only after evals pass in both local and OCI-native modes.
+
+Current implementation status:
+
+- `RETRIEVAL_PROVIDER=oracle_ai_vector_search` is accepted by the backend factory.
+- The adapter reports health and missing DB inputs.
+- Search reads are intentionally disabled until schema validation and retrieval parity are proven.
+- Rollback remains configuration-only because `local_json` stays the default.
 
 ## Retrieval Intelligence Roadmap
 
@@ -191,8 +229,6 @@ Already added:
 Next:
 
 - service-specific filtering from classifier output
-- architecture-pattern boosting
-- stale-source penalty
 - release snapshot recency boost
 - unsupported-claim suppression based on retrieved evidence
 - retrieval diff report for the demo prompt set
@@ -229,6 +265,15 @@ Next production metrics:
 - stale-source rate
 - eval pass/fail trend by intent
 
+New regression command:
+
+```bash
+python3 infra/scripts/retrieval_regression_check.py \
+  --cases evals/golden-prompts.jsonl \
+  --cases evals/edge-cases.jsonl \
+  --output-dir evals/reports/retrieval
+```
+
 ## Validation Strategy
 
 Required before switching retrieval defaults:
@@ -241,6 +286,10 @@ cd ../..
 app/backend/.venv/bin/python evals/run_golden.py --output-dir evals/reports/golden
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/edge-cases.jsonl --output-dir evals/reports/edge-cases
 python3 infra/scripts/check_retrieval_health.py --provider local_json
+python3 infra/scripts/retrieval_regression_check.py \
+  --cases evals/golden-prompts.jsonl \
+  --cases evals/edge-cases.jsonl \
+  --output-dir evals/reports/retrieval
 cd app/frontend && npm run build
 ```
 

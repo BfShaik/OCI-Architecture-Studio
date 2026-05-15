@@ -16,7 +16,11 @@ from oci_arch_studio_backend.services.retrieval import build_retriever  # noqa: 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Validate retrieval provider health.")
-    parser.add_argument("--provider", choices=("local_json", "oci_object_storage"), default="local_json")
+    parser.add_argument(
+        "--provider",
+        choices=("local_json", "oci_object_storage", "oracle_ai_vector_search"),
+        default="local_json",
+    )
     parser.add_argument("--index-path", type=Path, default=REPO_ROOT / "knowledge" / "snapshots" / "oci-rag-index.json")
     parser.add_argument("--embedding-provider", choices=("local", "oci_genai"), default="local")
     parser.add_argument("--oci-region")
@@ -28,6 +32,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--oci-genai-compartment-id")
     parser.add_argument("--oci-genai-embedding-model-id")
     parser.add_argument("--oci-genai-endpoint")
+    parser.add_argument("--oci-vector-db-dsn")
+    parser.add_argument("--oci-vector-db-user")
+    parser.add_argument("--oci-vector-db-password")
     return parser.parse_args()
 
 
@@ -46,6 +53,9 @@ def main() -> int:
         OCI_GENAI_COMPARTMENT_ID=args.oci_genai_compartment_id,
         OCI_GENAI_EMBEDDING_MODEL_ID=args.oci_genai_embedding_model_id,
         OCI_GENAI_ENDPOINT=args.oci_genai_endpoint,
+        OCI_VECTOR_DB_DSN=args.oci_vector_db_dsn,
+        OCI_VECTOR_DB_USER=args.oci_vector_db_user,
+        OCI_VECTOR_DB_PASSWORD=args.oci_vector_db_password,
     )
     retriever = build_retriever(settings)
     diagnostics = retriever.diagnostics()

@@ -4,6 +4,8 @@
 
 Build the first working OCI Architecture Studio vertical slice with local RAG, intent-aware orchestration, golden/edge regression, release-awareness foundation, demo-ready UI, and a validated first OCI deployment scaffold.
 
+Sprint 2 has started with an incremental OCI-native retrieval migration. The first slice keeps `local_json` as the default while adding OCI embedding/Object Storage hooks, a guarded Oracle AI Vector Search boundary, metadata-aware ranking, and retrieval regression checks.
+
 ## Timebox
 
 2 weeks
@@ -38,11 +40,11 @@ In scope:
 - deployment scripts, smoke tests, and staging workflow
 
 Out of scope:
-- production RAG/vector database
+- production RAG/vector database cutover
 - LangGraph
 - advanced memory systems
 - production ingestion jobs beyond local CLI snapshots
-- production-grade cloud deployment
+- production-grade cloud deployment beyond the current staging slice
 - HTTPS ingress and HA cloud runtime
 
 ## Demo Readiness
@@ -56,6 +58,16 @@ See `docs/phase-2-architecture.md` for the productionization architecture, scala
 ## Status
 
 See `docs/status.md` for the current completed/pending log.
+
+Latest full validation on 2026-05-15 passed locally and in OCI staging:
+
+- backend tests: `29 passed`
+- golden evals: `6 passed`
+- edge-case evals: `8 passed`
+- retrieval regression: `14 passed`
+- frontend build: passed
+- Terraform validation: passed for `dev`, `test`, and `staging`
+- staging smoke and resource visibility checks: passed
 
 ## Two-Week Plan
 

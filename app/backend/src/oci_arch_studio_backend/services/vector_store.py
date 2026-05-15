@@ -21,6 +21,9 @@ class VectorChunk:
 class VectorSearchFilters:
     intent: str | None = None
     service_domain: str | None = None
+    service_domains: tuple[str, ...] = ()
+    services: tuple[str, ...] = ()
+    architecture_patterns: tuple[str, ...] = ()
     min_freshness_score: float | None = None
     trust_level: str | None = None
     release_aware: bool = False
@@ -71,11 +74,36 @@ class JsonVectorStore:
 
     def health(self) -> dict[str, object]:
         chunks = self._load_chunks()
+        services = sorted(
+            {
+                str(chunk.metadata.get("service"))
+                for chunk in chunks
+                if chunk.metadata.get("service")
+            }
+        )
+        domains = sorted(
+            {
+                str(chunk.metadata.get("service_domain"))
+                for chunk in chunks
+                if chunk.metadata.get("service_domain")
+            }
+        )
+        stale_count = sum(
+            1
+            for chunk in chunks
+            if isinstance(chunk.metadata.get("freshness_score"), int | float)
+            and float(chunk.metadata["freshness_score"]) < 0.5
+        )
         return {
             "provider": "local_json",
             "exists": self.exists,
             "chunk_count": len(chunks),
             "index_path": str(self.index_path),
+            "service_count": len(services),
+            "service_domain_count": len(domains),
+            "services": services[:20],
+            "service_domains": domains,
+            "low_freshness_chunk_count": stale_count,
         }
 
     def _matches_filters(self, chunk: VectorChunk, filters: VectorSearchFilters) -> bool:
@@ -92,13 +120,24 @@ class JsonVectorStore:
     def _rank_score(self, chunk: VectorChunk, similarity: float, filters: VectorSearchFilters) -> float:
         metadata = chunk.metadata
         score = similarity
+        service = str(metadata.get("service", "")).lower()
+        domain = str(metadata.get("service_domain", "")).lower()
+        patterns = {str(pattern).lower() for pattern in metadata.get("architecture_patterns", [])}
         if filters.intent and filters.intent in metadata.get("intent_tags", []):
             score += 0.08
+        if domain and domain in {item.lower() for item in filters.service_domains}:
+            score += 0.05
+        if service and service in {item.lower() for item in filters.services}:
+            score += 0.05
+        if patterns.intersection({item.lower() for item in filters.architecture_patterns}):
+            score += 0.04
         if metadata.get("trust_level") == "official":
             score += 0.03
         freshness_score = metadata.get("freshness_score")
         if isinstance(freshness_score, int | float):
             score += min(max(float(freshness_score), 0.0), 1.0) * 0.02
+            if float(freshness_score) < 0.5:
+                score -= 0.04
         if filters.release_aware and "release" in metadata.get("intent_tags", []):
             score += 0.04
         return score
@@ -169,6 +208,20 @@ class OciObjectStorageVectorStore(JsonVectorStore):
         except Exception as exc:
             chunks = []
             self._last_error = str(exc)
+        services = sorted(
+            {
+                str(chunk.metadata.get("service"))
+                for chunk in chunks
+                if chunk.metadata.get("service")
+            }
+        )
+        domains = sorted(
+            {
+                str(chunk.metadata.get("service_domain"))
+                for chunk in chunks
+                if chunk.metadata.get("service_domain")
+            }
+        )
         return {
             "provider": "oci_object_storage_vector_manifest",
             "exists": bool(chunks),
@@ -176,6 +229,10 @@ class OciObjectStorageVectorStore(JsonVectorStore):
             "namespace": self.config.namespace,
             "bucket": self.config.bucket_name,
             "object_name": self.config.object_name,
+            "service_count": len(services),
+            "service_domain_count": len(domains),
+            "services": services[:20],
+            "service_domains": domains,
             "last_error": self._last_error,
         }
 
@@ -220,3 +277,69 @@ class OciObjectStorageVectorStore(JsonVectorStore):
             object_name=self.config.object_name,
         )
         return response.data.content.decode("utf-8")
+
+
+@dataclass(frozen=True)
+class OracleAiVectorSearchConfig:
+    """Configuration for the future Oracle AI Vector Search read path.
+
+    The first Sprint 2 slice keeps this adapter behind explicit configuration
+    so local and staging behavior stay stable while the vector schema and DB
+    connectivity are validated.
+    """
+
+    dsn: str | None = None
+    username: str | None = None
+    password: str | None = None
+    table_name: str = "OCI_ARCHITECTURE_CHUNKS"
+    embedding_column: str = "EMBEDDING"
+    metadata_column: str = "METADATA_JSON"
+
+
+class OracleAiVectorSearchStore:
+    """Guarded Oracle AI Vector Search adapter skeleton.
+
+    This class defines the production retrieval boundary without changing the
+    default runtime. It intentionally refuses search until required DB inputs
+    are present, which prevents accidental partial cutover.
+    """
+
+    def __init__(self, config: OracleAiVectorSearchConfig) -> None:
+        self.config = config
+
+    @property
+    def exists(self) -> bool:
+        return all((self.config.dsn, self.config.username, self.config.password))
+
+    def search(
+        self,
+        query_embedding: list[float],
+        top_k: int = 4,
+        filters: VectorSearchFilters | None = None,
+    ) -> list[tuple[VectorChunk, float]]:
+        raise RuntimeError(
+            "Oracle AI Vector Search retrieval is configured as a Phase 2 adapter boundary "
+            "but is not enabled for reads yet. Use RETRIEVAL_PROVIDER=local_json or "
+            "RETRIEVAL_PROVIDER=oci_object_storage until vector schema validation is complete."
+        )
+
+    def health(self) -> dict[str, object]:
+        missing = [
+            name
+            for name, value in (
+                ("OCI_VECTOR_DB_DSN", self.config.dsn),
+                ("OCI_VECTOR_DB_USER", self.config.username),
+                ("OCI_VECTOR_DB_PASSWORD", self.config.password),
+            )
+            if not value
+        ]
+        return {
+            "provider": "oracle_ai_vector_search",
+            "exists": self.exists,
+            "read_enabled": False,
+            "table_name": self.config.table_name,
+            "embedding_column": self.config.embedding_column,
+            "metadata_column": self.config.metadata_column,
+            "missing_config": missing,
+            "migration_phase": "phase_2_schema_validation",
+        }

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import ssl
@@ -151,6 +152,10 @@ def cleanup_chunk_text(text: str) -> str:
     return text.strip()
 
 
+def chunk_content_hash(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
 def ssl_context() -> ssl.SSLContext | None:
     try:
         import certifi
@@ -281,7 +286,10 @@ def build_index(args: argparse.Namespace) -> dict[str, object]:
                     "embedding": embedder.embed(clean_chunk),
                     "metadata": {
                         "chunk_index": index,
+                        "chunk_word_count": len(clean_chunk.split()),
+                        "content_hash": chunk_content_hash(clean_chunk),
                         "fetch_status": fetch_status,
+                        "vector_ready": True,
                         **source_metadata,
                     },
                 }
@@ -296,7 +304,8 @@ def build_index(args: argparse.Namespace) -> dict[str, object]:
         "vector_migration": {
             "local_json_compatible": True,
             "oci_object_storage_manifest_ready": True,
-            "oracle_ai_vector_search_ready": False,
+            "oracle_ai_vector_search_schema_ready": True,
+            "oracle_ai_vector_search_read_enabled": False,
         },
         "source_count": len(sources),
         "chunk_count": len(chunks),

@@ -34,6 +34,13 @@ jobs:
         run: |
           python infra/scripts/check_retrieval_health.py --provider local_json
 
+      - name: Retrieval regression check
+        run: |
+          python infra/scripts/retrieval_regression_check.py \
+            --cases evals/golden-prompts.jsonl \
+            --cases evals/edge-cases.jsonl \
+            --output-dir evals/reports/retrieval
+
       - name: Deployment config template validation
         run: |
           python infra/scripts/validate_deployment_config.py \

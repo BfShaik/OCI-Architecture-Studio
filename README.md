@@ -36,6 +36,11 @@ tests/                Backend and integration tests
 - Deterministic local embeddings for development
 - JSON vector index for local retrieval
 - Citation-friendly chunk metadata with service, domain, trust, intent tags, and freshness score
+- OCI-native retrieval migration hooks:
+  - optional OCI Generative AI embedding adapter
+  - optional Object Storage vector-manifest retrieval
+  - guarded Oracle AI Vector Search adapter boundary
+  - retrieval regression reporting for citations, intents, and required service coverage
 - Separate local OCI release snapshot pipeline
 - Intent-aware orchestration for:
   - product overview
@@ -141,6 +146,18 @@ app/backend/.venv/bin/python evals/run_golden.py --cases evals/edge-cases.jsonl 
 
 Reports are written to `evals/reports/` and ignored by git.
 
+## Run Retrieval Regression Checks
+
+```bash
+app/backend/.venv/bin/python infra/scripts/check_retrieval_health.py --provider local_json
+app/backend/.venv/bin/python infra/scripts/retrieval_regression_check.py \
+  --cases evals/golden-prompts.jsonl \
+  --cases evals/edge-cases.jsonl \
+  --output-dir evals/reports/retrieval
+```
+
+This checks retrieval health, intent alignment, citation availability, top chunks, stale citations, and required OCI service coverage before changing retrieval providers.
+
 ## OCI Deployment
 
 The first OCI deployment path keeps one codebase and uses environment-specific configuration:
@@ -181,6 +198,7 @@ python3 infra/scripts/validate_deployment_config.py \
 ```bash
 app/backend/.venv/bin/python evals/run_golden.py --output-dir evals/reports/golden
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/edge-cases.jsonl --output-dir evals/reports/edge-cases
+app/backend/.venv/bin/python infra/scripts/retrieval_regression_check.py --cases evals/golden-prompts.jsonl --cases evals/edge-cases.jsonl --output-dir evals/reports/retrieval
 app/backend/.venv/bin/python knowledge/ingestion/ingest.py --no-fetch
 app/backend/.venv/bin/python knowledge/refresh/ingest_releases.py --no-fetch
 cd app/backend && PYTHONPATH=src .venv/bin/pytest -q
@@ -188,6 +206,18 @@ cd ../frontend && npm run build
 ```
 
 ## Project Status
+
+Latest full validation: 2026-05-15.
+
+- Local backend tests: `29 passed`
+- Golden evals: `6 passed, 0 failed`
+- Edge-case evals: `8 passed, 0 failed`
+- Retrieval regression: `14 passed, 0 failed`
+- Knowledge ingestion: `13 chunks`
+- Release ingestion: `3 release items`
+- Frontend build: passed
+- Terraform fmt/validate: passed for `dev`, `test`, and `staging`
+- OCI staging smoke: passed for backend, frontend, OCI SDK, retrieval, and resource visibility
 
 See `docs/status.md` for the current completed work, pending work, and known limitations.
 
@@ -206,6 +236,8 @@ See `docs/oci-deployment-execution.md` for the command-by-command staging deploy
 See `docs/pre-migration-readiness-report.md` for the OCI-native retrieval pre-migration validation, stability review, and go/no-go decision.
 
 See `docs/oci-native-retrieval-migration.md` for the OCI-native retrieval architecture, phased migration guide, validation strategy, observability plan, and rollback path.
+
+See `docs/oci-native-retrieval-runbook.md` for provider modes, validation gates, rollback steps, and troubleshooting for Sprint 2 retrieval migration.
 
 See `docs/terraform-plan-review.md` for the first staging Terraform planning workflow, plan review, apply readiness criteria, and post-apply smoke-test plan.
 

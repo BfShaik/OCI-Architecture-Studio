@@ -41,3 +41,10 @@ def test_infer_source_metadata_adds_citation_ready_fields() -> None:
     assert "architecture" in metadata["intent_tags"]
     assert metadata["trust_level"] == "official"
     assert metadata["freshness_score"] == 0.9
+
+
+def test_chunk_content_hash_is_stable() -> None:
+    text = "OCI Object Storage supports durable architecture artifacts."
+
+    assert ingest.chunk_content_hash(text) == ingest.chunk_content_hash(text)
+    assert ingest.chunk_content_hash(text) != ingest.chunk_content_hash(text + " Updated.")
