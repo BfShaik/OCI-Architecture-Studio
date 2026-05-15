@@ -25,6 +25,37 @@ def test_architecture_review() -> None:
     assert body["recommendations"]
     assert body["citations"]
     assert "summary" in body["citations"][0]
+    assert body["evidence_links"]
+    assert body["confidence"]["overall"] >= 0
+    assert body["quality_warnings"] is not None
+
+
+def test_architecture_review_flags_low_context_uncertainty() -> None:
+    response = client.post(
+        "/architecture-review",
+        json={"question": "Make it enterprise grade on OCI."},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["not_enough_evidence"] is True
+    assert body["low_confidence"] is True
+    assert body["confidence"]["level"] == "low"
+    assert any("Not enough context" in warning for warning in body["quality_warnings"])
+
+
+def test_advisory_quality_metrics_endpoint() -> None:
+    client.post(
+        "/architecture-review",
+        json={"question": "Design a highly available ecommerce platform on OCI."},
+    )
+
+    response = client.get("/advisory/quality")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["request_count"] >= 1
+    assert "average_citation_coverage" in body
 
 
 def test_retrieval_health() -> None:

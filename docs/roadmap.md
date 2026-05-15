@@ -44,8 +44,25 @@ Deliverables:
 - citation display — Done
 - regression evals for grounded answers — Done
 - config-only promotion and rollback path — Done
+- evidence-linked recommendations — Done
+- confidence scoring and low-confidence fallback — Done
+- advisory-quality eval suite — Done
 - production embedding provider — Pending
 - Oracle AI Vector Search active read path — Pending
+
+## Phase 2B — Advisory Intelligence Quality
+Status: Started
+
+Deliverables:
+- recommendation-to-citation evidence links — Done
+- confidence scoring — Done
+- not-enough-evidence behavior — Done
+- unsupported requested service warnings — Done
+- advisory-quality metrics endpoint — Done
+- advisory-quality eval suite — Done
+- citation-aware LLM synthesis — Pending
+- stronger unsupported-claim suppression — Pending
+- quality trend dashboard — Pending
 
 ## Phase 3 — Release-Aware Knowledge
 Status: Point-in-time snapshots implemented

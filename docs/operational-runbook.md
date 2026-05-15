@@ -22,6 +22,12 @@ Retrieval health endpoint:
 http://193.122.149.102:8000/retrieval/health
 ```
 
+Advisory quality endpoint:
+
+```text
+http://193.122.149.102:8000/advisory/quality
+```
+
 ## Verify Deployment Health
 
 Run:
@@ -68,6 +74,7 @@ python3 infra/scripts/check_oci_access.py \
 ```bash
 app/backend/.venv/bin/python evals/run_golden.py --output-dir evals/reports/golden
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/edge-cases.jsonl --output-dir evals/reports/edge-cases
+app/backend/.venv/bin/python evals/run_golden.py --cases evals/advisory-quality.jsonl --output-dir evals/reports/advisory-quality
 ```
 
 ## Rerun Retrieval Parity
@@ -177,6 +184,13 @@ If retrieval fails:
 - check `/retrieval/health`
 - confirm chunk count is at least 13
 - rerun ingestion on the VM through the deploy script
+
+If advisory confidence drops:
+
+- check `/advisory/quality`
+- inspect `quality_warnings` and `evidence_links` in the API response
+- add source chunks when useful recommendations lack evidence
+- add a regression eval for any repeated failure pattern
 
 If `oci_object_storage` promotion fails:
 

@@ -62,6 +62,10 @@ jobs:
         run: |
           python evals/run_golden.py --cases evals/edge-cases.jsonl --output-dir evals/reports/edge-cases
 
+      - name: Advisory-quality evals
+        run: |
+          python evals/run_golden.py --cases evals/advisory-quality.jsonl --output-dir evals/reports/advisory-quality
+
       - name: Upload eval reports
         if: always()
         uses: actions/upload-artifact@v4

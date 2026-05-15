@@ -13,7 +13,7 @@ The current state uses `oci_object_storage` as the active staging retrieval prov
 ## Current Priorities
 
 1. Monitor the promoted `oci_object_storage` staging provider
-2. Prepare Oracle AI Vector Search schema and indexing prototype
+2. Improve advisory intelligence quality and confidence reporting
 3. Expand source registry for WAF, Vault, Cloud Guard, Logging, Monitoring, Budgets, IAM, Audit, and Data Guard
 4. Add vector-search dual-run parity against the Object Storage provider
 5. Keep release-awareness snapshot flow honest and clearly point-in-time
@@ -36,6 +36,8 @@ In scope:
 - deployment scripts, smoke tests, and staging workflow
 - dual-provider retrieval parity validation
 - Object Storage retrieval promotion and rollback validation
+- evidence-linked recommendations and confidence scoring
+- advisory-quality eval suite
 
 Out of scope:
 - production RAG/vector database cutover
@@ -63,6 +65,7 @@ Latest full validation on 2026-05-15 passed locally and in OCI staging:
 - golden evals: `6 passed`
 - edge-case evals: `8 passed`
 - retrieval regression: `14 passed`
+- advisory-quality evals: `5 passed`
 - frontend build: passed
 - Terraform validation: passed for `dev`, `test`, and `staging`
 - staging smoke and resource visibility checks: passed

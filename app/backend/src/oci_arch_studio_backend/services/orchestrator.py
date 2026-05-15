@@ -2,6 +2,8 @@ from oci_arch_studio_backend.models.architecture import (
     ArchitectureReviewRequest,
     ArchitectureReviewResponse,
 )
+from oci_arch_studio_backend.services.advisory_metrics import advisory_quality_metrics
+from oci_arch_studio_backend.services.advisory_quality import AdvisoryQualityAnalyzer
 from oci_arch_studio_backend.services.intents import (
     IntentClassifier,
     get_intent_profile,
@@ -18,10 +20,12 @@ class ArchitectureReviewOrchestrator:
         retriever: OciKnowledgeRetriever,
         classifier: IntentClassifier | None = None,
         release_store: ReleaseSnapshotStore | None = None,
+        quality_analyzer: AdvisoryQualityAnalyzer | None = None,
     ) -> None:
         self.retriever = retriever
         self.classifier = classifier or IntentClassifier()
         self.release_store = release_store
+        self.quality_analyzer = quality_analyzer or AdvisoryQualityAnalyzer()
 
     async def review(
         self,
@@ -40,6 +44,13 @@ class ArchitectureReviewOrchestrator:
         source_titles = sorted({source.title for source in sources})
         has_index = all(source.source_type != "missing_index" for source in sources)
         stale_sources = [source for source in sources if source.is_stale]
+        quality = self.quality_analyzer.assess(
+            question=request.question,
+            profile=profile,
+            base_recommendations=list(profile.recommendations),
+            sources=sources,
+            release_store=self.release_store,
+        )
 
         context_note = (
             f"Retrieved {len(sources)} relevant OCI knowledge chunks from "
@@ -61,6 +72,29 @@ class ArchitectureReviewOrchestrator:
             release_note = self.release_store.freshness_note(profile.intent, request.question)
             if release_note:
                 context_note += f" {release_note}"
+        if quality.not_enough_evidence:
+            context_note += (
+                " Not enough evidence is available for a final design; treat the response as "
+                "a provisional advisory and gather the missing workload or source context."
+            )
+        if quality.unsupported_claims:
+            context_note += (
+                " The prompt contains requested capabilities that are not supported by the "
+                "retrieved OCI evidence; they are flagged instead of accepted as valid OCI services."
+            )
+
+        advisory_quality_metrics.record(
+            intent=profile.intent.value,
+            confidence_level=quality.confidence.level,
+            overall_confidence=quality.confidence.overall,
+            citation_coverage=quality.citation_coverage,
+            evidence_support=quality.evidence_support,
+            low_confidence=quality.low_confidence,
+            not_enough_evidence=quality.not_enough_evidence,
+            unsupported_claims=quality.unsupported_claims,
+            stale_evidence_count=len(stale_sources),
+            warnings=quality.quality_warnings,
+        )
 
         return ArchitectureReviewResponse(
             intent=profile.intent.value,
@@ -70,9 +104,15 @@ class ArchitectureReviewOrchestrator:
                 f"{profile.prompt_template} template to focus the review on "
                 f"{profile.focus}."
             ),
-            recommendations=list(profile.recommendations),
+            recommendations=quality.recommendations,
             assumptions=list(profile.assumptions),
             risks=list(profile.risks),
             citations=sources,
+            evidence_links=quality.evidence_links,
+            confidence=quality.confidence,
+            quality_warnings=quality.quality_warnings,
+            unsupported_claims=quality.unsupported_claims,
+            not_enough_evidence=quality.not_enough_evidence,
+            low_confidence=quality.low_confidence,
             next_steps=list(profile.next_steps),
         )

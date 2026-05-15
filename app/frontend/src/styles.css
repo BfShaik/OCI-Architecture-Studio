@@ -200,6 +200,53 @@ h1 {
   text-transform: capitalize;
 }
 
+.intent-row .confidence-badge {
+  color: #164e63;
+  background: #cffafe;
+}
+
+.intent-row .confidence-low,
+.intent-row .warning-pill {
+  color: #7c2d12;
+  background: #ffedd5;
+}
+
+.quality-warnings {
+  display: grid;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.quality-warnings span {
+  border-left: 3px solid #f97316;
+  padding: 6px 8px;
+  color: #7c2d12;
+  background: #fff7ed;
+  font-size: 0.84rem;
+  font-weight: 650;
+}
+
+.confidence-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.confidence-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.confidence-grid span {
+  border: 1px solid #d8dee8;
+  border-radius: 8px;
+  padding: 10px;
+  color: #334155;
+  background: #f8fafc;
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
 .result-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -223,6 +270,22 @@ li:last-child {
 .citations {
   display: grid;
   gap: 12px;
+}
+
+.evidence-links {
+  display: grid;
+  gap: 12px;
+}
+
+.evidence-links article {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 12px;
+}
+
+.evidence-links p {
+  margin: 6px 0 0;
+  color: #52606d;
+  line-height: 1.5;
 }
 
 .source-item {
@@ -350,7 +413,8 @@ button:disabled {
 @media (max-width: 900px) {
   .app-shell,
   .composer,
-  .result-grid {
+  .result-grid,
+  .confidence-grid {
     grid-template-columns: 1fr;
   }
 

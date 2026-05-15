@@ -119,6 +119,17 @@ def response_text(response: dict[str, Any]) -> str:
     for key in ("recommendations", "assumptions", "risks", "next_steps"):
         parts.append(key)
         parts.extend(str(item) for item in response.get(key, []))
+    for key in ("quality_warnings", "unsupported_claims"):
+        parts.append(key)
+        parts.extend(str(item) for item in response.get(key, []))
+    confidence = response.get("confidence") or {}
+    if isinstance(confidence, dict):
+        parts.append(str(confidence.get("level", "")))
+        parts.extend(str(note) for note in confidence.get("notes", []))
+    for link in response.get("evidence_links", []):
+        parts.append(str(link.get("support_level", "")))
+        parts.append(str(link.get("rationale", "")))
+        parts.extend(str(title) for title in link.get("source_titles", []))
     for citation in response.get("citations", []):
         parts.append(str(citation.get("title", "")))
         parts.append(str(citation.get("summary", "")))
@@ -178,6 +189,11 @@ def validate_structure(response: dict[str, Any]) -> EvalCheck:
         "risks": list,
         "citations": list,
         "next_steps": list,
+        "evidence_links": list,
+        "quality_warnings": list,
+        "unsupported_claims": list,
+        "not_enough_evidence": bool,
+        "low_confidence": bool,
     }
     missing_or_invalid = [
         field
@@ -309,6 +325,80 @@ def validate_citations(case: dict[str, Any], response: dict[str, Any]) -> EvalCh
     return EvalCheck("citations", passed, 10 if passed else 0, 10, details)
 
 
+def validate_evidence_links(case: dict[str, Any], response: dict[str, Any]) -> EvalCheck:
+    if not case.get("grounding_required", False):
+        return EvalCheck("evidence_links", True, 10, 10, ["evidence links not required"])
+
+    recommendations = response.get("recommendations", [])
+    links = response.get("evidence_links", [])
+    details: list[str] = []
+    if len(links) < len(recommendations):
+        details.append("fewer evidence links than recommendations")
+    unsupported = [
+        str(link.get("recommendation_index"))
+        for link in links
+        if link.get("support_level") == "unsupported"
+    ]
+    unsupported_allowed = bool(case.get("allow_unsupported_evidence", False))
+    if unsupported and not unsupported_allowed:
+        details.append(f"unsupported recommendation links: {', '.join(unsupported)}")
+    linked = [
+        link
+        for link in links
+        if link.get("support_level") in {"strong", "partial"}
+        and link.get("source_chunk_ids")
+        and link.get("source_titles")
+    ]
+    if not linked:
+        details.append("no recommendations linked to citation chunk ids")
+
+    passed = not details
+    score = 10 if passed else max(0, 10 - (len(details) * 4))
+    return EvalCheck("evidence_links", passed, score, 10, details)
+
+
+def validate_confidence(case: dict[str, Any], response: dict[str, Any]) -> EvalCheck:
+    confidence = response.get("confidence")
+    if not isinstance(confidence, dict):
+        return EvalCheck("confidence", False, 0, 10, ["missing confidence object"])
+
+    required_keys = {
+        "retrieval",
+        "evidence",
+        "freshness",
+        "release_awareness",
+        "recommendation",
+        "overall",
+        "level",
+        "notes",
+    }
+    missing = sorted(required_keys - set(confidence))
+    details: list[str] = []
+    if missing:
+        details.append(f"missing confidence keys: {', '.join(missing)}")
+    numeric_keys = required_keys - {"level", "notes"}
+    out_of_range = [
+        key
+        for key in numeric_keys
+        if not isinstance(confidence.get(key), int | float)
+        or float(confidence.get(key)) < 0
+        or float(confidence.get(key)) > 1
+    ]
+    if out_of_range:
+        details.append(f"confidence scores out of range: {', '.join(sorted(out_of_range))}")
+    minimum = float(case.get("minimum_confidence", 0.0))
+    overall = float(confidence.get("overall", 0.0)) if isinstance(confidence.get("overall"), int | float) else 0.0
+    if minimum and overall < minimum:
+        details.append(f"overall confidence {overall} below required {minimum}")
+    if case.get("expect_low_confidence") is True and not response.get("low_confidence", False):
+        details.append("expected low_confidence=true")
+    if case.get("expect_not_enough_evidence") is True and not response.get("not_enough_evidence", False):
+        details.append("expected not_enough_evidence=true")
+
+    passed = not details
+    return EvalCheck("confidence", passed, 10 if passed else 0, 10, details)
+
+
 def validate_forbidden_patterns(case: dict[str, Any], text: str) -> EvalCheck:
     patterns = list(case.get("forbidden_patterns", []))
     patterns.extend(SUSPICIOUS_PATTERNS)
@@ -388,6 +478,8 @@ def evaluate_case(client: TestClient, case: dict[str, Any]) -> dict[str, Any]:
         validate_citations(case, response),
         validate_grounding(case, response),
         validate_retrieval_support(case, response),
+        validate_evidence_links(case, response),
+        validate_confidence(case, response),
         validate_forbidden_patterns(case, text),
         validate_unsupported_oci_claims(text),
         validate_stale_or_unverified_guidance(case, text),
@@ -406,6 +498,8 @@ def evaluate_case(client: TestClient, case: dict[str, Any]) -> dict[str, Any]:
             "citations",
             "grounding",
             "retrieval_support",
+            "evidence_links",
+            "confidence",
             "non_hallucination",
             "stale_unverified_guidance",
         }
@@ -484,6 +578,8 @@ def summarize_results(results: list[dict[str, Any]]) -> dict[str, Any]:
         recommendations.append("Improve retrieval corpus, chunk metadata, and citation selection for weakly grounded cases.")
     if check_counter["retrieval_support"]:
         recommendations.append("Add or retune source chunks for recommendations that are not supported by retrieved evidence.")
+    if check_counter["evidence_links"] or check_counter["confidence"]:
+        recommendations.append("Review advisory confidence scoring and recommendation-to-citation linking.")
     if check_counter["non_hallucination"] or check_counter["unsupported_oci_claims"]:
         recommendations.append("Tighten hallucination guardrails and review unsupported OCI service claims.")
     if check_counter["stale_unverified_guidance"]:

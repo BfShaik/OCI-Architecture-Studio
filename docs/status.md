@@ -175,6 +175,14 @@ This progress is based on `docs/two-week-plan.md`.
   - validated Object Storage manifest retrieval with 13 chunks and 10 service domains
   - validated rollback to `local_json` and restored `oci_object_storage`
   - added `docs/retrieval-provider-promotion-report.md`
+- Added advisory intelligence quality foundation:
+  - recommendation-to-citation evidence links
+  - confidence scoring for retrieval, evidence, freshness, release-awareness, recommendations, and overall response quality
+  - `not_enough_evidence`, `low_confidence`, `quality_warnings`, and `unsupported_claims` response fields
+  - `/advisory/quality` operational metrics endpoint
+  - advisory-quality eval suite under `evals/advisory-quality.jsonl`
+  - CI advisory-quality eval gate
+  - `docs/advisory-intelligence.md`
 - Pushed current implementation to GitHub.
 
 ## Latest Validation
@@ -196,10 +204,11 @@ Last validation run: 2026-05-15
 - Infrastructure Python script compile checks: passed
 - Knowledge ingestion smoke: passed, 13 chunks generated
 - Release ingestion smoke: passed, 3 release items generated
-- Backend tests: passed, 30 tests
+- Backend tests: passed, 34 tests
 - Frontend build: passed
 - Golden evals: passed, 6 of 6
 - Edge-case evals: passed, 8 of 8
+- Advisory-quality evals: passed, 5 of 5
 - Retrieval health check: passed for `oci_object_storage`, 13 chunks
 - Retrieval regression check: passed, 14 of 14 golden + edge cases
 - Python compile checks: passed for backend, infra scripts, ingestion, and refresh code
@@ -246,9 +255,8 @@ Last validation run: 2026-05-15
   - explicit current-vs-historical recommendation comparison
 - Add stronger response generation:
   - actual prompt execution with an LLM
-  - citation-aware answer synthesis
-  - unsupported-claim checks
-  - structured confidence or evidence notes
+  - richer citation-aware natural-language synthesis beyond deterministic intent-profile recommendations
+  - stronger unsupported-claim suppression beyond current requested-service warnings
 - Add frontend improvements:
   - prompt history
 - Move Terraform state to OCI Object Storage before shared/team usage.

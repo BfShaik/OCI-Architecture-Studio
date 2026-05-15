@@ -50,7 +50,7 @@ export function App() {
           <h1>Architecture Advisor</h1>
           <p className="lede">
             Ask an OCI design question and receive a structured, review-ready
-            response from the first vertical slice.
+            response with grounded evidence and confidence signals.
           </p>
           <div className="demo-prompts" aria-label="Demo prompts">
             {demoPrompts.map((prompt) => (
@@ -76,9 +76,9 @@ export function App() {
           <div className="message message-system">
             <span>System</span>
             <p>
-              Retrieval uses local OCI chunks with citation metadata and release
-              freshness signals. Current-release impact still requires a
-              matching release snapshot.
+              Retrieval uses the configured OCI knowledge provider with citation
+              metadata, evidence links, confidence scoring, and release freshness
+              signals.
             </p>
           </div>
 

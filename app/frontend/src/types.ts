@@ -16,6 +16,25 @@ export type RetrievedSource = {
   relevance_score?: number | null;
 };
 
+export type EvidenceLink = {
+  recommendation_index: number;
+  support_level: string;
+  source_chunk_ids: string[];
+  source_titles: string[];
+  rationale: string;
+};
+
+export type ConfidenceScore = {
+  retrieval: number;
+  evidence: number;
+  freshness: number;
+  release_awareness: number;
+  recommendation: number;
+  overall: number;
+  level: string;
+  notes: string[];
+};
+
 export type ArchitectureReviewRequest = {
   question: string;
   workload_context?: string;
@@ -29,5 +48,11 @@ export type ArchitectureReviewResponse = {
   assumptions: string[];
   risks: string[];
   citations: RetrievedSource[];
+  evidence_links: EvidenceLink[];
+  confidence?: ConfidenceScore | null;
+  quality_warnings: string[];
+  unsupported_claims: string[];
+  not_enough_evidence: boolean;
+  low_confidence: boolean;
   next_steps: string[];
 };

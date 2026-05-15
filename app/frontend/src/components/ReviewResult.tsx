@@ -21,8 +21,13 @@ function labelForIntent(intent: string) {
   return intent.replace(/_/g, " ");
 }
 
+function percent(value: number) {
+  return `${Math.round(value * 100)}%`;
+}
+
 export function ReviewResult({ result }: ReviewResultProps) {
   const citationCount = result.citations.length;
+  const confidence = result.confidence;
 
   return (
     <div className="review-result">
@@ -31,10 +36,43 @@ export function ReviewResult({ result }: ReviewResultProps) {
         <div className="intent-row">
           <span className="intent-badge">{labelForIntent(result.intent)}</span>
           <span>{citationCount} sources</span>
+          {confidence ? (
+            <span className={`confidence-badge confidence-${confidence.level}`}>
+              confidence {confidence.level} · {percent(confidence.overall)}
+            </span>
+          ) : null}
+          {result.not_enough_evidence ? <span className="warning-pill">needs evidence</span> : null}
           <span>{result.prompt_template}</span>
         </div>
         <p>{result.answer}</p>
+        {result.quality_warnings.length ? (
+          <div className="quality-warnings" aria-label="Quality warnings">
+            {result.quality_warnings.map((warning) => (
+              <span key={warning}>{warning}</span>
+            ))}
+          </div>
+        ) : null}
       </section>
+
+      {confidence ? (
+        <section className="result-section confidence-panel">
+          <h3>Confidence</h3>
+          <div className="confidence-grid">
+            <span>Retrieval {percent(confidence.retrieval)}</span>
+            <span>Evidence {percent(confidence.evidence)}</span>
+            <span>Freshness {percent(confidence.freshness)}</span>
+            <span>Release {percent(confidence.release_awareness)}</span>
+            <span>Recommendation {percent(confidence.recommendation)}</span>
+          </div>
+          {confidence.notes.length ? (
+            <ul>
+              {confidence.notes.map((note) => (
+                <li key={note}>{note}</li>
+              ))}
+            </ul>
+          ) : null}
+        </section>
+      ) : null}
 
       <div className="result-grid">
         <Section title="Recommendations" items={result.recommendations} />
@@ -42,6 +80,20 @@ export function ReviewResult({ result }: ReviewResultProps) {
         <Section title="Risks" items={result.risks} />
         <Section title="Next Steps" items={result.next_steps} />
       </div>
+
+      {result.evidence_links.length ? (
+        <section className="result-section evidence-links">
+          <h3>Evidence Links</h3>
+          {result.evidence_links.map((link) => (
+            <article key={`${link.recommendation_index}-${link.support_level}`}>
+              <strong>
+                Recommendation {link.recommendation_index + 1}: {link.support_level}
+              </strong>
+              <p>{link.rationale}</p>
+            </article>
+          ))}
+        </section>
+      ) : null}
 
       <section className="result-section citations">
         <h3>Sources</h3>

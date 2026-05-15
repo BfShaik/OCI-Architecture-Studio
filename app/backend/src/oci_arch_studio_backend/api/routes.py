@@ -6,6 +6,7 @@ from oci_arch_studio_backend.models.architecture import (
     HealthResponse,
 )
 from oci_arch_studio_backend.core.config import get_settings
+from oci_arch_studio_backend.services.advisory_metrics import advisory_quality_metrics
 from oci_arch_studio_backend.services.orchestrator import ArchitectureReviewOrchestrator
 from oci_arch_studio_backend.services.releases import ReleaseSnapshotStore
 from oci_arch_studio_backend.services.retrieval import build_retriever
@@ -34,3 +35,8 @@ async def retrieval_health() -> dict[str, object]:
     settings = get_settings()
     retriever = build_retriever(settings)
     return retriever.diagnostics()
+
+
+@router.get("/advisory/quality")
+async def advisory_quality() -> dict[str, object]:
+    return advisory_quality_metrics.snapshot()

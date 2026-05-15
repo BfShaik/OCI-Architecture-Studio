@@ -62,6 +62,7 @@ tests/                Backend and integration tests
 - OCI staging deployment with smoke tests, resource visibility checks, and rollback runbooks
 - Dual-provider retrieval parity gate comparing `local_json` and `oci_object_storage`
 - Config-only staging promotion to `oci_object_storage` with rollback validation
+- Evidence-linked recommendations, confidence scoring, uncertainty flags, and advisory quality metrics
 
 ## Run Locally
 
@@ -148,6 +149,7 @@ VITE_API_BASE_URL=http://localhost:8000 npm run dev
 ```bash
 app/backend/.venv/bin/python evals/run_golden.py --output-dir evals/reports/golden
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/edge-cases.jsonl --output-dir evals/reports/edge-cases
+app/backend/.venv/bin/python evals/run_golden.py --cases evals/advisory-quality.jsonl --output-dir evals/reports/advisory-quality
 ```
 
 Reports are written to `evals/reports/` and ignored by git.
@@ -236,9 +238,10 @@ cd ../frontend && npm run build
 
 Latest full validation: 2026-05-15.
 
-- Local backend tests: `30 passed`
+- Local backend tests: `34 passed`
 - Golden evals: `6 passed, 0 failed`
 - Edge-case evals: `8 passed, 0 failed`
+- Advisory-quality evals: `5 passed, 0 failed`
 - Retrieval regression: `14 passed, 0 failed`
 - Knowledge ingestion: `13 chunks`
 - Release ingestion: `3 release items`
@@ -277,6 +280,8 @@ See `docs/post-migration-readiness-report.md` for the full post-migration valida
 See `docs/retrieval-parity-validation-report.md` for dual-provider parity results, promotion criteria, config switching, rollback validation, and the go/no-go decision for `oci_object_storage` staging promotion.
 
 See `docs/retrieval-provider-promotion-report.md` for the completed staging promotion, post-promotion validation results, rollback proof, and the next Oracle AI Vector Search boundary.
+
+See `docs/advisory-intelligence.md` for evidence-linked recommendations, confidence scoring, citation enforcement, uncertainty handling, and advisory-quality observability.
 
 See `docs/terraform-plan-review.md` for the first staging Terraform planning workflow, plan review, apply readiness criteria, and post-apply smoke-test plan.
 
