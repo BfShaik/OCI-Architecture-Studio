@@ -94,3 +94,21 @@ variable "knowledge_refresh_function_timeout_seconds" {
   type        = number
   default     = 900
 }
+
+variable "deployment_profile" {
+  description = "Runtime deployment profile exposed to backend diagnostics."
+  type        = string
+  default     = "oci_vm"
+}
+
+variable "operational_diagnostics_enabled" {
+  description = "Enable operational diagnostics endpoints."
+  type        = bool
+  default     = true
+}
+
+variable "oci_connectivity_check_enabled" {
+  description = "Enable live OCI SDK connectivity checks in operational diagnostics."
+  type        = bool
+  default     = false
+}

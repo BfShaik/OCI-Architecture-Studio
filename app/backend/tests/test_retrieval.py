@@ -405,10 +405,25 @@ def test_retriever_debug_trace_explains_reranking(tmp_path) -> None:
     )
 
 
-def test_build_retriever_requires_oci_vector_settings(tmp_path) -> None:
+def test_build_retriever_falls_back_when_oci_object_storage_settings_are_missing(tmp_path) -> None:
     settings = Settings(
         KNOWLEDGE_INDEX_PATH=tmp_path / "index.json",
         RETRIEVAL_PROVIDER="oci_object_storage",
+    )
+
+    retriever = build_retriever(settings)
+    diagnostics = retriever.diagnostics()
+
+    assert diagnostics["store"]["fallback_enabled"] is True
+    assert diagnostics["store"]["fallback_active"] is True
+    assert "OCI_OBJECT_STORAGE_NAMESPACE" in diagnostics["store"]["primary"]["missing_config"]
+
+
+def test_build_retriever_can_require_oci_object_storage_settings(tmp_path) -> None:
+    settings = Settings(
+        KNOWLEDGE_INDEX_PATH=tmp_path / "index.json",
+        RETRIEVAL_PROVIDER="oci_object_storage",
+        RETRIEVAL_FALLBACK_ENABLED=False,
     )
 
     with pytest.raises(ValueError, match="OCI_OBJECT_STORAGE_NAMESPACE"):

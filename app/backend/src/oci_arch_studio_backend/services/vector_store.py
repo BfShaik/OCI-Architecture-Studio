@@ -65,6 +65,37 @@ class VectorStore(Protocol):
         ...
 
 
+class UnavailableVectorStore:
+    def __init__(self, provider_name: str, reason: str, missing_config: list[str] | None = None) -> None:
+        self.provider_name = provider_name
+        self.reason = reason
+        self.missing_config = missing_config or []
+
+    @property
+    def exists(self) -> bool:
+        return False
+
+    def search(
+        self,
+        query_embedding: list[float],
+        top_k: int = 4,
+        filters: VectorSearchFilters | None = None,
+    ) -> list[tuple[VectorChunk, float]]:
+        raise RuntimeError(self.reason)
+
+    def health(self) -> dict[str, object]:
+        return {
+            "provider": self.provider_name,
+            "exists": False,
+            "read_enabled": False,
+            "chunk_count": 0,
+            "service_count": 0,
+            "service_domain_count": 0,
+            "missing_config": self.missing_config,
+            "last_error": self.reason,
+        }
+
+
 class JsonVectorStore:
     def __init__(self, index_path: Path) -> None:
         self.index_path = index_path

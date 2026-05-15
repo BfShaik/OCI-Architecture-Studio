@@ -14,6 +14,8 @@ This scaffold is intentionally small:
 - Notifications topic
 - Events rule for environment resource lifecycle notifications
 - optional OCI Functions + Resource Scheduler knowledge refresh schedules
+- runtime environment profile bootstrap for the backend VM
+- operational diagnostics configuration for OCI Vault, Logging, Monitoring, Notifications, and Events
 
 It is not a production HA design yet. It is the Phase 1 OCI deployment foundation for the validated MVP.
 
@@ -57,6 +59,7 @@ terraform apply
 - Keep saved plan files such as `tfplan` out of git.
 - Commit `.terraform.lock.hcl` files when provider selections change.
 - Store production secrets in OCI Vault, not Terraform variables.
+- Use `deployment_profile`, `operational_diagnostics_enabled`, and `oci_connectivity_check_enabled` to control runtime diagnostics. Keep live OCI connectivity checks disabled until IAM policies and Vault access are verified.
 - Use the generated Object Storage buckets for frontend assets, knowledge snapshots, release snapshots, and eval reports.
 - Enable `enable_knowledge_refresh_scheduler` only after the knowledge refresh function image is built and pushed to OCIR.
 - The backend instance is intentionally simple; move to Container Instances or a Load Balancer + instance pool only after the MVP deployment is stable.

@@ -37,6 +37,8 @@ OCI Architecture Studio is an AI-powered OCI architecture intelligence platform 
 - Confidence sub-signals for service relevance, workload alignment, migration mapping certainty, and citation coverage
 - Release snapshot and temporal knowledge schemas for current-vs-historical scaffolding
 - Deterministic release intelligence for release normalization, change-category classification, impacted service/source/chunk analysis, targeted eval impact detection, and refresh action recommendations
+- OCI-native operational diagnostics for deployment profiles, retrieval/vector health, release freshness, synthesis provider availability, secret/config posture, observability configuration, and runtime analytics
+- Runtime profile examples for local development, OCI VM, OKE, and OCI Functions-compatible execution
 - Retrieval regression and parity validation
 - OCI staging deployment
 
@@ -55,6 +57,15 @@ User flow:
 8. Release-aware prompts are checked against point-in-time release snapshots, freshness metadata, release change categories, and release impact summaries. Current release awareness is snapshot-based and deterministic; it is not live request-time reconciliation with OCI release feeds.
 9. The backend returns recommendations, assumptions, risks, citations, evidence links, confidence, reasoning trace metadata, tradeoff analysis, per-recommendation confidence, decision reasoning metadata, consistency findings, section citation metadata, release context, temporal knowledge context, and optional retrieval debug traces.
 10. The UI displays the main advisory fields and citation cards. Full section-level citation, reasoning, tradeoff, consistency, and release-context UI is not implemented yet.
+
+Operational flow:
+
+- Runtime mode is selected by `DEPLOYMENT_PROFILE=local_dev|oci_vm|oke|oci_functions`.
+- Local development keeps deterministic local retrieval/synthesis and does not require OCI connectivity.
+- OCI VM and OKE profiles prefer OCI IAM-based runtime identity, OCI Vault for sensitive configuration, OCI Object Storage or Oracle AI Vector Search for retrieval, and OCI Logging/Monitoring/Notifications for operations.
+- OCI Functions-compatible execution is supported for scheduled refresh jobs through OCI Resource Scheduler invoking OCI Functions.
+- `/operations/profile`, `/operations/health`, and `/operations/analytics` expose additive diagnostics without changing the architecture-review API.
+- Live OCI SDK connectivity checks are disabled by default and should be enabled only after IAM policies and Vault access are ready.
 
 Evaluation flow:
 
@@ -165,6 +176,7 @@ Orchestration behavior:
 - Golden evals, edge-case evals, retrieval regression, and dual-provider parity can be run locally.
 - Local-vs-Oracle vector retrieval comparison cases exist for migration, SaaS, AI inference, observability, fintech DR, and analytics retrieval scenarios.
 - OCI staging smoke tests validate backend, frontend, retrieval, and OCI SDK access.
+- Operational readiness checks validate health endpoints, retrieval availability, deployment profile, operational diagnostics, and analytics visibility.
 
 ## Current Non-Goals / Deferred Work
 
@@ -176,6 +188,8 @@ Orchestration behavior:
 - No always-on live LLM synthesis by default.
 - No promotion of OCI GenAI mode without parity and operational validation.
 - No continuous live release intelligence beyond scheduled snapshot refresh, deterministic impact analysis, and gated promotion.
+- No external scheduler or operational workflow platform; scheduled refresh uses OCI Resource Scheduler and OCI Functions scaffolding.
+- No mandatory live OCI connectivity checks in local development.
 - No autonomous documentation crawling or full OCI documentation corpus yet.
 - No full bi-temporal retrieval; current-vs-historical support currently consists of schemas, retained historical snapshots, temporal response metadata, and current-first retrieval with release context terms.
 - Oracle AI Vector Search staging active reads remain guarded until a real index is built and query parity is validated.

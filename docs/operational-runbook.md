@@ -40,6 +40,37 @@ Knowledge refresh status endpoint:
 http://193.122.149.102:8000/knowledge/refresh/status
 ```
 
+Operational diagnostics endpoints:
+
+```text
+http://193.122.149.102:8000/operations/profile
+http://193.122.149.102:8000/operations/health
+http://193.122.149.102:8000/operations/analytics
+```
+
+## Operational Diagnostics
+
+Use the operational endpoints before promoting runtime changes. They summarize deployment profile, retrieval/vector health, release-refresh freshness, synthesis provider readiness, OCI Vault configuration-secret posture, OCI observability configuration, fallback events, hallucination findings, confidence distribution, and provider usage.
+
+Runtime profiles are configured with:
+
+```bash
+DEPLOYMENT_PROFILE=local_dev|oci_vm|oke|oci_functions
+```
+
+Profile examples live under `infra/runtime-profiles/`. Local development remains offline-safe. OCI VM and OKE profiles should use OCI IAM runtime identity and OCI Vault-backed sensitive configuration. OCI Functions-compatible execution is intended for scheduled refresh jobs invoked by OCI Resource Scheduler.
+
+Run a lightweight endpoint gate:
+
+```bash
+app/backend/.venv/bin/python infra/scripts/operational_readiness_check.py \
+  --api-base-url http://localhost:8000
+```
+
+For staging, add `--require-oci-profile` once the deployed runtime is expected to report an OCI profile instead of `local_dev`.
+
+Live OCI SDK connectivity checks are controlled by `OCI_CONNECTIVITY_CHECK_ENABLED`. Keep this disabled until IAM policies, dynamic groups, and Vault access are verified.
+
 ## Verify Deployment Health
 
 Run:

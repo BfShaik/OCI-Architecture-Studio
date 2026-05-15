@@ -19,4 +19,7 @@ module "foundation" {
   knowledge_refresh_stable_docs_cron         = var.knowledge_refresh_stable_docs_cron
   knowledge_refresh_function_memory_mbs      = var.knowledge_refresh_function_memory_mbs
   knowledge_refresh_function_timeout_seconds = var.knowledge_refresh_function_timeout_seconds
+  deployment_profile                         = var.deployment_profile
+  operational_diagnostics_enabled            = var.operational_diagnostics_enabled
+  oci_connectivity_check_enabled             = var.oci_connectivity_check_enabled
 }

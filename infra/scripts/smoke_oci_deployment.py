@@ -40,6 +40,8 @@ def post_json(url: str, payload: dict, timeout: int = 20) -> dict:
 def check_backend(api_base_url: str) -> None:
     health = fetch_json(f"{api_base_url.rstrip('/')}/health")
     assert health["status"] == "ok", health
+    operations = fetch_json(f"{api_base_url.rstrip('/')}/operations/health")
+    assert operations["status"] in {"ok", "warning"}, operations
 
     architecture_review = post_json(
         f"{api_base_url.rstrip('/')}/architecture-review",
@@ -60,7 +62,8 @@ def check_backend(api_base_url: str) -> None:
     print(
         "PASS backend: "
         f"{len(architecture_review['citations'])} architecture citations, "
-        f"{len(release_review['citations'])} release-aware citations"
+        f"{len(release_review['citations'])} release-aware citations, "
+        f"operations={operations['status']}"
     )
 
 

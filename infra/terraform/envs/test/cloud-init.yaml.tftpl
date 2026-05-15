@@ -9,3 +9,27 @@ runcmd:
   - mkdir -p /opt/oci-architecture-studio
   - echo "OCI Architecture Studio backend host initialized" > /opt/oci-architecture-studio/README
   - echo "Deploy application artifact or container here through CI/CD." >> /opt/oci-architecture-studio/README
+  - |
+    cat >/etc/oci-architecture-studio.env <<'EOF'
+    APP_ENV=${app_env}
+    DEPLOYMENT_PROFILE=${deployment_profile}
+    OCI_AUTH_MODE=instance_principal
+    OCI_REGION=${oci_region}
+    OCI_COMPARTMENT_ID=${oci_compartment_id}
+    OCI_OBJECT_STORAGE_NAMESPACE=${object_storage_namespace}
+    OCI_VECTOR_BUCKET=${snapshots_bucket_name}
+    OCI_VECTOR_OBJECT_NAME=oci-rag-index.json
+    OCI_VAULT_CONFIG_SECRET_OCID=${oci_vault_config_secret_ocid}
+    OCI_LOGGING_LOG_GROUP_OCID=${oci_logging_log_group_ocid}
+    OCI_NOTIFICATIONS_TOPIC_OCID=${oci_notifications_topic_ocid}
+    OCI_EVENTS_RULE_OCID=${oci_events_rule_ocid}
+    OCI_MONITORING_NAMESPACE=${oci_monitoring_namespace}
+    OPERATIONAL_DIAGNOSTICS_ENABLED=${operational_diagnostics_enabled}
+    OCI_CONNECTIVITY_CHECK_ENABLED=${oci_connectivity_check_enabled}
+    RETRIEVAL_PROVIDER=oci_object_storage
+    RETRIEVAL_FALLBACK_ENABLED=true
+    EMBEDDING_PROVIDER=local
+    EMBEDDING_FALLBACK_ENABLED=true
+    ADVISORY_SYNTHESIS_PROVIDER=deterministic
+    EOF
+  - chmod 0600 /etc/oci-architecture-studio.env

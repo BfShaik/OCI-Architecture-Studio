@@ -1,5 +1,3 @@
-import json
-
 from fastapi import APIRouter
 
 from oci_arch_studio_backend.models.architecture import (
@@ -10,6 +8,7 @@ from oci_arch_studio_backend.models.architecture import (
 from oci_arch_studio_backend.core.config import get_settings
 from oci_arch_studio_backend.services.advisory_metrics import advisory_quality_metrics
 from oci_arch_studio_backend.services.orchestrator import ArchitectureReviewOrchestrator
+from oci_arch_studio_backend.services.operational import OperationalDiagnostics, read_refresh_status
 from oci_arch_studio_backend.services.releases import ReleaseSnapshotStore
 from oci_arch_studio_backend.services.retrieval import build_retriever
 from oci_arch_studio_backend.services.synthesis import build_synthesizer
@@ -65,18 +64,7 @@ async def retrieval_health() -> dict[str, object]:
 @router.get("/knowledge/refresh/status")
 async def knowledge_refresh_status() -> dict[str, object]:
     settings = get_settings()
-    status_path = settings.knowledge_refresh_status_path
-    if not status_path.exists():
-        return {
-            "status": "not_initialized",
-            "status_path": str(status_path),
-            "last_run": None,
-            "current_promoted_snapshot": None,
-        }
-    with status_path.open("r", encoding="utf-8") as file:
-        status = json.load(file)
-    status["status_path"] = str(status_path)
-    return status
+    return read_refresh_status(settings.knowledge_refresh_status_path)
 
 
 @router.get("/advisory/quality")
@@ -96,4 +84,32 @@ async def orchestration_health() -> dict[str, object]:
         "critic_warning_count": snapshot.get("critic_warning_count", 0),
         "orchestration_failure_count": snapshot.get("orchestration_failure_count", 0),
         "request_count": snapshot.get("request_count", 0),
+    }
+
+
+@router.get("/operations/profile")
+async def operations_profile() -> dict[str, object]:
+    settings = get_settings()
+    return OperationalDiagnostics(settings).deployment_profile()
+
+
+@router.get("/operations/health")
+async def operations_health() -> dict[str, object]:
+    settings = get_settings()
+    diagnostics = OperationalDiagnostics(settings)
+    retriever = build_retriever(settings)
+    return diagnostics.runtime_status(
+        retrieval=retriever.diagnostics(),
+        refresh_status=read_refresh_status(settings.knowledge_refresh_status_path),
+    )
+
+
+@router.get("/operations/analytics")
+async def operations_analytics() -> dict[str, object]:
+    settings = get_settings()
+    diagnostics = OperationalDiagnostics(settings)
+    return {
+        "deployment": diagnostics.deployment_profile(),
+        "observability": diagnostics.observability_status(),
+        "advisory_quality": advisory_quality_metrics.snapshot(),
     }

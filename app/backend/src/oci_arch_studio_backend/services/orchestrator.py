@@ -14,6 +14,7 @@ from oci_arch_studio_backend.services.intents import (
     IntentClassifier,
     get_intent_profile,
 )
+from oci_arch_studio_backend.services.operational import operational_metrics
 from oci_arch_studio_backend.services.releases import ReleaseSnapshotStore
 from oci_arch_studio_backend.services.response_formatter import build_section_citations
 from oci_arch_studio_backend.services.retrieval import OciKnowledgeRetriever
@@ -58,6 +59,7 @@ class ArchitectureReviewOrchestrator:
         self,
         request: ArchitectureReviewRequest,
     ) -> ArchitectureReviewResponse:
+        operational_started_at = operational_metrics.start()
         classifier_text = " ".join(
             part for part in (request.question, request.workload_context) if part
         )
@@ -218,7 +220,7 @@ class ArchitectureReviewOrchestrator:
             warnings=[*quality.quality_warnings, *synthesis.warnings, *orchestration_warnings, *consistency_warnings],
         )
 
-        return ArchitectureReviewResponse(
+        response = ArchitectureReviewResponse(
             intent=profile.intent.value,
             prompt_template=profile.prompt_template,
             orchestration_mode=orchestration_plan.mode,
@@ -286,3 +288,8 @@ class ArchitectureReviewOrchestrator:
             low_confidence=quality.low_confidence,
             next_steps=synthesis.next_steps,
         )
+        operational_metrics.record_response(
+            started_at=operational_started_at,
+            response=response.model_dump(),
+        )
+        return response

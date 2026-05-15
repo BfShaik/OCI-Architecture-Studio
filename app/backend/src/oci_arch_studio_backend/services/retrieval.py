@@ -28,6 +28,7 @@ from oci_arch_studio_backend.services.vector_store import (
     OracleAiVectorSearchStore,
     OciObjectStorageVectorConfig,
     OciObjectStorageVectorStore,
+    UnavailableVectorStore,
     VectorSearchFilters,
     VectorStore,
 )
@@ -581,20 +582,44 @@ def build_retriever(settings: Settings, top_k: int = 6) -> OciKnowledgeRetriever
             )
 
     if settings.retrieval_provider == "oci_object_storage":
-        if not settings.oci_object_storage_namespace or not settings.oci_vector_bucket:
+        missing = [
+            name
+            for name, value in (
+                ("OCI_OBJECT_STORAGE_NAMESPACE", settings.oci_object_storage_namespace),
+                ("OCI_VECTOR_BUCKET", settings.oci_vector_bucket),
+            )
+            if not value
+        ]
+        if missing and not settings.retrieval_fallback_enabled:
             raise ValueError(
                 "OCI_OBJECT_STORAGE_NAMESPACE and OCI_VECTOR_BUCKET are required "
                 "when RETRIEVAL_PROVIDER=oci_object_storage."
             )
-        store: VectorStore = OciObjectStorageVectorStore(
-            OciObjectStorageVectorConfig(
-                namespace=settings.oci_object_storage_namespace,
-                bucket_name=settings.oci_vector_bucket,
-                object_name=settings.oci_vector_object_name,
-                region=settings.oci_region,
-                profile=settings.oci_profile,
-                auth_mode=settings.oci_auth_mode,
+        if missing:
+            primary_store: VectorStore = UnavailableVectorStore(
+                provider_name="oci_object_storage_vector_manifest",
+                reason="Missing required OCI Object Storage retrieval setting(s): " + ", ".join(missing),
+                missing_config=missing,
             )
+        else:
+            primary_store = OciObjectStorageVectorStore(
+                OciObjectStorageVectorConfig(
+                    namespace=settings.oci_object_storage_namespace or "",
+                    bucket_name=settings.oci_vector_bucket or "",
+                    object_name=settings.oci_vector_object_name,
+                    region=settings.oci_region,
+                    profile=settings.oci_profile,
+                    auth_mode=settings.oci_auth_mode,
+                )
+            )
+        store = (
+            FallbackVectorStore(
+                primary=primary_store,
+                fallback=JsonVectorStore(index_path=settings.knowledge_index_path),
+                provider_name="oci_object_storage",
+            )
+            if settings.retrieval_fallback_enabled
+            else primary_store
         )
         provider_name = "oci_object_storage"
     elif settings.retrieval_provider == "oracle_ai_vector_search":

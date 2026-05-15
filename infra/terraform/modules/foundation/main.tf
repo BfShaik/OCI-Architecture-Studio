@@ -314,7 +314,21 @@ resource "oci_core_instance" "backend" {
     ssh_authorized_keys = var.ssh_public_key
     user_data = base64encode(templatefile(
       "${path.root}/cloud-init.yaml.tftpl",
-      {}
+      {
+        app_env                         = var.environment
+        deployment_profile              = var.deployment_profile
+        oci_region                      = var.region
+        oci_compartment_id              = oci_identity_compartment.project.id
+        oci_vault_config_secret_ocid    = oci_vault_secret.app_config_placeholder.id
+        oci_logging_log_group_ocid      = oci_logging_log_group.app.id
+        oci_notifications_topic_ocid    = oci_ons_notification_topic.alerts.id
+        oci_events_rule_ocid            = oci_events_rule.resource_lifecycle.id
+        oci_monitoring_namespace        = "oci_architecture_studio"
+        operational_diagnostics_enabled = var.operational_diagnostics_enabled
+        oci_connectivity_check_enabled  = var.oci_connectivity_check_enabled
+        snapshots_bucket_name           = oci_objectstorage_bucket.snapshots.name
+        object_storage_namespace        = data.oci_objectstorage_namespace.namespace.namespace
+      }
     ))
   }
 }

@@ -33,6 +33,15 @@ docs/
   ci.yml
 ```
 
+Operational readiness is checked separately from prompt/eval datasets because it validates runtime endpoints rather than generated architecture text:
+
+```bash
+app/backend/.venv/bin/python infra/scripts/operational_readiness_check.py \
+  --api-base-url http://localhost:8000
+```
+
+For OCI staging, add `--require-oci-profile` when the runtime should report an OCI deployment profile.
+
 ## Dataset Schema
 
 Each JSONL record is one eval case:
@@ -190,6 +199,7 @@ CI should run:
 6. advisory, orchestration, architecture-realism, and evaluation-intelligence suites
 7. retrieval regression
 8. advisory quality gate for promotion candidates
+9. operational readiness endpoint gate for deployment/profile/diagnostics changes
 9. retrieval parity before provider promotion
 
 The workflow in `.github/workflows/ci.yml` performs those steps. The eval runner writes JSON and Markdown reports to `evals/reports/`; CI uploads them as artifacts.

@@ -118,3 +118,26 @@ variable "knowledge_refresh_function_timeout_seconds" {
   type        = number
   default     = 900
 }
+
+variable "deployment_profile" {
+  description = "Runtime deployment profile exposed to the backend diagnostics layer."
+  type        = string
+  default     = "oci_vm"
+
+  validation {
+    condition     = contains(["local_dev", "oci_vm", "oke", "oci_functions"], var.deployment_profile)
+    error_message = "deployment_profile must be one of local_dev, oci_vm, oke, or oci_functions."
+  }
+}
+
+variable "operational_diagnostics_enabled" {
+  description = "Enable additive operational diagnostics endpoints and runtime health summaries."
+  type        = bool
+  default     = true
+}
+
+variable "oci_connectivity_check_enabled" {
+  description = "Enable live OCI SDK connectivity checks from operational diagnostics. Keep false unless runtime IAM is ready."
+  type        = bool
+  default     = false
+}

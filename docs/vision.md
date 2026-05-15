@@ -25,6 +25,7 @@ OCI Architecture Studio now has a validated working foundation:
 - optional Oracle AI Vector Search provider and index tooling for the next OCI-native retrieval step
 - local JSON retrieval preserved as the config-only rollback provider
 - point-in-time release snapshots, deterministic release impact metadata, selective refresh overlays, retained historical snapshots, and current-vs-historical schema scaffolding for release-aware guidance
+- OCI-native operational diagnostics, runtime profiles, and scheduled refresh scaffolding that prefer OCI Vault, IAM, Logging, Monitoring, Notifications, Events, Resource Scheduler, Functions, Object Storage, and Oracle AI Vector Search where applicable
 - golden, edge-case, advisory-quality, orchestration-quality, architecture-realism, evaluation-intelligence, retrieval regression, and parity validation gates
 - Terraform-based OCI staging slice with Object Storage, Vault, Logging, Monitoring, Events, and Notifications
 
@@ -39,6 +40,8 @@ The current deterministic synthesis and reasoning layer is heuristic. It improve
 The current evaluation intelligence layer is also heuristic. It provides reproducible regression signals for architecture realism, hallucination risk, provider comparisons, and recommendation quality, but it is not an objective measure of correctness and does not use LLM-as-judge scoring.
 
 Release-awareness is still foundational: the runtime can reference local release snapshots, classify release changes, surface impacted services/change categories, and retain historical snapshots for audit/context. It does not yet perform full automated release reconciliation or bi-temporal retrieval.
+
+Operational hardening is intentionally OCI-centric. The current implementation exposes diagnostics and config profiles, but it is not yet a production HA runtime, does not emit custom OCI Monitoring metrics automatically, and does not require live OCI checks in local development.
 
 The corpus remains curated rather than comprehensive. Current quality work should be read as a controlled transition from deterministic OCI advisory scaffolding toward retrieval-grounded OCI GenAI-assisted synthesis, not as a claim of full OCI documentation coverage or autonomous documentation crawling.
 

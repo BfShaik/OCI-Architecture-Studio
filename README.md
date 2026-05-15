@@ -18,6 +18,7 @@ OCI Architecture Studio currently supports a validated advisory flow in local de
 8. One final synthesis step generates the advisory response through the configured provider with deterministic rollback available. Deterministic synthesis now uses lightweight architecture pattern profiles, retrieved evidence, workload heuristics, and consistency checks rather than only profile boilerplate. OCI GenAI synthesis can be enabled through configuration and uses the same retrieved context through a dedicated grounding prompt builder.
 9. Release-awareness uses local release snapshots, deterministic release classification, impact analysis, release overlays on affected chunks, and refresh-policy scaffolding. Scheduled refresh and promotion automation exist, but live release reconciliation is not part of request-time advisory behavior.
 10. The backend returns structured recommendations, concise decision reasoning metadata, consistency findings, confidence, evidence links, section citation metadata, optional retrieval debug traces, release context, temporal knowledge context, and standard architecture response sections. The current UI renders the main advisory fields and citation cards; full section-level citation, reasoning, consistency, and release-context UI is future work.
+11. Operational diagnostics expose deployment profile, retrieval health, release refresh freshness, synthesis availability, OCI secret/config posture, and lightweight runtime analytics through additive endpoints. Live OCI connectivity checks are opt-in so local development stays offline-safe.
 
 LangGraph, advanced memory, and autonomous agent execution remain deferred. Oracle AI Vector Search provider code and tooling exist, but staging active-read promotion is deferred until a real Oracle vector index is built and parity checks pass.
 
@@ -70,6 +71,12 @@ tests/                Backend and integration tests
 - Knowledge refresh policy scaffolding for release-note watching, candidate snapshot validation, selective reindex, release overlay tagging, eval-gated promotion, historical snapshot retention, version lineage, and rollback-safe updates
 - Optional OCI-native recurring refresh scaffold with OCI Functions and OCI Resource Scheduler; this is not active request-time release intelligence
 - Continuous intelligence status endpoint at `/knowledge/refresh/status`
+- OCI-native runtime profiles for `local_dev`, `oci_vm`, `oke`, and `oci_functions` under `infra/runtime-profiles/`
+- Additive operational diagnostics endpoints: `/operations/profile`, `/operations/health`, and `/operations/analytics`
+- Lightweight operational analytics for retrieval provider usage, synthesis provider usage, fallback events, hallucination findings, workload-category usage, confidence distribution, and response latency
+- OCI Vault configuration-secret readiness checks, with local environment compatibility for development
+- OCI Logging, Monitoring, Notifications, and Events configuration visibility in operational diagnostics
+- Operational readiness checker under `infra/scripts/operational_readiness_check.py`
 - Intent-aware orchestration for:
   - product overview
   - architecture
@@ -253,6 +260,7 @@ VITE_API_BASE_URL=http://localhost:8000 npm run dev
 6. Run Oracle AI Vector Search dual-run checks against local JSON and the Object Storage provider before any active-read promotion.
 7. Replace fallback release parsing with stronger extraction from official OCI release pages and keep impact-category mappings under review.
 8. Use the evaluation-intelligence suite and advisory quality gate before promoting retrieval, synthesis, prompt, or provider changes.
+9. Use OCI-native runtime profiles and `/operations/health` before staging changes; enable live OCI connectivity checks only after IAM policies and Vault access are ready.
 
 ## Run Evaluations
 
@@ -289,6 +297,8 @@ app/backend/.venv/bin/python infra/scripts/retrieval_regression_check.py \
   --cases evals/golden-prompts.jsonl \
   --cases evals/edge-cases.jsonl \
   --output-dir evals/reports/retrieval
+app/backend/.venv/bin/python infra/scripts/operational_readiness_check.py \
+  --api-base-url http://localhost:8000
 ```
 
 This checks retrieval health, intent alignment, citation availability, top chunks, stale citations, and required OCI service coverage before changing retrieval providers.
@@ -380,7 +390,7 @@ cd ../frontend && npm run build
 
 Latest full validation: 2026-05-15.
 
-- Local backend tests: `105 passed`
+- Local backend tests: `112 passed`
 - Golden evals: `18 passed, 0 failed`
 - Edge-case evals: `8 passed, 0 failed`
 - Advisory-quality evals: `5 passed, 0 failed`
@@ -388,6 +398,7 @@ Latest full validation: 2026-05-15.
 - Architecture-realism evals: `4 passed, 0 failed`
 - Evaluation-intelligence evals: `9 passed, 0 failed`
 - Advisory quality gate: passed with MVP thresholds
+- Operational readiness check: passed locally
 - Retrieval regression: `26 passed, 0 failed`
 - Retrieval health: passed for `local_json` with 44 chunks in the current branch; staging remains documented as `oci_object_storage`
 - Oracle AI Vector Search local fallback health: passed with fallback active when DB settings are absent
