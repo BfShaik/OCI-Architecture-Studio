@@ -37,10 +37,14 @@ tests/                Backend and integration tests
 ## Current Capabilities
 
 - Local OCI source registry and ingestion pipeline
+- Curated local OCI architecture corpus with 44 registry sources/chunks in the current branch
+- Scalable ingestion scaffolding for source groups, source categories, release tags, chunk lineage, section hierarchy, and source traceability
 - Deterministic local embeddings for development
 - Optional OCI Generative AI embeddings with provider switching, dimensional validation, failure diagnostics, and deterministic local fallback
 - JSON vector index for local retrieval
 - Citation-friendly chunk metadata with service, service category, domain, workload, architecture pattern, trust, intent tags, migration mappings, and freshness score
+- Automatic chunk-level metadata enrichment for OCI service references, workload/domain labels, migration relevance, HA/DR relevance, cost relevance, security/compliance tags, and architecture pattern tags
+- Lightweight corpus health validation for chunk count, metadata completeness, missing service tags, orphaned chunks, duplicate content, empty embeddings, and coverage gaps
 - Lightweight retrieval reranking that combines semantic similarity, intent match, service relevance, metadata overlap, architecture pattern match, workload/domain relevance, topic match, and migration mapping match
 - Optional retrieval debug traces through request flag `retrieval_debug` or environment flag `RETRIEVAL_DEBUG_ENABLED`
 - Backend section citation plumbing with chunk ID, source document, OCI service category, and service name
@@ -118,10 +122,10 @@ Implemented today:
 
 Current limitations:
 
-- The active local corpus is still small: 21 OCI knowledge chunks/services.
+- The active local corpus is still curated and incomplete, but has expanded to 44 OCI registry sources/chunks across 41 services and 14 service domains in the current branch.
 - OCI GenAI mode requires valid OCI SDK auth, compartment, model IDs, region/endpoint policy access, and parity validation before promotion.
 - Live GenAI comparison is skipped when required OCI GenAI environment variables are absent.
-- GenAI output is still constrained by retrieved evidence quality; corpus expansion remains necessary before production-grade breadth.
+- GenAI output is still constrained by retrieved evidence quality; deeper official OCI documentation coverage remains necessary before production-grade breadth.
 
 ## Run Locally
 
@@ -133,12 +137,20 @@ Run this once before starting the backend if `knowledge/snapshots/oci-rag-index.
 python3 knowledge/ingestion/ingest.py
 ```
 
-The ingestion pipeline reads `knowledge/source_registry.json`, fetches a small approved set of OCI documentation pages when network access is available, chunks the text, creates deterministic local embeddings, and writes a JSON vector index to `knowledge/snapshots/oci-rag-index.json`.
+The ingestion pipeline reads `knowledge/source_registry.json`, applies source-group defaults, fetches the approved OCI documentation pages when network access is available, preserves document and section context during chunking, enriches chunk metadata, creates deterministic local embeddings by default, and writes a JSON vector index to `knowledge/snapshots/oci-rag-index.json`.
 
 For a fully offline seed index using the registry fallback text:
 
 ```bash
 python3 knowledge/ingestion/ingest.py --no-fetch
+```
+
+Validate corpus health:
+
+```bash
+app/backend/.venv/bin/python knowledge/ingestion/corpus_health.py \
+  --index knowledge/snapshots/oci-rag-index.json \
+  --min-chunks 40
 ```
 
 ### Build the Local OCI Release Snapshot
@@ -328,14 +340,15 @@ cd ../frontend && npm run build
 
 Latest full validation: 2026-05-15.
 
-- Local backend tests: `70 passed`
-- Golden evals: `12 passed, 0 failed`
+- Local backend tests: `89 passed`
+- Golden evals: `18 passed, 0 failed`
 - Edge-case evals: `8 passed, 0 failed`
 - Advisory-quality evals: `5 passed, 0 failed`
 - Controlled orchestration evals: `5 passed, 0 failed`
-- Retrieval regression: `20 passed, 0 failed`
-- Retrieval health: passed for `local_json` in the current branch; staging remains documented as `oci_object_storage`
-- Knowledge ingestion: `21 chunks`
+- Retrieval regression: `26 passed, 0 failed`
+- Retrieval health: passed for `local_json` with 44 chunks in the current branch; staging remains documented as `oci_object_storage`
+- Corpus health: passed for 44 chunks, 44 sources, 41 services, and 14 service domains
+- Knowledge ingestion: `44 chunks`
 - Release ingestion: `3 release items`
 - Knowledge refresh policy smoke: passed
 - Frontend build: passed

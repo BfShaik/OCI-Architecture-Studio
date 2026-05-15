@@ -268,6 +268,68 @@ def test_mapped_service_selection_prioritizes_operational_coverage(tmp_path) -> 
     )
 
 
+def test_final_chunk_selection_adds_intent_diversity(tmp_path) -> None:
+    retriever = OciKnowledgeRetriever(index_path=tmp_path / "missing.json", top_k=4)
+    reranked = [
+        (_chunk("arch::1", "Architecture Center", "architecture"), 0.9),
+        (_chunk("arch::2", "Architecture Center", "architecture"), 0.89),
+        (_chunk("net::1", "Load Balancer", "networking"), 0.7),
+        (_chunk("db::1", "Database Services", "database"), 0.69),
+        (_chunk("obs::1", "Monitoring", "observability"), 0.68),
+    ]
+
+    selected = retriever._select_final_chunks(  # noqa: SLF001 - regression for retrieval diversity.
+        reranked,
+        mapped_services=(),
+        pattern_services=(),
+        intent="architecture",
+    )
+
+    selected_domains = [chunk.metadata["service_domain"] for chunk, _score in selected]
+    assert selected_domains == ["networking", "database", "observability", "architecture"]
+
+
+def test_final_chunk_selection_protects_intent_critical_services(tmp_path) -> None:
+    retriever = OciKnowledgeRetriever(index_path=tmp_path / "missing.json", top_k=6)
+    reranked = [
+        (_chunk("security::1", "Security Services", "security"), 0.96),
+        (_chunk("cost::1", "Cost Management", "cost"), 0.95),
+        (_chunk("lb::1", "Load Balancer", "networking"), 0.72),
+        (_chunk("db::1", "Database Services", "database"), 0.71),
+        (_chunk("object::1", "Object Storage", "storage"), 0.7),
+        (_chunk("logging::1", "Logging", "observability"), 0.69),
+        (_chunk("monitoring::1", "Monitoring", "observability"), 0.68),
+    ]
+
+    selected = retriever._select_final_chunks(  # noqa: SLF001 - regression for architecture-aware coverage.
+        reranked,
+        mapped_services=(),
+        pattern_services=(),
+        intent="saas_platform",
+    )
+
+    selected_services = [chunk.metadata["service"] for chunk, _score in selected]
+    assert selected_services[:5] == [
+        "Load Balancer",
+        "Database Services",
+        "Object Storage",
+        "Logging",
+        "Monitoring",
+    ]
+
+
+def _chunk(chunk_id: str, service: str, service_domain: str) -> VectorChunk:
+    return VectorChunk(
+        id=chunk_id,
+        title=service,
+        url="https://example.com",
+        source_type="oci_doc",
+        text=f"{service} guidance",
+        embedding=[1.0, 0.0],
+        metadata={"service": service, "service_domain": service_domain},
+    )
+
+
 def test_retriever_debug_trace_explains_reranking(tmp_path) -> None:
     embedder = LocalHashingEmbedder()
     index_path = tmp_path / "index.json"

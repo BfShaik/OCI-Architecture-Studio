@@ -16,6 +16,7 @@ OCI Architecture Studio now has a validated working foundation:
 - optional synthesis debug traces for prompt sections, retrieved chunks, token estimates, and fallback reasons
 - backend section citation metadata for chunk IDs, source documents, OCI service categories, and services
 - AWS-to-OCI source service mapping and domain-aware heuristics for ecommerce, fintech, SaaS, AI/ML inference, observability, and analytics scenarios
+- 44-source local OCI corpus with scalable ingestion scaffolding for source groups, source categories, chunk lineage, document hierarchy, release tags, and corpus health validation
 - deterministic architecture pattern profiles and synthesis quality signals that make fallback responses more useful while remaining explainable
 - concise decision reasoning metadata and lightweight consistency validation for recommendation coherence
 - confidence sub-signals for retrieval grounding, service relevance, workload alignment, migration mapping certainty, and citation coverage
@@ -35,7 +36,7 @@ The current deterministic synthesis layer is heuristic. It improves structure, w
 
 Release-awareness is still foundational: the runtime can reference local release snapshots and impact metadata, but it does not yet perform full automated release reconciliation or bi-temporal retrieval.
 
-The corpus remains intentionally modest. Current quality work should be read as a controlled transition from deterministic OCI advisory scaffolding toward retrieval-grounded OCI GenAI-assisted synthesis, not as a claim of full OCI documentation coverage.
+The corpus remains curated rather than comprehensive. Current quality work should be read as a controlled transition from deterministic OCI advisory scaffolding toward retrieval-grounded OCI GenAI-assisted synthesis, not as a claim of full OCI documentation coverage or autonomous documentation crawling.
 
 ## Product Pillars
 

@@ -19,6 +19,9 @@ OCI Architecture Studio is an AI-powered OCI architecture intelligence platform 
 - AWS-to-OCI service mapping before retrieval
 - Metadata-aware retrieval reranking and optional retrieval debug traces
 - Section citation metadata in the backend response
+- Curated 44-source local OCI knowledge corpus in the current branch
+- Ingestion scaffolding for source groups, source categorization, document hierarchy, chunk lineage, release tags, metadata enrichment, and source traceability
+- Corpus health validation for metadata completeness, duplicates, orphaned chunks, service tags, embeddings, and retrieval coverage gaps
 - OCI GenAI embedding provider path with deterministic fallback and validation diagnostics
 - OCI GenAI synthesis provider path with fail-closed deterministic fallback
 - Dedicated retrieval-grounded prompt builder for GenAI synthesis
@@ -41,7 +44,7 @@ User flow:
 2. The system classifies the prompt intent.
 3. The system maps known source services to OCI service candidates when migration/source-cloud services are mentioned.
 4. The system detects architecture-domain heuristics such as ecommerce, fintech, SaaS, AI/ML inference, observability, or analytics.
-5. The system retrieves OCI knowledge chunks through a config-selected retrieval provider and reranks candidates using semantic score, intent match, service relevance, metadata overlap, architecture pattern match, workload/domain relevance, topic match, and migration mappings.
+5. The system retrieves OCI knowledge chunks through a config-selected retrieval provider and reranks candidates using semantic score, intent match, service relevance, metadata overlap, architecture pattern match, workload/domain relevance, topic match, migration mappings, and intent-critical service coverage.
 6. The system uses deterministic in-process orchestration metadata and a single synthesis step to produce a structured advisory response. The deterministic path applies lightweight architecture pattern profiles, retrieved services, workload/domain heuristics, citation metadata, and consistency validation. The OCI GenAI path injects a retrieval-grounded prompt with intent, mappings, workload/domain profile, pattern hints, and retrieved chunks.
 7. Release-aware prompts are checked against point-in-time release snapshots and freshness metadata. Current release awareness is snapshot/scaffold based, not live request-time reconciliation with OCI release feeds.
 8. The backend returns recommendations, assumptions, risks, citations, evidence links, confidence, decision reasoning metadata, consistency findings, section citation metadata, release context, temporal knowledge context, and optional retrieval debug traces.
@@ -93,6 +96,13 @@ Embedding behavior:
 - Embedding fallback is enabled by default through `EMBEDDING_FALLBACK_ENABLED=true`.
 - The embedding path validates missing provider configuration, generation failures, and optional dimensional consistency.
 
+Corpus and ingestion behavior:
+
+- The current local corpus is curated, not a complete OCI documentation mirror.
+- The current branch contains 44 registry sources/chunks across architecture, networking, compute, containers, database, storage, edge, security, observability, cost, resilience, AI/ML, analytics, and DevOps-oriented domains.
+- Ingestion supports source-group defaults, source categories, source freshness metadata, release tags, context-preserving chunking, section paths, previous/next chunk lineage, chunk content hashes, and automatic metadata enrichment.
+- Corpus health checks are lightweight validation utilities; they are not autonomous crawlers or production refresh automation.
+
 Orchestration behavior:
 
 - The current orchestration layer is deterministic and in-process.
@@ -127,6 +137,7 @@ Orchestration behavior:
 - No always-on live LLM synthesis by default.
 - No promotion of OCI GenAI mode without parity and operational validation.
 - No continuous live release intelligence beyond scheduled snapshot refresh and gated promotion.
+- No autonomous documentation crawling or full OCI documentation corpus yet.
 - No bi-temporal retrieval; current-vs-historical temporal knowledge support is schema-oriented scaffolding only.
 - Oracle AI Vector Search active reads remain guarded until schema, indexing, and query parity are validated.
 - HTTPS ingress and production HA are deferred beyond the current staging slice.

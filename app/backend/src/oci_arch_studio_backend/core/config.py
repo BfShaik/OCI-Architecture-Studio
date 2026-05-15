@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     embedding_fallback_enabled: bool = Field(default=True, alias="EMBEDDING_FALLBACK_ENABLED")
     retrieval_provider: str = Field(default="local_json", alias="RETRIEVAL_PROVIDER")
     retrieval_debug_enabled: bool = Field(default=False, alias="RETRIEVAL_DEBUG_ENABLED")
-    retrieval_candidate_multiplier: int = Field(default=3, alias="RETRIEVAL_CANDIDATE_MULTIPLIER")
+    retrieval_candidate_multiplier: int = Field(default=6, alias="RETRIEVAL_CANDIDATE_MULTIPLIER")
     advisory_orchestration_mode: str = Field(
         default="multi_agent_pilot",
         alias="ADVISORY_ORCHESTRATION_MODE",

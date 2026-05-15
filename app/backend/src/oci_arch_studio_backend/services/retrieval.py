@@ -134,7 +134,7 @@ class OciKnowledgeRetriever:
         store: VectorStore | None = None,
         provider_name: str = "local_json",
         debug_enabled: bool = False,
-        candidate_multiplier: int = 3,
+        candidate_multiplier: int = 6,
     ) -> None:
         self.store = store or JsonVectorStore(index_path=index_path)
         self.top_k = top_k
@@ -231,6 +231,7 @@ class OciKnowledgeRetriever:
             reranked,
             mapped_services=service_mapping.mapped_services,
             pattern_services=pattern_services,
+            intent=intent,
         )
         sources = [self._to_retrieved_source(chunk, score) for chunk, score in selected]
         if self._debug_requested(debug_enabled):
@@ -379,11 +380,16 @@ class OciKnowledgeRetriever:
         *,
         mapped_services: tuple[str, ...],
         pattern_services: tuple[str, ...],
+        intent: str | None = None,
     ) -> list[tuple[object, float]]:
         selected: list[tuple[object, float]] = []
         selected_ids: set[str] = set()
 
-        for service in (*self._prioritized_mapped_services(mapped_services), *pattern_services):
+        for service in (
+            *self._prioritized_mapped_services(mapped_services),
+            *pattern_services,
+            *self._intent_critical_services(intent),
+        ):
             for chunk, score in reranked:
                 if chunk.id in selected_ids:
                     continue
@@ -393,6 +399,19 @@ class OciKnowledgeRetriever:
                     break
             if len(selected) >= self.top_k:
                 break
+
+        for domain in self._diversity_domains(intent):
+            if len(selected) >= self.top_k:
+                break
+            if any(str(chunk.metadata.get("service_domain", "")).lower() == domain for chunk, _score in selected):
+                continue
+            for chunk, score in reranked:
+                if chunk.id in selected_ids:
+                    continue
+                if str(chunk.metadata.get("service_domain", "")).lower() == domain:
+                    selected.append((chunk, score))
+                    selected_ids.add(chunk.id)
+                    break
 
         for chunk, score in reranked:
             if len(selected) >= self.top_k:
@@ -422,6 +441,32 @@ class OciKnowledgeRetriever:
                 key=lambda service: (priority.get(service, 100), service),
             )
         )
+
+    def _diversity_domains(self, intent: str | None) -> tuple[str, ...]:
+        domains_by_intent = {
+            "architecture": ("architecture", "networking", "database", "observability", "security", "cost"),
+            "migration": ("containers", "database", "networking", "observability", "security", "cost"),
+            "dr": ("resilience", "database", "networking", "observability", "security", "storage"),
+            "cost": ("cost", "compute", "storage", "database", "observability", "architecture"),
+            "observability": ("observability", "security", "compute", "database", "containers"),
+            "security": ("security", "networking", "observability", "database", "architecture"),
+            "ai_ml": ("compute", "containers", "storage", "observability", "security", "cost"),
+            "saas_platform": ("networking", "containers", "database", "observability", "security", "cost"),
+            "analytics": ("storage", "database", "observability", "security", "cost"),
+        }
+        return domains_by_intent.get(intent or "", ("architecture", "observability", "security", "cost"))
+
+    def _intent_critical_services(self, intent: str | None) -> tuple[str, ...]:
+        services_by_intent = {
+            "architecture": ("Load Balancer", "Database Services", "Object Storage", "Logging", "Monitoring"),
+            "dr": ("Database Services", "Logging", "Monitoring", "Object Storage"),
+            "cost": ("Compute", "Object Storage", "Cost Management", "Monitoring"),
+            "observability": ("Logging", "Monitoring", "Database Services"),
+            "ai_ml": ("Compute", "Object Storage", "Logging", "Monitoring"),
+            "saas_platform": ("Load Balancer", "Database Services", "Object Storage", "Logging", "Monitoring"),
+            "analytics": ("Object Storage", "Database Services", "Logging", "Monitoring"),
+        }
+        return services_by_intent.get(intent or "", ())
 
     def _pattern_triggered(self, triggers: tuple[str, ...], text: str) -> bool:
         normalized = text.lower()

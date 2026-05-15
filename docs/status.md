@@ -262,6 +262,14 @@ This progress is based on `docs/two-week-plan.md`.
   - optional OCI Functions + Resource Scheduler schedule scaffold for OCI-native recurring refresh
   - `docs/knowledge-refresh-policy.md`
   - `docs/continuous-intelligence-operations.md`
+- Added corpus expansion foundation:
+  - expanded the local source registry to 44 curated OCI sources/chunks
+  - added source-group defaults for service families, reference architectures, and architecture-center sources
+  - added context-preserving chunking profiles for service docs, migration guidance, resilience/security/observability guidance, and reference architectures
+  - added chunk lineage metadata including parent document, section title/path, chunk type, previous/next chunk IDs, content hash, and word count
+  - added automatic chunk metadata enrichment for OCI service references, workload/domain labels, migration relevance, HA/DR relevance, cost relevance, security/compliance tags, and architecture patterns
+  - added corpus health validation for chunk count, metadata completeness, missing service tags, empty embeddings, duplicate IDs/content, orphaned chunks, and coverage gaps
+  - improved final retrieval selection so intent-critical services and retrieval diversity survive the larger curated corpus
 - Pushed current implementation to GitHub.
 
 ## Latest Validation
@@ -281,19 +289,19 @@ Last validation run: 2026-05-15
 - Deployment config validation: passed
 - GitHub workflow YAML parsing: passed
 - Infrastructure Python script compile checks: passed
-- Knowledge ingestion smoke: passed, 21 chunks generated
+- Knowledge ingestion smoke: passed, 44 chunks generated locally from 44 registry sources
 - Release ingestion smoke: passed, 3 release items generated
 - Knowledge refresh policy smoke: passed, forced selective refresh with post-refresh gates
 - Continuous intelligence hardening: candidate-first promotion, version lineage, rollback automation, and refresh status endpoint implemented
 - Terraform validation: passed after optional knowledge refresh scheduler scaffold; staging plan currently should not be applied until existing backend replacement drift is resolved and the function image is available
 - OCI-native refresh scheduler scaffold: implemented with OCI Functions plus OCI Resource Scheduler; not applied yet because a published OCIR function image is required before enabling
-- Backend tests: passed, 83 tests
+- Backend tests: passed, 89 tests
 - Frontend build: passed
 - Golden evals: passed, 18 of 18
 - Edge-case evals: passed, 8 of 8
 - Advisory-quality evals: passed, 5 of 5
 - Controlled orchestration evals: passed, 5 of 5
-- Retrieval health check: passed for `local_json`, 21 chunks
+- Retrieval health check: passed for `local_json`, 44 chunks
 - Retrieval health check with `EMBEDDING_PROVIDER=oci_genai` and missing OCI GenAI env vars: passed through deterministic embedding fallback
 - Retrieval regression check: passed for `local_json`, 26 of 26 golden + edge cases
 - GenAI comparison eval: skipped live OCI GenAI path because required OCI GenAI env vars were not present; deterministic side of 4 comparison cases passed and report was generated
@@ -316,7 +324,7 @@ Last validation run: 2026-05-15
 - Staging retrieval provider promotion: passed, active provider is now `oci_object_storage`
 - Staging redeploy from the latest audited working tree: passed
 - Staging endpoint parity: passed for `/health`, `/architecture-review`, `/retrieval/health`, `/advisory/quality`, `/orchestration/health`, and `/knowledge/refresh/status`
-- Staging retrieval snapshot: passed with `oci_object_storage`, 21 chunks, 21 services, and 11 service domains
+- Staging retrieval snapshot: previously passed with `oci_object_storage`, 21 chunks, 21 services, and 11 service domains; the 44-source corpus expansion is validated locally and still needs staging snapshot promotion before it is a staging runtime claim
 - Post-promotion baseline guardrail: passed with expected provider `oci_object_storage`
 - Post-promotion deployment smoke: passed for backend, frontend, and OCI SDK tenancy access
 - Post-promotion OCI resource visibility smoke: passed for Object Storage bucket, Vault secret, Logging log group, Monitoring alarm, and Events rule
@@ -333,7 +341,6 @@ Last validation run: 2026-05-15
 - Validate the Oracle AI Vector Search table schema and enable read-path implementation only after manifest parity is proven.
 - Expand OCI source coverage for:
   - Budgets-specific documentation
-  - Audit-specific documentation
   - Data Guard-specific documentation
   - deeper workload architecture sources
 - Improve HTML ingestion quality to remove more documentation boilerplate.
@@ -367,8 +374,8 @@ Last validation run: 2026-05-15
   - current index includes source URL, service, service domain, service category, workload/domain tags, topic, migration mappings, HA/DR and cost tags, intent tags, fetched timestamp, freshness score, trust level, architecture patterns, chunk index, and fetch status
   - still needs source version/date and richer ownership metadata
 - Source registry expansion:
-  - added OKE, database migration, Full Stack Disaster Recovery, Cost Management, Security Services, Object Storage, CDN / edge services, IAM, Network Security Groups, Autonomous Database, Vault, Logging, Monitoring, Cloud Guard, and WAF
-  - still needs Budgets-specific, Audit-specific, Data Guard-specific, and deeper workload architecture sources
+  - expanded to 44 local registry sources/chunks covering core networking, containers, database, storage, observability, security, cost, data/analytics, AI/ML, DevOps, and selected reference architecture topics
+  - still needs Budgets-specific, Data Guard-specific, and deeper workload architecture sources
 - Release-awareness and continuous intelligence:
   - release-aware intent, prompt template, release registry, release ingestion, and release snapshot reader exist
   - scheduled refresh automation and candidate-first promotion now exist
@@ -399,14 +406,15 @@ Last validation run: 2026-05-15
 - Retrieval quality:
   - reranking and domain heuristics are implemented and covered by tests
   - optional debug traces expose detected intent, mapped OCI services, candidate chunks, score adjustments, and selected final chunks
+  - final chunk selection now protects intent-critical architecture services before generic diversity fill
   - section citation metadata is available in the backend response
   - full section-level citation rendering in the frontend remains future work
 
 ## Current Known Limitations
 
-- The local RAG index is small and not a complete OCI documentation corpus.
+- The local RAG index is a curated 44-source corpus, not a complete OCI documentation corpus.
 - Embeddings are deterministic local hash embeddings, useful for workflow validation but not production semantic retrieval.
-- Reranking improves ordering and traceability but still depends on the small curated corpus and local hash embeddings.
+- Reranking improves ordering and traceability but still depends on the curated corpus and local hash embeddings.
 - Release awareness has scheduled snapshot refresh, candidate validation, and status visibility; deeper semantic impact analysis remains next-phase work.
 - OCI GenAI synthesis adapter exists, but deterministic synthesis remains the rollback-safe default unless enabled by environment configuration.
 - Deterministic architecture patterns improve fallback usefulness but are still heuristic and bounded by the retrieved corpus.

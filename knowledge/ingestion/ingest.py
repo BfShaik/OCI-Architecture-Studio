@@ -9,6 +9,7 @@ import sys
 from datetime import UTC, datetime
 from html.parser import HTMLParser
 from pathlib import Path
+from typing import NamedTuple
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
@@ -24,6 +25,7 @@ from oci_arch_studio_backend.services.embeddings import (  # noqa: E402
 )
 from oci_arch_studio_backend.services.metadata import (  # noqa: E402
     METADATA_SCHEMA_VERSION,
+    enrich_chunk_metadata,
     enrich_metadata,
 )
 
@@ -36,6 +38,13 @@ BOILERPLATE_PATTERNS = (
     r"Copyright\s+©.*?$",
     r"Oracle Account\s+Manage your account.*?$",
 )
+
+
+class ChunkRecord(NamedTuple):
+    text: str
+    section_title: str
+    section_path: tuple[str, ...]
+    chunk_type: str
 
 SERVICE_METADATA: dict[str, dict[str, object]] = {
     "architecture-center": {
@@ -251,16 +260,124 @@ def chunk_text(text: str, chunk_size: int, chunk_overlap: int) -> list[str]:
     return chunks
 
 
-def load_registry(path: Path) -> list[dict[str, str]]:
+def chunk_document(
+    *,
+    text: str,
+    source: dict[str, object],
+    chunk_size: int,
+    chunk_overlap: int,
+) -> list[ChunkRecord]:
+    profile = chunk_profile(source)
+    effective_size = int(source.get("chunk_size", profile["chunk_size"]) or chunk_size)
+    effective_overlap = int(source.get("chunk_overlap", profile["chunk_overlap"]) or chunk_overlap)
+    section_title = str(source.get("section") or source.get("title") or "Document")
+    section_path = tuple(
+        str(item)
+        for item in source.get(
+            "section_path",
+            [
+                source.get("source_group", "oci"),
+                source.get("service_domain", profile["service_domain"]),
+                section_title,
+            ],
+        )
+    )
+    context_prefix = (
+        f"Document: {source.get('title')}. "
+        f"Section: {' > '.join(section_path)}. "
+        f"Context: {source.get('service', '') or profile['service']} "
+        f"{source.get('source_category', profile['source_category'])} guidance. "
+    )
+    raw_chunks = chunk_text(text, chunk_size=effective_size, chunk_overlap=effective_overlap)
+    records: list[ChunkRecord] = []
+    for raw_chunk in raw_chunks:
+        cleaned = cleanup_chunk_text(raw_chunk)
+        if not cleaned:
+            continue
+        records.append(
+            ChunkRecord(
+                text=f"{context_prefix}{cleaned}",
+                section_title=section_title,
+                section_path=section_path,
+                chunk_type=str(profile["chunk_type"]),
+            )
+        )
+    return records
+
+
+def chunk_profile(source: dict[str, object]) -> dict[str, object]:
+    source_type = str(source.get("source_type", "oci_doc"))
+    source_category = str(source.get("source_category", "service"))
+    service_domain = str(source.get("service_domain", "general"))
+    if source_type == "oci_architecture_doc" or source_category in {"reference-architecture", "architecture-pattern"}:
+        return {
+            "chunk_size": 340,
+            "chunk_overlap": 70,
+            "chunk_type": "architecture_context",
+            "service": source.get("service", "Architecture Center"),
+            "service_domain": service_domain,
+            "source_category": source_category,
+        }
+    if "migration" in source_category or "migration" in str(source.get("intent_tags", "")):
+        return {
+            "chunk_size": 300,
+            "chunk_overlap": 60,
+            "chunk_type": "migration_guidance",
+            "service": source.get("service", "Migration"),
+            "service_domain": service_domain,
+            "source_category": source_category,
+        }
+    if service_domain in {"resilience", "security", "observability"}:
+        return {
+            "chunk_size": 280,
+            "chunk_overlap": 55,
+            "chunk_type": f"{service_domain}_guidance",
+            "service": source.get("service", "OCI Service"),
+            "service_domain": service_domain,
+            "source_category": source_category,
+        }
+    return {
+        "chunk_size": 260,
+        "chunk_overlap": 50,
+        "chunk_type": "service_guidance",
+        "service": source.get("service", "OCI Service"),
+        "service_domain": service_domain,
+        "source_category": source_category,
+    }
+
+
+def load_registry(path: Path) -> list[dict[str, object]]:
     with path.open("r", encoding="utf-8") as file:
         payload = json.load(file)
-    return payload["sources"]
+    groups = {
+        group["id"]: group
+        for group in payload.get("source_groups", [])
+        if isinstance(group, dict) and group.get("id")
+    }
+    sources: list[dict[str, object]] = []
+    for source in payload["sources"]:
+        source = dict(source)
+        group_id = source.get("source_group")
+        if group_id in groups:
+            group = groups[group_id]
+            for key in (
+                "source_category",
+                "service_domain",
+                "intent_tags",
+                "architecture_patterns",
+                "domain_tags",
+                "workload_types",
+                "refresh_policy",
+            ):
+                source.setdefault(key, group.get(key))
+        sources.append(source)
+    return sources
 
 
 def select_sources(
-    sources: list[dict[str, str]],
+    sources: list[dict[str, object]],
     source_ids: list[str] | None,
-) -> list[dict[str, str]]:
+) -> list[dict[str, object]]:
     if not source_ids:
         return sources
     requested = set(source_ids)
@@ -312,8 +429,11 @@ def infer_source_metadata(source: dict[str, object], fetched_timestamp: str, fet
             "source_url": source["url"],
             "source_id": source["id"],
             "source_type": source.get("source_type", "oci_doc"),
+            "source_group": source.get("source_group", "ungrouped"),
             "source_category": source.get("source_category", metadata.get("service_domain", "general")),
             "release_tags": _as_list(source.get("release_tags", [])),
+            "refresh_policy": source.get("refresh_policy", "manual"),
+            "source_last_reviewed": source.get("last_reviewed"),
             "fetched_timestamp": fetched_timestamp,
             "freshness_score": 0.9 if fetch_status == "fetched" else 0.65,
             "trust_level": source.get("trust_level", "official"),
@@ -409,14 +529,24 @@ def build_index(args: argparse.Namespace) -> dict[str, object]:
                 fetch_status = "fallback"
 
         source_metadata = infer_source_metadata(source, generated_at, fetch_status)
+        chunk_records = chunk_document(
+            text=text,
+            source=source,
+            chunk_size=args.chunk_size,
+            chunk_overlap=args.chunk_overlap,
+        )
+        chunk_ids = [f"{source['id']}::{index}" for index in range(1, len(chunk_records) + 1)]
+        parent_document_id = str(source["id"])
         for index, chunk in enumerate(
-            chunk_text(text, chunk_size=args.chunk_size, chunk_overlap=args.chunk_overlap),
+            chunk_records,
             start=1,
         ):
-            clean_chunk = cleanup_chunk_text(chunk)
+            chunk_id = chunk_ids[index - 1]
+            clean_chunk = cleanup_chunk_text(chunk.text)
+            chunk_metadata = enrich_chunk_metadata(source_metadata, clean_chunk)
             chunks.append(
                 {
-                    "id": f"{source['id']}::{index}",
+                    "id": chunk_id,
                     "source_id": source["id"],
                     "title": source["title"],
                     "url": source["url"],
@@ -425,11 +555,18 @@ def build_index(args: argparse.Namespace) -> dict[str, object]:
                     "embedding": embedder.embed(clean_chunk),
                     "metadata": {
                         "chunk_index": index,
+                        "chunk_count_for_source": len(chunk_records),
+                        "chunk_type": chunk.chunk_type,
+                        "parent_document_id": parent_document_id,
+                        "section_title": chunk.section_title,
+                        "section_path": list(chunk.section_path),
+                        "previous_chunk_id": chunk_ids[index - 2] if index > 1 else None,
+                        "next_chunk_id": chunk_ids[index] if index < len(chunk_ids) else None,
                         "chunk_word_count": len(clean_chunk.split()),
                         "content_hash": chunk_content_hash(clean_chunk),
                         "fetch_status": fetch_status,
                         "vector_ready": True,
-                        **source_metadata,
+                        **chunk_metadata,
                     },
                 }
             )
@@ -454,6 +591,7 @@ def build_index(args: argparse.Namespace) -> dict[str, object]:
             "oracle_ai_vector_search_read_enabled": False,
         },
         "source_count": len(all_sources),
+        "source_group_count": len({str(source.get("source_group", "ungrouped")) for source in all_sources}),
         "refreshed_source_ids": refreshed_source_ids,
         "selective_refresh": bool(args.source_ids),
         "chunk_count": len(chunks),

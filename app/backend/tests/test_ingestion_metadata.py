@@ -80,6 +80,51 @@ def test_chunk_content_hash_is_stable() -> None:
     assert ingest.chunk_content_hash(text) != ingest.chunk_content_hash(text + " Updated.")
 
 
+def test_chunk_document_preserves_context_and_lineage_metadata() -> None:
+    source = {
+        "id": "oci-reference-test",
+        "title": "OCI Reference Architecture Test",
+        "url": "https://docs.oracle.com/example",
+        "source_type": "oci_architecture_doc",
+        "source_category": "reference-architecture",
+        "source_group": "architecture-foundation",
+        "service": "Architecture Center",
+        "service_domain": "architecture",
+        "section_path": ["architecture", "webapp", "reference"],
+    }
+    text = " ".join(f"sentence {index} describes load balancer monitoring backup security." for index in range(80))
+
+    chunks = ingest.chunk_document(text=text, source=source, chunk_size=40, chunk_overlap=10)
+
+    assert len(chunks) > 1
+    assert chunks[0].chunk_type == "architecture_context"
+    assert chunks[0].section_path == ("architecture", "webapp", "reference")
+    assert chunks[0].text.startswith("Document: OCI Reference Architecture Test.")
+
+
+def test_enrich_chunk_metadata_adds_content_signals() -> None:
+    source = {
+        "id": "oci-reference-ha-webapp",
+        "title": "OCI Reference HA Webapp",
+        "url": "https://docs.oracle.com/example",
+        "source_type": "oci_architecture_doc",
+        "service": "Architecture Center",
+        "service_domain": "architecture",
+        "intent_tags": ["architecture"],
+        "architecture_patterns": ["reference-architecture"],
+    }
+    metadata = ingest.infer_source_metadata(source, "2026-05-14T00:00:00+00:00", "fallback")
+    enriched = ingest.enrich_chunk_metadata(
+        metadata,
+        "Use Load Balancer, WAF, Object Storage, Monitoring, backups, IAM, and Vault for ecommerce DR.",
+    )
+
+    assert "Load Balancer" in enriched["oci_service_references"]
+    assert "operational-visibility" in enriched["architecture_patterns"]
+    assert enriched["ha_dr_relevance"] in {"medium", "high"}
+    assert "security" in enriched["intent_tags"]
+
+
 def test_select_sources_rejects_unknown_source_ids() -> None:
     sources = [{"id": "oci-object-storage-overview"}]
 
