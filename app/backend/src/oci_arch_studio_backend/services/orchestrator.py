@@ -57,11 +57,24 @@ class ArchitectureReviewOrchestrator:
         )
         intent = self.classifier.classify(classifier_text)
         profile = get_intent_profile(intent)
+        release_context_terms = (
+            self.release_store.retrieval_context_terms(request.question)
+            if self.release_store is not None
+            else []
+        )
+        retrieval_workload_context = " ".join(
+            part
+            for part in (
+                request.workload_context,
+                " ".join(release_context_terms) if release_context_terms else None,
+            )
+            if part
+        ) or None
 
         sources = await self.retriever.retrieve(
             request.question,
             intent_profile=profile,
-            workload_context=request.workload_context,
+            workload_context=retrieval_workload_context,
             debug_enabled=request.retrieval_debug,
         )
         source_titles = sorted({source.title for source in sources})
@@ -156,7 +169,10 @@ class ArchitectureReviewOrchestrator:
             else None
         )
         temporal_context = (
-            self.release_store.temporal_context(knowledge_snapshot_path=getattr(self.retriever.store, "index_path", None))
+            self.release_store.temporal_context(
+                knowledge_snapshot_path=getattr(self.retriever.store, "index_path", None),
+                question=request.question,
+            )
             if self.release_store is not None
             else None
         )

@@ -19,6 +19,7 @@ sys.path.append(str(REPO_ROOT / "knowledge" / "refresh"))
 
 import ingest  # noqa: E402
 import ingest_releases  # noqa: E402
+from release_intelligence import apply_release_overlay, impact_analysis, normalize_release_item  # noqa: E402
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -105,12 +106,37 @@ def affected_source_ids(
     return sorted(source_ids)
 
 
+def default_eval_case_paths() -> list[Path]:
+    return [
+        REPO_ROOT / "evals" / "golden-prompts.jsonl",
+        REPO_ROOT / "evals" / "edge-cases.jsonl",
+        REPO_ROOT / "evals" / "advisory-quality.jsonl",
+        REPO_ROOT / "evals" / "orchestration-quality.jsonl",
+        REPO_ROOT / "evals" / "vector-retrieval-cases.jsonl",
+    ]
+
+
 def backup_file(path: Path, backup_dir: Path) -> Path | None:
     if not path.exists():
         return None
     backup_dir.mkdir(parents=True, exist_ok=True)
     target = backup_dir / path.name
     shutil.copy2(path, target)
+    return target
+
+
+def preserve_historical_snapshot(path: Path, historical_dir: Path, *, valid_to: str, snapshot_type: str) -> Path | None:
+    if not path.exists():
+        return None
+    historical_dir.mkdir(parents=True, exist_ok=True)
+    payload = load_json(path)
+    payload["snapshot_scope"] = "historical"
+    payload["knowledge_scope"] = "historical"
+    payload["valid_to"] = valid_to
+    payload["source_snapshot_path"] = str(path)
+    payload["snapshot_type"] = snapshot_type
+    target = historical_dir / f"historical-{snapshot_type}-{valid_to.replace(':', '').replace('-', '')}.json"
+    write_json(target, payload)
     return target
 
 
@@ -164,6 +190,15 @@ def build_selective_knowledge_index(
     )
     index = ingest.build_index(ingest_args)
     return ingest.merge_with_existing_index(index, existing_index_path or args.knowledge_index, source_ids)
+
+
+def retag_existing_knowledge_index(
+    knowledge_index_path: Path,
+    releases: list[dict[str, Any]],
+    impact: dict[str, Any],
+) -> dict[str, Any]:
+    knowledge_index = load_json(knowledge_index_path)
+    return apply_release_overlay(knowledge_index, releases, impact)
 
 
 def all_source_ids(source_registry: Path) -> list[str]:
@@ -295,6 +330,8 @@ def write_manifest(
     candidate_paths: dict[str, Path],
     promoted_paths: dict[str, Path],
     rollback_sources: dict[str, Path | None] | None = None,
+    impact_report: dict[str, Any] | None = None,
+    historical_snapshots: dict[str, Path | None] | None = None,
 ) -> dict[str, Any]:
     manifest = {
         "run_id": run_id,
@@ -312,9 +349,14 @@ def write_manifest(
             "metadata_schema_version": (knowledge_index or {}).get("metadata_schema_version"),
             "affected_source_ids": affected_source_ids,
             "changed_release_ids": [str(item.get("id") or item.get("title")) for item in changed_releases],
+            "impacted_eval_cases": sorted((impact_report or {}).get("impacted_eval_cases", {}).keys()),
         },
+        "impact_report": impact_report or {},
         "candidate_paths": {key: str(value) for key, value in candidate_paths.items()},
         "promoted_paths": {key: str(value) for key, value in promoted_paths.items()},
+        "historical_snapshots": {
+            key: str(value) if value else None for key, value in (historical_snapshots or {}).items()
+        },
         "rollback_sources": {
             key: str(value) if value else None for key, value in (rollback_sources or {}).items()
         },
@@ -432,15 +474,25 @@ def execute_refresh_policy(args: argparse.Namespace) -> dict[str, Any]:
     previous_release_snapshot = load_json(args.release_snapshot)
     current_release_snapshot = previous_release_snapshot
     changed_releases: list[dict[str, Any]] = []
+    normalized_changed_releases: list[dict[str, Any]] = []
     selected_source_ids: list[str] = []
     refresh_reason = args.mode
+    impact_report: dict[str, Any] = {}
 
     if args.mode in {"release-watch", "manual"}:
         current_release_snapshot = build_release_snapshot(
             candidate_args(args, candidate_knowledge_path, candidate_release_path)
         )
         changed_releases = new_release_items(previous_release_snapshot, current_release_snapshot)
-        selected_source_ids = affected_source_ids(changed_releases, policy)
+        normalized_changed_releases = [normalize_release_item(release) for release in changed_releases]
+        existing_index = load_json(args.knowledge_index)
+        impact_report = impact_analysis(
+            releases=normalized_changed_releases,
+            knowledge_index=existing_index,
+            eval_case_paths=default_eval_case_paths(),
+            policy=policy,
+        )
+        selected_source_ids = sorted(set(affected_source_ids(normalized_changed_releases, policy)) | set(impact_report.get("affected_source_ids", [])))
         if not changed_releases and not args.force:
             refresh_reason = "release-watch-no-change"
 
@@ -451,6 +503,16 @@ def execute_refresh_policy(args: argparse.Namespace) -> dict[str, Any]:
     if args.force and not selected_source_ids:
         selected_source_ids = all_source_ids(args.source_registry)
         refresh_reason = f"{args.mode}-forced"
+        impact_report = {
+            "release_count": len(normalized_changed_releases),
+            "affected_source_ids": selected_source_ids,
+            "affected_chunk_ids": [],
+            "change_categories": [],
+            "impacted_eval_cases": {},
+            "refresh_actions": ["full_reindex"],
+            "regression_required": True,
+            "unresolved_risks": [],
+        }
 
     candidate_dir.mkdir(parents=True, exist_ok=True)
     if current_release_snapshot or not args.release_snapshot.exists():
@@ -467,9 +529,14 @@ def execute_refresh_policy(args: argparse.Namespace) -> dict[str, Any]:
             selected_source_ids,
             existing_index_path=args.knowledge_index,
         )
+        if normalized_changed_releases:
+            knowledge_index = apply_release_overlay(knowledge_index, normalized_changed_releases, impact_report)
         write_json(candidate_knowledge_path, knowledge_index)
     else:
         knowledge_index = load_json(candidate_knowledge_path)
+        if normalized_changed_releases and impact_report.get("metadata_update_required"):
+            knowledge_index = apply_release_overlay(knowledge_index, normalized_changed_releases, impact_report)
+            write_json(candidate_knowledge_path, knowledge_index)
 
     gate_results: list[dict[str, Any]] = []
     candidate_changed = bool(selected_source_ids or changed_releases or args.force)
@@ -498,6 +565,7 @@ def execute_refresh_policy(args: argparse.Namespace) -> dict[str, Any]:
         affected_source_ids=selected_source_ids,
         changed_releases=changed_releases,
         gates=gate_results,
+        impact_report=impact_report,
         candidate_paths={
             "knowledge_index": candidate_knowledge_path,
             "release_snapshot": candidate_release_path,
@@ -513,6 +581,20 @@ def execute_refresh_policy(args: argparse.Namespace) -> dict[str, Any]:
         upload_performed = True
 
     if passed and candidate_changed:
+        historical_snapshots = {
+            "knowledge_index": preserve_historical_snapshot(
+                args.knowledge_index,
+                args.release_snapshot.parent / "historical",
+                valid_to=started_at,
+                snapshot_type="oci_knowledge",
+            ),
+            "release_snapshot": preserve_historical_snapshot(
+                args.release_snapshot,
+                args.release_snapshot.parent / "historical",
+                valid_to=started_at,
+                snapshot_type="oci_release",
+            ),
+        }
         rollback_sources = {
             "knowledge_index": promote_candidate(candidate_knowledge_path, args.knowledge_index, backup_dir),
             "release_snapshot": promote_candidate(candidate_release_path, args.release_snapshot, backup_dir),
@@ -531,6 +613,8 @@ def execute_refresh_policy(args: argparse.Namespace) -> dict[str, Any]:
             affected_source_ids=selected_source_ids,
             changed_releases=changed_releases,
             gates=gate_results,
+            impact_report=impact_report,
+            historical_snapshots=historical_snapshots,
             candidate_paths={
                 "knowledge_index": candidate_knowledge_path,
                 "release_snapshot": candidate_release_path,
@@ -553,10 +637,27 @@ def execute_refresh_policy(args: argparse.Namespace) -> dict[str, Any]:
         "cadence": policy.get("cadence", {}),
         "query_time_refresh": False,
         "changed_release_count": len(changed_releases),
-        "changed_releases": changed_releases,
+        "changed_releases": normalized_changed_releases or changed_releases,
+        "release_intelligence": {
+            "items_ingested": int(current_release_snapshot.get("release_count", len(current_release_snapshot.get("releases", [])))) if current_release_snapshot else 0,
+            "items_classified": len(normalized_changed_releases),
+            "impacted_services": impact_report.get("affected_services", []),
+            "refresh_actions": impact_report.get("refresh_actions", []),
+            "impacted_eval_cases": impact_report.get("impacted_eval_cases", {}),
+            "unresolved_risks": impact_report.get("unresolved_risks", []),
+        },
+        "impact_report": impact_report,
         "affected_source_ids": selected_source_ids,
         "selective_reindex": bool(selected_source_ids),
-        "full_reindex": False,
+        "full_reindex": refresh_reason.endswith("-forced") or args.mode == "stable-docs",
+        "reindex_operations": [
+            {
+                "source_id": source_id,
+                "operation": "selective_reindex",
+                "reason": "release-impact" if normalized_changed_releases else refresh_reason,
+            }
+            for source_id in selected_source_ids
+        ],
         "knowledge_chunk_count": knowledge_index.get("chunk_count") if knowledge_index else None,
         "oci_upload_requested": bool(args.oci_upload_bucket),
         "oci_upload_performed": upload_performed,

@@ -12,6 +12,9 @@ from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+sys.path.append(str(Path(__file__).resolve().parent))
+
+from release_intelligence import normalize_release_item  # noqa: E402
 
 
 class HtmlTextExtractor(HTMLParser):
@@ -96,6 +99,7 @@ def impact_tags(text: str) -> list[str]:
         "migration": ("migration", "compatibility", "s3", "api", "import", "export"),
         "cost": ("cost", "budget", "billing", "limit", "capacity"),
         "dr": ("disaster", "replication", "backup", "failover", "recovery"),
+        "observability": ("logging", "monitoring", "metrics", "alarm", "audit"),
     }
     for tag, keywords in keyword_map.items():
         if any(keyword in normalized for keyword in keywords):
@@ -114,6 +118,8 @@ def service_change_tags(text: str) -> list[str]:
         "security": ("security", "secret", "vault", "key", "iam", "policy"),
         "migration": ("migration", "import", "export", "compatibility"),
         "pricing-capacity": ("cost", "budget", "billing", "capacity"),
+        "deprecation": ("deprecated", "retired", "removed", "end of support"),
+        "observability": ("logging", "monitoring", "metrics", "alarm", "audit"),
     }
     for tag, keywords in keyword_map.items():
         if any(keyword in normalized for keyword in keywords):
@@ -161,7 +167,7 @@ def classify_release_item(item: str, source: dict[str, str], index: int, ingeste
     services = parse_services(item)
     primary_service = services[0] if services else "Oracle Cloud Infrastructure"
     tags = impact_tags(item)
-    return {
+    release = {
         "id": f"{source['id']}::{index}",
         "source_id": source["id"],
         "title": title,
@@ -182,6 +188,7 @@ def classify_release_item(item: str, source: dict[str, str], index: int, ingeste
         "ingested_timestamp": ingested_at,
         "summary": item[:800],
     }
+    return normalize_release_item(release)
 
 
 def build_release_snapshot(args: argparse.Namespace) -> dict[str, object]:

@@ -214,7 +214,11 @@ def test_refresh_promotes_candidate_only_after_gates_pass(tmp_path: Path, monkey
     assert report["status"] == "promoted"
     assert report["promoted"] is True
     assert promoted_index["chunks"][0]["id"] == "new::1"
+    assert promoted_index["chunks"][0]["metadata"]["release_impacted"] is True
+    assert "release_intelligence" in report
+    assert "security-change" in report["impact_report"]["change_categories"]
     assert status["current_promoted_snapshot"]["status"] == "promoted"
+    assert status["current_promoted_snapshot"]["historical_snapshots"]["knowledge_index"]
     assert status["current_promoted_snapshot"]["lineage"]["knowledge_snapshot_version"].startswith("knowledge-")
 
 

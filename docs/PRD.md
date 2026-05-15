@@ -32,13 +32,14 @@ OCI Architecture Studio is an AI-powered OCI architecture intelligence platform 
 - Concise architecture decision reasoning metadata for major recommendations
 - Lightweight architecture consistency findings before final response return
 - Confidence sub-signals for service relevance, workload alignment, migration mapping certainty, and citation coverage
-- Release snapshot and temporal knowledge schemas for future release-aware architecture intelligence
+- Release snapshot and temporal knowledge schemas for current-vs-historical scaffolding
+- Deterministic release intelligence for release normalization, change-category classification, impacted service/source/chunk analysis, targeted eval impact detection, and refresh action recommendations
 - Retrieval regression and parity validation
 - OCI staging deployment
 
 ## Current Working Flow
 
-The current implementation supports a validated API/UI advisory workflow with intent classification, source-service mapping, metadata-aware retrieval, reranking, deterministic fallback synthesis, optional OCI GenAI-assisted synthesis, release-awareness scaffolding, and OCI staging deployment.
+The current implementation supports a validated API/UI advisory workflow with intent classification, source-service mapping, metadata-aware retrieval, reranking, deterministic fallback synthesis, optional OCI GenAI-assisted synthesis, snapshot-based release awareness, and OCI staging deployment.
 
 User flow:
 1. A user asks an OCI architecture, migration, DR, cost, observability, AI/ML, security, modernization, SaaS, analytics, or release-awareness question.
@@ -47,7 +48,7 @@ User flow:
 4. The system detects architecture-domain heuristics such as ecommerce, fintech, SaaS, AI/ML inference, observability, or analytics.
 5. The system retrieves OCI knowledge chunks through a config-selected retrieval provider and reranks candidates using semantic score, intent match, service relevance, metadata overlap, architecture pattern match, workload/domain relevance, topic match, migration mappings, and intent-critical service coverage.
 6. The system uses deterministic in-process orchestration metadata and a single synthesis step to produce a structured advisory response. The deterministic path applies lightweight architecture pattern profiles, retrieved services, workload/domain heuristics, citation metadata, and consistency validation. The OCI GenAI path injects a retrieval-grounded prompt with intent, mappings, workload/domain profile, pattern hints, and retrieved chunks.
-7. Release-aware prompts are checked against point-in-time release snapshots and freshness metadata. Current release awareness is snapshot/scaffold based, not live request-time reconciliation with OCI release feeds.
+7. Release-aware prompts are checked against point-in-time release snapshots, freshness metadata, release change categories, and release impact summaries. Current release awareness is snapshot-based and deterministic; it is not live request-time reconciliation with OCI release feeds.
 8. The backend returns recommendations, assumptions, risks, citations, evidence links, confidence, decision reasoning metadata, consistency findings, section citation metadata, release context, temporal knowledge context, and optional retrieval debug traces.
 9. The UI displays the main advisory fields and citation cards. Full section-level citation, reasoning, consistency, and release-context UI is not implemented yet.
 
@@ -113,6 +114,14 @@ Corpus and ingestion behavior:
 - Ingestion supports source-group defaults, source categories, source freshness metadata, release tags, context-preserving chunking, section paths, previous/next chunk lineage, chunk content hashes, and automatic metadata enrichment.
 - Corpus health checks are lightweight validation utilities; they are not autonomous crawlers or production refresh automation.
 
+Release intelligence behavior:
+
+- Release ingestion writes a separate release snapshot from `knowledge/release_source_registry.json`.
+- Release items are normalized into deterministic change categories such as security, HA/DR, observability, cost, migration, deprecation, enhancement, and compatibility risk.
+- Impact analysis maps releases to affected services, source IDs, chunk IDs, eval cases, refresh actions, and unresolved risks.
+- Selective refresh can retag affected chunks with release overlay metadata and refresh embeddings/reindexing only for impacted sources.
+- Historical snapshots are retained on promotion for audit/context. Retrieval remains current-first; full bi-temporal retrieval and automatic current-vs-historical answer comparison are not implemented.
+
 Orchestration behavior:
 
 - The current orchestration layer is deterministic and in-process.
@@ -147,8 +156,8 @@ Orchestration behavior:
 - No autonomous multi-agent execution yet.
 - No always-on live LLM synthesis by default.
 - No promotion of OCI GenAI mode without parity and operational validation.
-- No continuous live release intelligence beyond scheduled snapshot refresh and gated promotion.
+- No continuous live release intelligence beyond scheduled snapshot refresh, deterministic impact analysis, and gated promotion.
 - No autonomous documentation crawling or full OCI documentation corpus yet.
-- No bi-temporal retrieval; current-vs-historical temporal knowledge support is schema-oriented scaffolding only.
+- No full bi-temporal retrieval; current-vs-historical support currently consists of schemas, retained historical snapshots, temporal response metadata, and current-first retrieval with release context terms.
 - Oracle AI Vector Search staging active reads remain guarded until a real index is built and query parity is validated.
 - HTTPS ingress and production HA are deferred beyond the current staging slice.

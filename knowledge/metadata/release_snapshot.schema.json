@@ -72,6 +72,23 @@
           },
           "description": "Service-level change labels such as api-compatibility, naming, limits, availability, lifecycle, security, pricing, or migration."
         },
+        "change_categories": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "new-service-feature",
+              "feature-enhancement",
+              "deprecated-behavior",
+              "pricing-cost-change",
+              "security-change",
+              "ha-dr-change",
+              "observability-change",
+              "migration-relevance",
+              "compatibility-risk"
+            ]
+          }
+        },
         "impact_tags": {
           "type": "array",
           "items": {
@@ -82,9 +99,43 @@
           "type": "string",
           "enum": ["informational", "review", "high"]
         },
+        "severity": {
+          "type": "string",
+          "enum": ["informational", "review", "high"]
+        },
+        "workload_relevance": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "architecture_domain_relevance": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "architecture_affecting": {
           "type": "boolean",
           "description": "True when the release can affect OCI architecture choices, migration compatibility, DR posture, security controls, or cost planning."
+        },
+        "recommendation_affecting": {
+          "type": "boolean"
+        },
+        "retrieval_affecting": {
+          "type": "boolean"
+        },
+        "metadata_update_required": {
+          "type": "boolean"
+        },
+        "prompt_template_review_required": {
+          "type": "boolean"
+        },
+        "service_mapping_review_required": {
+          "type": "boolean"
+        },
+        "regression_required": {
+          "type": "boolean"
         },
         "knowledge_scope": {
           "type": "string",

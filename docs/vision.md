@@ -23,7 +23,7 @@ OCI Architecture Studio now has a validated working foundation:
 - OCI Object Storage retrieval manifest as the active staging retrieval provider
 - optional Oracle AI Vector Search provider and index tooling for the next OCI-native retrieval step
 - local JSON retrieval preserved as the config-only rollback provider
-- point-in-time release snapshots, release impact metadata, and current-vs-historical schema scaffolding for release-aware guidance
+- point-in-time release snapshots, deterministic release impact metadata, selective refresh overlays, retained historical snapshots, and current-vs-historical schema scaffolding for release-aware guidance
 - golden, edge-case, retrieval regression, and parity validation gates
 - Terraform-based OCI staging slice with Object Storage, Vault, Logging, Monitoring, Events, and Notifications
 
@@ -35,7 +35,7 @@ OCI GenAI embeddings and synthesis are available as configurable paths with dete
 
 The current deterministic synthesis layer is heuristic. It improves structure, workload specificity, grounding fidelity, and recommendation explainability, but it is not a substitute for a full OCI design review or live GenAI reasoning.
 
-Release-awareness is still foundational: the runtime can reference local release snapshots and impact metadata, but it does not yet perform full automated release reconciliation or bi-temporal retrieval.
+Release-awareness is still foundational: the runtime can reference local release snapshots, classify release changes, surface impacted services/change categories, and retain historical snapshots for audit/context. It does not yet perform full automated release reconciliation or bi-temporal retrieval.
 
 The corpus remains curated rather than comprehensive. Current quality work should be read as a controlled transition from deterministic OCI advisory scaffolding toward retrieval-grounded OCI GenAI-assisted synthesis, not as a claim of full OCI documentation coverage or autonomous documentation crawling.
 

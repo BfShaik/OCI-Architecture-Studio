@@ -47,6 +47,8 @@ def test_release_store_returns_impact_and_temporal_context(tmp_path) -> None:
                         "service": "Secret Management",
                         "service_domain": "security",
                         "impact_tags": ["security"],
+                        "change_categories": ["security-change"],
+                        "recommendation_affecting": True,
                         "impact_level": "review",
                         "source_url": "https://docs.oracle.com/example",
                         "release_date": "January 22, 2026",
@@ -65,5 +67,26 @@ def test_release_store_returns_impact_and_temporal_context(tmp_path) -> None:
     assert impact.snapshot_generated_at == "2026-05-15T00:00:00+00:00"
     assert impact.architecture_affecting_services == ["Secret Management"]
     assert "security" in impact.impact_categories
+    assert "security-change" in impact.change_categories
+    assert impact.recommendation_affecting_services == ["Secret Management"]
     assert temporal.knowledge_mode == "current_snapshot_with_release_overlay"
+    assert temporal.current_knowledge_as_of == "2026-05-15T00:00:00+00:00"
     assert temporal.current_knowledge_snapshot.endswith("oci-rag-index.json")
+
+
+def test_release_store_detects_historical_time_context(tmp_path) -> None:
+    snapshot = tmp_path / "oci-release-snapshot.json"
+    historical_dir = tmp_path / "historical"
+    historical_dir.mkdir()
+    (historical_dir / "historical-oci_release-20260501.json").write_text("{}", encoding="utf-8")
+    snapshot.write_text(json.dumps({"generated_at": "2026-05-15T00:00:00+00:00", "releases": []}), encoding="utf-8")
+
+    temporal = ReleaseSnapshotStore(snapshot).temporal_context(
+        knowledge_snapshot_path=tmp_path / "oci-rag-index.json",
+        question="What was the old behavior before the release?",
+    )
+
+    assert temporal.knowledge_mode == "historical_context_requested"
+    assert temporal.requested_time_context == "historical"
+    assert temporal.historical_context_available is True
+    assert temporal.historical_snapshots

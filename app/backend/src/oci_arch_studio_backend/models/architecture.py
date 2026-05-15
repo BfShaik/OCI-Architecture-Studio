@@ -159,6 +159,8 @@ class ReleaseImpactSummary(BaseModel):
     matched_release_count: int = 0
     architecture_affecting_services: list[str] = Field(default_factory=list)
     impact_categories: list[str] = Field(default_factory=list)
+    change_categories: list[str] = Field(default_factory=list)
+    recommendation_affecting_services: list[str] = Field(default_factory=list)
     maturity_notes: list[str] = Field(default_factory=list)
 
 
@@ -166,7 +168,10 @@ class KnowledgeTemporalContext(BaseModel):
     knowledge_mode: str = "current_snapshot"
     current_knowledge_snapshot: str | None = None
     current_release_snapshot: str | None = None
+    current_knowledge_as_of: str | None = None
+    requested_time_context: str | None = None
     historical_snapshots: list[str] = Field(default_factory=list)
+    historical_context_available: bool = False
     notes: list[str] = Field(default_factory=list)
 
 

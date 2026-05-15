@@ -16,7 +16,7 @@ OCI Architecture Studio currently supports a validated advisory flow in local de
 6. Local development defaults to `local_json`; it also remains the tested config-only rollback provider for staging.
 7. The controlled orchestration layer selects deterministic specialist roles, shares the same retrieved evidence across them, and runs a validation critic over evidence support, citations, freshness, and unsupported-claim risk. These are in-process role boundaries, not autonomous agents.
 8. One final synthesis step generates the advisory response through the configured provider with deterministic rollback available. Deterministic synthesis now uses lightweight architecture pattern profiles, retrieved evidence, workload heuristics, and consistency checks rather than only profile boilerplate. OCI GenAI synthesis can be enabled through configuration and uses the same retrieved context through a dedicated grounding prompt builder.
-9. Release-awareness currently uses local release snapshots, release metadata schemas, and refresh-policy scaffolding. Scheduled refresh and promotion automation exist as implementation scaffolding, but live release reconciliation is not part of request-time advisory behavior.
+9. Release-awareness uses local release snapshots, deterministic release classification, impact analysis, release overlays on affected chunks, and refresh-policy scaffolding. Scheduled refresh and promotion automation exist, but live release reconciliation is not part of request-time advisory behavior.
 10. The backend returns structured recommendations, concise decision reasoning metadata, consistency findings, confidence, evidence links, section citation metadata, optional retrieval debug traces, release context, temporal knowledge context, and standard architecture response sections. The current UI renders the main advisory fields and citation cards; full section-level citation, reasoning, consistency, and release-context UI is future work.
 
 LangGraph, advanced memory, and autonomous agent execution remain deferred. Oracle AI Vector Search provider code and tooling exist, but staging active-read promotion is deferred until a real Oracle vector index is built and parity checks pass.
@@ -56,6 +56,7 @@ tests/                Backend and integration tests
 - Lightweight architecture consistency validation for conflicting requirements, migration mapping coverage, HA/DR alignment, observability coverage, security coverage, and simple unsupported combination risks
 - Expanded confidence sub-signals for service relevance, workload alignment, migration mapping certainty, and citation coverage
 - Release snapshot schema and temporal knowledge metadata schema for current-vs-historical scaffolding
+- Deterministic release intelligence for release normalization, change-category classification, impacted-service/source/chunk analysis, targeted eval impact reporting, and refresh action recommendations
 - OCI-native retrieval migration hooks:
   - optional OCI Generative AI embedding adapter
   - optional Object Storage vector-manifest retrieval
@@ -63,7 +64,7 @@ tests/                Backend and integration tests
   - retrieval regression reporting for citations, intents, and required service coverage
 - Hybrid retrieval path combining provider vector similarity, metadata filters, reranking heuristics, intent/domain heuristics, and intent-critical service coverage
 - Separate local OCI release snapshot pipeline
-- Knowledge refresh policy scaffolding for release-note watching, candidate snapshot validation, selective reindex, eval-gated promotion, version lineage, and rollback-safe updates
+- Knowledge refresh policy scaffolding for release-note watching, candidate snapshot validation, selective reindex, release overlay tagging, eval-gated promotion, historical snapshot retention, version lineage, and rollback-safe updates
 - Optional OCI-native recurring refresh scaffold with OCI Functions and OCI Resource Scheduler; this is not active request-time release intelligence
 - Continuous intelligence status endpoint at `/knowledge/refresh/status`
 - Intent-aware orchestration for:
@@ -176,7 +177,14 @@ Release notes and fast-changing sources are refreshed by policy, not on user que
 python3 knowledge/refresh/refresh_policy.py --mode release-watch --no-fetch --quick-gates
 ```
 
-The policy runner classifies changed release items, maps them to affected source IDs, builds candidate snapshots under `knowledge/reports/runs/<run_id>/candidates`, runs retrieval/eval gates against the candidate paths, and promotes refreshed knowledge only when validation passes.
+The policy runner classifies changed release items, runs deterministic impact analysis, maps affected services/domains/change categories to source IDs and chunk IDs, builds candidate snapshots under `knowledge/reports/runs/<run_id>/candidates`, applies release overlay metadata to affected chunks, runs retrieval/eval gates against the candidate paths, and promotes refreshed knowledge only when validation passes.
+
+Report release impact without promoting snapshots:
+
+```bash
+python3 infra/scripts/release_impact_report.py \
+  --output knowledge/reports/release-impact-report.json
+```
 
 Rollback the latest promoted refresh:
 
@@ -234,12 +242,12 @@ VITE_API_BASE_URL=http://localhost:8000 npm run dev
 ## Recommended Next Steps
 
 1. Keep staging on `RETRIEVAL_PROVIDER=oci_object_storage` and monitor retrieval latency, citations, and failure handling.
-2. Run the scheduled refresh function in staging with candidate-first promotion and watch `/knowledge/refresh/status`.
+2. Run the scheduled refresh function in staging with candidate-first promotion, release impact reporting, and `/knowledge/refresh/status` monitoring.
 3. Continue expanding the source registry with Budgets, Audit, Data Guard, and deeper service-specific architecture sources.
 4. Replace local hashing embeddings with OCI Generative AI embeddings once provider settings and cost controls are finalized.
 5. Build and validate the Oracle AI Vector Search table/index with production embeddings before enabling staging active reads.
 6. Run Oracle AI Vector Search dual-run checks against local JSON and the Object Storage provider before any active-read promotion.
-7. Replace fallback release parsing with stronger extraction from official OCI release pages.
+7. Replace fallback release parsing with stronger extraction from official OCI release pages and keep impact-category mappings under review.
 
 ## Run Evaluations
 
@@ -346,6 +354,7 @@ app/backend/.venv/bin/python infra/scripts/retrieval_regression_check.py --cases
 app/backend/.venv/bin/python infra/scripts/retrieval_parity_check.py --oci-region us-ashburn-1 --oci-profile DEFAULT --oci-namespace idsmrn7rvqb6 --oci-vector-bucket oci-architecture-studio-staging-knowledge-snapshots --oci-vector-object-name oci-rag-index.json --output-dir evals/reports/retrieval-parity
 app/backend/.venv/bin/python knowledge/ingestion/ingest.py --no-fetch
 app/backend/.venv/bin/python knowledge/refresh/ingest_releases.py --no-fetch
+app/backend/.venv/bin/python infra/scripts/release_impact_report.py --output knowledge/reports/release-impact-report.json
 app/backend/.venv/bin/python knowledge/refresh/refresh_policy.py --mode release-watch --no-fetch --quick-gates
 cd app/backend && PYTHONPATH=src .venv/bin/pytest -q
 cd ../frontend && npm run build
@@ -355,7 +364,7 @@ cd ../frontend && npm run build
 
 Latest full validation: 2026-05-15.
 
-- Local backend tests: `93 passed`
+- Local backend tests: `97 passed`
 - Golden evals: `18 passed, 0 failed`
 - Edge-case evals: `8 passed, 0 failed`
 - Advisory-quality evals: `5 passed, 0 failed`
@@ -367,8 +376,9 @@ Latest full validation: 2026-05-15.
 - Vector retrieval validation: skip-safe report generated when Oracle DB settings are absent
 - Corpus health: passed for 44 chunks, 44 sources, 41 services, and 14 service domains
 - Knowledge ingestion: `44 chunks`
-- Release ingestion: `3 release items`
-- Knowledge refresh policy smoke: passed
+- Release ingestion: `5 release items` in offline fallback mode
+- Release impact report: passed with deterministic classification, impacted sources/chunks, targeted eval cases, refresh actions, and unresolved-risk reporting
+- Knowledge refresh policy smoke: passed in offline release-watch quick-gate mode
 - Frontend build: passed
 - Terraform fmt/validate: passed for `dev`, `test`, and `staging`
 - OCI staging smoke: passed for backend, frontend, OCI SDK, retrieval, and resource visibility

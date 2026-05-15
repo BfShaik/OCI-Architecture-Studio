@@ -18,15 +18,17 @@ ingest candidate -> validate candidate -> promote only if gates pass -> rollback
 flowchart LR
     A["OCI Resource Scheduler"] --> B["Knowledge refresh function"]
     B --> C["Release ingestion"]
-    C --> D["Classify service, domain, impact"]
-    D --> E["Selective candidate reindex"]
-    E --> F["Candidate snapshots"]
-    F --> G["Retrieval and eval gates"]
-    G -->|Pass| H["Promote authoritative snapshots"]
-    G -->|Fail| I["Keep candidate for inspection"]
-    H --> J["Object Storage manifest upload"]
-    H --> K["Refresh status endpoint"]
-    I --> K
+    C --> D["Normalize and classify release changes"]
+    D --> E["Impact analysis"]
+    E --> F["Selective candidate reindex and overlay tagging"]
+    F --> G["Candidate snapshots"]
+    G --> H["Retrieval and eval gates"]
+    H -->|Pass| I["Preserve historical snapshots"]
+    I --> J["Promote authoritative snapshots"]
+    H -->|Fail| K["Keep candidate for inspection"]
+    J --> L["Object Storage manifest upload"]
+    J --> M["Refresh status endpoint"]
+    K --> M
 ```
 
 ## Versioned Artifacts
@@ -52,6 +54,10 @@ The run manifest records:
 - policy version
 - refresh mode and reason
 - affected source IDs
+- impacted chunk IDs
+- release change categories
+- impacted eval cases
+- refresh actions
 - changed release IDs
 - knowledge snapshot version
 - release snapshot version
@@ -59,6 +65,7 @@ The run manifest records:
 - metadata schema version
 - gate outcomes
 - rollback source paths
+- historical snapshot paths after promotion
 
 ## Eval-Gated Promotion
 
@@ -109,7 +116,10 @@ The status response includes:
 - last run status
 - pass/fail state
 - changed release count
+- release intelligence summary
+- impacted services and refresh actions
 - affected source IDs
+- reindex operations
 - gate result summary
 - current promoted snapshot lineage
 - previous promoted snapshot lineage
@@ -122,6 +132,8 @@ Operational signals to watch:
 - repeated gate failures
 - stale source detection
 - unusually high affected source count
+- unexpected release change categories
+- unresolved risks in release impact reports
 - missing rollback source paths
 - retrieval regression failures after refresh
 - release-awareness eval failures

@@ -278,7 +278,14 @@ This progress is based on `docs/two-week-plan.md`.
   - added `infra/scripts/oracle_vector_index.py` for schema printing, local-index validation, health checks, schema creation, vector index creation, and rebuild/upsert
   - added `infra/scripts/vector_retrieval_validation.py` for honest local-vs-Oracle retrieval comparison with skip-safe behavior when DB config is unavailable
   - added `evals/vector-retrieval-cases.jsonl` for local-vs-Oracle vector retrieval comparison scenarios
-- Pushed current implementation to GitHub.
+- Added release intelligence impact foundation:
+  - deterministic release normalization and change-category classification for new features, enhancements, deprecations, pricing/cost, security, HA/DR, observability, migration, and compatibility risk
+  - impact analysis that maps releases to affected services, source IDs, chunk IDs, targeted eval cases, refresh actions, and unresolved risks
+  - release overlay metadata on affected chunks for release item IDs, change categories, validity markers, and current/historical knowledge flags
+  - historical snapshot retention on promoted refresh runs under `knowledge/snapshots/historical/`
+  - release-aware retrieval context terms for latest/current/release prompts while preserving current-first retrieval
+  - impact reporting utility under `infra/scripts/release_impact_report.py`
+- Current release-intelligence implementation is prepared on the working branch for validation and commit.
 
 ## Latest Validation
 
@@ -298,12 +305,13 @@ Last validation run: 2026-05-15
 - GitHub workflow YAML parsing: passed
 - Infrastructure Python script compile checks: passed
 - Knowledge ingestion smoke: passed, 44 chunks generated locally from 44 registry sources
-- Release ingestion smoke: passed, 3 release items generated
-- Knowledge refresh policy smoke: passed, forced selective refresh with post-refresh gates
+- Release ingestion smoke: passed, 5 release items generated in offline fallback mode
+- Release impact report: passed with deterministic classification, impacted source/chunk mapping, targeted eval impact detection, refresh action reporting, and unresolved-risk reporting
+- Knowledge refresh policy smoke: passed in offline `release-watch` quick-gate mode
 - Continuous intelligence hardening: candidate-first promotion, version lineage, rollback automation, and refresh status endpoint implemented
 - Terraform validation: passed after optional knowledge refresh scheduler scaffold; staging plan currently should not be applied until existing backend replacement drift is resolved and the function image is available
 - OCI-native refresh scheduler scaffold: implemented with OCI Functions plus OCI Resource Scheduler; not applied yet because a published OCIR function image is required before enabling
-- Backend tests: passed, 93 tests
+- Backend tests: passed, 97 tests
 - Frontend build: passed
 - Golden evals: passed, 18 of 18
 - Edge-case evals: passed, 8 of 8
@@ -360,9 +368,9 @@ Last validation run: 2026-05-15
   - per-service owners
   - source freshness policy
 - Extend release-awareness workflow:
-  - deeper architecture impact analysis
   - explicit current-vs-historical recommendation comparison
   - stronger release source parsing for point-in-time snapshots
+  - richer release-to-source mapping coverage as the corpus expands
 - Continue hardening advisory synthesis:
   - provide `OCI_GENAI_COMPARTMENT_ID` and `OCI_GENAI_CHAT_MODEL_ID` for live OCI GenAI parity validation
   - enable OCI GenAI synthesis in staging only after deterministic-vs-OCI GenAI parity passes without fallback
@@ -391,7 +399,8 @@ Last validation run: 2026-05-15
   - release-aware intent, prompt template, release registry, release ingestion, and release snapshot reader exist
   - scheduled refresh automation and candidate-first promotion now exist
   - refresh status and rollback manifests now exist
-  - deeper impact comparison is still a next-phase item
+  - deterministic impact analysis, release overlay tagging, impacted eval reporting, and historical snapshot retention now exist
+  - full bi-temporal retrieval and automatic current-vs-historical answer comparison remain future work
 - OCI deployment execution:
   - Terraform, scripts, config templates, workflow, and docs exist
   - staging values, plan files, and secrets are ignored by git
@@ -428,7 +437,7 @@ Last validation run: 2026-05-15
 - Embeddings are deterministic local hash embeddings, useful for workflow validation but not production semantic retrieval.
 - Reranking improves ordering and traceability but still depends on the curated corpus and local hash embeddings.
 - Oracle AI Vector Search code and tooling are implemented, but live Oracle vector retrieval has not been validated without DB configuration in this branch.
-- Release awareness has scheduled snapshot refresh, candidate validation, and status visibility; deeper semantic impact analysis remains next-phase work.
+- Release awareness has scheduled snapshot refresh, deterministic impact analysis, candidate validation, historical snapshot retention, and status visibility; it does not yet perform live OCI release reconciliation or full bi-temporal retrieval.
 - OCI GenAI synthesis adapter exists, but deterministic synthesis remains the rollback-safe default unless enabled by environment configuration.
 - Deterministic architecture patterns improve fallback usefulness but are still heuristic and bounded by the retrieved corpus.
 - Controlled multi-agent orchestration is currently an in-process control layer; it does not yet perform autonomous planning, tool use, or multi-step agent memory.

@@ -40,14 +40,18 @@ Explicitly not supported:
 
 1. Ingest release notes into the separate release snapshot.
 2. Compare new release items against the previous snapshot with a stable content key.
-3. Classify new items by:
+3. Normalize and classify new items by:
    - service
    - service domain
    - impact tags
    - impact level
-4. Map the affected service/domain/impact to source IDs through `knowledge/refresh_policy.json`.
-5. Refresh only those source IDs.
-6. Merge refreshed chunks back into the existing index while retaining unaffected chunks.
+   - change category such as security, HA/DR, observability, cost, migration, deprecation, enhancement, or compatibility risk
+   - workload and architecture-domain relevance
+4. Run deterministic impact analysis to identify affected services, source IDs, chunk IDs, targeted eval cases, refresh actions, and unresolved risks.
+5. Map the affected service/domain/impact to source IDs through `knowledge/refresh_policy.json` plus built-in release-intelligence hints.
+6. Refresh only those source IDs.
+7. Apply release overlay metadata to impacted chunks when retagging is required.
+8. Merge refreshed chunks back into the existing index while retaining unaffected chunks.
 
 Full reindex is reserved for:
 
@@ -69,14 +73,16 @@ The policy runner performs:
 
 1. release ingestion
 2. candidate release snapshot creation under `knowledge/reports/runs/<run_id>/candidates`
-3. selective candidate knowledge ingestion for affected source IDs
-4. retrieval health check against the candidate knowledge index
-5. retrieval regression check against the candidate knowledge index
-6. golden evals with `KNOWLEDGE_INDEX_PATH` and `RELEASE_SNAPSHOT_PATH` pointed at the candidate snapshots
-7. edge-case evals
-8. advisory-quality evals
-9. controlled orchestration evals
-10. promotion to authoritative snapshots only if all gates pass
+3. release impact analysis and targeted eval impact detection
+4. selective candidate knowledge ingestion for affected source IDs
+5. release overlay tagging for impacted chunks
+6. retrieval health check against the candidate knowledge index
+7. retrieval regression check against the candidate knowledge index
+8. golden evals with `KNOWLEDGE_INDEX_PATH` and `RELEASE_SNAPSHOT_PATH` pointed at the candidate snapshots
+9. edge-case evals
+10. advisory-quality evals
+11. controlled orchestration evals
+12. promotion to authoritative snapshots only if all gates pass
 
 For quick local validation:
 
@@ -104,6 +110,14 @@ During promotion it stores rollback copies under the run directory:
 ```text
 knowledge/reports/runs/<run_id>/rollback/
 ```
+
+It also preserves historical copies of the previously authoritative knowledge and release snapshots under:
+
+```text
+knowledge/snapshots/historical/
+```
+
+Those historical snapshots are retained for audit/context and future time-aware retrieval work. The current runtime remains current-first; it does not yet perform full bi-temporal retrieval.
 
 If post-refresh gates fail, the candidate is kept for inspection but authoritative snapshots are not changed.
 
@@ -134,6 +148,9 @@ The manifest tracks:
 - metadata schema version
 - affected source IDs
 - changed release IDs
+- impacted eval case IDs
+- release impact report
+- historical snapshot paths when promotion occurs
 - gate results
 - rollback sources
 
@@ -164,9 +181,11 @@ Environment differences are config-only:
 
 - `knowledge/refresh_policy.json`
 - `knowledge/refresh/refresh_policy.py`
+- `knowledge/refresh/release_intelligence.py`
 - `.github/workflows/knowledge-refresh.yml`
 - `knowledge/ingestion/ingest.py`
 - `knowledge/refresh/ingest_releases.py`
+- `infra/scripts/release_impact_report.py`
 - `infra/terraform/modules/foundation/main.tf`
 - `infra/functions/knowledge-refresh/`
 
