@@ -686,11 +686,30 @@ class OperationalDiagnostics:
         }
 
     def _embedding_provider_visibility(self) -> dict[str, object]:
+        missing_config: list[str] = []
+        if self.settings.embedding_provider == "oci_genai":
+            for name, value in (
+                ("OCI_GENAI_COMPARTMENT_ID", self.settings.oci_genai_compartment_id),
+                ("OCI_GENAI_EMBEDDING_MODEL_ID", self.settings.oci_genai_embedding_model_id),
+            ):
+                if not value:
+                    missing_config.append(name)
+        oci_genai_configured = bool(
+            self.settings.oci_genai_compartment_id and self.settings.oci_genai_embedding_model_id
+        )
+        activation_ready = self.settings.embedding_provider == "oci_genai" and oci_genai_configured
         return {
             "configured_provider": self.settings.embedding_provider,
             "fallback_enabled": self.settings.embedding_fallback_enabled,
-            "oci_genai_embeddings_configured": bool(
-                self.settings.oci_genai_compartment_id and self.settings.oci_genai_embedding_model_id
+            "oci_genai_embeddings_configured": oci_genai_configured,
+            "activation_ready": activation_ready,
+            "expected_dimensions": self.settings.oci_genai_embedding_dimensions,
+            "vector_dimensions": self.settings.oci_vector_dimensions,
+            "missing_config": missing_config,
+            "promotion_gate": (
+                "run retrieval health, retrieval regression, and vector parity before promoting OCI GenAI embeddings"
+                if activation_ready
+                else "keep local deterministic embeddings active until OCI GenAI embedding config and parity are available"
             ),
         }
 

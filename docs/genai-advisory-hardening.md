@@ -163,6 +163,40 @@ ADVISORY_SYNTHESIS_PROVIDER=deterministic
 
 No code fork, prompt fork, or retrieval change is required.
 
+## Embedding Activation Readiness
+
+Local deterministic embeddings remain the default:
+
+```text
+EMBEDDING_PROVIDER=local
+```
+
+OCI GenAI embeddings can be evaluated in a controlled path:
+
+```text
+EMBEDDING_PROVIDER=oci_genai
+OCI_GENAI_COMPARTMENT_ID=<compartment ocid>
+OCI_GENAI_EMBEDDING_MODEL_ID=<embedding model id>
+OCI_GENAI_EMBEDDING_DIMENSIONS=<expected dimensions>
+EMBEDDING_FALLBACK_ENABLED=true
+```
+
+Promotion gates:
+
+1. `/operations/infrastructure` reports `providers.embeddings.activation_ready=true`.
+2. `/retrieval/health` shows the expected embedding provider/fallback state.
+3. `OCI_GENAI_EMBEDDING_DIMENSIONS` matches the generated vector length and `OCI_VECTOR_DIMENSIONS`.
+4. Retrieval regression does not degrade against the local embedding baseline.
+5. Oracle AI Vector Search parity is run before any active semantic retrieval promotion.
+
+Rollback:
+
+```text
+EMBEDDING_PROVIDER=local
+```
+
+Keep `EMBEDDING_FALLBACK_ENABLED=true` during shadow validation so retrieval remains available if OCI GenAI embedding calls fail.
+
 ## Troubleshooting
 
 If GenAI output is too generic:

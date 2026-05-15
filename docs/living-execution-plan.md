@@ -75,8 +75,8 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | TASK-003 | Done | Add API Gateway readiness validation for configured endpoint and OCIDs. | Passed `tests/test_operational_hardening.py`, `tests/test_api.py`, `py_compile` for operational readiness script, and `git diff --check`. |
 | TASK-004 | Done | Prepare API Gateway staging cutover checklist and rollback path. | Terraform validate and Gateway smoke commands documented; default-off behavior preserved. |
 | TASK-005 | Done | Run OCI GenAI synthesis readiness/parity in skip-safe mode, then live mode when config exists. | Skip-safe parity run wrote `evals/reports/genai-synthesis-parity`; status skipped because `OCI_GENAI_COMPARTMENT_ID` and `OCI_GENAI_CHAT_MODEL_ID` are absent; deterministic default preserved. |
-| TASK-006 | Next | Add OCI GenAI embedding activation checklist and diagnostics expectations. | Retrieval health exposes provider/fallback state; regression gate documented. |
-| TASK-007 | Not Started | Validate Oracle AI Vector Search schema/index prerequisites without active-provider promotion. | Vector validation reports configured/unconfigured state cleanly. |
+| TASK-006 | Done | Add OCI GenAI embedding activation checklist and diagnostics expectations. | Passed `tests/test_operational_hardening.py`, `tests/test_api.py`, and `git diff --check`; activation gates documented. |
+| TASK-007 | Next | Validate Oracle AI Vector Search schema/index prerequisites without active-provider promotion. | Vector validation reports configured/unconfigured state cleanly. |
 | TASK-008 | Not Started | Add Oracle AI Vector Search dual-read parity workflow against Object Storage retrieval. | Retrieval parity report covers golden, edge, and regression prompts. |
 | TASK-009 | Not Started | Promote semantic retrieval through configuration only after parity approval. | Staging smoke, retrieval regression, vector validation, rollback drill pass. |
 | TASK-010 | Not Started | Activate controlled OCI Functions knowledge-refresh invocation path. | Function invocation smoke passes; no automatic promotion of snapshots without gates. |
@@ -133,14 +133,14 @@ Run the appropriate subset after each increment; run the full matrix before a ne
 
 ## Next Actionable Increment
 
-Current task: `TASK-006`.
+Current task: `TASK-007`.
 
-Add OCI GenAI embedding activation checklist and diagnostics expectations:
+Validate Oracle AI Vector Search schema/index prerequisites without active-provider promotion:
 
-1. Inspect current embedding provider diagnostics and fallback behavior.
-2. Document required OCI GenAI embedding configuration.
-3. Define activation gates for embedding dimensions, retrieval regression, and fallback state.
-4. Keep `EMBEDDING_PROVIDER=local` as default until live embedding parity passes.
+1. Inspect vector validation and index tooling.
+2. Run skip-safe vector validation without Oracle DB credentials.
+3. Confirm the report distinguishes unconfigured state from a failed provider.
+4. Keep `RETRIEVAL_PROVIDER=oci_object_storage` as the active staging provider.
 
 ## Operating Rules
 

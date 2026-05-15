@@ -162,7 +162,48 @@ def test_infrastructure_visibility_distinguishes_configured_and_scaffolded_oci_r
     assert visibility["topology"]["runtime_compute"] == "oci_compute_vm"
     assert visibility["configured_resources"]["storage"]["knowledge_bucket_configured"] is True
     assert visibility["operational_workflows"]["deployment"]["provider"] == "oci_devops"
+    assert visibility["providers"]["embeddings"]["configured_provider"] == "local"
+    assert visibility["providers"]["embeddings"]["activation_ready"] is False
     assert not any(gap["area"] == "identity" for gap in visibility["gaps"])
+
+
+def test_embedding_visibility_reports_genai_activation_readiness() -> None:
+    settings = Settings(
+        EMBEDDING_PROVIDER="oci_genai",
+        OCI_GENAI_COMPARTMENT_ID="ocid1.compartment.oc1..example",
+        OCI_GENAI_EMBEDDING_MODEL_ID="cohere.embed-english-v3.0",
+        OCI_GENAI_EMBEDDING_DIMENSIONS=1024,
+        OCI_VECTOR_DIMENSIONS=1024,
+    )
+
+    visibility = OperationalDiagnostics(settings).infrastructure_visibility(
+        retrieval={"provider": "local_json", "store": {"exists": True, "chunk_count": 44}},
+        refresh_status={"status": "succeeded"},
+    )
+
+    embeddings = visibility["providers"]["embeddings"]
+    assert embeddings["configured_provider"] == "oci_genai"
+    assert embeddings["oci_genai_embeddings_configured"] is True
+    assert embeddings["activation_ready"] is True
+    assert embeddings["expected_dimensions"] == 1024
+    assert embeddings["vector_dimensions"] == 1024
+    assert embeddings["missing_config"] == []
+
+
+def test_embedding_visibility_reports_missing_genai_config() -> None:
+    settings = Settings(EMBEDDING_PROVIDER="oci_genai")
+
+    visibility = OperationalDiagnostics(settings).infrastructure_visibility(
+        retrieval={"provider": "local_json", "store": {"exists": True, "chunk_count": 44}},
+        refresh_status={"status": "succeeded"},
+    )
+
+    embeddings = visibility["providers"]["embeddings"]
+    assert embeddings["activation_ready"] is False
+    assert embeddings["missing_config"] == [
+        "OCI_GENAI_COMPARTMENT_ID",
+        "OCI_GENAI_EMBEDDING_MODEL_ID",
+    ]
 
 
 def test_scheduler_diagnostics_use_configured_function_and_schedule_ocids() -> None:
