@@ -33,8 +33,8 @@ INTENT_RETRIEVAL_HINTS: dict[str, dict[str, tuple[str, ...]]] = {
         "architecture_patterns": ("migration-waves", "cutover", "container-platform"),
     },
     "dr": {
-        "service_domains": ("resilience", "database", "security", "networking", "storage"),
-        "architecture_patterns": ("disaster-recovery", "failover-runbook", "backup-recovery"),
+        "service_domains": ("resilience", "database", "security", "networking", "storage", "observability"),
+        "architecture_patterns": ("disaster-recovery", "failover-runbook", "backup-recovery", "operational-visibility", "auditability"),
     },
     "cost": {
         "service_domains": ("cost", "compute", "storage", "database"),
@@ -45,9 +45,20 @@ INTENT_RETRIEVAL_HINTS: dict[str, dict[str, tuple[str, ...]]] = {
         "architecture_patterns": ("least-privilege", "auditability", "network-isolation"),
     },
     "release_awareness": {
-        "service_domains": ("architecture", "resilience", "database", "networking", "compute", "storage"),
-        "architecture_patterns": ("well-architected", "operational-excellence"),
+        "service_domains": ("architecture", "resilience", "database", "networking", "compute", "storage", "observability"),
+        "architecture_patterns": ("well-architected", "operational-excellence", "high-availability"),
     },
+}
+
+SERVICE_QUERY_TERMS: dict[str, tuple[str, ...]] = {
+    "Load Balancer": ("load balancer", "load balancing"),
+    "Logging": ("logging", "logs", "audit"),
+    "Monitoring": ("monitoring", "metrics", "alarms"),
+    "Vault": ("vault", "secrets", "keys"),
+    "Web Application Firewall": ("waf", "web application firewall"),
+    "Identity and Access Management": ("iam", "identity", "policies"),
+    "Autonomous Database": ("autonomous database", "adb"),
+    "Network Security Groups": ("network security group", "network security groups", "nsg"),
 }
 
 
@@ -91,7 +102,7 @@ class OciKnowledgeRetriever:
         embedding_started_at = perf_counter()
         query_embedding = self.embedder.embed(retrieval_query)
         embedding_latency_ms = round((perf_counter() - embedding_started_at) * 1000, 2)
-        filters = self._build_filters(intent_profile)
+        filters = self._build_filters(question, intent_profile)
         results = self.store.search(
             query_embedding=query_embedding,
             top_k=self.top_k,
@@ -182,9 +193,15 @@ class OciKnowledgeRetriever:
             return question
         return " ".join((question, intent_profile.focus, *intent_profile.retrieval_terms))
 
-    def _build_filters(self, intent_profile: IntentProfile | None) -> VectorSearchFilters:
+    def _build_filters(self, question: str, intent_profile: IntentProfile | None) -> VectorSearchFilters:
         if intent_profile is None:
             return VectorSearchFilters()
+        normalized_question = question.lower()
+        explicit_services = tuple(
+            service
+            for service, terms in SERVICE_QUERY_TERMS.items()
+            if any(term in normalized_question for term in terms)
+        )
         return VectorSearchFilters(
             intent=intent_profile.intent.value,
             service_domains=INTENT_RETRIEVAL_HINTS.get(intent_profile.intent.value, {}).get(
@@ -195,6 +212,7 @@ class OciKnowledgeRetriever:
                 "architecture_patterns",
                 (),
             ),
+            services=explicit_services,
             release_aware=intent_profile.intent.value == "release_awareness",
         )
 

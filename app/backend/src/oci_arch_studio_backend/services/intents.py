@@ -123,7 +123,7 @@ INTENT_PROFILES: dict[Intent, IntentProfile] = {
     Intent.DR: IntentProfile(
         intent=Intent.DR,
         prompt_template="prompts/architecture-review.dr.v0.md",
-        retrieval_terms=("disaster recovery", "DR", "RTO", "RPO", "backup", "replication", "Data Guard", "cross-region", "fintech"),
+        retrieval_terms=("disaster recovery", "DR", "RTO", "RPO", "backup", "replication", "Data Guard", "cross-region", "fintech", "logging", "monitoring", "audit"),
         focus="RTO/RPO, cross-region design, database protection, failover, security, auditability, and operational runbooks",
         recommendations=(
             "Define fintech RTO/RPO tiers first, then map each application and data component to active-active, active-passive, backup/restore, or pilot-light DR.",

@@ -160,7 +160,7 @@ This progress is based on `docs/two-week-plan.md`.
   - backend smoke test passed
   - frontend Object Storage smoke test passed
   - OCI resource visibility checks passed for bucket, secret, log group, alarm, and Events rule
-  - retrieval health passed on the OCI-hosted backend with 13 local JSON chunks
+  - initial retrieval health passed on the OCI-hosted backend with 13 local JSON chunks
   - added `docs/oci-staging-deployment-report.md`
 - Froze the current working staging baseline:
   - documented baseline commit, environment config, deployed OCI resources, verification results, known limitations, and technical debt in `docs/baseline-freeze.md`
@@ -172,7 +172,7 @@ This progress is based on `docs/two-week-plan.md`.
   - updated `/etc/oci-architecture-studio.env` on the staging VM
   - preserved the same codebase, prompt templates, and retrieval interface
   - verified `/retrieval/health` reports `provider=oci_object_storage`
-  - validated Object Storage manifest retrieval with 13 chunks and 10 service domains
+  - initially validated Object Storage manifest retrieval with 13 chunks and 10 service domains before the later 21-source corpus expansion
   - validated rollback to `local_json` and restored `oci_object_storage`
   - added `docs/retrieval-provider-promotion-report.md`
 - Added advisory intelligence quality foundation:
@@ -188,7 +188,8 @@ This progress is based on `docs/two-week-plan.md`.
   - OCI GenAI chat synthesis adapter
   - deterministic fail-closed fallback
   - synthesis provider, model, warnings, and fallback fields in the API response
-  - synthesis fallback observability in `/advisory/quality`
+  - synthesis fallback and latency observability in `/advisory/quality`
+  - deterministic-vs-OCI GenAI parity checker under `infra/scripts/genai_synthesis_parity_check.py`
   - versioned local and staging config examples
   - `docs/genai-advisory-hardening.md`
 - Added supervised orchestration foundation:
@@ -245,7 +246,7 @@ Last validation run: 2026-05-15
 - Deployment config validation: passed
 - GitHub workflow YAML parsing: passed
 - Infrastructure Python script compile checks: passed
-- Knowledge ingestion smoke: passed, 13 chunks generated
+- Knowledge ingestion smoke: passed, 21 chunks generated
 - Release ingestion smoke: passed, 3 release items generated
 - Knowledge refresh policy smoke: passed, forced selective refresh with post-refresh gates
 - Continuous intelligence hardening: candidate-first promotion, version lineage, rollback automation, and refresh status endpoint implemented
@@ -257,8 +258,9 @@ Last validation run: 2026-05-15
 - Edge-case evals: passed, 8 of 8
 - Advisory-quality evals: passed, 5 of 5
 - Controlled orchestration evals: passed, 5 of 5
-- Retrieval health check: passed for `oci_object_storage`, 13 chunks
+- Retrieval health check: passed for `oci_object_storage`, 21 chunks
 - Retrieval regression check: passed, 14 of 14 golden + edge cases
+- GenAI parity readiness check: passed in skip-safe mode when OCI GenAI env vars are not provided
 - Python compile checks: passed for backend, infra scripts, ingestion, and refresh code
 - Diff whitespace check: passed
 - Local API smoke: passed for `/health`, `/architecture-review`, and `/orchestration/health`, including `multi_agent_pilot` with 3 specialist contributions
@@ -275,11 +277,15 @@ Last validation run: 2026-05-15
 - Dual-provider retrieval parity validation: passed, 14 of 14 cases, comparing `local_json` with `oci_object_storage`
 - OCI Object Storage snapshot sync: passed for `oci-rag-index.json` and `oci-release-snapshot.json`
 - Staging retrieval provider promotion: passed, active provider is now `oci_object_storage`
+- Staging redeploy from the latest audited working tree: passed
+- Staging endpoint parity: passed for `/health`, `/architecture-review`, `/retrieval/health`, `/advisory/quality`, `/orchestration/health`, and `/knowledge/refresh/status`
+- Staging retrieval snapshot: passed with `oci_object_storage`, 21 chunks, 21 services, and 11 service domains
 - Post-promotion baseline guardrail: passed with expected provider `oci_object_storage`
 - Post-promotion deployment smoke: passed for backend, frontend, and OCI SDK tenancy access
 - Post-promotion OCI resource visibility smoke: passed for Object Storage bucket, Vault secret, Logging log group, Monitoring alarm, and Events rule
 - Post-promotion live scenario checks: passed for architecture, migration, HA/DR, cost, and release-awareness
-- Rollback validation: passed, `local_json` was restored and then `oci_object_storage` was restored without code or prompt changes
+- Rollback validation: passed, `local_json` was restored and then `oci_object_storage` was restored without code or prompt changes; the restore runbook now preserves or restores SELinux context on `/etc/oci-architecture-studio.env`
+- OCI Object Storage-provider eval parity: passed for golden evals, edge evals, and retrieval regression against the staging snapshot bucket
 - Presentation-friendly architecture diagrams: added in `docs/architecture-diagrams.md`
 - Documentation refresh: README, PRD, roadmap, vision, sprint docs, runbooks, demo readiness, architecture docs, promotion report, GenAI hardening notes, and supervised orchestration notes now reflect the current promoted staging state
 
@@ -289,12 +295,10 @@ Last validation run: 2026-05-15
 - Run OCI Generative AI embedding ingestion against the approved staging compartment and upload the vector manifest to Object Storage.
 - Validate the Oracle AI Vector Search table schema and enable read-path implementation only after manifest parity is proven.
 - Expand OCI source coverage for:
-  - dedicated WAF
-  - dedicated Vault
-  - dedicated Cloud Guard
-  - dedicated Logging
-  - dedicated Monitoring
   - Budgets-specific documentation
+  - Audit-specific documentation
+  - Data Guard-specific documentation
+  - deeper workload architecture sources
 - Improve HTML ingestion quality to remove more documentation boilerplate.
 - Add richer source metadata:
   - source version/date
@@ -305,8 +309,8 @@ Last validation run: 2026-05-15
   - explicit current-vs-historical recommendation comparison
   - stronger release source parsing for point-in-time snapshots
 - Continue hardening advisory synthesis:
-  - enable OCI GenAI synthesis in staging through approved configuration where appropriate
-  - compare GenAI and deterministic behavior on regression scenarios
+  - provide `OCI_GENAI_COMPARTMENT_ID` and `OCI_GENAI_CHAT_MODEL_ID` for live OCI GenAI parity validation
+  - enable OCI GenAI synthesis in staging only after deterministic-vs-OCI GenAI parity passes without fallback
   - strengthen unsupported-claim suppression beyond current requested-service warnings
 - Continue hardening controlled orchestration:
   - keep agent routing deterministic and observable
@@ -326,8 +330,8 @@ Last validation run: 2026-05-15
   - current index includes source URL, service, service domain, intent tags, fetched timestamp, freshness score, trust level, architecture patterns, chunk index, and fetch status
   - still needs source version/date and richer ownership metadata
 - Source registry expansion:
-  - added OKE, database migration, Full Stack Disaster Recovery, Cost Management, Security Services, Object Storage, and CDN / edge services
-  - still needs dedicated WAF, Vault, Cloud Guard, Logging, Monitoring, and Budgets-specific sources
+  - added OKE, database migration, Full Stack Disaster Recovery, Cost Management, Security Services, Object Storage, CDN / edge services, IAM, Network Security Groups, Autonomous Database, Vault, Logging, Monitoring, Cloud Guard, and WAF
+  - still needs Budgets-specific, Audit-specific, Data Guard-specific, and deeper workload architecture sources
 - Release-awareness and continuous intelligence:
   - release-aware intent, prompt template, release registry, release ingestion, and release snapshot reader exist
   - scheduled refresh automation and candidate-first promotion now exist

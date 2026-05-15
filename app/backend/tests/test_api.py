@@ -64,6 +64,7 @@ def test_advisory_quality_metrics_endpoint() -> None:
     body = response.json()
     assert body["request_count"] >= 1
     assert "average_citation_coverage" in body
+    assert "average_synthesis_latency_ms" in body
     assert body["last_orchestration_mode"] in {"multi_agent_pilot", "supervised", "single_pass"}
 
 

@@ -90,6 +90,62 @@
       "url": "https://docs.oracle.com/en-us/iaas/Content/Security/Concepts/security.htm",
       "source_type": "oci_service_doc",
       "fallback_text": "OCI security architecture should cover IAM, least privilege, compartment strategy, network security groups, private subnets, encryption, Vault for keys and secrets, Cloud Guard, Security Zones, logging, audit, monitoring, and compliance evidence."
+    },
+    {
+      "id": "oci-iam-overview",
+      "title": "OCI Identity and Access Management Overview",
+      "url": "https://docs.oracle.com/en-us/iaas/Content/Identity/Concepts/overview.htm",
+      "source_type": "oci_service_doc",
+      "fallback_text": "OCI Identity and Access Management provides identity domains, users, groups, dynamic groups, policies, federation, and authentication controls. Architecture guidance should define compartment strategy, least privilege policies, workload identities, administrator access, break-glass access, and audit expectations."
+    },
+    {
+      "id": "oci-network-security-groups-overview",
+      "title": "OCI Network Security Groups Overview",
+      "url": "https://docs.oracle.com/en-us/iaas/Content/Network/Concepts/networksecuritygroups.htm",
+      "source_type": "oci_service_doc",
+      "fallback_text": "OCI Network Security Groups provide virtual firewall rules for selected VNICs. Designs should use NSGs to express application-tier and data-tier traffic policy, reduce broad subnet-level exposure, and support auditable east-west and ingress controls."
+    },
+    {
+      "id": "oci-autonomous-database-overview",
+      "title": "OCI Autonomous Database Overview",
+      "url": "https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/index.html",
+      "source_type": "oci_service_doc",
+      "fallback_text": "OCI Autonomous Database is a managed Oracle Database service with automated operations. Architecture and migration guidance should evaluate workload type, connectivity, private endpoints, backup and recovery needs, performance, data movement, compatibility, and operational ownership."
+    },
+    {
+      "id": "oci-vault-overview",
+      "title": "OCI Vault Overview",
+      "url": "https://docs.oracle.com/en-us/iaas/Content/KeyManagement/Concepts/keyoverview.htm",
+      "source_type": "oci_service_doc",
+      "fallback_text": "OCI Vault provides key management and secrets capabilities. Enterprise designs should use Vault for customer-managed keys, secret storage, rotation planning, encryption governance, backup and DR access, and separation of duties for sensitive application configuration."
+    },
+    {
+      "id": "oci-logging-overview",
+      "title": "OCI Logging Overview",
+      "url": "https://docs.oracle.com/en-us/iaas/Content/Logging/Concepts/loggingoverview.htm",
+      "source_type": "oci_service_doc",
+      "fallback_text": "OCI Logging collects and manages service, custom, and audit-related logs. Architecture recommendations should include centralized logging, retention, log groups, operational troubleshooting, security investigation, and integration with monitoring or downstream analysis."
+    },
+    {
+      "id": "oci-monitoring-overview",
+      "title": "OCI Monitoring Overview",
+      "url": "https://docs.oracle.com/en-us/iaas/Content/Monitoring/Concepts/monitoringoverview.htm",
+      "source_type": "oci_service_doc",
+      "fallback_text": "OCI Monitoring provides metrics, alarms, and notifications for cloud resources and applications. Designs should define health signals, alarms, notification topics, SLO indicators, capacity trends, cost signals, and incident response expectations."
+    },
+    {
+      "id": "oci-cloud-guard-overview",
+      "title": "OCI Cloud Guard Overview",
+      "url": "https://docs.oracle.com/en-us/iaas/cloud-guard/using/index.htm",
+      "source_type": "oci_service_doc",
+      "fallback_text": "OCI Cloud Guard helps detect and respond to security posture problems. Security architecture guidance should consider detector recipes, responder recipes, monitored compartments, posture findings, operations ownership, and integration with incident response."
+    },
+    {
+      "id": "oci-waf-overview",
+      "title": "OCI Web Application Firewall Overview",
+      "url": "https://docs.oracle.com/en-us/iaas/Content/WAF/Concepts/overview.htm",
+      "source_type": "oci_service_doc",
+      "fallback_text": "OCI Web Application Firewall protects web applications at the edge. Internet-facing architectures should evaluate WAF policies, origin protection, TLS, bot and threat controls, CDN integration, logging, and operational tuning for application security."
     }
   ]
 }

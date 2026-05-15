@@ -126,9 +126,9 @@ class JsonVectorStore:
         if filters.intent and filters.intent in metadata.get("intent_tags", []):
             score += 0.08
         if domain and domain in {item.lower() for item in filters.service_domains}:
-            score += 0.05
+            score += 0.07
         if service and service in {item.lower() for item in filters.services}:
-            score += 0.05
+            score += 0.16
         if patterns.intersection({item.lower() for item in filters.architecture_patterns}):
             score += 0.04
         if metadata.get("trust_level") == "official":

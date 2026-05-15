@@ -26,6 +26,7 @@ def test_deterministic_synthesizer_preserves_profile_contract() -> None:
 
     assert result.provider == "deterministic"
     assert result.model == "profile-v0"
+    assert result.latency_ms == 0.0
     assert result.recommendations == list(profile.recommendations)
     assert "Retrieved test context" in result.answer
 
@@ -59,6 +60,7 @@ def test_oci_genai_synthesizer_fails_closed_to_deterministic() -> None:
 
     assert result.provider == "deterministic"
     assert result.used_fallback is True
+    assert result.latency_ms is not None
     assert any("fallback" in warning.lower() for warning in result.warnings)
 
 

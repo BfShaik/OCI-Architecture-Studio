@@ -39,6 +39,26 @@ ADVISORY_SYNTHESIS_PROVIDER=deterministic|oci_genai
 
 The deterministic provider remains the rollback path. The OCI GenAI provider fails closed to deterministic synthesis if the model call fails or returns invalid JSON.
 
+Before enabling `ADVISORY_SYNTHESIS_PROVIDER=oci_genai` in staging, run the parity checker:
+
+```bash
+app/backend/.venv/bin/python infra/scripts/genai_synthesis_parity_check.py \
+  --cases evals/golden-prompts.jsonl \
+  --cases evals/edge-cases.jsonl \
+  --output-dir evals/reports/genai-parity
+```
+
+If OCI GenAI config is not present, the checker can be run in readiness mode:
+
+```bash
+app/backend/.venv/bin/python infra/scripts/genai_synthesis_parity_check.py \
+  --cases evals/golden-prompts.jsonl \
+  --output-dir evals/reports/genai-parity \
+  --allow-skip
+```
+
+The checker compares deterministic and OCI GenAI outputs for intent, citation coverage, fallback usage, unsupported claims, confidence behavior, and latency.
+
 Orchestration is also config-selected:
 
 ```text

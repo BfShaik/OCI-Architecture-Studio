@@ -75,11 +75,29 @@ SERVICE_METADATA: dict[str, dict[str, object]] = {
         "intent_tags": ["architecture", "cost", "general"],
         "architecture_patterns": ["application-tier", "autoscaling"],
     },
+    "iam": {
+        "service": "Identity and Access Management",
+        "service_domain": "security",
+        "intent_tags": ["security", "architecture", "migration", "general"],
+        "architecture_patterns": ["least-privilege", "compartment-strategy", "access-governance"],
+    },
+    "network-security-groups": {
+        "service": "Network Security Groups",
+        "service_domain": "networking",
+        "intent_tags": ["security", "architecture", "dr", "general"],
+        "architecture_patterns": ["network-isolation", "east-west-controls"],
+    },
     "database-migration": {
         "service": "Database Migration",
         "service_domain": "database",
         "intent_tags": ["migration", "general"],
         "architecture_patterns": ["migration-waves", "cutover"],
+    },
+    "autonomous-database": {
+        "service": "Autonomous Database",
+        "service_domain": "database",
+        "intent_tags": ["architecture", "migration", "dr", "cost", "general"],
+        "architecture_patterns": ["managed-database", "data-tier", "backup-recovery"],
     },
     "database": {
         "service": "Database Services",
@@ -104,6 +122,36 @@ SERVICE_METADATA: dict[str, dict[str, object]] = {
         "service_domain": "cost",
         "intent_tags": ["cost", "general"],
         "architecture_patterns": ["budgets", "tagging", "rightsizing"],
+    },
+    "vault": {
+        "service": "Vault",
+        "service_domain": "security",
+        "intent_tags": ["security", "architecture", "dr", "general"],
+        "architecture_patterns": ["key-management", "secrets-management", "encryption"],
+    },
+    "logging": {
+        "service": "Logging",
+        "service_domain": "observability",
+        "intent_tags": ["architecture", "security", "dr", "general"],
+        "architecture_patterns": ["auditability", "operational-visibility"],
+    },
+    "monitoring": {
+        "service": "Monitoring",
+        "service_domain": "observability",
+        "intent_tags": ["architecture", "cost", "dr", "general"],
+        "architecture_patterns": ["operational-visibility", "alarms", "slo-monitoring"],
+    },
+    "cloud-guard": {
+        "service": "Cloud Guard",
+        "service_domain": "security",
+        "intent_tags": ["security", "architecture", "general"],
+        "architecture_patterns": ["posture-management", "threat-detection"],
+    },
+    "waf": {
+        "service": "Web Application Firewall",
+        "service_domain": "edge",
+        "intent_tags": ["security", "architecture", "general"],
+        "architecture_patterns": ["edge-protection", "application-security"],
     },
     "security": {
         "service": "Security Services",

@@ -130,6 +130,7 @@ class ArchitectureReviewOrchestrator:
             stale_evidence_count=len(stale_sources),
             synthesis_provider=synthesis.provider,
             synthesis_fallback_used=synthesis.used_fallback,
+            synthesis_latency_ms=synthesis.latency_ms,
             orchestration_mode=orchestration_plan.mode,
             active_agents=orchestration_plan.active_agents,
             routing_decision=orchestration_plan.routing_decision,

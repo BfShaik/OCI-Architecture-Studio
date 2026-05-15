@@ -66,6 +66,13 @@ jobs:
           python evals/run_golden.py --output-dir evals/reports/golden
           python evals/run_golden.py --cases evals/edge-cases.jsonl --output-dir evals/reports/edge-cases
 
+      - name: GenAI synthesis parity readiness
+        run: |
+          python infra/scripts/genai_synthesis_parity_check.py \
+            --cases evals/golden-prompts.jsonl \
+            --output-dir evals/reports/genai-parity \
+            --allow-skip
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:

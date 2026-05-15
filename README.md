@@ -171,7 +171,7 @@ VITE_API_BASE_URL=http://localhost:8000 npm run dev
 
 1. Keep staging on `RETRIEVAL_PROVIDER=oci_object_storage` and monitor retrieval latency, citations, and failure handling.
 2. Run the scheduled refresh function in staging with candidate-first promotion and watch `/knowledge/refresh/status`.
-3. Expand the source registry with dedicated WAF, Vault, Cloud Guard, Logging, Monitoring, Budgets, IAM, Audit, and Data Guard sources.
+3. Continue expanding the source registry with Budgets, Audit, Data Guard, and deeper service-specific architecture sources.
 4. Replace local hashing embeddings with OCI Generative AI embeddings once provider settings and cost controls are finalized.
 5. Validate Oracle AI Vector Search schema/query parity before enabling active reads.
 6. Add Oracle AI Vector Search dual-run checks against the Object Storage provider before any active-read promotion.
@@ -184,6 +184,7 @@ app/backend/.venv/bin/python evals/run_golden.py --output-dir evals/reports/gold
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/edge-cases.jsonl --output-dir evals/reports/edge-cases
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/advisory-quality.jsonl --output-dir evals/reports/advisory-quality
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/orchestration-quality.jsonl --output-dir evals/reports/orchestration-quality
+app/backend/.venv/bin/python infra/scripts/genai_synthesis_parity_check.py --cases evals/golden-prompts.jsonl --output-dir evals/reports/genai-parity --allow-skip
 ```
 
 Reports are written to `evals/reports/` and ignored by git.
@@ -275,13 +276,13 @@ cd ../frontend && npm run build
 
 Latest full validation: 2026-05-15.
 
-- Local backend tests: `46 passed`
+- Local backend tests: `50 passed`
 - Golden evals: `6 passed, 0 failed`
 - Edge-case evals: `8 passed, 0 failed`
 - Advisory-quality evals: `5 passed, 0 failed`
 - Controlled orchestration evals: `5 passed, 0 failed`
 - Retrieval regression: `14 passed, 0 failed`
-- Knowledge ingestion: `13 chunks`
+- Knowledge ingestion: `21 chunks`
 - Release ingestion: `3 release items`
 - Knowledge refresh policy smoke: passed
 - Frontend build: passed
@@ -290,6 +291,8 @@ Latest full validation: 2026-05-15.
 - Dual-provider retrieval parity: passed, `14/14`, comparing `local_json` with `oci_object_storage`
 - Staging retrieval promotion: passed, active provider is `oci_object_storage`
 - Rollback validation: passed, `local_json` can be restored through config only and `oci_object_storage` was restored after the rollback test
+- Deployment synchronization: passed, staging exposes current repo endpoints including `/orchestration/health` and `/knowledge/refresh/status`
+- GenAI activation readiness: parity checker implemented; live OCI GenAI comparison is gated on `OCI_GENAI_COMPARTMENT_ID` and `OCI_GENAI_CHAT_MODEL_ID`
 - Live post-promotion scenario checks: passed for architecture, migration, HA/DR, cost, and release-awareness prompts
 
 See `docs/status.md` for the current completed work, pending work, and known limitations.
@@ -323,6 +326,8 @@ See `docs/retrieval-provider-promotion-report.md` for the completed staging prom
 See `docs/advisory-intelligence.md` for evidence-linked recommendations, confidence scoring, citation enforcement, uncertainty handling, and advisory-quality observability.
 
 See `docs/genai-advisory-hardening.md` for GenAI synthesis configuration, fail-closed fallback behavior, citation enforcement, confidence scoring, eval strategy, and rollback guidance.
+
+See `docs/post-stabilization-architecture-review.md` for the factual current-state architecture after repo/staging synchronization, active providers, GenAI readiness, validation summary, and next milestone.
 
 See `docs/terraform-plan-review.md` for the first staging Terraform planning workflow, plan review, apply readiness criteria, and post-apply smoke-test plan.
 

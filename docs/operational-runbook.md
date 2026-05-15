@@ -1,6 +1,6 @@
 # OCI Architecture Studio — Operational Runbook
 
-Date: 2026-05-14
+Date: 2026-05-15
 
 ## Working URLs
 
@@ -48,7 +48,8 @@ Run:
 python3 infra/scripts/verify_staging_baseline.py \
   --api-base-url http://193.122.149.102:8000 \
   --frontend-url http://193.122.149.102:8000/ \
-  --expected-retrieval-provider oci_object_storage
+  --expected-retrieval-provider oci_object_storage \
+  --expected-chunks 21
 ```
 
 Expected result:
@@ -233,7 +234,7 @@ If frontend loads but Review fails:
 If retrieval fails:
 
 - check `/retrieval/health`
-- confirm chunk count is at least 13
+- confirm chunk count is at least 21 for the current staging baseline
 - rerun ingestion on the VM through the deploy script
 
 If advisory confidence drops:
@@ -259,6 +260,17 @@ If GenAI synthesis needs rollback:
 - rerun `/advisory/quality` and baseline smoke tests
 - inspect `synthesis_warnings` and `synthesis_fallback_used` in API responses
 
+Before enabling OCI GenAI synthesis, run:
+
+```bash
+app/backend/.venv/bin/python infra/scripts/genai_synthesis_parity_check.py \
+  --cases evals/golden-prompts.jsonl \
+  --cases evals/edge-cases.jsonl \
+  --output-dir evals/reports/genai-parity
+```
+
+The parity gate must pass without GenAI fallback before staging is switched from deterministic synthesis.
+
 If `oci_object_storage` promotion fails:
 
 - set `RETRIEVAL_PROVIDER=local_json`
@@ -266,6 +278,17 @@ If `oci_object_storage` promotion fails:
 - rerun baseline smoke tests
 - inspect `/retrieval/health`
 - restore `RETRIEVAL_PROVIDER=oci_object_storage` only after the Object Storage manifest path is healthy again
+
+When restoring `/etc/oci-architecture-studio.env`, preserve systemd-readable permissions and SELinux context:
+
+```bash
+sudo install -o root -g root -m 0644 /tmp/oci-architecture-studio.env /etc/oci-architecture-studio.env
+sudo restorecon /etc/oci-architecture-studio.env
+sudo systemctl reset-failed oci-architecture-studio
+sudo systemctl restart oci-architecture-studio
+```
+
+Avoid `sudo mv` from `/tmp` into `/etc` because it can carry a `user_tmp_t` SELinux label and cause systemd `Failed to load environment files: Permission denied`.
 
 ## Rollback
 

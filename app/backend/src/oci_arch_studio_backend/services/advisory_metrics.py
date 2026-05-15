@@ -16,6 +16,8 @@ class AdvisoryQualityMetrics:
     last_confidence_level: str | None = None
     last_overall_confidence: float | None = None
     last_synthesis_provider: str | None = None
+    total_synthesis_latency_ms: float = 0.0
+    last_synthesis_latency_ms: float | None = None
     synthesis_fallback_count: int = 0
     last_orchestration_mode: str | None = None
     last_active_agents: list[str] = field(default_factory=list)
@@ -40,6 +42,12 @@ class AdvisoryQualityMetrics:
             return 0.0
         return round(self.total_evidence_support / self.request_count, 3)
 
+    @property
+    def average_synthesis_latency_ms(self) -> float:
+        if self.request_count == 0:
+            return 0.0
+        return round(self.total_synthesis_latency_ms / self.request_count, 2)
+
     def as_dict(self) -> dict[str, object]:
         return {
             "request_count": self.request_count,
@@ -53,6 +61,8 @@ class AdvisoryQualityMetrics:
             "last_confidence_level": self.last_confidence_level,
             "last_overall_confidence": self.last_overall_confidence,
             "last_synthesis_provider": self.last_synthesis_provider,
+            "last_synthesis_latency_ms": self.last_synthesis_latency_ms,
+            "average_synthesis_latency_ms": self.average_synthesis_latency_ms,
             "synthesis_fallback_count": self.synthesis_fallback_count,
             "last_orchestration_mode": self.last_orchestration_mode,
             "last_active_agents": list(self.last_active_agents),
@@ -85,6 +95,7 @@ class AdvisoryQualityMetricsRecorder:
         stale_evidence_count: int,
         synthesis_provider: str,
         synthesis_fallback_used: bool,
+        synthesis_latency_ms: float | None = None,
         orchestration_mode: str = "single_pass",
         active_agents: list[str] | None = None,
         routing_decision: str | None = None,
@@ -99,6 +110,8 @@ class AdvisoryQualityMetricsRecorder:
         self.metrics.last_confidence_level = confidence_level
         self.metrics.last_overall_confidence = overall_confidence
         self.metrics.last_synthesis_provider = synthesis_provider
+        self.metrics.last_synthesis_latency_ms = synthesis_latency_ms
+        self.metrics.total_synthesis_latency_ms += synthesis_latency_ms or 0.0
         self.metrics.last_orchestration_mode = orchestration_mode
         self.metrics.last_active_agents = list(active_agents or [])
         self.metrics.last_routing_decision = routing_decision

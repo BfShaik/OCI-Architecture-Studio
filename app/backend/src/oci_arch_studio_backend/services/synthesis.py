@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
+from time import perf_counter
 from typing import Protocol
 
 from oci_arch_studio_backend.models.architecture import RetrievedSource
@@ -26,6 +27,7 @@ class SynthesisResult:
     next_steps: list[str]
     provider: str
     model: str | None = None
+    latency_ms: float | None = None
     warnings: list[str] = field(default_factory=list)
     used_fallback: bool = False
 
@@ -54,6 +56,7 @@ class DeterministicAdvisorySynthesizer:
             next_steps=list(profile.next_steps),
             provider=self.provider_name,
             model="profile-v0",
+            latency_ms=0.0,
         )
 
 
@@ -82,6 +85,7 @@ class OciGenAiAdvisorySynthesizer:
         self._client = None
 
     def synthesize(self, request: SynthesisRequest) -> SynthesisResult:
+        started_at = perf_counter()
         try:
             raw_text = self._invoke_model(request)
             payload = self._parse_json(raw_text)
@@ -93,6 +97,7 @@ class OciGenAiAdvisorySynthesizer:
                 next_steps=self._list_or_default(payload.get("next_steps"), request.profile.next_steps),
                 provider=self.provider_name,
                 model=self.config.model_id,
+                latency_ms=round((perf_counter() - started_at) * 1000, 2),
                 warnings=self._list_or_default(payload.get("quality_warnings"), ()),
             )
         except Exception as exc:  # noqa: BLE001 - synthesis must fail closed into deterministic advisory.
@@ -105,6 +110,7 @@ class OciGenAiAdvisorySynthesizer:
                 next_steps=fallback.next_steps,
                 provider=fallback.provider,
                 model=fallback.model,
+                latency_ms=round((perf_counter() - started_at) * 1000, 2),
                 warnings=[
                     "OCI GenAI synthesis failed closed; deterministic synthesis fallback was used.",
                     f"{type(exc).__name__}: {exc}",
