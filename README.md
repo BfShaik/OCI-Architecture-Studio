@@ -50,9 +50,12 @@ tests/                Backend and integration tests
 - Backend section citation plumbing with chunk ID, source document, OCI service category, and service name
 - Architecture-domain heuristics for ecommerce, fintech, SaaS, AI/ML inference, observability platforms, and analytics platforms
 - AWS-to-OCI service mapping for container, database, storage, CDN/DNS, networking, observability, security, AI/ML, and data engineering source services
-- Deterministic architecture pattern profiles for HA web apps, Kubernetes modernization, fintech DR, AI inference, analytics/data lake, and multi-region SaaS
+- Deterministic architecture pattern profiles for HA web apps, Kubernetes modernization, fintech DR, AI inference, analytics/data lake, multi-region SaaS, active/passive DR, event-driven systems, serverless workloads, and secure landing zones
+- Deterministic architecture reasoning profiles for HA/DR, migration, SaaS, fintech, AI/ML inference, analytics/data platforms, observability platforms, and cost-optimized workloads
 - Lightweight synthesis quality signals for grounding, OCI specificity, workload alignment, migration accuracy, recommendation diversity, and citation coverage
 - Concise architecture decision reasoning metadata with service choice rationale, workload signals, tradeoffs, rejected alternatives, source chunk IDs, and confidence
+- Explicit architecture tradeoff analysis for cost/resilience, performance/complexity, managed/self-managed, latency/multi-region resilience, simplicity/scalability, and flexibility/operational overhead
+- Per-recommendation confidence indicators with reasoning basis, supporting chunk IDs, assumptions, and known limitations
 - Lightweight architecture consistency validation for conflicting requirements, migration mapping coverage, HA/DR alignment, observability coverage, security coverage, and simple unsupported combination risks
 - Expanded confidence sub-signals for service relevance, workload alignment, migration mapping certainty, and citation coverage
 - Release snapshot schema and temporal knowledge metadata schema for current-vs-historical scaffolding
@@ -92,7 +95,7 @@ tests/                Backend and integration tests
 - Config-only staging promotion to `oci_object_storage` with rollback validation
 - Evidence-linked recommendations, confidence scoring, decision reasoning metadata, consistency findings, synthesis quality signals, uncertainty flags, and advisory quality metrics
 - Config-selectable advisory synthesis with deterministic rollback and an OCI GenAI chat adapter
-- Retrieval-grounded GenAI prompt construction with detected intent, mapped OCI services, workload/domain profile, architecture pattern hints, retrieved OCI chunks, and required response structure
+- Retrieval-grounded GenAI prompt construction with detected intent, mapped OCI services, workload/domain profile, architecture pattern hints, reasoning profile, retrieved OCI chunks, and required response structure
 - Optional synthesis debug traces with selected provider, retrieved chunk IDs, grounding prompt sections, approximate input tokens, token usage when available, and fallback reason
 - Controlled in-process orchestration pilot with:
   - one in-process supervisor
@@ -256,6 +259,7 @@ app/backend/.venv/bin/python evals/run_golden.py --output-dir evals/reports/gold
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/edge-cases.jsonl --output-dir evals/reports/edge-cases
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/advisory-quality.jsonl --output-dir evals/reports/advisory-quality
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/orchestration-quality.jsonl --output-dir evals/reports/orchestration-quality
+app/backend/.venv/bin/python evals/run_golden.py --cases evals/architecture-realism.jsonl --output-dir evals/reports/architecture-realism
 app/backend/.venv/bin/python infra/scripts/genai_synthesis_parity_check.py --cases evals/genai-comparison.jsonl --output-dir evals/reports/genai-comparison --allow-skip
 app/backend/.venv/bin/python infra/scripts/genai_synthesis_parity_check.py --cases evals/golden-prompts.jsonl --output-dir evals/reports/genai-parity --allow-skip
 ```
@@ -350,6 +354,7 @@ app/backend/.venv/bin/python evals/run_golden.py --output-dir evals/reports/gold
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/edge-cases.jsonl --output-dir evals/reports/edge-cases
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/advisory-quality.jsonl --output-dir evals/reports/advisory-quality
 app/backend/.venv/bin/python evals/run_golden.py --cases evals/orchestration-quality.jsonl --output-dir evals/reports/orchestration-quality
+app/backend/.venv/bin/python evals/run_golden.py --cases evals/architecture-realism.jsonl --output-dir evals/reports/architecture-realism
 app/backend/.venv/bin/python infra/scripts/retrieval_regression_check.py --cases evals/golden-prompts.jsonl --cases evals/edge-cases.jsonl --output-dir evals/reports/retrieval
 app/backend/.venv/bin/python infra/scripts/retrieval_parity_check.py --oci-region us-ashburn-1 --oci-profile DEFAULT --oci-namespace idsmrn7rvqb6 --oci-vector-bucket oci-architecture-studio-staging-knowledge-snapshots --oci-vector-object-name oci-rag-index.json --output-dir evals/reports/retrieval-parity
 app/backend/.venv/bin/python knowledge/ingestion/ingest.py --no-fetch
@@ -364,11 +369,12 @@ cd ../frontend && npm run build
 
 Latest full validation: 2026-05-15.
 
-- Local backend tests: `97 passed`
+- Local backend tests: `101 passed`
 - Golden evals: `18 passed, 0 failed`
 - Edge-case evals: `8 passed, 0 failed`
 - Advisory-quality evals: `5 passed, 0 failed`
 - Controlled orchestration evals: `5 passed, 0 failed`
+- Architecture-realism evals: `4 passed, 0 failed`
 - Retrieval regression: `26 passed, 0 failed`
 - Retrieval health: passed for `local_json` with 44 chunks in the current branch; staging remains documented as `oci_object_storage`
 - Oracle AI Vector Search local fallback health: passed with fallback active when DB settings are absent

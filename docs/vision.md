@@ -17,8 +17,8 @@ OCI Architecture Studio now has a validated working foundation:
 - backend section citation metadata for chunk IDs, source documents, OCI service categories, and services
 - AWS-to-OCI source service mapping and domain-aware heuristics for ecommerce, fintech, SaaS, AI/ML inference, observability, and analytics scenarios
 - 44-source local OCI corpus with scalable ingestion scaffolding for source groups, source categories, chunk lineage, document hierarchy, release tags, and corpus health validation
-- deterministic architecture pattern profiles and synthesis quality signals that make fallback responses more useful while remaining explainable
-- concise decision reasoning metadata and lightweight consistency validation for recommendation coherence
+- deterministic architecture pattern profiles, reasoning profiles, and synthesis quality signals that make fallback responses more useful while remaining explainable
+- concise decision reasoning metadata, explicit tradeoff analysis, per-recommendation confidence indicators, and lightweight consistency validation for recommendation coherence
 - confidence sub-signals for retrieval grounding, service relevance, workload alignment, migration mapping certainty, and citation coverage
 - OCI Object Storage retrieval manifest as the active staging retrieval provider
 - optional Oracle AI Vector Search provider and index tooling for the next OCI-native retrieval step
@@ -33,7 +33,7 @@ The current orchestration layer is deterministic and in-process. Autonomous agen
 
 OCI GenAI embeddings and synthesis are available as configurable paths with deterministic fallback. Deterministic synthesis remains the safe default unless live GenAI configuration and parity validation are provided.
 
-The current deterministic synthesis layer is heuristic. It improves structure, workload specificity, grounding fidelity, and recommendation explainability, but it is not a substitute for a full OCI design review or live GenAI reasoning.
+The current deterministic synthesis and reasoning layer is heuristic. It improves structure, workload specificity, tradeoff visibility, grounding fidelity, and recommendation explainability, but it is not a substitute for a full OCI design review or live GenAI reasoning.
 
 Release-awareness is still foundational: the runtime can reference local release snapshots, classify release changes, surface impacted services/change categories, and retain historical snapshots for audit/context. It does not yet perform full automated release reconciliation or bi-temporal retrieval.
 

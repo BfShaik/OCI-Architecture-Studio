@@ -3,6 +3,7 @@ from __future__ import annotations
 from oci_arch_studio_backend.models.architecture import RetrievedSource, SectionCitation, SectionCitationSource
 from oci_arch_studio_backend.services.architecture_heuristics import ArchitectureHeuristicClassifier
 from oci_arch_studio_backend.services.architecture_patterns import ArchitecturePatternProfile, ArchitecturePatternSelector
+from oci_arch_studio_backend.services.architecture_reasoning_engine import ArchitectureReasoningEngine
 from oci_arch_studio_backend.services.intents import IntentProfile
 
 
@@ -40,7 +41,17 @@ def format_standard_answer(
         profile=profile,
         sources=sources,
     )
+    reasoning = ArchitectureReasoningEngine().analyze(
+        question=question,
+        workload_context=workload_context,
+        profile=profile,
+        sources=sources,
+        recommendations=list(profile.recommendations),
+        synthesis_provider="deterministic",
+    )
     domain_guidance = " ".join(heuristics.recommendations) if heuristics.recommendations else profile.focus
+    reasoning_guidance = " ".join(reasoning.profile.recommendation_guidance)
+    tradeoff_guidance = _tradeoff_summary(reasoning.tradeoffs)
     migration_note = (
         _migration_guidance(sources)
         if profile.intent.value in {"migration", "modernization", "saas_platform", "release_awareness"}
@@ -51,9 +62,9 @@ def format_standard_answer(
     risk_moves = " ".join(pattern.risks)
     next_moves = " ".join(pattern.next_steps)
     lines = [
-        f"1. Executive Summary\nIntent: {profile.intent.value}. Selected pattern: {pattern.name}. {context_note} The recommendation is grounded in retrieved OCI evidence for {source_summary}.",
-        f"2. Recommended OCI Services\nPrioritize {service_priorities}. Retrieved service candidates: {service_summary}. Service choices remain provisional where the local corpus lacks specialized evidence.",
-        f"3. Reference Architecture\n{design_moves} {domain_guidance}",
+        f"1. Executive Summary\nIntent: {profile.intent.value}. Selected pattern: {pattern.name}. Reasoning profile: {reasoning.profile.name}. {context_note} The recommendation is grounded in retrieved OCI evidence for {source_summary}.",
+        f"2. Recommended OCI Services\nPrioritize {service_priorities}. Retrieved service candidates: {service_summary}. {reasoning_guidance} Service choices remain provisional where the local corpus lacks specialized evidence.",
+        f"3. Reference Architecture\n{design_moves} {domain_guidance} Tradeoff analysis: {tradeoff_guidance}",
         f"4. HA/DR Design\n{_ha_dr_guidance(pattern, sources)}",
         f"5. Security Considerations\n{_security_guidance(pattern, sources)}",
         f"6. Cost Optimization\n{_cost_guidance(pattern, sources)}",
@@ -75,6 +86,15 @@ def _source_summary(sources: list[RetrievedSource]) -> str:
             label = f"{label} ({source.chunk_id})"
         labels.append(label)
     return ", ".join(labels) if labels else "no retrieved chunks"
+
+
+def _tradeoff_summary(tradeoffs) -> str:
+    if not tradeoffs:
+        return "Confirm cost, resilience, complexity, and operating model tradeoffs before implementation."
+    return " ".join(
+        f"{tradeoff.dimension}: {tradeoff.guidance}"
+        for tradeoff in tradeoffs[:3]
+    )
 
 
 def _prioritized_services(pattern: ArchitecturePatternProfile, retrieved_services: list[str]) -> str:

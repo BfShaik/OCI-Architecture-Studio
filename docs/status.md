@@ -285,7 +285,14 @@ This progress is based on `docs/two-week-plan.md`.
   - historical snapshot retention on promoted refresh runs under `knowledge/snapshots/historical/`
   - release-aware retrieval context terms for latest/current/release prompts while preserving current-first retrieval
   - impact reporting utility under `infra/scripts/release_impact_report.py`
-- Current release-intelligence implementation is prepared on the working branch for validation and commit.
+- Added architecture reasoning engine foundation:
+  - deterministic reasoning profiles for HA/DR, migration, SaaS, fintech, AI/ML inference, analytics/data, observability, and cost-optimized workloads
+  - reasoning-profile retrieval hints and service priorities that bias retrieval through the existing provider/reranker path
+  - expanded pattern library coverage for multi-region HA, active/passive DR, Kubernetes modernization, event-driven systems, serverless workloads, analytics pipelines, AI inference, and secure enterprise landing zones
+  - explicit tradeoff analysis for cost/resilience, performance/complexity, managed/self-managed, latency/multi-region resilience, simplicity/scalability, and flexibility/operational overhead
+  - per-recommendation confidence indicators with reasoning basis, supporting chunk IDs, known limitations, and assumptions
+  - reasoning trace metadata for selected profile, triggered heuristics, pattern hints, retrieval terms, service priorities, risk emphasis, and synthesis provider
+  - architecture realism eval suite under `evals/architecture-realism.jsonl`
 
 ## Latest Validation
 
@@ -311,12 +318,13 @@ Last validation run: 2026-05-15
 - Continuous intelligence hardening: candidate-first promotion, version lineage, rollback automation, and refresh status endpoint implemented
 - Terraform validation: passed after optional knowledge refresh scheduler scaffold; staging plan currently should not be applied until existing backend replacement drift is resolved and the function image is available
 - OCI-native refresh scheduler scaffold: implemented with OCI Functions plus OCI Resource Scheduler; not applied yet because a published OCIR function image is required before enabling
-- Backend tests: passed, 97 tests
+- Backend tests: passed, 101 tests
 - Frontend build: passed
 - Golden evals: passed, 18 of 18
 - Edge-case evals: passed, 8 of 8
 - Advisory-quality evals: passed, 5 of 5
 - Controlled orchestration evals: passed, 5 of 5
+- Architecture-realism evals: passed, 4 of 4
 - Retrieval health check: passed for `local_json`, 44 chunks
 - Retrieval health check with `EMBEDDING_PROVIDER=oci_genai` and missing OCI GenAI env vars: passed through deterministic embedding fallback
 - Retrieval regression check: passed for `local_json`, 26 of 26 golden + edge cases
@@ -422,6 +430,7 @@ Last validation run: 2026-05-15
   - final response synthesis remains single-writer through the configured synthesis provider
 - Synthesis quality:
   - deterministic synthesis uses reusable architecture pattern profiles and retrieved evidence
+  - deterministic reasoning profiles influence retrieval hints, synthesis guidance, tradeoff analysis, and recommendation confidence metadata
   - synthesis quality signals are available in the backend response
   - OCI GenAI remains optional and must pass parity validation before staging activation
 - Retrieval quality:
@@ -440,6 +449,7 @@ Last validation run: 2026-05-15
 - Release awareness has scheduled snapshot refresh, deterministic impact analysis, candidate validation, historical snapshot retention, and status visibility; it does not yet perform live OCI release reconciliation or full bi-temporal retrieval.
 - OCI GenAI synthesis adapter exists, but deterministic synthesis remains the rollback-safe default unless enabled by environment configuration.
 - Deterministic architecture patterns improve fallback usefulness but are still heuristic and bounded by the retrieved corpus.
+- Deterministic reasoning profiles improve explainability and tradeoff structure, but they are heuristic and do not replace expert OCI solution review.
 - Controlled multi-agent orchestration is currently an in-process control layer; it does not yet perform autonomous planning, tool use, or multi-step agent memory.
 - Generated vector snapshots are local and gitignored.
 - The first OCI deployment exposes the backend directly on port `8000`; this is acceptable for staging validation but should be replaced with HTTPS ingress before demo/prod.

@@ -28,8 +28,10 @@ OCI Architecture Studio is an AI-powered OCI architecture intelligence platform 
 - Dedicated retrieval-grounded prompt builder for GenAI synthesis
 - Optional synthesis debug metadata for provider, prompt sections, retrieved chunks, token estimates, and fallback reasons
 - Deterministic architecture pattern profiles for common OCI advisory scenarios
+- Deterministic architecture reasoning profiles for HA/DR, migration, SaaS, fintech, AI/ML inference, analytics/data, observability, and cost-optimized workloads
 - Lightweight synthesis quality scoring
 - Concise architecture decision reasoning metadata for major recommendations
+- Explicit architecture tradeoff analysis and per-recommendation confidence indicators
 - Lightweight architecture consistency findings before final response return
 - Confidence sub-signals for service relevance, workload alignment, migration mapping certainty, and citation coverage
 - Release snapshot and temporal knowledge schemas for current-vs-historical scaffolding
@@ -46,11 +48,12 @@ User flow:
 2. The system classifies the prompt intent.
 3. The system maps known source services to OCI service candidates when migration/source-cloud services are mentioned.
 4. The system detects architecture-domain heuristics such as ecommerce, fintech, SaaS, AI/ML inference, observability, or analytics.
-5. The system retrieves OCI knowledge chunks through a config-selected retrieval provider and reranks candidates using semantic score, intent match, service relevance, metadata overlap, architecture pattern match, workload/domain relevance, topic match, migration mappings, and intent-critical service coverage.
-6. The system uses deterministic in-process orchestration metadata and a single synthesis step to produce a structured advisory response. The deterministic path applies lightweight architecture pattern profiles, retrieved services, workload/domain heuristics, citation metadata, and consistency validation. The OCI GenAI path injects a retrieval-grounded prompt with intent, mappings, workload/domain profile, pattern hints, and retrieved chunks.
-7. Release-aware prompts are checked against point-in-time release snapshots, freshness metadata, release change categories, and release impact summaries. Current release awareness is snapshot-based and deterministic; it is not live request-time reconciliation with OCI release feeds.
-8. The backend returns recommendations, assumptions, risks, citations, evidence links, confidence, decision reasoning metadata, consistency findings, section citation metadata, release context, temporal knowledge context, and optional retrieval debug traces.
-9. The UI displays the main advisory fields and citation cards. Full section-level citation, reasoning, consistency, and release-context UI is not implemented yet.
+5. The system selects a deterministic reasoning profile and uses its retrieval terms, service priorities, architecture patterns, workload hints, and risk emphasis to bias retrieval while preserving the same retrieval provider interface.
+6. The system retrieves OCI knowledge chunks through a config-selected retrieval provider and reranks candidates using semantic score, intent match, service relevance, metadata overlap, architecture pattern match, workload/domain relevance, topic match, migration mappings, reasoning-profile hints, and intent-critical service coverage.
+7. The system uses deterministic in-process orchestration metadata and a single synthesis step to produce a structured advisory response. The deterministic path applies lightweight architecture pattern profiles, reasoning profiles, retrieved services, workload/domain heuristics, citation metadata, tradeoff analysis, and consistency validation. The OCI GenAI path injects a retrieval-grounded prompt with intent, mappings, workload/domain profile, pattern hints, reasoning profile, and retrieved chunks.
+8. Release-aware prompts are checked against point-in-time release snapshots, freshness metadata, release change categories, and release impact summaries. Current release awareness is snapshot-based and deterministic; it is not live request-time reconciliation with OCI release feeds.
+9. The backend returns recommendations, assumptions, risks, citations, evidence links, confidence, reasoning trace metadata, tradeoff analysis, per-recommendation confidence, decision reasoning metadata, consistency findings, section citation metadata, release context, temporal knowledge context, and optional retrieval debug traces.
+10. The UI displays the main advisory fields and citation cards. Full section-level citation, reasoning, tradeoff, consistency, and release-context UI is not implemented yet.
 
 Current active staging retrieval:
 
@@ -87,6 +90,7 @@ Synthesis behavior:
 - The GenAI prompt builder explicitly includes retrieved chunks, mapped services, workload/domain heuristics, architecture pattern hints, and response section requirements.
 - Optional synthesis debug output exposes provider, model, grounding prompt sections, selected chunks, token estimates, token usage when available, and fallback reason.
 - Deterministic synthesis uses reusable architecture profiles for HA web apps, Kubernetes modernization, fintech DR, AI inference, analytics/data lake, and multi-region SaaS.
+- Deterministic reasoning profiles add profile-specific retrieval hints, service priorities, risk emphasis, tradeoff dimensions, and recommendation guidance before final synthesis.
 - The response includes additive synthesis quality signals for grounding, OCI specificity, workload alignment, migration accuracy, recommendation diversity, and citation coverage.
 - Live GenAI use requires environment configuration and parity validation.
 - If OCI GenAI synthesis fails, the system fails closed to deterministic synthesis.
@@ -126,7 +130,8 @@ Orchestration behavior:
 
 - The current orchestration layer is deterministic and in-process.
 - It exposes supervisor, specialist, and critic metadata for visibility.
-- It also adds lightweight consistency findings and decision reasoning metadata.
+- It also adds lightweight reasoning profile metadata, tradeoff analysis, per-recommendation confidence indicators, consistency findings, and decision reasoning metadata.
+- Reasoning profiles are explainable heuristics, not hidden chain-of-thought or autonomous planner state.
 - It does not perform autonomous planning, external tool use, persistent agent memory, raw chain-of-thought exposure, or independent agent execution.
 
 ## Acceptance Criteria
@@ -142,6 +147,8 @@ Orchestration behavior:
 - Optional synthesis debug trace is available without changing the default response behavior.
 - Backend citation metadata can associate response sections with chunk IDs, source documents, and OCI service categories.
 - Decision reasoning metadata can associate major recommendations with concise rationale, tradeoffs, rejected alternatives, source chunk IDs, and confidence.
+- Reasoning trace metadata can show the selected reasoning profile, triggered heuristics, pattern hints, retrieval terms, service priorities, risk emphasis, and synthesis provider.
+- Architecture tradeoff metadata can show explicit decision guidance for cost/resilience, performance/complexity, managed/self-managed, latency/resilience, simplicity/scalability, and flexibility/overhead dimensions.
 - Consistency validation can flag conflicting requirements, migration mapping coverage gaps, HA/DR alignment gaps, observability gaps, and security coverage gaps.
 - Prompt templates and golden eval prompts exist in source control.
 - Golden prompts route to expected intents.
@@ -154,6 +161,7 @@ Orchestration behavior:
 - No LangGraph implementation yet.
 - No advanced memory or bi-temporal storage implementation yet.
 - No autonomous multi-agent execution yet.
+- No architecture reasoning engine based on hidden chain-of-thought, self-planning, or autonomous tool use.
 - No always-on live LLM synthesis by default.
 - No promotion of OCI GenAI mode without parity and operational validation.
 - No continuous live release intelligence beyond scheduled snapshot refresh, deterministic impact analysis, and gated promotion.

@@ -8,6 +8,7 @@ from oci_arch_studio_backend.services.architecture_heuristics import (
     ArchitectureHeuristicClassifier,
 )
 from oci_arch_studio_backend.services.architecture_patterns import ArchitecturePatternSelector
+from oci_arch_studio_backend.services.architecture_reasoning_engine import ArchitectureReasoningEngine, ReasoningProfile
 from oci_arch_studio_backend.services.embeddings import (
     Embedder,
     FallbackEmbedder,
@@ -144,6 +145,7 @@ class OciKnowledgeRetriever:
         self.service_mapper = OciServiceMapper()
         self.heuristic_classifier = ArchitectureHeuristicClassifier()
         self.pattern_selector = ArchitecturePatternSelector()
+        self.reasoning_engine = ArchitectureReasoningEngine()
         self.reranker = RetrievalReranker()
         self.debug_enabled = debug_enabled
         self.candidate_multiplier = max(candidate_multiplier, 1)
@@ -176,6 +178,16 @@ class OciKnowledgeRetriever:
         combined_text = " ".join(part for part in (question, workload_context) if part)
         service_mapping = self.service_mapper.map_text(combined_text)
         heuristics = self.heuristic_classifier.detect(combined_text)
+        reasoning_profile = (
+            self.reasoning_engine.select_profile(
+                question=question,
+                workload_context=workload_context,
+                profile=intent_profile,
+                sources=[],
+            )
+            if intent_profile
+            else None
+        )
         pattern = self.pattern_selector.select(
             question=question,
             workload_context=workload_context,
@@ -192,10 +204,12 @@ class OciKnowledgeRetriever:
             retrieval_query = " ".join((retrieval_query, *service_mapping.retrieval_terms))
         if heuristics.retrieval_terms:
             retrieval_query = " ".join((retrieval_query, *heuristics.retrieval_terms))
+        if reasoning_profile:
+            retrieval_query = " ".join((retrieval_query, *reasoning_profile.retrieval_terms, *reasoning_profile.architecture_patterns))
         embedding_started_at = perf_counter()
         query_embedding = self.embedder.embed(retrieval_query)
         embedding_latency_ms = round((perf_counter() - embedding_started_at) * 1000, 2)
-        filters = self._build_filters(question, intent_profile, service_mapping.mapped_services, heuristics)
+        filters = self._build_filters(question, intent_profile, service_mapping.mapped_services, heuristics, reasoning_profile)
         candidate_count = max(
             self.top_k * self.candidate_multiplier,
             self.top_k + 4,
@@ -352,6 +366,7 @@ class OciKnowledgeRetriever:
         intent_profile: IntentProfile | None,
         mapped_services: tuple[str, ...] = (),
         heuristics: ArchitectureDomainHeuristics | None = None,
+        reasoning_profile: ReasoningProfile | None = None,
     ) -> VectorSearchFilters:
         if intent_profile is None:
             return VectorSearchFilters()
@@ -366,14 +381,17 @@ class OciKnowledgeRetriever:
         if not hints:
             return VectorSearchFilters()
         heuristics = heuristics or ArchitectureDomainHeuristics()
+        reasoning_patterns = reasoning_profile.architecture_patterns if reasoning_profile else ()
+        reasoning_workloads = reasoning_profile.workload_types if reasoning_profile else ()
+        reasoning_services = reasoning_profile.service_priorities if reasoning_profile else ()
         return VectorSearchFilters(
             intent=intent_profile.intent.value,
             service_domains=tuple(dict.fromkeys((*hints.get("service_domains", ()), *heuristics.service_domains))),
-            architecture_patterns=tuple(dict.fromkeys((*hints.get("architecture_patterns", ()), *heuristics.architecture_patterns))),
-            workload_types=tuple(dict.fromkeys((*hints.get("workload_types", ()), *heuristics.workload_types))),
+            architecture_patterns=tuple(dict.fromkeys((*hints.get("architecture_patterns", ()), *heuristics.architecture_patterns, *reasoning_patterns))),
+            workload_types=tuple(dict.fromkeys((*hints.get("workload_types", ()), *heuristics.workload_types, *reasoning_workloads))),
             domain_tags=tuple(dict.fromkeys((*hints.get("domain_tags", ()), *heuristics.domain_tags))),
             topics=tuple(dict.fromkeys((*hints.get("topics", ()), *heuristics.topics))),
-            services=services,
+            services=tuple(dict.fromkeys((*services, *reasoning_services))),
             release_aware=intent_profile.intent.value == "release_awareness",
         )
 

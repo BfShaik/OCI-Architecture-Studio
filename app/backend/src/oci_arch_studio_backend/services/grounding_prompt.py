@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from oci_arch_studio_backend.models.architecture import RetrievedSource
 from oci_arch_studio_backend.services.architecture_heuristics import ArchitectureHeuristicClassifier
 from oci_arch_studio_backend.services.architecture_patterns import ArchitecturePatternSelector
+from oci_arch_studio_backend.services.architecture_reasoning_engine import ArchitectureReasoningEngine
 from oci_arch_studio_backend.services.intents import IntentProfile
 from oci_arch_studio_backend.services.response_formatter import STANDARD_RESPONSE_SECTIONS
 from oci_arch_studio_backend.services.service_mapping import OciServiceMapper
@@ -45,12 +46,21 @@ class GroundingPromptBuilder:
             profile=profile,
             sources=sources,
         )
+        reasoning = ArchitectureReasoningEngine().analyze(
+            question=question,
+            workload_context=workload_context,
+            profile=profile,
+            sources=sources,
+            recommendations=list(profile.recommendations),
+            synthesis_provider="oci_genai",
+        )
         sections = (
             "task",
             "intent",
             "mapped_oci_services",
             "workload_domain_profile",
             "architecture_pattern_hints",
+            "reasoning_profile",
             "retrieved_oci_chunks",
             "response_structure",
             "grounding_rules",
@@ -78,6 +88,15 @@ class GroundingPromptBuilder:
                 f"Service priorities: {', '.join(pattern.service_priorities)}\n"
                 f"Design moves: {' '.join(pattern.design_moves)}\n"
                 f"Known risks: {' '.join(pattern.risks)}",
+                "# reasoning_profile\n"
+                f"Selected reasoning profile: {reasoning.profile.name}\n"
+                f"Reasoning service priorities: {', '.join(reasoning.service_priorities)}\n"
+                f"Risk emphasis: {', '.join(reasoning.risk_emphasis)}\n"
+                f"Tradeoffs to evaluate: "
+                + "; ".join(
+                    f"{tradeoff.dimension}: {tradeoff.guidance}"
+                    for tradeoff in reasoning.tradeoffs
+                ),
                 "# retrieved_oci_chunks\n" + "\n---\n".join(self._source_block(source) for source in sources[:8]),
                 "# response_structure\n"
                 + "\n".join(f"{index}. {section}" for index, section in enumerate(STANDARD_RESPONSE_SECTIONS, start=1)),

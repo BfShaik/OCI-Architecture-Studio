@@ -36,3 +36,27 @@ def test_pattern_selector_prefers_saas_multi_region() -> None:
 
     assert pattern.name == "saas_multi_region_platform"
     assert any("tenant isolation" in move.lower() for move in pattern.design_moves)
+
+
+def test_pattern_selector_supports_secure_landing_zone() -> None:
+    pattern = ArchitecturePatternSelector().select(
+        question="Design a secure enterprise landing zone with compartments and guardrails.",
+        workload_context=None,
+        profile=get_intent_profile(Intent.SECURITY),
+        sources=[],
+    )
+
+    assert pattern.name == "secure_enterprise_landing_zone"
+    assert "Identity and Access Management" in pattern.service_priorities
+
+
+def test_pattern_selector_supports_event_driven_systems() -> None:
+    pattern = ArchitecturePatternSelector().select(
+        question="Design an event-driven workload with streaming and asynchronous handlers.",
+        workload_context=None,
+        profile=get_intent_profile(Intent.ARCHITECTURE),
+        sources=[],
+    )
+
+    assert pattern.name == "event_driven_system"
+    assert "Streaming" in pattern.service_priorities

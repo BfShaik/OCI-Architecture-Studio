@@ -1,11 +1,15 @@
 from oci_arch_studio_backend.models.architecture import (
+    ArchitectureReasoningTrace,
     ArchitectureReviewRequest,
     ArchitectureReviewResponse,
+    ArchitectureTradeoffAnalysis,
+    RecommendationConfidenceIndicator,
 )
 from oci_arch_studio_backend.services.advisory_metrics import advisory_quality_metrics
 from oci_arch_studio_backend.services.advisory_quality import AdvisoryQualityAnalyzer
 from oci_arch_studio_backend.services.architecture_consistency import ArchitectureConsistencyValidator
 from oci_arch_studio_backend.services.architecture_reasoning import ArchitectureDecisionReasoner
+from oci_arch_studio_backend.services.architecture_reasoning_engine import ArchitectureReasoningEngine
 from oci_arch_studio_backend.services.intents import (
     IntentClassifier,
     get_intent_profile,
@@ -36,6 +40,7 @@ class ArchitectureReviewOrchestrator:
         agent_orchestrator: SupervisedAgentOrchestrator | None = None,
         consistency_validator: ArchitectureConsistencyValidator | None = None,
         decision_reasoner: ArchitectureDecisionReasoner | None = None,
+        reasoning_engine: ArchitectureReasoningEngine | None = None,
         synthesis_debug_enabled: bool = False,
     ) -> None:
         self.retriever = retriever
@@ -46,6 +51,7 @@ class ArchitectureReviewOrchestrator:
         self.agent_orchestrator = agent_orchestrator or SupervisedAgentOrchestrator()
         self.consistency_validator = consistency_validator or ArchitectureConsistencyValidator()
         self.decision_reasoner = decision_reasoner or ArchitectureDecisionReasoner()
+        self.reasoning_engine = reasoning_engine or ArchitectureReasoningEngine()
         self.synthesis_debug_enabled = synthesis_debug_enabled
 
     async def review(
@@ -57,6 +63,11 @@ class ArchitectureReviewOrchestrator:
         )
         intent = self.classifier.classify(classifier_text)
         profile = get_intent_profile(intent)
+        reasoning_terms = self.reasoning_engine.pre_retrieval_terms(
+            question=request.question,
+            workload_context=request.workload_context,
+            profile=profile,
+        )
         release_context_terms = (
             self.release_store.retrieval_context_terms(request.question)
             if self.release_store is not None
@@ -66,6 +77,7 @@ class ArchitectureReviewOrchestrator:
             part
             for part in (
                 request.workload_context,
+                " ".join(reasoning_terms) if reasoning_terms else None,
                 " ".join(release_context_terms) if release_context_terms else None,
             )
             if part
@@ -144,6 +156,14 @@ class ArchitectureReviewOrchestrator:
             evidence_links=quality.evidence_links,
             sources=sources,
         )
+        reasoning_result = self.reasoning_engine.analyze(
+            question=request.question,
+            workload_context=request.workload_context,
+            profile=profile,
+            sources=sources,
+            recommendations=quality.recommendations,
+            synthesis_provider=synthesis.provider,
+        )
         consistency_findings = self.consistency_validator.validate(
             question=request.question,
             workload_context=request.workload_context,
@@ -216,6 +236,38 @@ class ArchitectureReviewOrchestrator:
             synthesis_quality=synthesis.quality,
             synthesis_debug=synthesis.debug,
             decision_reasoning=decision_reasoning,
+            reasoning_trace=ArchitectureReasoningTrace(
+                profile=reasoning_result.profile.name,
+                heuristics_triggered=list(reasoning_result.heuristics_triggered),
+                pattern_hints=list(reasoning_result.pattern_hints),
+                retrieval_terms=list(reasoning_result.retrieval_terms),
+                service_priorities=list(reasoning_result.service_priorities),
+                risk_emphasis=list(reasoning_result.risk_emphasis),
+                synthesis_provider=synthesis.provider,
+            ),
+            architecture_tradeoffs=[
+                ArchitectureTradeoffAnalysis(
+                    dimension=tradeoff.dimension,
+                    decision=tradeoff.decision,
+                    benefit=tradeoff.benefit,
+                    cost_or_risk=tradeoff.cost_or_risk,
+                    guidance=tradeoff.guidance,
+                    source_chunk_ids=list(tradeoff.source_chunk_ids),
+                )
+                for tradeoff in reasoning_result.tradeoffs
+            ],
+            recommendation_confidence=[
+                RecommendationConfidenceIndicator(
+                    recommendation=item.recommendation,
+                    score=item.score,
+                    level=item.level,
+                    reasoning_basis=item.reasoning_basis,
+                    source_chunk_ids=list(item.source_chunk_ids),
+                    known_limitations=list(item.known_limitations),
+                    assumptions=list(item.assumptions),
+                )
+                for item in reasoning_result.recommendation_confidence
+            ],
             consistency_findings=consistency_findings,
             release_context=release_context,
             knowledge_temporal_context=temporal_context,

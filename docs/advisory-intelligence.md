@@ -12,22 +12,24 @@ The current implementation keeps the existing flow:
 user prompt -> intent classifier -> retrieval -> controlled multi-agent routing -> final synthesis -> critic -> structured response
 ```
 
-It adds a lightweight evidence, confidence, controlled routing, specialist contribution, aggregation, and critic layer before the response is returned.
+It adds a lightweight evidence, confidence, reasoning-profile, tradeoff, controlled routing, specialist contribution, aggregation, and critic layer before the response is returned.
 
 ## Current Synthesis Pipeline
 
 1. Classify the prompt into an intent.
-2. Retrieve OCI evidence through the configured retrieval provider.
-3. Load the matching intent profile and prompt template.
-4. Select one or more bounded specialist advisors.
-5. Share the same retrieved evidence set with every selected specialist.
-6. Aggregate specialist contributions into one final synthesis step.
-7. Run the configured synthesis provider.
-8. Link each synthesized recommendation to retrieved citations.
-9. Compute confidence scores.
-10. Run the validation critic over evidence, citation, freshness, unsupported-claim, and fallback signals.
-11. Surface evidence gaps, unsupported requested services, stale evidence, synthesis warnings, critic findings, and missing-context warnings.
-12. Return the structured advisory response to the UI.
+2. Select a deterministic architecture reasoning profile for retrieval hints and risk/tradeoff emphasis.
+3. Retrieve OCI evidence through the configured retrieval provider.
+4. Load the matching intent profile and prompt template.
+5. Select one or more bounded specialist advisors.
+6. Share the same retrieved evidence set with every selected specialist.
+7. Aggregate specialist contributions into one final synthesis step.
+8. Run the configured synthesis provider.
+9. Link each synthesized recommendation to retrieved citations.
+10. Compute confidence scores and per-recommendation confidence indicators.
+11. Run deterministic tradeoff analysis for the selected reasoning profile.
+12. Run the validation critic over evidence, citation, freshness, unsupported-claim, and fallback signals.
+13. Surface reasoning trace, tradeoffs, evidence gaps, unsupported requested services, stale evidence, synthesis warnings, critic findings, and missing-context warnings.
+14. Return the structured advisory response to the UI.
 
 This remains an MVP-friendly in-process pipeline. It does not add LangGraph, autonomous multi-agent planning, or a new distributed service.
 
@@ -124,6 +126,16 @@ The response includes a `confidence` object:
 
 Low-context prompts are intentionally capped to low confidence even when generic OCI chunks are retrieved. This prevents the platform from sounding certain when the user has not provided enough workload context.
 
+## Reasoning And Tradeoff Design
+
+The backend now exposes additive reasoning metadata:
+
+- `reasoning_trace`: selected deterministic profile, triggered heuristics, pattern hints, retrieval terms, service priorities, risk emphasis, and synthesis provider.
+- `architecture_tradeoffs`: explicit decision guidance for cost/resilience, performance/complexity, managed/self-managed, latency/multi-region resilience, simplicity/scalability, and flexibility/operational-overhead tradeoffs.
+- `recommendation_confidence`: per-recommendation confidence indicators with reasoning basis, supporting chunk IDs, known limitations, and assumptions.
+
+Reasoning profiles are deterministic heuristics. They improve explainability and recommendation structure, but they do not expose raw chain-of-thought and do not perform autonomous planning.
+
 ## Uncertainty Handling
 
 The response now exposes:
@@ -187,6 +199,12 @@ The orchestration-quality suite lives at:
 evals/orchestration-quality.jsonl
 ```
 
+The architecture-realism suite lives at:
+
+```text
+evals/architecture-realism.jsonl
+```
+
 Run it with:
 
 ```bash
@@ -196,6 +214,9 @@ app/backend/.venv/bin/python evals/run_golden.py \
 app/backend/.venv/bin/python evals/run_golden.py \
   --cases evals/orchestration-quality.jsonl \
   --output-dir evals/reports/orchestration-quality
+app/backend/.venv/bin/python evals/run_golden.py \
+  --cases evals/architecture-realism.jsonl \
+  --output-dir evals/reports/architecture-realism
 ```
 
 The eval runner now checks:
@@ -215,6 +236,7 @@ The eval runner now checks:
 - specialist contribution count
 - aggregation decision presence
 - critic findings and agent trace presence
+- reasoning profile and tradeoff language in architecture-realism prompts
 
 ## Operational Guidance
 
@@ -233,6 +255,7 @@ When a response is weak:
 
 - The evidence linker is heuristic-based.
 - Confidence scores are practical guardrails, not statistical probabilities.
+- Reasoning profiles and tradeoff analysis are heuristic and bounded by retrieved corpus quality.
 - The corpus is still small.
 - Local hashing embeddings are still active for deterministic parity.
 - OCI GenAI synthesis is adapter-backed and config-gated; deterministic synthesis remains the rollback-safe default.

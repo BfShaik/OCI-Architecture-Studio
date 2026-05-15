@@ -33,6 +33,11 @@ def test_architecture_review() -> None:
     assert body["synthesis_quality"]["overall"] >= 0
     assert body["decision_reasoning"]
     assert "why_chosen" in body["decision_reasoning"][0]
+    assert body["reasoning_trace"]["profile"]
+    assert body["reasoning_trace"]["service_priorities"]
+    assert body["architecture_tradeoffs"]
+    assert body["recommendation_confidence"]
+    assert body["recommendation_confidence"][0]["reasoning_basis"]
     assert body["consistency_findings"] is not None
     assert body["release_context"] is not None
     assert body["knowledge_temporal_context"]["knowledge_mode"]

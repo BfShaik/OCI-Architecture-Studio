@@ -145,6 +145,35 @@ class ArchitectureDecisionReason(BaseModel):
     confidence: float = 0.0
 
 
+class ArchitectureTradeoffAnalysis(BaseModel):
+    dimension: str
+    decision: str
+    benefit: str
+    cost_or_risk: str
+    guidance: str
+    source_chunk_ids: list[str] = Field(default_factory=list)
+
+
+class RecommendationConfidenceIndicator(BaseModel):
+    recommendation: str
+    score: float
+    level: str
+    reasoning_basis: str
+    source_chunk_ids: list[str] = Field(default_factory=list)
+    known_limitations: list[str] = Field(default_factory=list)
+    assumptions: list[str] = Field(default_factory=list)
+
+
+class ArchitectureReasoningTrace(BaseModel):
+    profile: str
+    heuristics_triggered: list[str] = Field(default_factory=list)
+    pattern_hints: list[str] = Field(default_factory=list)
+    retrieval_terms: list[str] = Field(default_factory=list)
+    service_priorities: list[str] = Field(default_factory=list)
+    risk_emphasis: list[str] = Field(default_factory=list)
+    synthesis_provider: str | None = None
+
+
 class ArchitectureConsistencyFinding(BaseModel):
     check: str
     severity: str
@@ -212,6 +241,9 @@ class ArchitectureReviewResponse(BaseModel):
     synthesis_quality: SynthesisQualityScore | None = None
     synthesis_debug: SynthesisDebugTrace | None = None
     decision_reasoning: list[ArchitectureDecisionReason] = Field(default_factory=list)
+    reasoning_trace: ArchitectureReasoningTrace | None = None
+    architecture_tradeoffs: list[ArchitectureTradeoffAnalysis] = Field(default_factory=list)
+    recommendation_confidence: list[RecommendationConfidenceIndicator] = Field(default_factory=list)
     consistency_findings: list[ArchitectureConsistencyFinding] = Field(default_factory=list)
     release_context: ReleaseImpactSummary | None = None
     knowledge_temporal_context: KnowledgeTemporalContext | None = None
