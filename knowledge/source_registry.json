@@ -137,11 +137,41 @@
       "fallback_text": "OCI cost optimization should use budgets, cost analysis, tagging, right-sized compute, autoscaling, storage tiering, lifecycle policies, environment shutdown schedules, and measured utilization. Cost reviews should preserve required availability, backup, security, and monitoring controls."
     },
     {
+      "id": "oci-budgets-overview",
+      "title": "OCI Budgets Overview",
+      "url": "https://docs.oracle.com/en-us/iaas/Content/Billing/Concepts/budgetsoverview.htm",
+      "source_type": "oci_service_doc",
+      "source_group": "data-platform",
+      "service": "Budgets",
+      "service_domain": "cost",
+      "source_category": "service",
+      "architecture_patterns": ["cost-governance", "operational-governance"],
+      "intent_tags": ["cost", "architecture", "governance"],
+      "domain_tags": ["enterprise", "SaaS", "fintech"],
+      "workload_types": ["enterprise-app", "saas-platform", "regulated-workload"],
+      "fallback_text": "OCI Budgets help track and alert on spending against defined thresholds. FinOps guidance should include budget scopes, compartment and tag strategy, alert thresholds, ownership, escalation paths, forecast review cadence, and alignment with Cost Analysis, rightsizing, autoscaling, and environment lifecycle controls."
+    },
+    {
       "id": "oci-security-services-overview",
       "title": "OCI Security Services Overview",
       "url": "https://docs.oracle.com/en-us/iaas/Content/Security/Concepts/security.htm",
       "source_type": "oci_service_doc",
       "fallback_text": "OCI security architecture should cover IAM, least privilege, compartment strategy, network security groups, private subnets, encryption, Vault for keys and secrets, Cloud Guard, Security Zones, logging, audit, monitoring, and compliance evidence."
+    },
+    {
+      "id": "oci-security-zones-overview",
+      "title": "OCI Security Zones Overview",
+      "url": "https://docs.oracle.com/en-us/iaas/security-zone/using/security-zones.htm",
+      "source_type": "oci_service_doc",
+      "source_group": "security-observability",
+      "service": "Security Zones",
+      "service_domain": "security",
+      "source_category": "service",
+      "architecture_patterns": ["security-zone", "least-privilege", "compliance-evidence"],
+      "intent_tags": ["security", "architecture", "governance"],
+      "domain_tags": ["enterprise", "fintech"],
+      "workload_types": ["regulated-workload", "enterprise-app"],
+      "fallback_text": "OCI Security Zones help enforce security posture through zone policies for sensitive compartments. Regulated architecture guidance should evaluate where security zones fit, policy constraints, resource placement, encryption, public access restrictions, IAM boundaries, Cloud Guard integration, exception handling, and migration impacts before placing workloads in protected compartments."
     },
     {
       "id": "oci-iam-overview",
@@ -247,6 +277,21 @@
       "architecture_patterns": ["event-driven", "serverless"],
       "intent_tags": ["architecture", "modernization", "cost"],
       "fallback_text": "OCI Functions supports event-driven serverless workloads. Architecture guidance should keep persistent state in managed data services, evaluate cold start and concurrency expectations, use IAM policies and network controls, and map AWS Lambda-style functions only after trigger, dependency, packaging, and observability review."
+    },
+    {
+      "id": "oci-compute-autoscaling-overview",
+      "title": "OCI Compute Autoscaling Overview",
+      "url": "https://docs.oracle.com/en-us/iaas/Content/Compute/Tasks/autoscalinginstancepools.htm",
+      "source_type": "oci_service_doc",
+      "source_group": "app-platform",
+      "service": "Compute Autoscaling",
+      "service_domain": "compute",
+      "source_category": "service",
+      "architecture_patterns": ["autoscaling", "cost-performance"],
+      "intent_tags": ["architecture", "cost", "modernization"],
+      "domain_tags": ["enterprise", "SaaS", "ecommerce"],
+      "workload_types": ["webapp", "enterprise-app", "saas-platform"],
+      "fallback_text": "OCI Compute autoscaling adjusts instance pool capacity based on schedules or performance metrics. Architecture and FinOps guidance should define scaling signals, minimum and maximum capacity, cooldowns, health checks, load balancer integration, deployment safety, cost guardrails, and operational ownership for capacity changes."
     },
     {
       "id": "oci-container-registry-overview",
