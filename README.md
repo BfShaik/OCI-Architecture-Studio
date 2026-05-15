@@ -15,7 +15,7 @@ OCI Architecture Studio currently supports a validated advisory flow in local de
 5. The active staging provider is `oci_object_storage`, reading the validated vector manifest from OCI Object Storage.
 6. Local development defaults to `local_json`; it also remains the tested config-only rollback provider for staging.
 7. The controlled orchestration layer selects deterministic specialist roles, shares the same retrieved evidence across them, and runs a validation critic over evidence support, citations, freshness, and unsupported-claim risk. These are in-process role boundaries, not autonomous agents.
-8. One final synthesis step generates the advisory response through the configured provider with deterministic rollback available.
+8. One final synthesis step generates the advisory response through the configured provider with deterministic rollback available. Deterministic synthesis now uses lightweight architecture pattern profiles and retrieved evidence rather than only profile boilerplate.
 9. The continuous intelligence pipeline refreshes OCI release knowledge on schedule, validates candidate snapshots, and promotes them only after gates pass.
 10. The backend returns structured recommendations, confidence, evidence links, section citation metadata, optional retrieval debug traces, and standard architecture response sections. The current UI renders the main advisory fields and citation cards; full section-level citation UI is future work.
 
@@ -45,6 +45,8 @@ tests/                Backend and integration tests
 - Backend section citation plumbing with chunk ID, source document, OCI service category, and service name
 - Architecture-domain heuristics for ecommerce, fintech, SaaS, AI/ML inference, observability platforms, and analytics platforms
 - AWS-to-OCI service mapping for container, database, storage, CDN/DNS, networking, observability, security, AI/ML, and data engineering source services
+- Deterministic architecture pattern profiles for HA web apps, Kubernetes modernization, fintech DR, AI inference, analytics/data lake, and multi-region SaaS
+- Lightweight synthesis quality signals for grounding, OCI specificity, workload alignment, migration accuracy, recommendation diversity, and citation coverage
 - OCI-native retrieval migration hooks:
   - optional OCI Generative AI embedding adapter
   - optional Object Storage vector-manifest retrieval
@@ -77,7 +79,7 @@ tests/                Backend and integration tests
 - OCI staging deployment with smoke tests, resource visibility checks, and rollback runbooks
 - Dual-provider retrieval parity gate comparing `local_json` and `oci_object_storage`
 - Config-only staging promotion to `oci_object_storage` with rollback validation
-- Evidence-linked recommendations, confidence scoring, uncertainty flags, and advisory quality metrics
+- Evidence-linked recommendations, confidence scoring, synthesis quality signals, uncertainty flags, and advisory quality metrics
 - Config-selectable advisory synthesis with deterministic rollback and an OCI GenAI chat adapter
 - Controlled in-process orchestration pilot with:
   - one in-process supervisor
@@ -296,11 +298,12 @@ cd ../frontend && npm run build
 
 Latest full validation: 2026-05-15.
 
-- Local backend tests: `62 passed`
-- Golden/edge advisory eval run: `8 passed, 0 failed`
+- Local backend tests: `70 passed`
+- Golden evals: `12 passed, 0 failed`
+- Edge-case evals: `8 passed, 0 failed`
 - Advisory-quality evals: `5 passed, 0 failed`
 - Controlled orchestration evals: `5 passed, 0 failed`
-- Retrieval regression: `14 passed, 0 failed`
+- Retrieval regression: `20 passed, 0 failed`
 - Retrieval health: passed for `local_json` in the current branch; staging remains documented as `oci_object_storage`
 - Knowledge ingestion: `21 chunks`
 - Release ingestion: `3 release items`

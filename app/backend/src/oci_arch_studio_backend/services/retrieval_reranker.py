@@ -90,7 +90,7 @@ class RetrievalReranker:
         return {
             "intent_match": 0.18 if filters.intent and filters.intent.lower() in intent_tags else 0.0,
             "service_domain_match": 0.1 if service_domain in service_domains else 0.0,
-            "service_relevance": 0.24 if service in services or service in mapped_services else 0.0,
+            "service_relevance": 0.36 if service in services or service in mapped_services else 0.0,
             "architecture_pattern_match": 0.12 if patterns.intersection(architecture_patterns | heuristic_patterns) else 0.0,
             "workload_match": 0.1 if workload_types.intersection(filter_workloads | heuristic_workloads) else 0.0,
             "domain_match": 0.1 if domain_tags.intersection(filter_domains | heuristic_domains) else 0.0,

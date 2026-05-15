@@ -460,22 +460,22 @@ class IntentClassifier:
             return Intent.RELEASE_AWARENESS
         if any(token in normalized for token in ("migrate", "migration")) or re.search(r"\b(eks|rds|aws)\b", normalized):
             return Intent.MIGRATION
+        if any(token in normalized for token in ("ai/ml", "ai inference", "model", "inference", "ml platform", "machine learning")):
+            return Intent.AI_ML
+        if any(token in normalized for token in ("saas", "tenant", "multi-tenant", "multi tenant", "multi-region", "multi region")):
+            return Intent.SAAS_PLATFORM
+        if any(token in normalized for token in ("analytics", "data platform", "data lake", "warehouse", "reporting", "pipeline scaling")):
+            return Intent.ANALYTICS
         if any(token in normalized for token in ("dr", "disaster recovery", "rto", "rpo", "failover", "fintech")):
             return Intent.DR
         if any(token in normalized for token in ("cost", "cost-optimized", "budget", "right-size", "right sized", "cheap")):
             return Intent.COST
         if any(token in normalized for token in ("observability", "logging", "monitoring", "metrics", "alarms", "dashboard", "audit trail")):
             return Intent.OBSERVABILITY
-        if any(token in normalized for token in ("ai/ml", "ai inference", "model", "inference", "ml platform", "machine learning")):
-            return Intent.AI_ML
         if any(token in normalized for token in ("security", "secure", "iam", "vault", "encryption", "compliance")):
             return Intent.SECURITY
         if any(token in normalized for token in ("modernize", "modernization", "refactor", "replatform", "managed database")):
             return Intent.MODERNIZATION
-        if any(token in normalized for token in ("saas", "tenant", "multi-tenant", "multi tenant", "multi-region", "multi region")):
-            return Intent.SAAS_PLATFORM
-        if any(token in normalized for token in ("analytics", "data platform", "data lake", "warehouse", "reporting")):
-            return Intent.ANALYTICS
         if any(token in normalized for token in ("design", "architecture", "architect", "highly available", "ecommerce", "platform")):
             return Intent.ARCHITECTURE
         return Intent.GENERAL

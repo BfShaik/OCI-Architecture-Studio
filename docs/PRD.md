@@ -19,6 +19,8 @@ OCI Architecture Studio is an AI-powered OCI architecture intelligence platform 
 - AWS-to-OCI service mapping before retrieval
 - Metadata-aware retrieval reranking and optional retrieval debug traces
 - Section citation metadata in the backend response
+- Deterministic architecture pattern profiles for common OCI advisory scenarios
+- Lightweight synthesis quality scoring
 - Retrieval regression and parity validation
 - OCI staging deployment
 
@@ -32,7 +34,7 @@ User flow:
 3. The system maps known source services to OCI service candidates when migration/source-cloud services are mentioned.
 4. The system detects architecture-domain heuristics such as ecommerce, fintech, SaaS, AI/ML inference, observability, or analytics.
 5. The system retrieves OCI knowledge chunks through a config-selected retrieval provider and reranks candidates using semantic score, intent match, service relevance, metadata overlap, architecture pattern match, workload/domain relevance, topic match, and migration mappings.
-6. The system uses deterministic in-process orchestration metadata and a single synthesis step to produce a structured advisory response.
+6. The system uses deterministic in-process orchestration metadata and a single synthesis step to produce a structured advisory response. The deterministic path applies lightweight architecture pattern profiles, retrieved services, workload/domain heuristics, and citation metadata.
 7. Release-aware prompts are checked against point-in-time release snapshots and freshness metadata.
 8. The backend returns recommendations, assumptions, risks, citations, evidence links, confidence, section citation metadata, and optional retrieval debug traces.
 9. The UI displays the main advisory fields and citation cards. Full section-level citation UI is not implemented yet.
@@ -68,6 +70,8 @@ Supported intents:
 Synthesis behavior:
 
 - Deterministic synthesis is implemented and remains the fallback-safe default unless `ADVISORY_SYNTHESIS_PROVIDER=oci_genai` is configured.
+- Deterministic synthesis uses reusable architecture profiles for HA web apps, Kubernetes modernization, fintech DR, AI inference, analytics/data lake, and multi-region SaaS.
+- The response includes additive synthesis quality signals for grounding, OCI specificity, workload alignment, migration accuracy, recommendation diversity, and citation coverage.
 - OCI GenAI chat synthesis adapter exists, but live GenAI use requires environment configuration and parity validation.
 - If OCI GenAI synthesis fails, the system fails closed to deterministic synthesis.
 

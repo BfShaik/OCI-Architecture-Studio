@@ -13,6 +13,7 @@ from oci_arch_studio_backend.services.response_formatter import (
     ensure_standard_sections,
     format_standard_answer,
 )
+from oci_arch_studio_backend.services.synthesis_quality import SynthesisQualityScorer
 
 
 @dataclass(frozen=True)
@@ -36,6 +37,7 @@ class SynthesisResult:
     latency_ms: float | None = None
     warnings: list[str] = field(default_factory=list)
     used_fallback: bool = False
+    quality: dict[str, object] | None = None
 
 
 class AdvisorySynthesizer(Protocol):
@@ -53,21 +55,30 @@ class DeterministicAdvisorySynthesizer:
         heuristics = ArchitectureHeuristicClassifier().detect(
             " ".join(part for part in (request.question, request.workload_context) if part)
         )
+        answer = format_standard_answer(
+            profile=profile,
+            context_note=request.context_note,
+            sources=request.sources,
+            workload_context=request.workload_context,
+            question=request.question,
+        )
+        recommendations = [*profile.recommendations, *heuristics.recommendations]
+        quality = SynthesisQualityScorer().score(
+            answer=answer,
+            recommendations=list(recommendations),
+            sources=request.sources,
+            question=request.question,
+        )
         return SynthesisResult(
-            answer=format_standard_answer(
-                profile=profile,
-                context_note=request.context_note,
-                sources=request.sources,
-                workload_context=request.workload_context,
-                question=request.question,
-            ),
-            recommendations=[*profile.recommendations, *heuristics.recommendations],
+            answer=answer,
+            recommendations=list(recommendations),
             assumptions=list(profile.assumptions),
             risks=list(profile.risks),
             next_steps=list(profile.next_steps),
             provider=self.provider_name,
             model="profile-v0",
             latency_ms=0.0,
+            quality=quality.as_dict(),
         )
 
 
@@ -100,13 +111,21 @@ class OciGenAiAdvisorySynthesizer:
         try:
             raw_text = self._invoke_model(request)
             payload = self._parse_json(raw_text)
+            answer = ensure_standard_sections(
+                self._string_or_default(payload.get("answer"), request.context_note),
+                profile=request.profile,
+                context_note=request.context_note,
+            )
+            recommendations = self._list_or_default(payload.get("recommendations"), request.profile.recommendations)
+            quality = SynthesisQualityScorer().score(
+                answer=answer,
+                recommendations=recommendations,
+                sources=request.sources,
+                question=request.question,
+            )
             return SynthesisResult(
-                answer=ensure_standard_sections(
-                    self._string_or_default(payload.get("answer"), request.context_note),
-                    profile=request.profile,
-                    context_note=request.context_note,
-                ),
-                recommendations=self._list_or_default(payload.get("recommendations"), request.profile.recommendations),
+                answer=answer,
+                recommendations=recommendations,
                 assumptions=self._list_or_default(payload.get("assumptions"), request.profile.assumptions),
                 risks=self._list_or_default(payload.get("risks"), request.profile.risks),
                 next_steps=self._list_or_default(payload.get("next_steps"), request.profile.next_steps),
@@ -114,6 +133,7 @@ class OciGenAiAdvisorySynthesizer:
                 model=self.config.model_id,
                 latency_ms=round((perf_counter() - started_at) * 1000, 2),
                 warnings=self._list_or_default(payload.get("quality_warnings"), ()),
+                quality=quality.as_dict(),
             )
         except Exception as exc:  # noqa: BLE001 - synthesis must fail closed into deterministic advisory.
             fallback = self.fallback.synthesize(request)
@@ -131,6 +151,7 @@ class OciGenAiAdvisorySynthesizer:
                     f"{type(exc).__name__}: {exc}",
                 ],
                 used_fallback=True,
+                quality=fallback.quality,
             )
 
     def _invoke_model(self, request: SynthesisRequest) -> str:
@@ -146,6 +167,8 @@ class OciGenAiAdvisorySynthesizer:
             "Use only the retrieved OCI evidence. Do not invent OCI services. "
             "Tie actionable recommendations to citation chunk IDs or source titles. "
             "If evidence is insufficient, say so explicitly and keep guidance provisional. "
+            "Use workload/domain characteristics and architecture pattern guidance from the prompt; avoid generic cloud filler. "
+            "Prioritize network segmentation, IAM/security boundaries, HA/DR, cost/performance tradeoffs, observability, and migration validation when relevant. "
             "For latest/release prompts, do not claim current impact unless release evidence is present. "
             "The answer field must use these section headings in order: "
             f"{', '.join(STANDARD_RESPONSE_SECTIONS)}."

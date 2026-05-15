@@ -157,6 +157,7 @@ class ArchitectureReviewOrchestrator:
             synthesis_model=synthesis.model,
             synthesis_warnings=synthesis.warnings,
             synthesis_fallback_used=synthesis.used_fallback,
+            synthesis_quality=synthesis.quality,
             answer=synthesis.answer if not quality.not_enough_evidence else f"{synthesis.answer} {context_note}",
             recommendations=quality.recommendations,
             assumptions=synthesis.assumptions,

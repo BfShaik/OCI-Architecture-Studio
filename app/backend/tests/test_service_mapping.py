@@ -8,7 +8,7 @@ def test_aws_to_oci_service_mapping_detects_initial_mappings() -> None:
 
     assert mapping.summary() == (
         "EKS -> OCI Kubernetes Engine; "
-        "RDS -> Database Services, Autonomous Database; "
+        "RDS -> Database Migration, Database Services, Autonomous Database; "
         "S3 -> Object Storage; "
         "CloudFront -> CDN; "
         "Route53 -> OCI DNS; "

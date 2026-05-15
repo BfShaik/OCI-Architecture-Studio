@@ -198,6 +198,11 @@ This progress is based on `docs/two-week-plan.md`.
   - deterministic-vs-OCI GenAI parity checker under `infra/scripts/genai_synthesis_parity_check.py`
   - versioned local and staging config examples
   - `docs/genai-advisory-hardening.md`
+- Added deterministic synthesis grounding improvements:
+  - lightweight architecture pattern profiles for HA web apps, Kubernetes modernization, fintech DR, AI inference, analytics/data lake, and multi-region SaaS
+  - deterministic synthesis now uses retrieved services, source chunk IDs, architecture patterns, workload/domain heuristics, and service-specific design moves
+  - additive synthesis quality scoring for grounding, OCI specificity, workload alignment, migration accuracy, recommendation diversity, and citation coverage
+  - expanded golden JSONL coverage for multi-region SaaS, AI inference optimization, observability modernization, secure fintech DR, Kubernetes modernization, and analytics platform scaling
 - Added supervised orchestration foundation:
   - config-selected orchestration mode through `ADVISORY_ORCHESTRATION_MODE`
   - one in-process supervisor
@@ -265,13 +270,14 @@ Last validation run: 2026-05-15
 - Continuous intelligence hardening: candidate-first promotion, version lineage, rollback automation, and refresh status endpoint implemented
 - Terraform validation: passed after optional knowledge refresh scheduler scaffold; staging plan currently should not be applied until existing backend replacement drift is resolved and the function image is available
 - OCI-native refresh scheduler scaffold: implemented with OCI Functions plus OCI Resource Scheduler; not applied yet because a published OCIR function image is required before enabling
-- Backend tests: passed, 62 tests
+- Backend tests: passed, 70 tests
 - Frontend build: passed
-- Golden/edge advisory eval command: passed, 8 of 8
+- Golden evals: passed, 12 of 12
+- Edge-case evals: passed, 8 of 8
 - Advisory-quality evals: passed, 5 of 5
 - Controlled orchestration evals: passed, 5 of 5
 - Retrieval health check: passed for `oci_object_storage`, 21 chunks
-- Retrieval regression check: passed, 14 of 14 golden + edge cases
+- Retrieval regression check: passed, 20 of 20 golden + edge cases
 - GenAI parity readiness check: passed in skip-safe mode when OCI GenAI env vars are not provided
 - Python compile checks: passed for backend, infra scripts, ingestion, and refresh code
 - Diff whitespace check: passed
@@ -367,6 +373,10 @@ Last validation run: 2026-05-15
   - specialist agents are deterministic role boundaries, not autonomous workers
   - validation critic currently reports findings and warnings; it does not block responses yet
   - final response synthesis remains single-writer through the configured synthesis provider
+- Synthesis quality:
+  - deterministic synthesis uses reusable architecture pattern profiles and retrieved evidence
+  - synthesis quality signals are available in the backend response
+  - OCI GenAI remains optional and must pass parity validation before staging activation
 - Retrieval quality:
   - reranking and domain heuristics are implemented and covered by tests
   - optional debug traces expose detected intent, mapped OCI services, candidate chunks, score adjustments, and selected final chunks
@@ -380,6 +390,7 @@ Last validation run: 2026-05-15
 - Reranking improves ordering and traceability but still depends on the small curated corpus and local hash embeddings.
 - Release awareness has scheduled snapshot refresh, candidate validation, and status visibility; deeper semantic impact analysis remains next-phase work.
 - OCI GenAI synthesis adapter exists, but deterministic synthesis remains the rollback-safe default unless enabled by environment configuration.
+- Deterministic architecture patterns improve fallback usefulness but are still heuristic and bounded by the retrieved corpus.
 - Controlled multi-agent orchestration is currently an in-process control layer; it does not yet perform autonomous planning, tool use, or multi-step agent memory.
 - Generated vector snapshots are local and gitignored.
 - The first OCI deployment exposes the backend directly on port `8000`; this is acceptable for staging validation but should be replaced with HTTPS ingress before demo/prod.

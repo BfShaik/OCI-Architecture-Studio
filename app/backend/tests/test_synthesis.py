@@ -1,6 +1,7 @@
 import pytest
 
 from oci_arch_studio_backend.services.intents import Intent, get_intent_profile
+from oci_arch_studio_backend.models.architecture import RetrievedSource
 from oci_arch_studio_backend.services.synthesis import (
     DeterministicAdvisorySynthesizer,
     OciGenAiAdvisorySynthesizer,
@@ -28,6 +29,7 @@ def test_deterministic_synthesizer_preserves_profile_contract() -> None:
     assert result.model == "profile-v0"
     assert result.latency_ms == 0.0
     assert result.recommendations == list(profile.recommendations)
+    assert result.quality is not None
     assert "Retrieved test context" in result.answer
     assert "1. Executive Summary" in result.answer
     assert "10. Recommended Next Steps" in result.answer
@@ -80,6 +82,45 @@ def test_deterministic_synthesizer_adds_domain_heuristics() -> None:
 
     assert any("For ecommerce" in recommendation for recommendation in result.recommendations)
     assert "checkout consistency" in result.answer
+
+
+def test_deterministic_synthesizer_uses_retrieved_services_and_pattern_moves() -> None:
+    profile = get_intent_profile(Intent.DR)
+    result = DeterministicAdvisorySynthesizer().synthesize(
+        SynthesisRequest(
+            question="Design secure fintech DR on OCI.",
+            workload_context=None,
+            profile=profile,
+            sources=[
+                RetrievedSource(
+                    chunk_id="dr::1",
+                    title="Full Stack DR",
+                    source_type="oci_doc",
+                    source_url="https://example.com/dr",
+                    service="Full Stack Disaster Recovery",
+                    service_domain="resilience",
+                    architecture_patterns=["disaster-recovery"],
+                    domain_tags=["fintech"],
+                    summary="Full Stack Disaster Recovery coordinates failover runbooks.",
+                ),
+                RetrievedSource(
+                    chunk_id="vault::1",
+                    title="Vault",
+                    source_type="oci_doc",
+                    source_url="https://example.com/vault",
+                    service="Vault",
+                    service_domain="security",
+                    summary="Vault manages keys and secrets.",
+                ),
+            ],
+            context_note="Retrieved DR and Vault context.",
+        )
+    )
+
+    assert "fintech_disaster_recovery_platform" in result.answer
+    assert "Full Stack Disaster Recovery" in result.answer
+    assert "Vault-backed key and secret controls" in result.answer
+    assert result.quality is not None
 
 
 def test_build_synthesizer_requires_genai_settings() -> None:

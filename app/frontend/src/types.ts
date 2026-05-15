@@ -76,6 +76,17 @@ export type ConfidenceScore = {
   notes: string[];
 };
 
+export type SynthesisQualityScore = {
+  grounding_quality: number;
+  oci_specificity: number;
+  workload_alignment: number;
+  migration_accuracy: number;
+  recommendation_diversity: number;
+  citation_coverage: number;
+  overall: number;
+  notes: string[];
+};
+
 export type AgentTrace = {
   agent: string;
   role: string;
@@ -116,6 +127,7 @@ export type ArchitectureReviewResponse = {
   synthesis_model?: string | null;
   synthesis_warnings: string[];
   synthesis_fallback_used: boolean;
+  synthesis_quality?: SynthesisQualityScore | null;
   answer: string;
   recommendations: string[];
   assumptions: string[];

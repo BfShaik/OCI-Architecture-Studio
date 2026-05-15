@@ -30,6 +30,7 @@ def test_architecture_review() -> None:
     assert body["aggregation_decision"]
     assert body["critic_findings"]
     assert body["synthesis_warnings"] is not None
+    assert body["synthesis_quality"]["overall"] >= 0
     assert body["recommendations"]
     assert body["citations"]
     assert body["section_citations"]

@@ -88,6 +88,17 @@ class RetrievalDebugTrace(BaseModel):
     selected_final_chunks: list[str] = Field(default_factory=list)
 
 
+class SynthesisQualityScore(BaseModel):
+    grounding_quality: float
+    oci_specificity: float
+    workload_alignment: float
+    migration_accuracy: float
+    recommendation_diversity: float
+    citation_coverage: float
+    overall: float
+    notes: list[str] = Field(default_factory=list)
+
+
 class ConfidenceScore(BaseModel):
     retrieval: float
     evidence: float
@@ -133,6 +144,7 @@ class ArchitectureReviewResponse(BaseModel):
     synthesis_model: str | None = None
     synthesis_warnings: list[str] = Field(default_factory=list)
     synthesis_fallback_used: bool = False
+    synthesis_quality: SynthesisQualityScore | None = None
     answer: str
     recommendations: list[str]
     assumptions: list[str]

@@ -7,6 +7,7 @@ from oci_arch_studio_backend.services.architecture_heuristics import (
     ArchitectureDomainHeuristics,
     ArchitectureHeuristicClassifier,
 )
+from oci_arch_studio_backend.services.architecture_patterns import ArchitecturePatternSelector
 from oci_arch_studio_backend.services.embeddings import (
     Embedder,
     LocalHashingEmbedder,
@@ -140,6 +141,7 @@ class OciKnowledgeRetriever:
         self.provider_name = provider_name
         self.service_mapper = OciServiceMapper()
         self.heuristic_classifier = ArchitectureHeuristicClassifier()
+        self.pattern_selector = ArchitecturePatternSelector()
         self.reranker = RetrievalReranker()
         self.debug_enabled = debug_enabled
         self.candidate_multiplier = max(candidate_multiplier, 1)
@@ -172,6 +174,17 @@ class OciKnowledgeRetriever:
         combined_text = " ".join(part for part in (question, workload_context) if part)
         service_mapping = self.service_mapper.map_text(combined_text)
         heuristics = self.heuristic_classifier.detect(combined_text)
+        pattern = self.pattern_selector.select(
+            question=question,
+            workload_context=workload_context,
+            profile=intent_profile,
+            sources=[],
+        ) if intent_profile else None
+        pattern_services = (
+            self._critical_pattern_services(pattern.name, intent)
+            if pattern and self._pattern_triggered(pattern.triggers, combined_text)
+            else ()
+        )
         retrieval_query = self._build_retrieval_query(question, intent_profile)
         if service_mapping.retrieval_terms:
             retrieval_query = " ".join((retrieval_query, *service_mapping.retrieval_terms))
@@ -209,7 +222,11 @@ class OciKnowledgeRetriever:
             service_mapping=service_mapping,
             heuristics=heuristics,
         )
-        selected = reranked[: self.top_k]
+        selected = self._select_final_chunks(
+            reranked,
+            mapped_services=service_mapping.mapped_services,
+            pattern_services=pattern_services,
+        )
         sources = [self._to_retrieved_source(chunk, score) for chunk, score in selected]
         if self._debug_requested(debug_enabled):
             self.last_debug_trace = RetrievalDebugTrace(
@@ -340,6 +357,53 @@ class OciKnowledgeRetriever:
 
     def _debug_requested(self, request_debug: bool | None) -> bool:
         return self.debug_enabled if request_debug is None else bool(request_debug or self.debug_enabled)
+
+    def _select_final_chunks(
+        self,
+        reranked: list[tuple[object, float]],
+        *,
+        mapped_services: tuple[str, ...],
+        pattern_services: tuple[str, ...],
+    ) -> list[tuple[object, float]]:
+        selected: list[tuple[object, float]] = []
+        selected_ids: set[str] = set()
+
+        for service in (*mapped_services, *pattern_services):
+            for chunk, score in reranked:
+                if chunk.id in selected_ids:
+                    continue
+                if str(chunk.metadata.get("service", "")).lower() == service.lower():
+                    selected.append((chunk, score))
+                    selected_ids.add(chunk.id)
+                    break
+            if len(selected) >= self.top_k:
+                break
+
+        for chunk, score in reranked:
+            if len(selected) >= self.top_k:
+                break
+            if chunk.id in selected_ids:
+                continue
+            selected.append((chunk, score))
+            selected_ids.add(chunk.id)
+        return selected
+
+    def _pattern_triggered(self, triggers: tuple[str, ...], text: str) -> bool:
+        normalized = text.lower()
+        return any(trigger.lower() in normalized for trigger in triggers)
+
+    def _critical_pattern_services(self, pattern_name: str, intent: str | None) -> tuple[str, ...]:
+        if intent == "cost":
+            return ()
+        critical = {
+            "highly_available_web_application": ("Load Balancer", "Database Services", "Object Storage", "CDN"),
+            "kubernetes_modernization_platform": ("OCI Kubernetes Engine", "Load Balancer", "Logging", "Monitoring"),
+            "fintech_disaster_recovery_platform": ("Full Stack Disaster Recovery", "Database Services", "Vault", "Logging", "Monitoring"),
+            "ai_inference_platform": ("Compute", "Object Storage", "Logging", "Monitoring"),
+            "analytics_data_lake_platform": ("Object Storage", "Database Services", "Logging", "Monitoring"),
+            "saas_multi_region_platform": ("Load Balancer", "Database Services", "Object Storage", "Logging", "Monitoring"),
+        }
+        return critical.get(pattern_name, ())
 
 
 def build_retriever(settings: Settings, top_k: int = 6) -> OciKnowledgeRetriever:

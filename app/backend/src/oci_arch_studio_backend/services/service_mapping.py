@@ -60,7 +60,7 @@ AWS_TO_OCI_MAPPINGS: tuple[ServiceMapping, ...] = (
     ),
     ServiceMapping(
         source_service="RDS",
-        target_services=("Database Services", "Autonomous Database"),
+        target_services=("Database Migration", "Database Services", "Autonomous Database"),
         retrieval_terms=("OCI Base Database", "Autonomous Database", "Database Migration", "database engine compatibility"),
     ),
     ServiceMapping(
