@@ -88,7 +88,8 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | TASK-016 | Done | Cut a new internal beta baseline after all active gates pass. | Local/backend/frontend/eval/Terraform gates passed; staging Object Storage refreshed to 47 chunks; staging smoke, retrieval health, operational readiness, and internal beta readiness passed with expected API Gateway/OCI DevOps warnings. |
 | TASK-017 | Done | Select and execute the next OCI-native promotion increment. | Chose default-off Terraform readiness for API Gateway plus Oracle Autonomous AI Database/Vector Search rather than any live promotion. |
 | TASK-018 | Done | Add default-off Terraform scaffold for Oracle Autonomous AI Database vector-search shadow mode. | Passed `terraform fmt -recursive`, `git diff --check`, and Terraform validate for dev/test/staging. Non-mutating staging plan kept API Gateway and Autonomous Database disabled; existing backend replacement drift remains a known do-not-apply condition. |
-| TASK-019 | Next | Resolve staging Terraform drift before live API Gateway or database apply. | Staging plan no longer proposes unintended backend replacement, or a controlled replacement window/rollback plan is documented and approved. |
+| TASK-019 | Done | Resolve staging Terraform drift before live API Gateway or database apply. | Added targeted `metadata["user_data"]` ignore for backend cloud-init bootstrap drift; passed Terraform fmt/check/validate; non-mutating staging plan now shows no real infrastructure changes, only new outputs. |
+| TASK-020 | Next | Run API Gateway live preflight plan without cutover apply. | Staging plan with API Gateway enabled shows only expected Gateway/deployment changes and no backend replacement or unrelated destructive changes. |
 
 ## Phase Gates
 
@@ -136,13 +137,13 @@ Run the appropriate subset after each increment; run the full matrix before a ne
 
 ## Next Actionable Increment
 
-Current task: `TASK-019`.
+Current task: `TASK-020`.
 
-Resolve staging Terraform drift before live API Gateway or database apply:
+Run API Gateway live preflight plan without cutover apply:
 
-1. Inspect the existing backend replacement drift caused by cloud-init/user-data differences.
-2. Decide whether to import/ignore/update state or schedule a controlled backend replacement.
-3. Do not apply API Gateway or Autonomous Database resources until the drift is understood.
+1. Generate an API Gateway-enabled plan without applying.
+2. Confirm the plan only adds expected API Gateway resources and output changes.
+3. Keep direct backend VM exposure as rollback path until smoke succeeds.
 
 ## Operating Rules
 

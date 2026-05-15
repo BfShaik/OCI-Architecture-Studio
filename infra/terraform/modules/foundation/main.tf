@@ -338,6 +338,12 @@ resource "oci_core_instance" "backend" {
       }
     ))
   }
+
+  lifecycle {
+    ignore_changes = [
+      metadata["user_data"],
+    ]
+  }
 }
 
 resource "oci_apigateway_gateway" "api" {
