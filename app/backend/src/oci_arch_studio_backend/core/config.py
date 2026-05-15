@@ -18,6 +18,16 @@ class Settings(BaseSettings):
     vector_db_url: str | None = Field(default=None, alias="VECTOR_DB_URL")
     embedding_provider: str = Field(default="local", alias="EMBEDDING_PROVIDER")
     retrieval_provider: str = Field(default="local_json", alias="RETRIEVAL_PROVIDER")
+    advisory_synthesis_provider: str = Field(
+        default="deterministic",
+        alias="ADVISORY_SYNTHESIS_PROVIDER",
+    )
+    oci_genai_chat_model_id: str | None = Field(
+        default=None,
+        alias="OCI_GENAI_CHAT_MODEL_ID",
+    )
+    oci_genai_max_tokens: int = Field(default=1200, alias="OCI_GENAI_MAX_TOKENS")
+    oci_genai_temperature: float = Field(default=0.1, alias="OCI_GENAI_TEMPERATURE")
     oci_genai_embedding_model_id: str | None = Field(
         default=None,
         alias="OCI_GENAI_EMBEDDING_MODEL_ID",

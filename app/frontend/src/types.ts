@@ -43,6 +43,10 @@ export type ArchitectureReviewRequest = {
 export type ArchitectureReviewResponse = {
   intent: string;
   prompt_template: string;
+  synthesis_provider: string;
+  synthesis_model?: string | null;
+  synthesis_warnings: string[];
+  synthesis_fallback_used: boolean;
   answer: string;
   recommendations: string[];
   assumptions: string[];

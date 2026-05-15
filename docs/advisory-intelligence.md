@@ -19,12 +19,21 @@ It adds a lightweight evidence and confidence layer before the response is retur
 1. Classify the prompt into an intent.
 2. Retrieve OCI evidence through the configured retrieval provider.
 3. Load the matching intent profile and prompt template.
-4. Link each recommendation to retrieved citations.
-5. Compute confidence scores.
-6. Surface evidence gaps, unsupported requested services, stale evidence, and missing-context warnings.
-7. Return the structured advisory response to the UI.
+4. Run the configured synthesis provider.
+5. Link each synthesized recommendation to retrieved citations.
+6. Compute confidence scores.
+7. Surface evidence gaps, unsupported requested services, stale evidence, synthesis warnings, and missing-context warnings.
+8. Return the structured advisory response to the UI.
 
 This remains a deterministic MVP-friendly pipeline. It does not add LangGraph, multi-agent planning, or a new distributed service.
+
+Synthesis is config-selected:
+
+```text
+ADVISORY_SYNTHESIS_PROVIDER=deterministic|oci_genai
+```
+
+The deterministic provider remains the rollback path. The OCI GenAI provider fails closed to deterministic synthesis if the model call fails or returns invalid JSON.
 
 ## Citation Enforcement Design
 

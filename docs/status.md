@@ -183,6 +183,14 @@ This progress is based on `docs/two-week-plan.md`.
   - advisory-quality eval suite under `evals/advisory-quality.jsonl`
   - CI advisory-quality eval gate
   - `docs/advisory-intelligence.md`
+- Added GenAI advisory hardening foundation:
+  - config-selected synthesis provider
+  - OCI GenAI chat synthesis adapter
+  - deterministic fail-closed fallback
+  - synthesis provider, model, warnings, and fallback fields in the API response
+  - synthesis fallback observability in `/advisory/quality`
+  - versioned local and staging config examples
+  - `docs/genai-advisory-hardening.md`
 - Pushed current implementation to GitHub.
 
 ## Latest Validation
@@ -204,7 +212,7 @@ Last validation run: 2026-05-15
 - Infrastructure Python script compile checks: passed
 - Knowledge ingestion smoke: passed, 13 chunks generated
 - Release ingestion smoke: passed, 3 release items generated
-- Backend tests: passed, 34 tests
+- Backend tests: passed, 37 tests
 - Frontend build: passed
 - Golden evals: passed, 6 of 6
 - Edge-case evals: passed, 8 of 8

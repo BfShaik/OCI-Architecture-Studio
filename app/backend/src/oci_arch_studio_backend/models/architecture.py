@@ -57,6 +57,10 @@ class ConfidenceScore(BaseModel):
 class ArchitectureReviewResponse(BaseModel):
     intent: str
     prompt_template: str
+    synthesis_provider: str = "deterministic"
+    synthesis_model: str | None = None
+    synthesis_warnings: list[str] = Field(default_factory=list)
+    synthesis_fallback_used: bool = False
     answer: str
     recommendations: list[str]
     assumptions: list[str]

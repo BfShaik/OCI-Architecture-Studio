@@ -85,9 +85,13 @@ class AdvisoryQualityAnalyzer:
     ) -> AdvisoryQualityAssessment:
         valid_sources = self._valid_sources(sources)
         unsupported_claims = self._unsupported_requested_claims(question)
+        assessed_recommendations = self._suppress_unsupported_terms(
+            base_recommendations,
+            unsupported_claims,
+        )
         evidence_links = [
             self._link_recommendation(index, recommendation, valid_sources)
-            for index, recommendation in enumerate(base_recommendations)
+            for index, recommendation in enumerate(assessed_recommendations)
         ]
         low_context_prompt = self._is_low_context_prompt(question)
         evidence_support = self._evidence_support(evidence_links)
@@ -132,7 +136,7 @@ class AdvisoryQualityAnalyzer:
             notes=quality_warnings[:4],
         )
         return AdvisoryQualityAssessment(
-            recommendations=self._ground_recommendations(base_recommendations, evidence_links),
+            recommendations=self._ground_recommendations(assessed_recommendations, evidence_links),
             evidence_links=evidence_links,
             confidence=confidence,
             quality_warnings=quality_warnings,
@@ -223,6 +227,28 @@ class AdvisoryQualityAnalyzer:
             if re.search(pattern, question, flags=re.IGNORECASE):
                 claims.append(message)
         return claims
+
+    def _suppress_unsupported_terms(
+        self,
+        recommendations: list[str],
+        unsupported_claims: list[str],
+    ) -> list[str]:
+        if not unsupported_claims:
+            return recommendations
+        sanitized: list[str] = []
+        for recommendation in recommendations:
+            revised = recommendation
+            revised = re.sub(
+                r"\bOCI\s+(Quantum\s+Database|Infinite\s+DR|AutoPilot\s+Architect|Magic\s+Migration)\b",
+                "the requested unsupported OCI capability",
+                revised,
+                flags=re.IGNORECASE,
+            )
+            sanitized.append(revised)
+        sanitized.append(
+            "Do not use the requested unsupported service names as valid OCI design components; validate alternatives against official OCI services."
+        )
+        return sanitized
 
     def _quality_warnings(
         self,

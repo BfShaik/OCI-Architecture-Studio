@@ -60,7 +60,9 @@ Deliverables:
 - unsupported requested service warnings — Done
 - advisory-quality metrics endpoint — Done
 - advisory-quality eval suite — Done
-- citation-aware LLM synthesis — Pending
+- config-selected OCI GenAI synthesis adapter — Done
+- deterministic synthesis rollback — Done
+- citation-aware GenAI synthesis hardening — MVP Done
 - stronger unsupported-claim suppression — Pending
 - quality trend dashboard — Pending
 

@@ -119,11 +119,12 @@ def response_text(response: dict[str, Any]) -> str:
     for key in ("recommendations", "assumptions", "risks", "next_steps"):
         parts.append(key)
         parts.extend(str(item) for item in response.get(key, []))
-    for key in ("quality_warnings", "unsupported_claims"):
+    for key in ("quality_warnings", "unsupported_claims", "synthesis_warnings"):
         parts.append(key)
         parts.extend(str(item) for item in response.get(key, []))
     confidence = response.get("confidence") or {}
     if isinstance(confidence, dict):
+        parts.append("confidence")
         parts.append(str(confidence.get("level", "")))
         parts.extend(str(note) for note in confidence.get("notes", []))
     for link in response.get("evidence_links", []):
@@ -183,6 +184,9 @@ def validate_structure(response: dict[str, Any]) -> EvalCheck:
     required_fields = {
         "intent": str,
         "prompt_template": str,
+        "synthesis_provider": str,
+        "synthesis_warnings": list,
+        "synthesis_fallback_used": bool,
         "answer": str,
         "recommendations": list,
         "assumptions": list,

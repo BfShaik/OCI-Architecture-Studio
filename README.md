@@ -63,6 +63,7 @@ tests/                Backend and integration tests
 - Dual-provider retrieval parity gate comparing `local_json` and `oci_object_storage`
 - Config-only staging promotion to `oci_object_storage` with rollback validation
 - Evidence-linked recommendations, confidence scoring, uncertainty flags, and advisory quality metrics
+- Config-selectable advisory synthesis with deterministic rollback and an OCI GenAI chat adapter
 
 ## Run Locally
 
@@ -139,10 +140,11 @@ VITE_API_BASE_URL=http://localhost:8000 npm run dev
 
 1. Keep staging on `RETRIEVAL_PROVIDER=oci_object_storage` and monitor retrieval latency, citations, and failure handling.
 2. Expand the source registry with dedicated WAF, Vault, Cloud Guard, Logging, Monitoring, Budgets, IAM, Audit, and Data Guard sources.
-3. Replace local hashing embeddings with OCI Generative AI embeddings once provider settings and cost controls are finalized.
-4. Validate Oracle AI Vector Search schema/query parity before enabling active reads.
-5. Add Oracle AI Vector Search dual-run checks against the Object Storage provider before any active-read promotion.
-6. Replace fallback release parsing with stronger extraction from official OCI release pages.
+3. Enable OCI GenAI synthesis in staging through configuration and compare it against deterministic synthesis on the demo scenarios.
+4. Replace local hashing embeddings with OCI Generative AI embeddings once provider settings and cost controls are finalized.
+5. Validate Oracle AI Vector Search schema/query parity before enabling active reads.
+6. Add Oracle AI Vector Search dual-run checks against the Object Storage provider before any active-read promotion.
+7. Replace fallback release parsing with stronger extraction from official OCI release pages.
 
 ## Run Evaluations
 
@@ -238,7 +240,7 @@ cd ../frontend && npm run build
 
 Latest full validation: 2026-05-15.
 
-- Local backend tests: `34 passed`
+- Local backend tests: `37 passed`
 - Golden evals: `6 passed, 0 failed`
 - Edge-case evals: `8 passed, 0 failed`
 - Advisory-quality evals: `5 passed, 0 failed`
@@ -282,6 +284,8 @@ See `docs/retrieval-parity-validation-report.md` for dual-provider parity result
 See `docs/retrieval-provider-promotion-report.md` for the completed staging promotion, post-promotion validation results, rollback proof, and the next Oracle AI Vector Search boundary.
 
 See `docs/advisory-intelligence.md` for evidence-linked recommendations, confidence scoring, citation enforcement, uncertainty handling, and advisory-quality observability.
+
+See `docs/genai-advisory-hardening.md` for GenAI synthesis configuration, fail-closed fallback behavior, citation enforcement, confidence scoring, eval strategy, and rollback guidance.
 
 See `docs/terraform-plan-review.md` for the first staging Terraform planning workflow, plan review, apply readiness criteria, and post-apply smoke-test plan.
 

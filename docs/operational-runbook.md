@@ -192,6 +192,13 @@ If advisory confidence drops:
 - add source chunks when useful recommendations lack evidence
 - add a regression eval for any repeated failure pattern
 
+If GenAI synthesis needs rollback:
+
+- set `ADVISORY_SYNTHESIS_PROVIDER=deterministic`
+- restart `oci-architecture-studio`
+- rerun `/advisory/quality` and baseline smoke tests
+- inspect `synthesis_warnings` and `synthesis_fallback_used` in API responses
+
 If `oci_object_storage` promotion fails:
 
 - set `RETRIEVAL_PROVIDER=local_json`

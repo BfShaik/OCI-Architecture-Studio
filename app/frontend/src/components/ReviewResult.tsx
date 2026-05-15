@@ -36,6 +36,10 @@ export function ReviewResult({ result }: ReviewResultProps) {
         <div className="intent-row">
           <span className="intent-badge">{labelForIntent(result.intent)}</span>
           <span>{citationCount} sources</span>
+          <span>
+            synthesis {result.synthesis_provider}
+            {result.synthesis_fallback_used ? " fallback" : ""}
+          </span>
           {confidence ? (
             <span className={`confidence-badge confidence-${confidence.level}`}>
               confidence {confidence.level} · {percent(confidence.overall)}
@@ -45,9 +49,9 @@ export function ReviewResult({ result }: ReviewResultProps) {
           <span>{result.prompt_template}</span>
         </div>
         <p>{result.answer}</p>
-        {result.quality_warnings.length ? (
+        {result.quality_warnings.length || result.synthesis_warnings.length ? (
           <div className="quality-warnings" aria-label="Quality warnings">
-            {result.quality_warnings.map((warning) => (
+            {[...result.quality_warnings, ...result.synthesis_warnings].map((warning) => (
               <span key={warning}>{warning}</span>
             ))}
           </div>

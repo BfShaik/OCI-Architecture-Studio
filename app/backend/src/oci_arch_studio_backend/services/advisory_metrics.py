@@ -15,6 +15,8 @@ class AdvisoryQualityMetrics:
     last_intent: str | None = None
     last_confidence_level: str | None = None
     last_overall_confidence: float | None = None
+    last_synthesis_provider: str | None = None
+    synthesis_fallback_count: int = 0
     last_citation_coverage: float | None = None
     last_evidence_support: float | None = None
     warnings: list[str] = field(default_factory=list)
@@ -43,6 +45,8 @@ class AdvisoryQualityMetrics:
             "last_intent": self.last_intent,
             "last_confidence_level": self.last_confidence_level,
             "last_overall_confidence": self.last_overall_confidence,
+            "last_synthesis_provider": self.last_synthesis_provider,
+            "synthesis_fallback_count": self.synthesis_fallback_count,
             "last_citation_coverage": self.last_citation_coverage,
             "last_evidence_support": self.last_evidence_support,
             "warnings": list(self.warnings[-10:]),
@@ -65,6 +69,8 @@ class AdvisoryQualityMetricsRecorder:
         not_enough_evidence: bool,
         unsupported_claims: list[str],
         stale_evidence_count: int,
+        synthesis_provider: str,
+        synthesis_fallback_used: bool,
         warnings: list[str],
     ) -> None:
         self.metrics.request_count += 1
@@ -73,6 +79,7 @@ class AdvisoryQualityMetricsRecorder:
         self.metrics.last_intent = intent
         self.metrics.last_confidence_level = confidence_level
         self.metrics.last_overall_confidence = overall_confidence
+        self.metrics.last_synthesis_provider = synthesis_provider
         self.metrics.last_citation_coverage = citation_coverage
         self.metrics.last_evidence_support = evidence_support
         if low_confidence:
@@ -83,6 +90,8 @@ class AdvisoryQualityMetricsRecorder:
             self.metrics.unsupported_claim_count += 1
         if stale_evidence_count:
             self.metrics.stale_evidence_count += 1
+        if synthesis_fallback_used:
+            self.metrics.synthesis_fallback_count += 1
         self.metrics.warnings.extend(warnings)
 
     def snapshot(self) -> dict[str, object]:

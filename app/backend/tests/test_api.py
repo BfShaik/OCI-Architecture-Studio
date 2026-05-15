@@ -22,6 +22,8 @@ def test_architecture_review() -> None:
     assert response.status_code == 200
     body = response.json()
     assert body["answer"]
+    assert body["synthesis_provider"]
+    assert body["synthesis_warnings"] is not None
     assert body["recommendations"]
     assert body["citations"]
     assert "summary" in body["citations"][0]
