@@ -4,7 +4,8 @@ Last updated: 2026-05-15
 
 ## Active Plan
 
-- Two-week plan: `docs/two-week-plan.md`
+- Living execution plan: `docs/living-execution-plan.md`
+- Two-week plan archive: `docs/two-week-plan.md`
 
 ## Plan Progress
 
