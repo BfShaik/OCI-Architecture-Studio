@@ -15,13 +15,13 @@ Last updated: 2026-05-16
 - Historical report/archive documents now include current-state notes where their original milestone content predates Oracle AI Vector Search active reads.
 - No source code, runtime environment values, vector DB state, Object Storage objects, or infrastructure settings were changed in this documentation pass.
 
-## Latest Embedding Migration Guardrail
+## Latest Embedding Migration Status
 
-- `TASK-055` remains gated behind completed staging validation for `TASK-054`; no embedding provider, Object Storage manifest, Oracle vector table, or staging runtime env value was changed.
-- Approved visible embedding candidate selected by operator direction: `cohere.embed-v4.0` in `us-ashburn-1`, requiring a scope update from 1024 to 1536 dimensions before any future reindex.
-- Added a retrieval guardrail that compares the configured embedding provider/model/dimensions with the loaded index manifest metadata and refuses retrieval on mismatch.
-- `/retrieval/health` now reports the configured embedding provider separately from the embedding model, exposes active index embedding metadata, and includes an `embedding_index_guardrail` verdict for promotion checks.
-- Prepared the Embed v4 migration code path: OCI GenAI document ingestion now uses `SEARCH_DOCUMENT`, query retrieval uses `SEARCH_QUERY`, generated manifests and Oracle vector row metadata carry embedding provider/model/dimensions, and Oracle vector health can surface that metadata for the guardrail.
+- `TASK-055` is promoted in staging with `EMBEDDING_PROVIDER=oci_genai`, `cohere.embed-v4.0`, and 1536-dimensional Oracle AI Vector Search rows.
+- Active Oracle vector table/index: `OCI_ARCHITECTURE_CHUNKS_V4` / `OCI_ARCH_CHUNKS_V4_VEC_IDX`.
+- `/retrieval/health` reports matching configured/index provider, model, and dimensions with `embedding_index_guardrail.ok=true`.
+- Object Storage active manifest now matches the v4 index; rollback manifest `oci-rag-index.local-hash.json` and the 256-dimension `OCI_ARCHITECTURE_CHUNKS` table remain available.
+- Validation passed: 32/32 retrieval regression, 18/18 golden evals, 8/8 edge evals, and public `/architecture-review` smoke with OCI GenAI synthesis fallback disabled.
 - Validation passed: focused retrieval/API tests `27 passed`; backend full suite `133 passed`; `git diff --check` passed; changed-file secret scan returned no findings.
 
 ## Latest OCI GenAI Synthesis Parity Readiness

@@ -432,6 +432,7 @@ class OracleAiVectorSearchStore:
         try:
             with self._connect() as connection:
                 cursor = connection.cursor()
+                self._set_search_input_sizes(cursor)
                 cursor.execute(sql, binds)
                 rows = cursor.fetchall()
                 results = [self._row_to_result(row) for row in rows]
@@ -457,6 +458,7 @@ class OracleAiVectorSearchStore:
         try:
             with self._connect() as connection:
                 cursor = connection.cursor()
+                self._set_upsert_input_sizes(cursor)
                 cursor.executemany(self.upsert_sql(), rows)
                 connection.commit()
             self._last_error = None
@@ -813,6 +815,36 @@ FETCH FIRST {limit} ROWS ONLY""".strip()
             "content_hash": metadata.get("content_hash"),
         }
 
+    def _set_upsert_input_sizes(self, cursor: Any) -> None:
+        set_input_sizes = getattr(cursor, "setinputsizes", None)
+        if set_input_sizes is None:
+            return
+        try:
+            import oracledb
+        except ImportError:
+            return
+        clob_type = getattr(oracledb, "DB_TYPE_CLOB", None) or getattr(oracledb, "CLOB", None)
+        if clob_type is None:
+            return
+        set_input_sizes(
+            chunk_text=clob_type,
+            embedding_json=clob_type,
+            metadata_json=clob_type,
+        )
+
+    def _set_search_input_sizes(self, cursor: Any) -> None:
+        set_input_sizes = getattr(cursor, "setinputsizes", None)
+        if set_input_sizes is None:
+            return
+        try:
+            import oracledb
+        except ImportError:
+            return
+        clob_type = getattr(oracledb, "DB_TYPE_CLOB", None) or getattr(oracledb, "CLOB", None)
+        if clob_type is None:
+            return
+        set_input_sizes(query_embedding=clob_type)
+
     def _connect(self) -> Any:
         if self.connection_factory:
             return self.connection_factory()
@@ -879,10 +911,11 @@ FETCH FIRST 1 ROWS ONLY""".strip()
             cursor.execute(sql)
             row = cursor.fetchone()
         metadata = _loads_json(row[0]) if row else {}
+        dimensions = metadata.get("embedding_dimensions") or metadata.get("dimensions")
         return {
             "embedding_provider": metadata.get("embedding_provider"),
             "embedding_model": metadata.get("embedding_model"),
-            "dimensions": metadata.get("embedding_dimensions") or metadata.get("dimensions"),
+            "dimensions": int(dimensions) if dimensions is not None else None,
         }
 
     def _filter_summary(self, filters: VectorSearchFilters) -> dict[str, object]:

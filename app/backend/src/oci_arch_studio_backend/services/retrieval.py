@@ -521,9 +521,9 @@ class OciKnowledgeRetriever:
         selected_ids: set[str] = set()
 
         for service in (
-            *self._prioritized_mapped_services(mapped_services, intent=intent),
             *pattern_services,
             *self._intent_critical_services(intent),
+            *self._prioritized_mapped_services(mapped_services, intent=intent),
         ):
             for chunk, score in reranked:
                 if chunk.id in selected_ids:

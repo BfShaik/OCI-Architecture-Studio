@@ -53,10 +53,10 @@ STOPWORDS = {
 }
 
 UNSUPPORTED_REQUEST_PATTERNS = {
-    r"\bOCI\s+Quantum\s+Database\b": "Requested unsupported service: Quantum Database",
-    r"\bOCI\s+Infinite\s+DR\b": "Requested unsupported service: Infinite DR",
-    r"\bOCI\s+AutoPilot\s+Architect\b": "Requested unsupported service: AutoPilot Architect",
-    r"\bOCI\s+Magic\s+Migration\b": "Requested unsupported service: Magic Migration",
+    r"\bOCI\s+Quantum\s+Database\b": "Requested unsupported OCI database capability.",
+    r"\bOCI\s+Infinite\s+DR\b": "Requested unsupported OCI disaster recovery capability.",
+    r"\bOCI\s+AutoPilot\s+Architect\b": "Requested unsupported OCI architecture automation capability.",
+    r"\bOCI\s+Magic\s+Migration\b": "Requested unsupported OCI migration capability.",
 }
 
 

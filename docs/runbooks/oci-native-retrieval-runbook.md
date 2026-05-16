@@ -16,11 +16,16 @@ RETRIEVAL_PROVIDER=local_json
 Current staging default:
 
 ```bash
-EMBEDDING_PROVIDER=local
+EMBEDDING_PROVIDER=oci_genai
+OCI_GENAI_EMBEDDING_MODEL_ID=cohere.embed-v4.0
+OCI_GENAI_EMBEDDING_DIMENSIONS=1536
 RETRIEVAL_PROVIDER=oracle_ai_vector_search
 OCI_OBJECT_STORAGE_NAMESPACE=idsmrn7rvqb6
 OCI_VECTOR_BUCKET=oci-architecture-studio-staging-knowledge-snapshots
 OCI_VECTOR_OBJECT_NAME=oci-rag-index.json
+OCI_VECTOR_TABLE_NAME=OCI_ARCHITECTURE_CHUNKS_V4
+OCI_VECTOR_INDEX_NAME=OCI_ARCH_CHUNKS_V4_VEC_IDX
+OCI_VECTOR_DIMENSIONS=1536
 ```
 
 Object Storage remains the immediate config rollback provider; `local_json` remains the local development fallback.
@@ -88,9 +93,9 @@ OCI_VECTOR_DISTANCE_METRIC=COSINE
 RETRIEVAL_FALLBACK_ENABLED=true
 ```
 
-Current status: the provider code creates schema, upserts chunks, serves active reads, and reports health when Oracle DB settings and schema are valid. Staging uses `oracle_ai_vector_search` with the promoted 60-chunk corpus; Object Storage remains the immediate rollback provider.
+Current status: the provider code creates schema, upserts chunks, serves active reads, and reports health when Oracle DB settings and schema are valid. Staging uses `oracle_ai_vector_search` with the promoted 60-chunk `cohere.embed-v4.0` corpus in `OCI_ARCHITECTURE_CHUNKS_V4`; Object Storage remains the immediate rollback provider.
 
-Embedding migration note: the active staging table is still the 256-dimension local-hash index. For the approved `cohere.embed-v4.0` migration path, build a separate 1536-dimension Oracle vector table/index first, generate document embeddings with OCI GenAI `SEARCH_DOCUMENT`, use `SEARCH_QUERY` for runtime questions, and promote only after `/retrieval/health` shows matching provider, model, and dimensions with the guardrail passing.
+Embedding migration note: the active staging table is now the 1536-dimension `cohere.embed-v4.0` index. Future embedding migrations must still build a separate Oracle vector table/index first, generate document embeddings with OCI GenAI `SEARCH_DOCUMENT`, use `SEARCH_QUERY` for runtime questions, and promote only after `/retrieval/health` shows matching provider, model, and dimensions with the guardrail passing.
 
 Local operational checks:
 
@@ -139,9 +144,9 @@ OCI_VECTOR_DB_USER=<vault/runtime value>
 OCI_VECTOR_DB_PASSWORD=<vault/runtime value>
 OCI_VECTOR_WALLET_LOCATION=<runtime wallet directory>
 OCI_VECTOR_WALLET_PASSWORD=<vault/runtime value>
-OCI_VECTOR_TABLE_NAME=OCI_ARCHITECTURE_CHUNKS
-OCI_VECTOR_INDEX_NAME=OCI_ARCH_CHUNKS_VEC_IDX
-OCI_VECTOR_DIMENSIONS=256
+OCI_VECTOR_TABLE_NAME=OCI_ARCHITECTURE_CHUNKS_V4
+OCI_VECTOR_INDEX_NAME=OCI_ARCH_CHUNKS_V4_VEC_IDX
+OCI_VECTOR_DIMENSIONS=1536
 OCI_VECTOR_DISTANCE_METRIC=COSINE
 ```
 
@@ -169,6 +174,29 @@ Rollback:
 ```text
 RETRIEVAL_PROVIDER=oci_object_storage
 ```
+
+## Embedding Rollback
+
+The local-hash rollback assets are intentionally retained:
+
+- Object Storage rollback manifest: `oci-rag-index.local-hash.json`
+- Oracle vector rollback table: `OCI_ARCHITECTURE_CHUNKS`
+- Oracle vector rollback index: `OCI_ARCH_CHUNKS_VEC_IDX`
+- Rollback dimensions: `256`
+
+To roll back from OCI GenAI embeddings to local-hash embeddings through the reviewed runtime path:
+
+```text
+EMBEDDING_PROVIDER=local
+OCI_GENAI_EMBEDDING_MODEL_ID=
+OCI_GENAI_EMBEDDING_DIMENSIONS=
+OCI_VECTOR_OBJECT_NAME=oci-rag-index.local-hash.json
+OCI_VECTOR_TABLE_NAME=OCI_ARCHITECTURE_CHUNKS
+OCI_VECTOR_INDEX_NAME=OCI_ARCH_CHUNKS_VEC_IDX
+OCI_VECTOR_DIMENSIONS=256
+```
+
+Restart the backend, then verify `/retrieval/health` reports `embedding_provider=local`, `index_dimensions=256`, `embedding_index_guardrail.ok=true`, and no active fallback. Do not leave `EMBEDDING_PROVIDER=oci_genai` pointed at the hash manifest or the 256-dimension table.
 
 Emergency local rollback:
 

@@ -1,6 +1,7 @@
 import json
 import sys
 import types
+from decimal import Decimal
 
 from oci_arch_studio_backend.core.config import Settings
 from oci_arch_studio_backend.services.embeddings import LocalHashingEmbedder
@@ -101,6 +102,52 @@ def test_oracle_vector_search_builds_metadata_filters_and_returns_chunks() -> No
     assert connection.last_execute_binds["intent_0"] == "%|observability|%"
 
 
+def test_oracle_vector_search_binds_large_query_vector_as_clob(monkeypatch) -> None:
+    clob_type = object()
+    monkeypatch.setitem(sys.modules, "oracledb", types.SimpleNamespace(DB_TYPE_CLOB=clob_type))
+    connection = FakeConnection(
+        search_rows=[
+            (
+                "genai::1",
+                "OCI Generative AI",
+                "https://example.com/genai",
+                "oci_doc",
+                "Generative AI supports semantic embeddings.",
+                json.dumps([0.1] * 1536),
+                json.dumps({"service": "Generative AI", "service_domain": "ai_ml"}),
+                "oci-genai",
+                "Generative AI",
+                "ai_ml",
+                "ai_ml",
+                "embeddings",
+                "embeddings",
+                "|ai_inference|",
+                "|rag|",
+                "|enterprise-app|",
+                "|enterprise|",
+                "https://example.com/genai",
+                "hash",
+                0.1,
+            )
+        ]
+    )
+    store = OracleAiVectorSearchStore(
+        OracleAiVectorSearchConfig(
+            dsn="db",
+            username="user",
+            password="pw",
+            dimensions=1536,
+        ),
+        connection_factory=lambda: connection,
+    )
+
+    results = store.search([0.1] * 1536)
+
+    assert results[0][0].id == "genai::1"
+    assert connection.last_input_sizes["query_embedding"] is clob_type
+    assert len(connection.last_execute_binds["query_embedding"]) > 4000
+
+
 def test_oracle_vector_upsert_serializes_metadata_and_tags() -> None:
     connection = FakeConnection()
     store = OracleAiVectorSearchStore(
@@ -145,15 +192,51 @@ def test_oracle_vector_upsert_serializes_metadata_and_tags() -> None:
     assert connection.committed is True
 
 
+def test_oracle_vector_upsert_binds_large_json_as_clob(monkeypatch) -> None:
+    clob_type = object()
+    monkeypatch.setitem(sys.modules, "oracledb", types.SimpleNamespace(DB_TYPE_CLOB=clob_type))
+    connection = FakeConnection()
+    store = OracleAiVectorSearchStore(
+        OracleAiVectorSearchConfig(
+            dsn="db",
+            username="user",
+            password="pw",
+            dimensions=1536,
+        ),
+        connection_factory=lambda: connection,
+    )
+    chunk = VectorChunk(
+        id="genai::1",
+        title="OCI Generative AI",
+        url="https://example.com/genai",
+        source_type="oci_doc",
+        text="Generative AI supports semantic embeddings.",
+        embedding=[0.123456789] * 1536,
+        metadata={
+            "source_id": "oci-genai",
+            "service": "Generative AI",
+            "service_domain": "ai_ml",
+            "embedding_provider": "oci_genai",
+            "embedding_model": "cohere.embed-v4.0",
+            "embedding_dimensions": 1536,
+        },
+    )
+
+    assert store.upsert_chunks([chunk]) == 1
+
+    assert connection.last_input_sizes["chunk_text"] is clob_type
+    assert connection.last_input_sizes["embedding_json"] is clob_type
+    assert connection.last_input_sizes["metadata_json"] is clob_type
+    assert len(connection.last_executemany_rows[0]["embedding_json"]) > 4000
+
+
 def test_oracle_vector_health_reports_embedding_metadata() -> None:
     connection = FakeConnection(
-        metadata_row=json.dumps(
-            {
-                "embedding_provider": "oci_genai",
-                "embedding_model": "cohere.embed-v4.0",
-                "embedding_dimensions": 1536,
-            }
-        )
+        metadata_row={
+            "embedding_provider": "oci_genai",
+            "embedding_model": "cohere.embed-v4.0",
+            "embedding_dimensions": Decimal("1536"),
+        }
     )
     store = OracleAiVectorSearchStore(
         OracleAiVectorSearchConfig(
@@ -254,6 +337,7 @@ class FakeConnection:
         self.last_execute_binds = {}
         self.last_executemany_sql = ""
         self.last_executemany_rows = []
+        self.last_input_sizes = {}
         self.committed = False
 
     def __enter__(self):
@@ -292,3 +376,6 @@ class FakeCursor:
 
     def fetchall(self):
         return self.connection.search_rows
+
+    def setinputsizes(self, **kwargs) -> None:
+        self.connection.last_input_sizes = kwargs

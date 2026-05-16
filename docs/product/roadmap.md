@@ -47,7 +47,7 @@ Deliverables:
 - evidence-linked recommendations — Done
 - confidence scoring and low-confidence fallback — Done
 - advisory-quality eval suite — Done
-- production embedding provider — Shadow validated, not default
+- production embedding provider — OCI GenAI embeddings promoted in staging
 - Oracle AI Vector Search shadow index — Done
 - Oracle AI Vector Search active read path — Done
 

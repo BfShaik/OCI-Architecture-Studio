@@ -62,7 +62,7 @@ tests/                Backend and integration tests
 - Curated OCI architecture corpus with 60 chunks active in staging after the latest architecture-accuracy promotion
 - Scalable ingestion scaffolding for source groups, source categories, release tags, chunk lineage, section hierarchy, and source traceability
 - Deterministic local embeddings for development
-- Optional OCI Generative AI embeddings with provider switching, `cohere.embed-v4.0` shadow validation, dimensional validation, failure diagnostics, and deterministic local fallback
+- OCI Generative AI embeddings with provider switching, active `cohere.embed-v4.0` staging validation at 1536 dimensions, dimensional validation, failure diagnostics, and deterministic local rollback
 - JSON vector index for local retrieval
 - Citation-friendly chunk metadata with service, service category, domain, workload, architecture pattern, trust, intent tags, migration mappings, and freshness score
 - Automatic chunk-level metadata enrichment for OCI service references, workload/domain labels, migration relevance, HA/DR relevance, cost relevance, security/compliance tags, and architecture pattern tags
@@ -169,7 +169,7 @@ Implemented today:
 
 Current limitations:
 
-- The active corpus is still curated and incomplete, but staging now serves 60 promoted chunks from Oracle AI Vector Search. A shadow OCI GenAI embedding candidate using `cohere.embed-v4.0` at 256 dimensions passed parity gates, but local deterministic embeddings remain the active default.
+- The active corpus is still curated and incomplete, but staging now serves 60 promoted chunks from Oracle AI Vector Search using `cohere.embed-v4.0` at 1536 dimensions. The previous 256-dimension local-hash manifest and Oracle vector table remain available for rollback.
 - OCI GenAI mode requires valid OCI SDK auth, compartment, model IDs, region/endpoint policy access, and parity validation before promotion.
 - Live GenAI comparison is skipped when required OCI GenAI environment variables are absent.
 - GenAI output is still constrained by retrieved evidence quality; deeper official OCI documentation coverage remains necessary before production-grade breadth.

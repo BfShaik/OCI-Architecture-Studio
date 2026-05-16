@@ -34,8 +34,10 @@ def normalize(value: str) -> str:
 def required_service_matches(required: str, services: set[str], titles: set[str], summaries: str) -> bool:
     required_norm = normalize(required)
     aliases = {
+        "eks": ("oke", "kubernetes engine", "container engine for kubernetes"),
         "load balancing": ("load balancer", "traffic to backend resources"),
         "oci database": ("database services", "autonomous database", "base database service"),
+        "rds": ("database migration", "database services", "autonomous database", "base database service"),
         "right sized compute": ("right-sized compute", "compute"),
         "autoscaling": ("autoscaling", "auto scaling"),
         "rto rpo": ("rto and rpo", "rto", "rpo"),

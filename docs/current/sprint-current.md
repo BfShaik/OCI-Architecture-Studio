@@ -88,10 +88,10 @@ Latest validation/current posture:
 - saved review history: redacted file-backed history APIs and left-rail UI are deployed to staging; validation traffic opts out of persistence, and local/staging tests, direct/API Gateway smoke, Gateway history redaction/delete smoke, and staging browser smoke passed
 - section citation traceability: enriched section citation metadata and UI passed backend tests, frontend lint/build, retrieval regression, golden evals, architecture-realism evals, local browser smoke, staging focused tests, direct/gateway smoke, gateway traceability validation, and staging browser smoke
 - review-history operator controls: backend policy/export/delete-all APIs, recursive saved-response redaction, and left-rail controls are deployed to staging; local/staging tests, direct/API Gateway smoke, Gateway redaction/export smoke, retrieval health, env hash guardrail, and browser smoke passed
-- next pending: OCI GenAI synthesis parity is blocked until approved `OCI_GENAI_COMPARTMENT_ID` and `OCI_GENAI_CHAT_MODEL_ID` runtime configuration is available; deterministic default remains unchanged
-- embedding migration: `cohere.embed-v4.0` is the approved best visible candidate after `cohere.embed-english-v3.0` was not visible; D1 mismatch guardrail is prepared, but no reindex, Object Storage upload, or staging env flip is allowed until `TASK-054` is validated and the 1536-dimension v4 scope is promoted through the ordered gate
-- OCI GenAI synthesis: implemented and configurable, not default
-- OCI GenAI embeddings: `cohere.embed-v4.0` shadow candidate validated at 256 dimensions, not default
+- OCI GenAI synthesis: promoted in staging with `xai.grok-4.3`; public smoke and go-live gates passed with fallback disabled
+- embedding migration: promoted in staging with `cohere.embed-v4.0` at 1536 dimensions, `OCI_ARCHITECTURE_CHUNKS_V4`, active Object Storage v4 manifest, and `oci-rag-index.local-hash.json` retained for rollback
+- OCI GenAI embeddings: active in staging; `/retrieval/health`, 32/32 retrieval regression, 18/18 golden evals, and 8/8 edge evals passed
+- next pending: continue post-migration hardening only after monitoring the promoted v4 retrieval path and deciding whether to add query embedding caching for cost/latency optimization
 
 ## Two-Week Plan Archive
 
