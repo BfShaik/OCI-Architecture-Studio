@@ -374,6 +374,7 @@ class EnterpriseGovernanceAdvisor:
                 priority = "advanced enterprise enhancements"
                 phase = "phase_4_resilience_expansion"
                 rationale = "Advanced resilience should follow validated requirements, operating model, and cost approval."
+            rationale = f"R{index + 1}: {rationale}"
             priorities.append(
                 RecommendationPriority(
                     recommendation_index=index,

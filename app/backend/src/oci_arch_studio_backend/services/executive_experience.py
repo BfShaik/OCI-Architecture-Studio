@@ -142,16 +142,16 @@ class ExecutiveExperienceBuilder:
             briefs.append(
                 ExecutiveDecisionBrief(
                     title=f"Decision {index + 1}",
-                    summary=recommendation,
+                    summary=self._decision_summary(index=index, recommendation=recommendation),
                     business_impact=(
-                        priority.rationale
+                        f"Priority rationale: {priority.rationale}"
                         if priority
                         else "Clarifies the target OCI operating model and reduces ambiguity for delivery teams."
                     ),
                     risk_visibility=(
-                        "; ".join(confidence.known_limitations[:2])
+                        f"Risk lens for R{index + 1}: {'; '.join(confidence.known_limitations[:2])}"
                         if confidence and confidence.known_limitations
-                        else risks[index % len(risks)]
+                        else f"Risk lens for R{index + 1}: {risks[index % len(risks)]}"
                         if risks
                         else "No specific elevated risk was detected from the available evidence."
                     ),
@@ -173,7 +173,7 @@ class ExecutiveExperienceBuilder:
             ImplementationSequenceItem(
                 phase="1. Architecture review",
                 objective="Confirm the target design, assumptions, governance posture, and evidence gaps.",
-                actions=[item.rationale for item in immediate[:3]] or recommendations[:2],
+                actions=self._priority_actions(immediate[:3]) or self._recommendation_actions(recommendations[:2]),
                 exit_criteria=[
                     "Decision owner accepts recommendation priority.",
                     "Open risks have named mitigations or follow-up owners.",
@@ -182,7 +182,7 @@ class ExecutiveExperienceBuilder:
             ImplementationSequenceItem(
                 phase="2. Controlled implementation",
                 objective="Implement the selected OCI services with observability, security controls, and rollback criteria.",
-                actions=next_steps[:3] or recommendations[2:5],
+                actions=self._next_step_actions(next_steps[:3]) or self._recommendation_actions(recommendations[2:5], start_index=3),
                 exit_criteria=[
                     "Runtime health, retrieval health, and fallback checks pass.",
                     "Deployment runbook and recovery path are validated.",
@@ -191,12 +191,38 @@ class ExecutiveExperienceBuilder:
             ImplementationSequenceItem(
                 phase="3. Optimization and scale",
                 objective="Tune cost, resilience, operations, and release-refresh behavior after the baseline is stable.",
-                actions=[item.rationale for item in later[:3]] or next_steps[3:6],
+                actions=self._priority_actions(later[:3]) or self._next_step_actions(next_steps[3:6], start_index=4),
                 exit_criteria=[
                     "Cost, reliability, and governance metrics are reviewed.",
                     "Post-implementation findings are fed back into the knowledge corpus or evals.",
                 ],
             ),
+        ]
+
+    def _decision_summary(self, *, index: int, recommendation: str) -> str:
+        statement = recommendation.split(" Evidence:", 1)[0].strip().rstrip(".")
+        words = statement.split()
+        label = " ".join(words[:12])
+        if len(words) > 12:
+            label = f"{label}..."
+        return f"R{index + 1} decision focus: {label}."
+
+    def _priority_actions(self, priorities) -> list[str]:
+        return [
+            f"Gate for {item.rationale}"
+            for item in priorities
+        ]
+
+    def _recommendation_actions(self, recommendations: list[str], *, start_index: int = 1) -> list[str]:
+        return [
+            f"R{index}: convert this recommendation into an owner, validation evidence, and rollout gate."
+            for index, _recommendation in enumerate(recommendations, start=start_index)
+        ]
+
+    def _next_step_actions(self, next_steps: list[str], *, start_index: int = 1) -> list[str]:
+        return [
+            f"Step {index}: {step}"
+            for index, step in enumerate(next_steps, start=start_index)
         ]
 
     def _visualization(

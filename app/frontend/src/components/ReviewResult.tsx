@@ -34,6 +34,10 @@ type ReviewResultProps = {
 };
 
 function Section({ title, items }: { title: string; items: string[] }) {
+  if (!items.length) {
+    return null;
+  }
+
   return (
     <section className="result-section">
       <h3>{title}</h3>
@@ -56,6 +60,22 @@ function percent(value: number) {
 
 function readable(value: string) {
   return value.replace(/_/g, " ");
+}
+
+function normalizedText(value: string) {
+  return value.toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+function uniqueByNormalized<T>(items: T[], text: (item: T) => string) {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    const normalized = normalizedText(text(item));
+    if (!normalized || seen.has(normalized)) {
+      return false;
+    }
+    seen.add(normalized);
+    return true;
+  });
 }
 
 function answerSections(answer: string) {
@@ -223,6 +243,25 @@ export function ReviewResult({ result }: ReviewResultProps) {
   const firstNextStep = result.next_steps[0] ?? "Confirm the architecture decision owner and implementation sequence.";
   const firstConfidenceNote =
     confidence?.notes[0] ?? "Confidence is based on retrieved OCI evidence and citation coverage.";
+  const qualityWarningItems = uniqueByNormalized(
+    [...result.quality_warnings, ...result.synthesis_warnings, ...result.orchestration_warnings],
+    (warning) => warning,
+  );
+  const priorityItems = uniqueByNormalized(
+    governance?.recommendation_priorities.slice(0, 4) ?? [],
+    (item) => `${item.priority}|${item.implementation_phase}|${item.rationale}`,
+  );
+  const recommendationTextByIndex = new Map(result.recommendations.map((item, index) => [normalizedText(item), index + 1]));
+  const recommendationConfidenceItems = uniqueByNormalized(
+    result.recommendation_confidence.slice(0, 4),
+    (item) => item.recommendation,
+  );
+  const resultSections = [
+    { title: "Recommendations", items: uniqueByNormalized(result.recommendations, (item) => item) },
+    { title: "Assumptions", items: uniqueByNormalized(result.assumptions, (item) => item) },
+    { title: "Risks", items: uniqueByNormalized(result.risks, (item) => item) },
+    { title: "Next Steps", items: uniqueByNormalized(result.next_steps, (item) => item) },
+  ];
 
   return (
     <div className="review-result">
@@ -259,11 +298,9 @@ export function ReviewResult({ result }: ReviewResultProps) {
             <p key={`answer-${index}`}>{section}</p>
           ))}
         </div>
-        {result.quality_warnings.length ||
-        result.synthesis_warnings.length ||
-        result.orchestration_warnings.length ? (
+        {qualityWarningItems.length ? (
           <div className="quality-warnings" aria-label="Quality warnings">
-            {[...result.quality_warnings, ...result.synthesis_warnings, ...result.orchestration_warnings].map((warning, index) => (
+            {qualityWarningItems.map((warning, index) => (
               <span key={`warning-${index}-${warning}`}>{warning}</span>
             ))}
           </div>
@@ -333,25 +370,25 @@ export function ReviewResult({ result }: ReviewResultProps) {
             <Gauge size={18} aria-hidden="true" />
             <strong>{confidence ? percent(confidence.overall) : "Pending"}</strong>
             <span>{confidence ? `${confidence.level} confidence` : "confidence"}</span>
-            <p>{firstConfidenceNote}</p>
+            <p>Snapshot confidence: {firstConfidenceNote}</p>
           </article>
           <article>
             <ShieldCheck size={18} aria-hidden="true" />
             <strong>{governance ? readable(governance.maturity_level) : "Governance"}</strong>
             <span>{governance ? "review posture" : "not assessed"}</span>
-            <p>{governance?.executive_summary.risk_summary ?? firstRisk}</p>
+            <p>Governance risk view: {governance?.executive_summary.risk_summary ?? firstRisk}</p>
           </article>
           <article>
             <Route size={18} aria-hidden="true" />
             <strong>{firstDecision ? readable(firstDecision.implementation_priority) : "Next move"}</strong>
             <span>{firstDecision?.title ?? "implementation"}</span>
-            <p>{firstDecision?.summary ?? firstNextStep}</p>
+            <p>Snapshot next move: {firstDecision?.summary ?? firstNextStep}</p>
           </article>
           <article>
             <AlertTriangle size={18} aria-hidden="true" />
             <strong>{result.risks.length} risk{result.risks.length === 1 ? "" : "s"}</strong>
             <span>watch list</span>
-            <p>{firstRisk}</p>
+            <p>Primary risk to review: {firstRisk}</p>
           </article>
         </div>
       </section>
@@ -419,7 +456,7 @@ export function ReviewResult({ result }: ReviewResultProps) {
                 {reason.alternatives_rejected.length ? (
                   <div className="rejected-paths">
                     <Scale size={16} aria-hidden="true" />
-                    <p>Rejected: {reason.alternatives_rejected.slice(0, 2).join("; ")}</p>
+                    <p>Decision {index + 1} rejected: {reason.alternatives_rejected.slice(0, 2).join("; ")}</p>
                   </div>
                 ) : null}
               </article>
@@ -468,12 +505,14 @@ export function ReviewResult({ result }: ReviewResultProps) {
               </button>
             ) : null}
           </div>
-          {governance?.recommendation_priorities.length ? (
+          {priorityItems.length ? (
             <div className="priority-strip">
-              {governance.recommendation_priorities.slice(0, 4).map((item) => (
+              {priorityItems.map((item) => (
                 <article key={`${item.recommendation_index}-${item.priority}`}>
                   <span>{readable(item.priority)}</span>
-                  <strong>{item.implementation_phase}</strong>
+                  <strong>
+                    R{item.recommendation_index + 1} · {item.implementation_phase}
+                  </strong>
                   <p>{item.rationale}</p>
                 </article>
               ))}
@@ -502,7 +541,7 @@ export function ReviewResult({ result }: ReviewResultProps) {
                 <strong>{phase.phase}</strong>
                 <p>{phase.objective}</p>
                 <ul>
-                  {phase.actions.slice(0, 3).map((action, index) => (
+                  {uniqueByNormalized(phase.actions, (action) => action).slice(0, 3).map((action, index) => (
                     <li key={`${phase.phase}-action-${index}`}>{action}</li>
                   ))}
                 </ul>
@@ -757,16 +796,21 @@ export function ReviewResult({ result }: ReviewResultProps) {
               ))}
             </ul>
           ) : null}
-          {result.recommendation_confidence.length ? (
+          {recommendationConfidenceItems.length ? (
             <div className="recommendation-confidence-list">
-              {result.recommendation_confidence.slice(0, 4).map((item, index) => (
+              {recommendationConfidenceItems.map((item, index) => (
                 <article key={`${item.recommendation}-${index}`}>
                   <div>
                     <strong>{percent(item.score)}</strong>
                     <span>{item.level}</span>
                   </div>
-                  <p>{item.recommendation}</p>
-                  <small>{item.reasoning_basis}</small>
+                  <p>
+                    Recommendation R{recommendationTextByIndex.get(normalizedText(item.recommendation)) ?? index + 1}
+                  </p>
+                  <small>
+                    R{recommendationTextByIndex.get(normalizedText(item.recommendation)) ?? index + 1} basis:{" "}
+                    {item.reasoning_basis}
+                  </small>
                 </article>
               ))}
             </div>
@@ -775,10 +819,9 @@ export function ReviewResult({ result }: ReviewResultProps) {
       ) : null}
 
       <div className="result-grid">
-        <Section title="Recommendations" items={result.recommendations} />
-        <Section title="Assumptions" items={result.assumptions} />
-        <Section title="Risks" items={result.risks} />
-        <Section title="Next Steps" items={result.next_steps} />
+        {resultSections.map((section) => (
+          <Section key={section.title} title={section.title} items={section.items} />
+        ))}
       </div>
 
       {experience?.explainability_highlights.length || result.decision_reasoning.length ? (
@@ -790,19 +833,6 @@ export function ReviewResult({ result }: ReviewResultProps) {
                 <li key={`highlight-${index}`}>{highlight}</li>
               ))}
             </ul>
-          ) : null}
-          {result.decision_reasoning.length ? (
-            <div className="reasoning-list">
-              {result.decision_reasoning.slice(0, 4).map((reason) => (
-                <article key={`${reason.recommendation}-${reason.why_chosen}`}>
-                  <strong>{reason.service ?? "Architecture decision"}</strong>
-                  <p>{reason.why_chosen}</p>
-                  {reason.alternatives_rejected.length ? (
-                    <small>Alternatives: {reason.alternatives_rejected.slice(0, 2).join("; ")}</small>
-                  ) : null}
-                </article>
-              ))}
-            </div>
           ) : null}
           {result.architecture_tradeoffs.length ? (
             <div className="tradeoff-list">
@@ -826,7 +856,7 @@ export function ReviewResult({ result }: ReviewResultProps) {
               <strong>
                 Recommendation {link.recommendation_index + 1}: {link.support_level}
               </strong>
-              <p>{link.rationale}</p>
+              <p>R{link.recommendation_index + 1} evidence rationale: {link.rationale}</p>
               {link.source_chunk_ids.length || link.source_titles.length ? (
                 <div className="evidence-source-row">
                   {link.source_chunk_ids.map((chunkId, index) => {
