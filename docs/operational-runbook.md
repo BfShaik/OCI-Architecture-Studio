@@ -57,10 +57,10 @@ Use the operational endpoints before promoting runtime changes. They summarize d
 Runtime profiles are configured with:
 
 ```bash
-DEPLOYMENT_PROFILE=local_dev|oci_vm|oke|oci_functions
+DEPLOYMENT_PROFILE=local_dev|oci_vm|oke
 ```
 
-Profile examples live under `infra/runtime-profiles/`. Local development remains offline-safe. OCI VM and OKE profiles should use OCI IAM runtime identity and OCI Vault-backed sensitive configuration. Scheduled refresh currently runs as a conservative cron job on the OCI backend VM using `infra/scripts/run_knowledge_refresh_vm.sh`; OCI Functions-compatible execution remains deferred until the Function image startup path is repaired.
+Profile examples live under `infra/runtime-profiles/`. Local development remains offline-safe. OCI VM and OKE profiles should use OCI IAM runtime identity and OCI Vault-backed sensitive configuration. Scheduled refresh currently runs as a conservative cron job on the OCI backend VM using `infra/scripts/run_knowledge_refresh_vm.sh`.
 
 Run a lightweight endpoint gate:
 

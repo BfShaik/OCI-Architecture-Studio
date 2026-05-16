@@ -42,7 +42,7 @@ OCI Architecture Studio is an AI-powered OCI architecture intelligence platform 
 - Release snapshot and temporal knowledge schemas for current-vs-historical scaffolding
 - Deterministic release intelligence for release normalization, change-category classification, impacted service/source/chunk analysis, targeted eval impact detection, and refresh action recommendations
 - OCI-native operational diagnostics for deployment profiles, retrieval/vector health, release freshness, synthesis provider availability, secret/config posture, observability configuration, infrastructure visibility, rebuildability gaps, and runtime analytics
-- Runtime profile examples for local development, OCI VM, OKE, and OCI Functions-compatible execution
+- Runtime profile examples for local development, OCI VM, and OKE
 - Retrieval regression and parity validation
 - OCI staging deployment
 
@@ -64,10 +64,10 @@ User flow:
 
 Operational flow:
 
-- Runtime mode is selected by `DEPLOYMENT_PROFILE=local_dev|oci_vm|oke|oci_functions`.
+- Runtime mode is selected by `DEPLOYMENT_PROFILE=local_dev|oci_vm|oke`.
 - Local development keeps deterministic local retrieval/synthesis and does not require OCI connectivity.
 - OCI VM and OKE profiles prefer OCI IAM-based runtime identity, OCI Vault for sensitive configuration, OCI Object Storage or Oracle AI Vector Search for retrieval, and OCI Logging/Monitoring/Notifications for operations.
-- The current staging scheduled refresh path runs from backend OCI Compute VM cron because the packaged OCI Function image failed container initialization before handler execution. OCI Functions-compatible execution and Resource Scheduler Terraform scaffolding remain deferred until packaged no-fetch invocation passes.
+- The current staging scheduled refresh path runs from backend OCI Compute VM cron. Release-watch uses live fetch, quick gates, gated promotion, and Object Storage upload; stable-doc refresh remains safe/candidate-only.
 - `/operations/profile`, `/operations/health`, `/operations/readiness`, `/operations/infrastructure`, and `/operations/analytics` expose additive diagnostics without changing the architecture-review API.
 - Operational analytics include deterministic governance policy-trigger and risk-trend counters from generated advisory metadata.
 - Runtime readiness diagnostics check startup paths, dependency configuration, API Gateway readiness, OCI DevOps readiness, runtime safeguards, fallback paths, and release-refresh state.
@@ -213,7 +213,7 @@ FinOps and migration optimization behavior:
 - No always-on live LLM synthesis by default.
 - No promotion of OCI GenAI mode without parity and operational validation.
 - No request-time live release intelligence beyond scheduled snapshot refresh, deterministic impact analysis, and gated promotion.
-- No external scheduler or operational workflow platform; current scheduled refresh uses cron on the OCI backend VM, with OCI Functions and Resource Scheduler scaffolding deferred until the Function image startup issue is repaired.
+- No external scheduler or operational workflow platform; current scheduled refresh uses cron on the OCI backend VM.
 - No mandatory live OCI connectivity checks in local development.
 - No autonomous documentation crawling or full OCI documentation corpus yet.
 - No full bi-temporal retrieval; current-vs-historical support currently consists of schemas, retained historical snapshots, temporal response metadata, and current-first retrieval with release context terms.

@@ -2,7 +2,7 @@
 
 OCI Architecture Studio is an enterprise AI platform for OCI architecture guidance, migration advisory, cost optimization, and release-aware OCI knowledge synchronization.
 
-Current version: `1.0.2`
+Current version: `1.0.3`
 
 The project is monorepo-first, RAG-first, modular, and evaluation-driven. Prompts, retrieval code, evals, and application code are treated as first-class assets from the start.
 
@@ -77,9 +77,8 @@ tests/                Backend and integration tests
 - Separate local OCI release snapshot pipeline
 - Knowledge refresh policy scaffolding for release-note watching, candidate snapshot validation, selective reindex, release overlay tagging, eval-gated promotion, historical snapshot retention, version lineage, and rollback-safe updates
 - OCI-native release-watch refresh from the backend OCI Compute VM cron path with live release fetch, quick gates, gated promotion, and Object Storage upload; stable-doc refresh remains conservative/candidate-only
-- Deferred OCI Functions and OCI Resource Scheduler refresh scaffold retained for a later retry after the packaged Function image startup issue is fixed
 - Continuous intelligence status endpoint at `/knowledge/refresh/status`
-- OCI-native runtime profiles for `local_dev`, `oci_vm`, `oke`, and `oci_functions` under `infra/runtime-profiles/`
+- OCI-native runtime profiles for `local_dev`, `oci_vm`, and `oke` under `infra/runtime-profiles/`
 - Additive operational diagnostics endpoints: `/operations/profile`, `/operations/health`, `/operations/readiness`, `/operations/infrastructure`, and `/operations/analytics`
 - Runtime readiness checks for startup paths, provider/dependency configuration, fallback paths, API Gateway readiness, OCI DevOps readiness, and runtime safeguards
 - Lightweight operational analytics for retrieval provider usage, synthesis provider usage, fallback events, hallucination findings, governance policy triggers, governance risk trends, architecture comparison usage, recommendation category trends, visualization generation, review artifact generation, runtime degradation events, workload-category usage, confidence distribution, and response latency
@@ -267,7 +266,7 @@ VITE_API_BASE_URL=http://localhost:8000 npm run dev
 ## Recommended Next Steps
 
 1. Keep staging on `RETRIEVAL_PROVIDER=oci_object_storage` and monitor retrieval latency, citations, and failure handling.
-2. Keep release-watch refresh on the backend OCI VM cron path, monitor `/knowledge/refresh/status`, and treat OCI Functions/Resource Scheduler as deferred until the packaged image startup issue is fixed.
+2. Keep release-watch refresh on the backend OCI VM cron path, monitor `/knowledge/refresh/status`, and keep stable-doc refresh in safe/candidate-only mode until its live cadence is validated.
 3. Continue expanding the source registry with Budgets, Audit, Data Guard, and deeper service-specific architecture sources.
 4. Replace local hashing embeddings with OCI Generative AI embeddings once provider settings and cost controls are finalized.
 5. Keep Oracle AI Vector Search shadow-synced from the promoted Object Storage snapshot before enabling staging active reads.

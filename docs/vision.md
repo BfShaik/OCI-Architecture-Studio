@@ -29,7 +29,7 @@ OCI Architecture Studio now has a validated working foundation:
 - Oracle AI Vector Search provider, Autonomous Database scaffold, table/index tooling, and validated shadow sync for the next OCI-native retrieval step
 - local JSON retrieval preserved as the config-only rollback provider
 - point-in-time release snapshots, deterministic release impact metadata, selective refresh overlays, retained historical snapshots, and current-vs-historical schema scaffolding for release-aware guidance
-- OCI-native operational diagnostics, runtime readiness checks, runtime profiles, API Gateway/OCI DevOps readiness metadata, and scheduled refresh support that currently uses backend OCI VM cron while preserving deferred Resource Scheduler/Functions scaffolding
+- OCI-native operational diagnostics, runtime readiness checks, runtime profiles, API Gateway/OCI DevOps readiness metadata, and scheduled refresh support through backend OCI VM cron
 - golden, edge-case, advisory-quality, orchestration-quality, architecture-realism, evaluation-intelligence, enterprise-governance, enterprise-platform-maturity, retrieval regression, and parity validation gates
 - enterprise-governance evals for auditability, migration governance, security realism, operational realism, FinOps realism, and implementation practicality
 - FinOps/migration optimization evals for phased sequencing, coexistence/rollback realism, modernization planning, cost-performance guidance, workload optimization, and implementation readiness

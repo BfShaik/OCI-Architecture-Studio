@@ -10,13 +10,6 @@ backend_memory_gbs       = 128
 frontend_bucket_access_type = "ObjectReadWithoutList"
 alarm_email              = "baba.shaik@oracle.com"
 
-enable_knowledge_refresh_scheduler          = false
-knowledge_refresh_function_image            = "iad.ocir.io/<namespace>/oci-architecture-studio/knowledge-refresh:latest"
-knowledge_refresh_scheduler_safe_mode       = true
-knowledge_refresh_release_cron              = "17 */6 * * *"
-knowledge_refresh_stable_docs_cron          = "23 2 * * 0"
-knowledge_refresh_function_memory_mbs       = 1024
-knowledge_refresh_function_timeout_seconds  = 300
 deployment_profile                          = "oci_vm"
 operational_diagnostics_enabled             = true
 oci_connectivity_check_enabled              = false

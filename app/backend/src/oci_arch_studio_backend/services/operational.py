@@ -27,7 +27,7 @@ DEPLOYMENT_PROFILE_CAPABILITIES: dict[str, dict[str, object]] = {
         "runtime": "oci_compute",
         "auth": "instance_principal",
         "secrets": "oci_vault",
-        "scheduler": "oci_resource_scheduler_to_oci_functions",
+        "scheduler": "backend_vm_cron",
         "observability": "oci_logging_monitoring_notifications",
         "fallback": "deterministic_local_json",
     },
@@ -35,15 +35,7 @@ DEPLOYMENT_PROFILE_CAPABILITIES: dict[str, dict[str, object]] = {
         "runtime": "oci_kubernetes_engine",
         "auth": "workload_identity_or_instance_principal",
         "secrets": "oci_vault_or_kubernetes_secret_reference",
-        "scheduler": "oci_resource_scheduler_to_oci_functions",
-        "observability": "oci_logging_monitoring_notifications",
-        "fallback": "deterministic_local_json",
-    },
-    "oci_functions": {
-        "runtime": "oci_functions",
-        "auth": "resource_principal",
-        "secrets": "oci_vault",
-        "scheduler": "oci_resource_scheduler",
+        "scheduler": "operator_managed_or_vm_cron",
         "observability": "oci_logging_monitoring_notifications",
         "fallback": "deterministic_local_json",
     },
@@ -224,7 +216,7 @@ class OperationalDiagnostics:
         warnings: list[str] = []
         if profile not in DEPLOYMENT_PROFILE_CAPABILITIES:
             warnings.append(f"Unknown deployment profile '{profile}', using local_dev capability assumptions.")
-        if profile in {"oci_vm", "oke", "oci_functions"} and self.settings.oci_auth_mode == "config_file":
+        if profile in {"oci_vm", "oke"} and self.settings.oci_auth_mode == "config_file":
             warnings.append("OCI runtime profile should normally use instance_principal, resource_principal, or workload identity.")
         if profile != "local_dev" and not self.settings.oci_region:
             warnings.append("OCI_REGION is not configured for an OCI runtime profile.")
@@ -592,8 +584,6 @@ class OperationalDiagnostics:
         api_exposure = "oci_api_gateway" if api_gateway.get("active") else "direct_backend_vm"
         if profile == "oke":
             runtime_compute = "oci_kubernetes_engine"
-        elif profile == "oci_functions":
-            runtime_compute = "oci_functions"
         elif profile == "oci_vm":
             runtime_compute = "oci_compute_vm"
         else:
@@ -659,9 +649,9 @@ class OperationalDiagnostics:
                 "events_configured": bool(self.settings.oci_events_rule_ocid),
             },
             "workflows": {
-                "knowledge_refresh_function_configured": bool(self.settings.oci_knowledge_refresh_function_ocid),
-                "release_schedule_configured": bool(self.settings.oci_knowledge_refresh_release_schedule_ocid),
-                "stable_docs_schedule_configured": bool(self.settings.oci_knowledge_refresh_stable_docs_schedule_ocid),
+                "knowledge_refresh_scheduler": "backend_vm_cron",
+                "release_watch_mode": "live_fetch_gated_upload",
+                "stable_docs_mode": "candidate_only_safe_mode",
             },
             "ai": {
                 "genai_chat_configured": bool(
@@ -731,27 +721,17 @@ class OperationalDiagnostics:
         }
 
     def _scheduler_status(self) -> dict[str, object]:
-        # Resource Scheduler and Functions are provisioned through Terraform when enabled.
-        configured = bool(
-            self.settings.oci_knowledge_refresh_function_ocid
-            and (
-                self.settings.oci_knowledge_refresh_release_schedule_ocid
-                or self.settings.oci_knowledge_refresh_stable_docs_schedule_ocid
-            )
-        )
-        profile_compatible = self.settings.deployment_profile in {"oci_vm", "oke", "oci_functions"}
+        configured = self.settings.deployment_profile == "oci_vm"
+        profile_compatible = self.settings.deployment_profile in {"oci_vm", "oke"}
         return {
-            "provider": "oci_resource_scheduler_to_oci_functions",
+            "provider": "backend_vm_cron",
             "configured": configured,
             "profile_compatible": profile_compatible,
-            "function_ocid_configured": bool(self.settings.oci_knowledge_refresh_function_ocid),
-            "release_schedule_ocid_configured": bool(self.settings.oci_knowledge_refresh_release_schedule_ocid),
-            "stable_docs_schedule_ocid_configured": bool(self.settings.oci_knowledge_refresh_stable_docs_schedule_ocid),
-            "message": (
-                "OCI Resource Scheduler and Functions refresh workflow is configured."
-                if configured
-                else "OCI Resource Scheduler and Functions are scaffolded in Terraform and disabled unless explicitly enabled with Function and Schedule OCIDs."
-            ),
+            "release_watch_mode": "live_fetch_quick_gates_promote_and_upload",
+            "stable_docs_mode": "no_fetch_quick_gates_candidate_only_no_upload",
+            "message": "Knowledge refresh runs from cron on the OCI backend VM."
+            if configured
+            else "Knowledge refresh is operator-managed for this profile; staging uses backend OCI VM cron.",
         }
 
     def _infrastructure_gaps(
@@ -790,13 +770,13 @@ class OperationalDiagnostics:
                     "recommended_action": "Wire OCI DevOps project and deploy pipeline OCIDs into Terraform/env configuration when delivery automation is promoted.",
                 }
             )
-        if not scheduler.get("configured"):
+        if not scheduler.get("configured") and self.settings.deployment_profile != "local_dev":
             gaps.append(
                 {
                     "severity": "low",
                     "area": "operations",
-                    "message": "OCI Resource Scheduler and Functions refresh workflow is scaffolded but not active.",
-                    "recommended_action": "Enable the scheduler only after the refresh function image and permissions are ready.",
+                    "message": "Backend VM cron refresh is not the active scheduler for this runtime profile.",
+                    "recommended_action": "Use the backend OCI VM cron runner or document an operator-managed refresh handoff for this environment.",
                 }
             )
         store = retrieval.get("store", {}) if isinstance(retrieval.get("store"), dict) else {}
@@ -833,7 +813,7 @@ class OperationalDiagnostics:
         checklist = {
             "terraform_foundation_module": True,
             "networking_iac": True,
-            "compute_profile_iac": self.settings.deployment_profile in {"oci_vm", "oke", "oci_functions"},
+            "compute_profile_iac": self.settings.deployment_profile in {"oci_vm", "oke"},
             "object_storage_iac": bool(storage.get("knowledge_bucket_configured")) or self.settings.deployment_profile != "local_dev",
             "vault_iac": bool(security.get("vault_config_secret_configured")) or self.settings.deployment_profile != "local_dev",
             "observability_iac": bool(observability.get("logging_configured"))
@@ -842,10 +822,8 @@ class OperationalDiagnostics:
             "api_gateway_iac": bool(runtime.get("api_gateway_endpoint_configured"))
             and bool(configured_resources.get("networking", {}).get("api_gateway_promotion_ready")),
             "oci_devops_iac": bool(runtime.get("oci_devops_promotion_ready")),
-            "refresh_scheduler_iac": bool(
-                configured_resources.get("workflows", {})
-                .get("release_schedule_configured")
-            )
+            "refresh_scheduler_iac": configured_resources.get("workflows", {}).get("knowledge_refresh_scheduler")
+            == "backend_vm_cron"
             or self.settings.deployment_profile != "local_dev",
         }
         critical_or_high_gaps = [gap for gap in gaps if gap.get("severity") in {"critical", "high"}]

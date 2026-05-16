@@ -5,9 +5,8 @@ Last updated: 2026-05-16
 ## Latest Knowledge Refresh Preflight
 
 - `TASK-028` completed as a controlled knowledge refresh preflight before any further Oracle vector promotion work.
-- Local OCI Function handler smoke passed with payload `{"mode":"release-watch","no_fetch":true,"quick_gates":true,"upload":false}` and wrote reports under `/tmp/knowledge-refresh-reports`.
 - Direct refresh policy preflight passed with `knowledge/refresh/refresh_policy.py --mode release-watch --no-fetch --quick-gates`.
-- Both preflight paths reported `release-watch-no-change`, `promoted=false`, `oci_upload_performed=false`, and `authoritative_snapshots_updated=false`.
+- The preflight path reported `release-watch-no-change`, `promoted=false`, `oci_upload_performed=false`, and `authoritative_snapshots_updated=false`.
 - A forced refresh against temporary snapshot copies exposed and then validated a selective-refresh fix: `refresh_policy.py` now passes embedding fallback and OCI GenAI embedding dimension settings through to `ingest.build_index`.
 - The forced temp-snapshot run exercised quick gates without touching repo authoritative snapshots: retrieval health passed and retrieval regression passed 26 cases.
 - Authoritative snapshot hashes remained unchanged:
@@ -19,7 +18,7 @@ Last updated: 2026-05-16
 ## Latest Refresh Candidate Quality Gate
 
 - `TASK-029` completed as a controlled candidate-only refresh quality gate.
-- Added `--candidate-only` support to `knowledge/refresh/refresh_policy.py` and the OCI Function payload path so changed candidates can be validated without promotion or Object Storage upload.
+- Added `--candidate-only` support to `knowledge/refresh/refresh_policy.py` so changed candidates can be validated without promotion or Object Storage upload.
 - Added `infra/scripts/validate_refresh_candidate.py` and wired it into post-refresh gates to validate chunk count, source metadata completeness, release snapshot integrity, and embedding dimensions.
 - Controlled forced `release-watch` candidate run passed with `--no-fetch --quick-gates --force --candidate-only`.
 - Candidate validation passed with 47 chunks, 5 releases, metadata schema `2026-05-oci-advisory-v2`, and no integrity errors.
@@ -52,42 +51,13 @@ Last updated: 2026-05-16
 - Temporary wallet and vector env material used for the rebuild were removed from the staging VM after validation.
 - Active retrieval remains `oci_object_storage`; Oracle AI Vector Search remains shadow-only.
 
-## Latest Function Image Packaging
-
-- `TASK-032` completed for OCI Function image packaging.
-- Added `.dockerignore` coverage so Function image builds exclude git metadata, local virtualenvs, node modules, Terraform state, and generated report caches.
-- Updated the knowledge-refresh Dockerfile to install backend requirements and expose `/python` on `PYTHONPATH` so packaged subprocess gates can import backend diagnostics dependencies.
-- Built and pushed immutable OCIR image `iad.ocir.io/idsmrn7rvqb6/oci-architecture-studio/knowledge-refresh:20260516-d73fa2c-task032-r3`.
-- OCIR digest: `sha256:28b85ed1ee6cac61a335f92ee1d53c258a7aa47864ede02989282bf930c07fc9`.
-- Packaged forced candidate-only invocation passed inside Docker with candidate validation, retrieval health, and 26-case retrieval regression.
-- Replaced the generic OCI auth token named `test` with a purpose-named OCIR token because the user already had the maximum two auth tokens. The temporary local token file was removed after Docker login.
-- Resource Scheduler enablement moved to `TASK-033`; live upload/promotion remains disabled until controlled scheduler dry run passes.
-
-## Latest Resource Scheduler Enablement
-
-- `TASK-033` completed for safe-mode OCI Resource Scheduler enablement.
-- Terraform applied the knowledge refresh OCI Function and schedules using immutable image `iad.ocir.io/idsmrn7rvqb6/oci-architecture-studio/knowledge-refresh:20260516-d73fa2c-task032-r3`.
-- Created Function OCID: `ocid1.fnfunc.oc1.iad.amaaaaaa2j5jslyavxvlplv2buo4czblwyii6ozstksvvja7uukuyxak6fkq`.
-- Created release-watch schedule OCID: `ocid1.resourceschedule.oc1.iad.amaaaaaa2j5jslya4y4m3mgofzhmyappmdsaqfawzbh5bgcnethhwirjsxia`.
-- Created stable-docs schedule OCID: `ocid1.resourceschedule.oc1.iad.amaaaaaa2j5jslya44pyqv5jarhnzmt66da4zx4gs5kbuv2oajowllxbl3cq`.
-- Terraform also created the Resource Scheduler dynamic group and IAM policy needed to invoke the Function.
-- Scheduler payloads are intentionally safe-mode only: `no_fetch=true`, `quick_gates=true`, `candidate_only=true`, and `upload=false`.
-- Post-apply Terraform drift check reported no changes.
-- API Gateway smoke passed through `https://pkgmvyyi3itxklv6knh4xfm6ca.apigateway.us-ashburn-1.oci.customer-oci.com`.
-- Operational readiness passed with the existing known warnings for inactive OCI DevOps metadata and remaining rebuildability gaps.
-- Active retrieval remains `oci_object_storage`; Oracle AI Vector Search remains shadow-only.
-- A `TASK-034` deployed Function dry run later failed before handler execution with OCI `FunctionInvokeContainerInitFail`. Per operator direction, the immediate refresh scheduling path is pivoting to the existing OCI backend VM instead of spending this cycle on Docker/FDK repair.
-- Terraform disabled and destroyed the staging Function, Resource Scheduler schedules, dynamic group, and invoke policy: 0 added, 0 changed, 6 destroyed. The rest of staging infrastructure remained unchanged.
-- Next gate is `TASK-034`: install and run a safe-mode VM cron refresh path before any live refresh activation.
-
 ## Latest VM Cron Refresh Pivot
 
-- `TASK-034` completed as a VM cron refresh dry run rather than an OCI Function/Scheduler dry run.
+- `TASK-034` completed as a VM cron refresh dry run.
 - Added `infra/scripts/run_knowledge_refresh_vm.sh` as the backend VM refresh runner.
 - Added `infra/scripts/install_knowledge_refresh_vm_cron.sh` to install `/etc/cron.d/oci-architecture-studio-knowledge-refresh` on the staging backend VM.
 - Cron defaults are intentionally safe: `no_fetch=true`, `quick_gates=true`, `candidate_only=true`, and `upload=false`.
 - The VM path runs inside OCI Compute and uses the same repository `knowledge/refresh/refresh_policy.py`, preserving deterministic fallback and avoiding any external scheduler.
-- OCI Functions plus Resource Scheduler remain a later preferred path after the Function image startup issue is repaired.
 - Installed the safe cron file on staging backend VM `193.122.149.102`.
 - Synced the backend VM to current repo code after the first dry run found an older `refresh_policy.py` without `--candidate-only`.
 - Manual release-watch VM run passed with `status=no_change`, `passed=true`, `promoted=false`, `authoritative_snapshots_updated=false`, and `oci_upload_performed=false`.
@@ -442,7 +412,7 @@ This progress is based on `docs/two-week-plan.md`.
   - manifest-driven rollback automation through `--rollback-latest`
   - `/knowledge/refresh/status` endpoint for operational visibility
   - slower stable-doc cadence guidance
-  - optional OCI Functions + Resource Scheduler schedule scaffold for OCI-native recurring refresh
+  - backend OCI VM cron support for recurring refresh
   - `docs/knowledge-refresh-policy.md`
   - `docs/continuous-intelligence-operations.md`
 - Added corpus expansion foundation:
@@ -514,10 +484,10 @@ This progress is based on `docs/two-week-plan.md`.
 - Added internal beta completion foundation:
   - internal beta gap assessment and readiness summary under `docs/internal-beta-readiness-summary.md`
   - deployed-environment readiness gate under `infra/scripts/internal_beta_readiness_check.py`
-  - OCI Resource Scheduler/Functions diagnostics now report configured Function and Schedule OCIDs instead of inferring readiness from runtime profile alone
-  - Terraform cloud-init and runtime profile examples expose knowledge-refresh Function/Schedule OCIDs when the OCI-native scheduler is enabled
+  - scheduler diagnostics now report the backend OCI VM cron refresh runtime directly
+  - Terraform cloud-init and runtime profile examples align to the VM cron refresh runtime
 - Added OCI-native operational hardening foundation:
-  - runtime deployment profiles for local development, OCI VM, OKE, and OCI Functions-compatible execution
+  - runtime deployment profiles for local development, OCI VM, and OKE
   - additive `/operations/profile`, `/operations/health`, `/operations/readiness`, `/operations/infrastructure`, and `/operations/analytics` endpoints
   - operational metrics for provider usage, synthesis usage, fallback events, hallucination findings, governance policy triggers, governance risk trends, workload-category usage, confidence distribution, and response latency
   - OCI Vault configuration-secret readiness checks with local environment compatibility
@@ -548,8 +518,8 @@ Last validation run: 2026-05-15
 - Release impact report: passed with deterministic classification, impacted source/chunk mapping, targeted eval impact detection, refresh action reporting, and unresolved-risk reporting
 - Knowledge refresh policy smoke: passed in offline `release-watch` quick-gate mode
 - Continuous intelligence hardening: candidate-first promotion, version lineage, rollback automation, and refresh status endpoint implemented
-- Terraform validation: passed after optional knowledge refresh scheduler scaffold; staging plan currently should not be applied until existing backend replacement drift is resolved and the function image is available
-- OCI-native refresh scheduler scaffold: implemented with OCI Functions plus OCI Resource Scheduler; not applied yet because a published OCIR function image is required before enabling
+- Terraform validation: passed after backend VM cron refresh support; staging plan currently should not be applied until existing backend replacement drift is resolved
+- OCI-native refresh scheduler: backend OCI VM cron is the active staging path
 - Backend tests: passed, 126 tests
 - Frontend build: passed
 - Golden evals: passed, 18 of 18

@@ -17,7 +17,6 @@ ingest candidate -> validate candidate -> promote only if gates pass -> rollback
 ```mermaid
 flowchart LR
     A["OCI Compute VM cron\ncurrent staging scheduler"] --> B["Refresh policy runner"]
-    F1["OCI Functions + Resource Scheduler\ndeferred retry path"] -. "after packaged invocation passes" .-> B
     B --> C["Release ingestion"]
     C --> D["Normalize and classify release changes"]
     D --> E["Impact analysis"]
@@ -215,8 +214,6 @@ Current staging posture:
 - stable-docs: `no_fetch=true`, `quick_gates=true`, `candidate_only=true`, `upload=false`
 - rollback: restore previous snapshots and re-upload rollback copies to Object Storage if needed
 
-OCI Functions plus Resource Scheduler remain the preferred managed-serverless retry path, but they are deferred because the packaged Function invocation failed before handler execution with `FunctionInvokeContainerInitFail`. Re-enable only after a packaged no-fetch invocation passes and Terraform shows only expected Functions/Scheduler/IAM changes.
-
 ## Next Milestone
 
-Add OCI Monitoring metrics for refresh latency, gate failures, candidate promotion count, rollback count, and retrieval regression failures so staging can alert before users see stale or degraded advisory responses. Then repair the Function image path and retry Resource Scheduler in safe mode.
+Add OCI Monitoring metrics for refresh latency, gate failures, candidate promotion count, rollback count, and retrieval regression failures so staging can alert before users see stale or degraded advisory responses.

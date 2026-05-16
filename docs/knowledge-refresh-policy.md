@@ -188,13 +188,12 @@ Environment differences are config-only:
 - `infra/scripts/run_knowledge_refresh_vm.sh`
 - `infra/scripts/install_knowledge_refresh_vm_cron.sh`
 - `infra/terraform/modules/foundation/main.tf`
-- `infra/functions/knowledge-refresh/`
 
 ## OCI-Native Schedule
 
-Current staging recurring execution uses a conservative cron entry on the OCI backend VM. This keeps the refresh runtime inside OCI Compute, uses the same repository Python policy code, and avoids external schedulers while the OCI Function image startup issue is repaired.
+Current staging recurring execution uses a conservative cron entry on the OCI backend VM. This keeps the refresh runtime inside OCI Compute, uses the same repository Python policy code, and avoids external schedulers.
 
-GitHub Actions is no longer used for scheduled knowledge refresh. The only
+GitHub Actions is not used for scheduled knowledge refresh. The only
 remaining GitHub workflow is CI validation; refresh orchestration should be
 run from OCI runtime infrastructure only.
 
@@ -222,37 +221,6 @@ Reports are
 written under `/var/lib/oci-architecture-studio/knowledge-refresh/reports` and
 logs under `/var/log/oci-architecture-studio`.
 
-OCI Functions plus Resource Scheduler remain the preferred later OCI-native
-managed scheduling target, but they are currently deferred because deployed
-Function invocation failed container initialization during dry run.
-
-Deferred Terraform variables:
-
-
-```hcl
-enable_knowledge_refresh_scheduler = true
-knowledge_refresh_function_image   = "iad.ocir.io/<namespace>/oci-architecture-studio/knowledge-refresh:<immutable-tag>"
-knowledge_refresh_release_cron     = "17 */6 * * *"
-knowledge_refresh_stable_docs_cron = "23 2 * * 0"
-```
-
-Created resources when enabled:
-
-- OCI Functions application
-- OCI knowledge refresh function
-- release-note Resource Scheduler schedule
-- stable-docs Resource Scheduler schedule
-- dynamic group for the schedules
-- IAM policy allowing the schedules to invoke the function
-
-The deferred function receives a JSON body:
-
-```json
-{"mode":"release-watch","upload":true}
-```
-
-or:
-
-```json
-{"mode":"stable-docs","upload":true}
-```
+Manual or cron-triggered refresh uses the same policy runner and equivalent
+environment flags, for example `VM_REFRESH_MODE=release-watch`,
+`VM_REFRESH_QUICK_GATES=true`, and `VM_REFRESH_UPLOAD=true`.

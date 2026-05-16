@@ -226,13 +226,8 @@ def test_embedding_visibility_reports_missing_genai_config() -> None:
     ]
 
 
-def test_scheduler_diagnostics_use_configured_function_and_schedule_ocids() -> None:
-    settings = Settings(
-        DEPLOYMENT_PROFILE="oci_vm",
-        OCI_KNOWLEDGE_REFRESH_FUNCTION_OCID="ocid1.fnfunc.oc1..example",
-        OCI_KNOWLEDGE_REFRESH_RELEASE_SCHEDULE_OCID="ocid1.resourceschedulerschedule.oc1..release",
-        OCI_KNOWLEDGE_REFRESH_STABLE_DOCS_SCHEDULE_OCID="ocid1.resourceschedulerschedule.oc1..docs",
-    )
+def test_scheduler_diagnostics_report_vm_cron_refresh_runtime() -> None:
+    settings = Settings(DEPLOYMENT_PROFILE="oci_vm")
 
     visibility = OperationalDiagnostics(settings).infrastructure_visibility(
         retrieval={"provider": "local_json", "store": {"exists": True, "chunk_count": 44}},
@@ -241,9 +236,10 @@ def test_scheduler_diagnostics_use_configured_function_and_schedule_ocids() -> N
 
     scheduler = visibility["operational_workflows"]["scheduler"]
     workflows = visibility["configured_resources"]["workflows"]
+    assert scheduler["provider"] == "backend_vm_cron"
     assert scheduler["configured"] is True
-    assert scheduler["function_ocid_configured"] is True
-    assert workflows["release_schedule_configured"] is True
+    assert scheduler["release_watch_mode"] == "live_fetch_quick_gates_promote_and_upload"
+    assert workflows["knowledge_refresh_scheduler"] == "backend_vm_cron"
     assert visibility["rebuildability"]["checklist"]["refresh_scheduler_iac"] is True
     assert not any(gap["area"] == "operations" for gap in visibility["gaps"])
 

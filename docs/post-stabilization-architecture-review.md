@@ -32,7 +32,7 @@ flowchart LR
 | Synthesis | `deterministic` | OCI GenAI chat adapter exists, config-gated |
 | Orchestration | `multi_agent_pilot` | `supervised` or `single_pass` config rollback |
 | Vector search | Object Storage vector manifest | Oracle AI Vector Search scaffolded, not active |
-| Refresh | Candidate-first refresh status visible | OCI scheduler/function scaffold requires published function image before full cloud automation |
+| Refresh | Candidate-first refresh status visible | Backend OCI VM cron is the active scheduled refresh runtime |
 
 ## Deployment Synchronization Result
 
@@ -102,7 +102,7 @@ Operational note: when replacing `/etc/oci-architecture-studio.env`, preserve fi
 - Public HTTP backend on port 8000 should be replaced with HTTPS ingress.
 - OCI GenAI live parity is not complete until model configuration is provided.
 - Oracle AI Vector Search remains scaffolded, not an active read path.
-- Refresh scheduler/function cloud activation needs a published function image and apply validation.
+- Stable-docs live refresh cadence still needs separate validation before promotion/upload.
 - Corpus is broader, but still not comprehensive enough for production OCI advisory coverage.
 
 ## Recommended Next Milestone

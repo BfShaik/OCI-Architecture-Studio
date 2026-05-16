@@ -14,11 +14,11 @@ This scaffold is intentionally small:
 - Notifications topic
 - Events rule for environment resource lifecycle notifications
 - optional OCI API Gateway in front of the backend VM
-- optional OCI Functions + Resource Scheduler knowledge refresh schedules, currently deferred in staging after packaged Function startup failed before handler execution
+- backend OCI VM cron support for scheduled knowledge refresh operations
 - runtime environment profile bootstrap for the backend VM
 - operational diagnostics configuration for OCI Vault, Logging, OCI Audit posture, Monitoring, Notifications, and Events
-- `governance_resource_summary` output for rebuild and audit review of IAM, Vault, logging, monitoring, notification, event, API Gateway, DevOps metadata, and scheduler resources
-- `runtime_infrastructure_summary` output for operator review of VCN/subnet, API exposure mode, runtime compute, Object Storage, Vault/IAM, observability, scheduler, and delivery posture
+- `governance_resource_summary` output for rebuild and audit review of IAM, Vault, logging, monitoring, notification, event, API Gateway, DevOps metadata, and refresh-runtime posture
+- `runtime_infrastructure_summary` output for operator review of VCN/subnet, API exposure mode, runtime compute, Object Storage, Vault/IAM, observability, VM cron refresh, and delivery posture
 
 It is not a production HA design yet. It is the Phase 1 OCI deployment foundation for the validated MVP.
 
@@ -67,8 +67,6 @@ terraform apply
 - Enable `enable_api_gateway` only when the backend VM exposure path is ready to move behind OCI API Gateway; it is default-off for staging stability.
 - Provide optional `oci_devops_project_ocid` and `oci_devops_deploy_pipeline_ocid` when deployment is managed through OCI DevOps; current operator-script deployment remains supported.
 - The current staging refresh scheduler is a cron job on the backend OCI Compute VM. It runs release-watch with live fetch, quick gates, gated promotion, and Object Storage upload; stable-docs remains safe/candidate-only.
-- Enable `enable_knowledge_refresh_scheduler` only after the knowledge refresh function image is rebuilt, pushed to OCIR, and passes a controlled packaged no-fetch invocation. The previous staged Function path was disabled after `FunctionInvokeContainerInitFail`.
-- When `enable_knowledge_refresh_scheduler` is enabled in a future retry, Terraform passes the Function and Resource Scheduler OCIDs into cloud-init so runtime diagnostics can report the OCI-native refresh workflow accurately.
 - Use `terraform output runtime_infrastructure_summary` during deployment reviews to distinguish active resources from default-off scaffolding.
 - The backend instance is intentionally simple; move to Container Instances or a Load Balancer + instance pool only after the MVP deployment is stable.
 - Use `backend.object-storage.example.tf` as the starting point for remote Terraform state once a shared state bucket exists.

@@ -98,14 +98,13 @@ Goal:
 - make knowledge refresh and release awareness operational.
 
 Steps:
-1. Keep release-watch refresh on the backend OCI Compute VM cron path while the packaged OCI Function image startup issue is repaired.
+1. Keep release-watch refresh on the backend OCI Compute VM cron path.
 2. Archive raw fetched docs and parsed snapshots in Object Storage.
 3. Add content hashing and selective reindexing.
 4. Add release impact classifier.
 5. Mark affected chunks as `needs_release_review`.
 6. Rerun impacted eval suites automatically.
 7. Notify owners when recommendations may be stale.
-8. Retry OCI Functions plus Resource Scheduler only after a packaged no-fetch invocation passes.
 
 ## Terraform Structure
 

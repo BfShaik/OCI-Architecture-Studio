@@ -25,7 +25,6 @@ flowchart LR
       Monitoring["OCI Monitoring\nbackend CPU alarm"]
       Events["OCI Events + Notifications\nresource lifecycle alerts"]
       Cron["VM cron\nrelease-watch active\nstable-docs safe mode"]
-      Function["OCI Function + Resource Scheduler\ndeferred retry path"]
     end
   end
 
@@ -41,7 +40,6 @@ flowchart LR
   Monitoring --> Events
   Cron --> SnapshotBucket
   Cron --> ObjectIndex
-  Function -. "deferred after FunctionInvokeContainerInitFail" .-> SnapshotBucket
 ```
 
 Current active retrieval provider:
@@ -106,7 +104,6 @@ flowchart LR
   Sources["Approved OCI docs\nsource registry"]
   Releases["OCI release sources\nrelease registry"]
   Scheduler["Backend OCI VM cron\ncurrent release-watch scheduler"]
-  FunctionRetry["OCI Functions + Resource Scheduler\ndeferred retry path"]
 
   subgraph Ingestion["Knowledge Refresh Pipeline"]
     Fetch["Fetch or fallback"]
@@ -136,7 +133,6 @@ flowchart LR
   end
 
   Scheduler --> Fetch
-  FunctionRetry -. "after packaged invocation passes" .-> Fetch
   Sources --> Fetch --> Clean --> Chunk --> Metadata --> Embed --> Candidate --> Gates --> Promote
   Metadata --> Raw
   Promote --> Manifest
@@ -200,7 +196,6 @@ Current release-awareness maturity:
 - candidate-first refresh and eval-gated promotion exist
 - release-aware intent exists
 - stale-source caution exists
-- OCI Functions plus Resource Scheduler retry remains deferred until packaged invocation passes
 - deeper semantic impact analysis remains future work
 
 ## 5. Operational Control Points

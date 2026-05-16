@@ -115,7 +115,6 @@ Deliverables:
 - refresh status endpoint — Done
 - manifest-driven rollback automation — Done
 - rollback-safe refresh snapshots — Done
-- OCI scheduled refresh scaffold — Done; Functions/Resource Scheduler retry deferred after packaged Function startup failure
 - backend OCI VM cron release-watch refresh — Done
 - release impact summaries — MVP Done
 - stale-knowledge warnings — MVP Done
