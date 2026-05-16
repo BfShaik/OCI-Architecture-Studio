@@ -1,6 +1,20 @@
 # OCI Architecture Studio — Status Log
 
-Last updated: 2026-05-15
+Last updated: 2026-05-16
+
+## Latest Knowledge Refresh Preflight
+
+- `TASK-028` completed as a controlled knowledge refresh preflight before any further Oracle vector promotion work.
+- Local OCI Function handler smoke passed with payload `{"mode":"release-watch","no_fetch":true,"quick_gates":true,"upload":false}` and wrote reports under `/tmp/knowledge-refresh-reports`.
+- Direct refresh policy preflight passed with `knowledge/refresh/refresh_policy.py --mode release-watch --no-fetch --quick-gates`.
+- Both preflight paths reported `release-watch-no-change`, `promoted=false`, `oci_upload_performed=false`, and `authoritative_snapshots_updated=false`.
+- A forced refresh against temporary snapshot copies exposed and then validated a selective-refresh fix: `refresh_policy.py` now passes embedding fallback and OCI GenAI embedding dimension settings through to `ingest.build_index`.
+- The forced temp-snapshot run exercised quick gates without touching repo authoritative snapshots: retrieval health passed and retrieval regression passed 26 cases.
+- Authoritative snapshot hashes remained unchanged:
+  - `knowledge/snapshots/oci-rag-index.json`: `83ffb06e49c81c7829fe6cebe1d1c490e64bd70655005051ed8f7a69477d2459`
+  - `knowledge/snapshots/oci-release-snapshot.json`: `cd77805429a66a2ed1289d4fae284c6762ef021ee01c7c52d357577f4b45ad32`
+- Backend refresh/status regression passed: `tests/test_refresh_policy.py` and `tests/test_api.py`.
+- Active retrieval remains `oci_object_storage`; Oracle AI Vector Search remains shadow-only until refresh candidate promotion and refreshed parity pass.
 
 ## Latest Operational Promotion
 

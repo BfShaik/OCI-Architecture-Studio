@@ -170,11 +170,13 @@ def build_selective_knowledge_index(
         output=args.knowledge_index,
         dimensions=args.dimensions,
         embedding_provider=args.embedding_provider,
+        embedding_fallback_enabled=args.embedding_fallback_enabled,
         oci_region=args.oci_region,
         oci_profile=args.oci_profile,
         oci_auth_mode=args.oci_auth_mode,
         oci_genai_compartment_id=args.oci_genai_compartment_id,
         oci_genai_embedding_model_id=args.oci_genai_embedding_model_id,
+        oci_genai_embedding_dimensions=args.oci_genai_embedding_dimensions,
         oci_genai_endpoint=args.oci_genai_endpoint,
         oci_namespace=args.oci_namespace,
         oci_upload_bucket=args.oci_upload_bucket,
@@ -752,11 +754,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--report-dir", type=Path, default=REPO_ROOT / "knowledge" / "reports")
     parser.add_argument("--dimensions", type=int, default=256)
     parser.add_argument("--embedding-provider", choices=("local", "oci_genai"), default="local")
+    parser.add_argument("--embedding-fallback-enabled", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--oci-region")
     parser.add_argument("--oci-profile", default="DEFAULT")
     parser.add_argument("--oci-auth-mode", choices=("config_file", "instance_principal", "resource_principal"), default="config_file")
     parser.add_argument("--oci-genai-compartment-id")
     parser.add_argument("--oci-genai-embedding-model-id")
+    parser.add_argument("--oci-genai-embedding-dimensions", type=int)
     parser.add_argument("--oci-genai-endpoint")
     parser.add_argument("--oci-namespace")
     parser.add_argument("--oci-upload-bucket")

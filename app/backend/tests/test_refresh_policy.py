@@ -142,11 +142,13 @@ def refresh_args(tmp_path: Path) -> Namespace:
         report_dir=tmp_path / "reports",
         dimensions=8,
         embedding_provider="local",
+        embedding_fallback_enabled=True,
         oci_region=None,
         oci_profile="DEFAULT",
         oci_auth_mode="config_file",
         oci_genai_compartment_id=None,
         oci_genai_embedding_model_id=None,
+        oci_genai_embedding_dimensions=None,
         oci_genai_endpoint=None,
         oci_namespace=None,
         oci_upload_bucket=None,
@@ -164,6 +166,47 @@ def refresh_args(tmp_path: Path) -> Namespace:
         rollback_on_failure=True,
         rollback_latest=False,
     )
+
+
+def test_selective_refresh_passes_embedding_validation_settings(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    args = refresh_args(tmp_path)
+    captured = {}
+
+    def fake_build_index(ingest_args):
+        captured["embedding_fallback_enabled"] = ingest_args.embedding_fallback_enabled
+        captured["oci_genai_embedding_dimensions"] = ingest_args.oci_genai_embedding_dimensions
+        return {
+            "generated_at": "2026-05-02T00:00:00+00:00",
+            "embedding_model": "local-hashing-v1",
+            "embedding_provider": "local",
+            "metadata_schema_version": "test-v1",
+            "chunk_count": 1,
+            "refreshed_source_ids": ["oci-object-storage-overview"],
+            "chunks": [
+                {
+                    "id": "oci-object-storage-overview::1",
+                    "source_id": "oci-object-storage-overview",
+                    "text": "Object Storage refreshed chunk.",
+                }
+            ],
+        }
+
+    monkeypatch.setattr(refresh_policy.ingest, "build_index", fake_build_index)
+
+    index = refresh_policy.build_selective_knowledge_index(
+        args,
+        ["oci-object-storage-overview"],
+        existing_index_path=args.knowledge_index,
+    )
+
+    assert captured == {
+        "embedding_fallback_enabled": True,
+        "oci_genai_embedding_dimensions": None,
+    }
+    assert index["chunk_count"] == 2
 
 
 def test_refresh_promotes_candidate_only_after_gates_pass(tmp_path: Path, monkeypatch) -> None:
