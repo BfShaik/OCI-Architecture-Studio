@@ -1,0 +1,604 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Length 9856 >>
+stream
+0.9725 0.9804 0.9882 rg
+1 w
+0.00 0.00 612.00 792.00 re f
+0.0588 0.0902 0.1647 rg
+1 w
+0.00 704.00 612.00 88.00 re f
+1.0000 1.0000 1.0000 rg
+BT
+/F2 25.00 Tf
+38.00 758.00 Td
+(OCI Architecture Studio) Tj
+ET
+0.7294 0.9020 0.9922 rg
+BT
+/F1 12.00 Tf
+39.00 735.00 Td
+(Product Details) Tj
+ET
+0.8588 0.9176 0.9961 rg
+BT
+/F1 9.50 Tf
+39.00 716.00 Td
+(OCI architecture advisory with live GenAI synthesis, semantic retrieval, citations, and rollback-safe operations.) Tj
+ET
+0.1176 0.1608 0.2314 rg
+0.5804 0.6392 0.7216 RG
+0.6 w
+438.00 752.00 66.00 20.00 re B
+0.8588 0.9176 0.9961 rg
+BT
+/F2 8.50 Tf
+446.00 758.00 Td
+(v1.0.3) Tj
+ET
+0.0235 0.3059 0.2314 rg
+0.5804 0.6392 0.7216 RG
+0.6 w
+510.00 752.00 64.00 20.00 re B
+0.8196 0.9804 0.8980 rg
+BT
+/F2 8.50 Tf
+518.00 758.00 Td
+(Staging live) Tj
+ET
+0.0588 0.0902 0.1647 rg
+BT
+/F2 14.00 Tf
+38.00 678.00 Td
+(What it does) Tj
+ET
+0.2000 0.2549 0.3333 rg
+BT
+/F1 9.30 Tf
+38.00 662.00 Td
+(Transforms OCI architecture, migration, resilience, security, observability, cost, and release-awareness) Tj
+ET
+0.2000 0.2549 0.3333 rg
+BT
+/F1 9.30 Tf
+38.00 651.00 Td
+(questions into grounded recommendations with citations, confidence, risks, topology, governance, and) Tj
+ET
+0.2000 0.2549 0.3333 rg
+BT
+/F1 9.30 Tf
+38.00 640.00 Td
+(next steps.) Tj
+ET
+1.0000 1.0000 1.0000 rg
+0.7961 0.8353 0.8824 RG
+0.85 w
+38.00 570.00 126.00 56.00 re B
+0.1451 0.3882 0.9216 rg
+1 w
+38.00 621.00 126.00 5.00 re f
+0.0588 0.0902 0.1647 rg
+BT
+/F2 9.20 Tf
+48.00 608.00 Td
+(Synthesis) Tj
+ET
+0.2784 0.3333 0.4118 rg
+BT
+/F1 7.50 Tf
+48.00 595.00 Td
+(OCI GenAI chat xai.grok-4.3) Tj
+ET
+1.0000 1.0000 1.0000 rg
+0.7961 0.8353 0.8824 RG
+0.85 w
+175.00 570.00 126.00 56.00 re B
+0.0196 0.5882 0.4118 rg
+1 w
+175.00 621.00 126.00 5.00 re f
+0.0588 0.0902 0.1647 rg
+BT
+/F2 9.20 Tf
+185.00 608.00 Td
+(Retrieval) Tj
+ET
+0.2784 0.3333 0.4118 rg
+BT
+/F1 7.50 Tf
+185.00 595.00 Td
+(Oracle AI Vector Search) Tj
+ET
+0.2784 0.3333 0.4118 rg
+BT
+/F1 7.50 Tf
+185.00 586.50 Td
+(active V4 table) Tj
+ET
+1.0000 1.0000 1.0000 rg
+0.7961 0.8353 0.8824 RG
+0.85 w
+312.00 570.00 126.00 56.00 re B
+0.4863 0.2275 0.9294 rg
+1 w
+312.00 621.00 126.00 5.00 re f
+0.0588 0.0902 0.1647 rg
+BT
+/F2 9.20 Tf
+322.00 608.00 Td
+(Embeddings) Tj
+ET
+0.2784 0.3333 0.4118 rg
+BT
+/F1 7.50 Tf
+322.00 595.00 Td
+(Cohere embed v4 1536) Tj
+ET
+0.2784 0.3333 0.4118 rg
+BT
+/F1 7.50 Tf
+322.00 586.50 Td
+(dimensions) Tj
+ET
+1.0000 1.0000 1.0000 rg
+0.7961 0.8353 0.8824 RG
+0.85 w
+449.00 570.00 126.00 56.00 re B
+0.9176 0.3451 0.0471 rg
+1 w
+449.00 621.00 126.00 5.00 re f
+0.0588 0.0902 0.1647 rg
+BT
+/F2 9.20 Tf
+459.00 608.00 Td
+(Validation) Tj
+ET
+0.2784 0.3333 0.4118 rg
+BT
+/F1 7.50 Tf
+459.00 595.00 Td
+(32/32 retrieval 18/18 golden,) Tj
+ET
+0.2784 0.3333 0.4118 rg
+BT
+/F1 7.50 Tf
+459.00 586.50 Td
+(8/8 edge) Tj
+ET
+0.0588 0.0902 0.1647 rg
+BT
+/F2 14.00 Tf
+38.00 512.00 Td
+(Current architecture) Tj
+ET
+1.0000 1.0000 1.0000 rg
+0.7961 0.8353 0.8824 RG
+0.85 w
+44.00 452.00 92.00 40.00 re B
+0.0549 0.6471 0.9137 rg
+1 w
+44.00 487.00 92.00 5.00 re f
+0.0588 0.0902 0.1647 rg
+BT
+/F2 9.20 Tf
+54.00 474.00 Td
+(User) Tj
+ET
+0.2784 0.3333 0.4118 rg
+BT
+/F1 7.50 Tf
+54.00 461.00 Td
+(Architect or reviewer) Tj
+ET
+1.0000 1.0000 1.0000 rg
+0.7961 0.8353 0.8824 RG
+0.85 w
+160.00 452.00 92.00 40.00 re B
+0.0549 0.6471 0.9137 rg
+1 w
+160.00 487.00 92.00 5.00 re f
+0.0588 0.0902 0.1647 rg
+BT
+/F2 9.20 Tf
+170.00 474.00 Td
+(API Gateway) Tj
+ET
+0.2784 0.3333 0.4118 rg
+BT
+/F1 7.50 Tf
+170.00 461.00 Td
+(Public staging ingress) Tj
+ET
+1.0000 1.0000 1.0000 rg
+0.7961 0.8353 0.8824 RG
+0.85 w
+276.00 452.00 92.00 40.00 re B
+0.0549 0.6471 0.9137 rg
+1 w
+276.00 487.00 92.00 5.00 re f
+0.0588 0.0902 0.1647 rg
+BT
+/F2 9.20 Tf
+286.00 474.00 Td
+(FastAPI VM) Tj
+ET
+0.2784 0.3333 0.4118 rg
+BT
+/F1 7.50 Tf
+286.00 461.00 Td
+(Backend + served UI) Tj
+ET
+1.0000 1.0000 1.0000 rg
+0.7961 0.8353 0.8824 RG
+0.85 w
+408.00 452.00 130.00 40.00 re B
+0.1451 0.3882 0.9216 rg
+1 w
+408.00 487.00 130.00 5.00 re f
+0.0588 0.0902 0.1647 rg
+BT
+/F2 9.20 Tf
+418.00 474.00 Td
+(OCI GenAI Chat) Tj
+ET
+0.2784 0.3333 0.4118 rg
+BT
+/F1 7.50 Tf
+418.00 461.00 Td
+(Grounded synthesis) Tj
+ET
+0.3922 0.4549 0.5451 RG
+1 w
+136.00 472.00 m 160.00 472.00 l S
+0.3922 0.4549 0.5451 RG
+1 w
+160.00 472.00 m 155.36 474.95 l S
+0.3922 0.4549 0.5451 RG
+1 w
+160.00 472.00 m 155.36 469.05 l S
+0.3922 0.4549 0.5451 RG
+1 w
+252.00 472.00 m 276.00 472.00 l S
+0.3922 0.4549 0.5451 RG
+1 w
+276.00 472.00 m 271.36 474.95 l S
+0.3922 0.4549 0.5451 RG
+1 w
+276.00 472.00 m 271.36 469.05 l S
+0.3922 0.4549 0.5451 RG
+1 w
+368.00 472.00 m 408.00 472.00 l S
+0.3922 0.4549 0.5451 RG
+1 w
+408.00 472.00 m 403.36 474.95 l S
+0.3922 0.4549 0.5451 RG
+1 w
+408.00 472.00 m 403.36 469.05 l S
+1.0000 1.0000 1.0000 rg
+0.7961 0.8353 0.8824 RG
+0.85 w
+104.00 386.00 120.00 46.00 re B
+0.0196 0.5882 0.4118 rg
+1 w
+104.00 427.00 120.00 5.00 re f
+0.0588 0.0902 0.1647 rg
+BT
+/F2 9.20 Tf
+114.00 414.00 Td
+(Retrieval Pipeline) Tj
+ET
+0.2784 0.3333 0.4118 rg
+BT
+/F1 7.50 Tf
+114.00 401.00 Td
+(intent, mapping, heuristics,) Tj
+ET
+0.2784 0.3333 0.4118 rg
+BT
+/F1 7.50 Tf
+114.00 392.50 Td
+(reranking) Tj
+ET
+1.0000 1.0000 1.0000 rg
+0.7961 0.8353 0.8824 RG
+0.85 w
+256.00 386.00 120.00 46.00 re B
+0.4863 0.2275 0.9294 rg
+1 w
+256.00 427.00 120.00 5.00 re f
+0.0588 0.0902 0.1647 rg
+BT
+/F2 9.20 Tf
+266.00 414.00 Td
+(OCI GenAI Embed) Tj
+ET
+0.2784 0.3333 0.4118 rg
+BT
+/F1 7.50 Tf
+266.00 401.00 Td
+(SEARCH_QUERY and) Tj
+ET
+0.2784 0.3333 0.4118 rg
+BT
+/F1 7.50 Tf
+266.00 392.50 Td
+(SEARCH_DOCUMENT) Tj
+ET
+1.0000 1.0000 1.0000 rg
+0.7961 0.8353 0.8824 RG
+0.85 w
+408.00 386.00 130.00 46.00 re B
+0.0196 0.5882 0.4118 rg
+1 w
+408.00 427.00 130.00 5.00 re f
+0.0588 0.0902 0.1647 rg
+BT
+/F2 9.20 Tf
+418.00 414.00 Td
+(Oracle Vector DB) Tj
+ET
+0.2784 0.3333 0.4118 rg
+BT
+/F1 7.50 Tf
+418.00 401.00 Td
+(OCI_ARCHITECTURE_CHUNKS_V4) Tj
+ET
+0.3922 0.4549 0.5451 RG
+1 w
+322.00 452.00 m 182.00 432.00 l S
+0.3922 0.4549 0.5451 RG
+1 w
+182.00 432.00 m 187.01 429.74 l S
+0.3922 0.4549 0.5451 RG
+1 w
+182.00 432.00 m 186.18 435.57 l S
+0.3922 0.4549 0.5451 RG
+1 w
+224.00 409.00 m 256.00 409.00 l S
+0.3922 0.4549 0.5451 RG
+1 w
+256.00 409.00 m 251.36 411.95 l S
+0.3922 0.4549 0.5451 RG
+1 w
+256.00 409.00 m 251.36 406.05 l S
+0.3922 0.4549 0.5451 RG
+1 w
+376.00 409.00 m 408.00 409.00 l S
+0.3922 0.4549 0.5451 RG
+1 w
+408.00 409.00 m 403.36 411.95 l S
+0.3922 0.4549 0.5451 RG
+1 w
+408.00 409.00 m 403.36 406.05 l S
+1.0000 1.0000 1.0000 rg
+0.7961 0.8353 0.8824 RG
+0.85 w
+104.00 322.00 120.00 43.00 re B
+0.3922 0.4549 0.5451 rg
+1 w
+104.00 360.00 120.00 5.00 re f
+0.0588 0.0902 0.1647 rg
+BT
+/F2 9.20 Tf
+114.00 347.00 Td
+(Object Storage) Tj
+ET
+0.2784 0.3333 0.4118 rg
+BT
+/F1 7.50 Tf
+114.00 334.00 Td
+(active manifest + local-hash) Tj
+ET
+0.2784 0.3333 0.4118 rg
+BT
+/F1 7.50 Tf
+114.00 325.50 Td
+(rollback) Tj
+ET
+1.0000 1.0000 1.0000 rg
+0.7961 0.8353 0.8824 RG
+0.85 w
+256.00 322.00 120.00 43.00 re B
+0.3922 0.4549 0.5451 rg
+1 w
+256.00 360.00 120.00 5.00 re f
+0.0588 0.0902 0.1647 rg
+BT
+/F2 9.20 Tf
+266.00 347.00 Td
+(Knowledge Refresh) Tj
+ET
+0.2784 0.3333 0.4118 rg
+BT
+/F1 7.50 Tf
+266.00 334.00 Td
+(candidate, gates, promote) Tj
+ET
+0.3922 0.4549 0.5451 RG
+1 w
+316.00 386.00 m 316.00 365.00 l S
+0.3922 0.4549 0.5451 RG
+1 w
+316.00 365.00 m 318.95 369.64 l S
+0.3922 0.4549 0.5451 RG
+1 w
+316.00 365.00 m 313.05 369.64 l S
+0.3922 0.4549 0.5451 RG
+1 w
+256.00 343.00 m 224.00 343.00 l S
+0.3922 0.4549 0.5451 RG
+1 w
+224.00 343.00 m 228.64 340.05 l S
+0.3922 0.4549 0.5451 RG
+1 w
+224.00 343.00 m 228.64 345.95 l S
+0.3922 0.4549 0.5451 RG
+1 w
+468.00 386.00 m 468.00 365.00 l S
+0.3922 0.4549 0.5451 RG
+1 w
+468.00 365.00 m 470.95 369.64 l S
+0.3922 0.4549 0.5451 RG
+1 w
+468.00 365.00 m 465.05 369.64 l S
+0.5804 0.6392 0.7216 RG
+0.8 w
+224.00 343.00 m 408.00 343.00 l S
+0.5804 0.6392 0.7216 RG
+0.8 w
+408.00 343.00 m 403.36 345.95 l S
+0.5804 0.6392 0.7216 RG
+0.8 w
+408.00 343.00 m 403.36 340.05 l S
+0.0588 0.0902 0.1647 rg
+BT
+/F2 14.00 Tf
+38.00 292.00 Td
+(Current live facts) Tj
+ET
+0.0588 0.0902 0.1647 rg
+BT
+/F2 9.00 Tf
+48.00 268.00 Td
+(Active corpus) Tj
+ET
+0.2784 0.3333 0.4118 rg
+BT
+/F1 8.50 Tf
+140.00 268.00 Td
+(60 curated chunks, 52 services, 15 service domains) Tj
+ET
+0.0588 0.0902 0.1647 rg
+BT
+/F2 9.00 Tf
+48.00 258.80 Td
+(Guardrail) Tj
+ET
+0.2784 0.3333 0.4118 rg
+BT
+/F1 8.50 Tf
+140.00 258.80 Td
+(Runtime provider/model/dimensions must match index metadata) Tj
+ET
+0.0588 0.0902 0.1647 rg
+BT
+/F2 9.00 Tf
+48.00 249.60 Td
+(Rollback) Tj
+ET
+0.2784 0.3333 0.4118 rg
+BT
+/F1 8.50 Tf
+140.00 249.60 Td
+(256-dimension local-hash table and Object Storage manifest retained) Tj
+ET
+0.0588 0.0902 0.1647 rg
+BT
+/F2 9.00 Tf
+48.00 240.40 Td
+(Open gap) Tj
+ET
+0.2784 0.3333 0.4118 rg
+BT
+/F1 8.50 Tf
+140.00 240.40 Td
+(team-real-prompts eval file still needs to be restored or created) Tj
+ET
+0.9255 0.9961 1.0000 rg
+0.6471 0.9529 0.9882 RG
+0.8 w
+38.00 116.00 536.00 82.00 re B
+0.0863 0.3059 0.3882 rg
+BT
+/F2 12.00 Tf
+52.00 178.00 Td
+(Why it matters) Tj
+ET
+0.0314 0.5686 0.6980 rg
+BT
+/F2 8.50 Tf
+57.00 162.00 Td
+(-) Tj
+ET
+0.0824 0.3686 0.4588 rg
+BT
+/F1 8.40 Tf
+70.00 162.00 Td
+(Reviewable, evidence-linked starting point instead of a generic chatbot answer.) Tj
+ET
+0.0314 0.5686 0.6980 rg
+BT
+/F2 8.50 Tf
+57.00 143.00 Td
+(-) Tj
+ET
+0.0824 0.3686 0.4588 rg
+BT
+/F1 8.40 Tf
+70.00 143.00 Td
+(Provider changes stay reversible through Object Storage, Oracle Vector, and local JSON) Tj
+ET
+0.0824 0.3686 0.4588 rg
+BT
+/F1 8.40 Tf
+70.00 133.50 Td
+(rollback paths.) Tj
+ET
+0.0314 0.5686 0.6980 rg
+BT
+/F2 8.50 Tf
+57.00 124.00 Td
+(-) Tj
+ET
+0.0824 0.3686 0.4588 rg
+BT
+/F1 8.40 Tf
+70.00 124.00 Td
+(Eval gates and health endpoints make quality, grounding, and runtime state visible.) Tj
+ET
+0.7961 0.8353 0.8824 RG
+0.7 w
+38.00 92.00 m 574.00 92.00 l S
+0.3922 0.4549 0.5451 rg
+BT
+/F1 7.40 Tf
+38.00 75.00 Td
+(Primary docs: README, docs/current/status.md, docs/architecture/architecture-diagrams.md, docs/runbooks/oci-native-retrieval-runbook.md) Tj
+ET
+0.3922 0.4549 0.5451 rg
+BT
+/F1 7.40 Tf
+38.00 61.00 Td
+(Generated for OCI Architecture Studio | Current staging state as of 2026-05-16) Tj
+ET
+endstream
+endobj
+2 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+4 0 obj
+<< /Type /Page /Parent 5 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 2 0 R /F2 3 0 R >> >> /Contents 1 0 R >>
+endobj
+5 0 obj
+<< /Type /Pages /Kids [4 0 R] /Count 1 >>
+endobj
+6 0 obj
+<< /Type /Catalog /Pages 5 0 R >>
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000015 00000 n 
+0000009923 00000 n 
+0000009993 00000 n 
+0000010068 00000 n 
+0000010204 00000 n 
+0000010261 00000 n 
+trailer
+<< /Size 7 /Root 6 0 R >>
+startxref
+10310
+%%EOF
