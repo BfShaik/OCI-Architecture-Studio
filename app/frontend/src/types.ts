@@ -294,6 +294,65 @@ export type ArchitectureReviewRequest = {
   retrieval_debug?: boolean;
 };
 
+export type KnowledgeRefreshLifecycle = {
+  candidate_created?: boolean;
+  candidate_changed?: boolean;
+  gates_run?: boolean;
+  gates_passed?: boolean;
+  promoted?: boolean;
+  promotion_status?: string;
+  authoritative_snapshots_updated?: boolean;
+  oci_upload_requested?: boolean;
+  oci_upload_performed?: boolean;
+  oci_upload_status?: string;
+  rollback_available?: boolean;
+  rollback_performed?: boolean;
+  query_time_refresh?: boolean;
+  selective_reindex?: boolean;
+  full_reindex?: boolean;
+};
+
+export type KnowledgeRefreshRun = {
+  run_id?: string;
+  status?: string;
+  passed?: boolean;
+  started_at?: string;
+  generated_at?: string;
+  changed_release_count?: number;
+  affected_source_ids?: string[];
+  gates_passed?: boolean;
+  rollback_performed?: boolean;
+  lifecycle?: KnowledgeRefreshLifecycle;
+};
+
+export type KnowledgeRefreshSnapshot = {
+  run_id?: string;
+  started_at?: string;
+  generated_at?: string;
+  policy_version?: string;
+  mode?: string;
+  refresh_reason?: string;
+  status?: string;
+  lineage?: {
+    knowledge_snapshot_version?: string;
+    release_snapshot_version?: string;
+    embedding_version?: string;
+    embedding_provider?: string;
+    metadata_schema_version?: string;
+    affected_source_ids?: string[];
+    changed_release_ids?: string[];
+    impacted_eval_cases?: string[];
+  };
+};
+
+export type KnowledgeRefreshStatus = {
+  status?: string;
+  status_path?: string;
+  generated_at?: string;
+  last_run?: KnowledgeRefreshRun | null;
+  current_promoted_snapshot?: KnowledgeRefreshSnapshot | null;
+};
+
 export type ArchitectureReviewResponse = {
   intent: string;
   prompt_template: string;

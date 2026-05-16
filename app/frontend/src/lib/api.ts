@@ -1,6 +1,7 @@
 import type {
   ArchitectureReviewRequest,
   ArchitectureReviewResponse,
+  KnowledgeRefreshStatus,
 } from "../types";
 
 const API_BASE_URL =
@@ -23,6 +24,16 @@ export async function requestArchitectureReview(
 
   if (!response.ok) {
     throw new Error(`Architecture review failed: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function requestKnowledgeRefreshStatus(): Promise<KnowledgeRefreshStatus> {
+  const response = await fetch(`${API_BASE_URL}/knowledge/refresh/status`);
+
+  if (!response.ok) {
+    throw new Error(`Knowledge refresh status failed: ${response.status}`);
   }
 
   return response.json();

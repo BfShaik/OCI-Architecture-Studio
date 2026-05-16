@@ -108,6 +108,7 @@ h1 {
 .loading-state,
 .answer-block,
 .result-section,
+.refresh-panel,
 .error-state {
   border: 1px solid #d8dee8;
   border-radius: 8px;
@@ -186,16 +187,120 @@ h1 {
 }
 
 .answer-block,
-.result-section {
+.result-section,
+.refresh-panel {
   padding: 22px;
 }
 
 .answer-block h2,
 .result-section h3,
+.refresh-panel h2,
 .empty-state h2 {
   margin-bottom: 10px;
   color: #111827;
   font-size: 1.15rem;
+}
+
+.refresh-panel {
+  display: grid;
+  gap: 16px;
+  max-width: 1100px;
+}
+
+.refresh-panel .section-heading-row {
+  align-items: center;
+}
+
+.refresh-eyebrow {
+  margin-bottom: 6px;
+  color: #64748b;
+}
+
+.refresh-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.refresh-summary span,
+.status-pill {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  border: 1px solid #d8dee8;
+  border-radius: 8px;
+  padding: 10px;
+  color: #334155;
+  background: #f8fafc;
+  font-size: 0.82rem;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.status-pill {
+  text-transform: capitalize;
+}
+
+.status-good {
+  border-color: #bbf7d0;
+  color: #166534;
+  background: #f0fdf4;
+}
+
+.status-risk {
+  border-color: #fed7aa;
+  color: #9a3412;
+  background: #fff7ed;
+}
+
+.status-neutral {
+  border-color: #cbd5e1;
+  color: #334155;
+  background: #f8fafc;
+}
+
+.refresh-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.refresh-grid article {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px;
+  background: #f8fafc;
+}
+
+.refresh-grid strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #111827;
+  font-size: 0.88rem;
+}
+
+.refresh-grid p,
+.refresh-grid small {
+  margin: 0;
+  color: #52606d;
+  line-height: 1.45;
+}
+
+.refresh-grid small {
+  display: block;
+  margin-top: 6px;
+  color: #334155;
+  font-size: 0.78rem;
+}
+
+.refresh-error {
+  border-left: 3px solid #f97316;
+  padding: 8px 10px;
+  color: #7c2d12;
+  background: #fff7ed;
+  font-size: 0.84rem;
+  font-weight: 650;
 }
 
 .intent-row {
@@ -681,7 +786,9 @@ button:disabled {
   .decision-grid,
   .sequence-list,
   .topology-grid,
-  .migration-flow {
+  .migration-flow,
+  .refresh-summary,
+  .refresh-grid {
     grid-template-columns: 1fr;
   }
 

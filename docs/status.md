@@ -2,6 +2,18 @@
 
 Last updated: 2026-05-16
 
+## Latest Knowledge Refresh Status Panel
+
+- `TASK-037` through `TASK-040` completed as the first low-risk operational visibility increment after the internal beta baseline.
+- Added a read-only frontend Knowledge Refresh Status panel backed by the existing `/knowledge/refresh/status` endpoint.
+- The panel surfaces VM cron refresh state, last run time, gate result, promotion status, Object Storage upload status, snapshot version, changed release count, affected source count, and rollback posture.
+- No query-time refresh, external scheduler, or new operational orchestration was introduced.
+- Validation passed:
+  - frontend production build
+  - backend `/knowledge/refresh/status` endpoint subset
+  - `git diff --check`
+  - local browser smoke for panel render and reload
+
 ## Latest Knowledge Refresh Preflight
 
 - `TASK-028` completed as a controlled knowledge refresh preflight before any further Oracle vector promotion work.

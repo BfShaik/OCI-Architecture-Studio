@@ -1,8 +1,12 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { Send } from "lucide-react";
+import { KnowledgeRefreshPanel } from "./components/KnowledgeRefreshPanel";
 import { ReviewResult } from "./components/ReviewResult";
-import { requestArchitectureReview } from "./lib/api";
-import type { ArchitectureReviewResponse } from "./types";
+import {
+  requestArchitectureReview,
+  requestKnowledgeRefreshStatus,
+} from "./lib/api";
+import type { ArchitectureReviewResponse, KnowledgeRefreshStatus } from "./types";
 
 const starterQuestion =
   "How should I design a highly available customer portal on OCI?";
@@ -21,6 +25,32 @@ export function App() {
   const [result, setResult] = useState<ArchitectureReviewResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [refreshStatus, setRefreshStatus] =
+    useState<KnowledgeRefreshStatus | null>(null);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
+  const [isRefreshLoading, setIsRefreshLoading] = useState(false);
+
+  async function loadRefreshStatus() {
+    setRefreshError(null);
+    setIsRefreshLoading(true);
+
+    try {
+      const response = await requestKnowledgeRefreshStatus();
+      setRefreshStatus(response);
+    } catch (caught) {
+      const message =
+        caught instanceof Error
+          ? caught.message
+          : "Unable to load knowledge refresh status.";
+      setRefreshError(message);
+    } finally {
+      setIsRefreshLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void loadRefreshStatus();
+  }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -73,6 +103,13 @@ export function App() {
 
       <section className="workspace">
         <div className="conversation">
+          <KnowledgeRefreshPanel
+            status={refreshStatus}
+            error={refreshError}
+            isLoading={isRefreshLoading}
+            onRefresh={() => void loadRefreshStatus()}
+          />
+
           <div className="message message-system">
             <span>System</span>
             <p>
