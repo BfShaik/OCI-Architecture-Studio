@@ -16,8 +16,8 @@ The plan favors OCI-native services, Terraform-managed infrastructure, determini
 | Retrieval | Staging uses `oci_object_storage` with `local_json` fallback. Oracle AI Vector Search is live, schema-loaded, and shadow-validated, but active DB-backed retrieval is not promoted. | Keep Object Storage active until refresh stability and refreshed vector parity pass. |
 | Synthesis | Deterministic synthesis is default. OCI GenAI synthesis exists behind configuration and fails closed to deterministic fallback. | Keep deterministic default until live GenAI parity passes. |
 | Embeddings | Deterministic local embeddings are the stable path. OCI GenAI embeddings are configurable but not the default. | Activate in shadow/parity mode before promotion. |
-| Runtime | OCI VM staging is active behind OCI API Gateway, with direct VM rollback preserved. OKE and Functions-compatible profiles exist. OCI Functions plus Resource Scheduler are enabled for knowledge refresh in safe mode only. OCI DevOps metadata is scaffolded but not active. | Keep Gateway active and promote delivery/scheduler paths one gate at a time. |
-| IaC | Terraform covers core OCI foundation resources, API Gateway, Autonomous Database vector shadow infrastructure, OCI Functions, Resource Scheduler, and related IAM policy. State remains local unless Object Storage backend is configured manually. | Keep schedules in safe mode until Function invocation logs, reports, and dry-run readiness pass. |
+| Runtime | OCI VM staging is active behind OCI API Gateway, with direct VM rollback preserved. OKE and Functions-compatible profiles exist. Knowledge refresh scheduling is pivoting to a conservative cron job on the OCI backend VM after the packaged OCI Function image failed container initialization. OCI DevOps metadata is scaffolded but not active. | Keep Gateway active and run refresh scheduling from the VM until the Function image path is repaired. |
+| IaC | Terraform covers core OCI foundation resources, API Gateway, Autonomous Database vector shadow infrastructure, and optional Functions/Scheduler scaffolds. The failing Function/Scheduler resources were removed from staging state. State remains local unless Object Storage backend is configured manually. | Keep the VM cron job safe-mode first; do not re-enable Functions/Scheduler until the image startup issue is fixed and dry-run invocation passes. |
 | Observability | Health, readiness, infrastructure, analytics, fallback, governance, and diagnostics endpoints exist. OCI Logging/Monitoring/Notifications are represented when configured. | Add live metric/log emission only after readiness checks are stable. |
 | Evaluation | Regression and advisory-quality suites cover retrieval, governance, migration, FinOps, release intelligence, runtime, and usability. | Keep every promotion tied to a quality gate. |
 | Documentation | Internal beta docs are broad and mostly aligned, with accepted limitations documented. | Keep plan and status docs current as work advances. |
@@ -45,19 +45,19 @@ The plan favors OCI-native services, Terraform-managed infrastructure, determini
    - Initial increment: rebuild the shadow index, validate counts and schema/index health, then run vector parity against Object Storage.
 
 5. **OCI Function image packaging**
-   - Why before scheduling: the scheduler must invoke a packaged, immutable Function image, not a local source-tree smoke.
-   - OCI-native target: OCI Functions image in OCIR with immutable tag.
-   - Initial increment: build and push `infra/functions/knowledge-refresh`, then run controlled invocation before enabling schedules.
+   - Why paused: packaged invocation failed with `FunctionInvokeContainerInitFail`, and Docker image repair was slower than the current refresh-stability priority allows.
+   - OCI-native target: OCI Functions image in OCIR with immutable tag remains the later preferred scheduler runtime.
+   - Initial increment before retry: fix FDK/container startup locally, then run controlled invocation before enabling Resource Scheduler again.
 
-6. **OCI Resource Scheduler enablement**
-   - Why after packaged Function validation: live schedules should only exist after reviewed Terraform plan and IAM policy checks.
-   - OCI-native target: OCI Resource Scheduler invoking OCI Functions.
-   - Initial increment: enable Terraform variables, review plan, apply expected Function/Scheduler/IAM changes only.
+6. **OCI VM cron refresh runtime**
+   - Why now: the backend VM is already inside OCI, has the repository and Python environment, and can run the same refresh policy without introducing an external scheduler.
+   - OCI-native fit for current maturity: lightweight OCI Compute scheduling preserves local-dev parity and avoids a failing Function image while refresh quality gates mature.
+   - Initial increment: install `/etc/cron.d/oci-architecture-studio-knowledge-refresh` with safe `no_fetch`, `quick_gates`, `candidate_only`, `upload=false` jobs.
 
-7. **Scheduled refresh dry run and activation**
-   - Why staged: dry-run scheduler path proves logs, reports, and readiness before live upload/promotion.
-   - OCI-native target: Resource Scheduler release-watch first; stable-docs remains slower and conservative.
-   - Initial increment: run safe `no_fetch`, `quick_gates`, `upload=false`, then activate gate-controlled release refresh.
+7. **VM scheduled refresh dry run and activation**
+   - Why staged: dry-run cron path proves logs, reports, and readiness before live upload/promotion.
+   - OCI-native target: backend OCI VM cron release-watch first; stable-docs remains slower and conservative.
+   - Initial increment: run safe `no_fetch`, `quick_gates`, `candidate_only`, `upload=false`, then activate gate-controlled release refresh.
 
 8. **Return to Oracle vector promotion**
    - Why last: active semantic retrieval should wait for stable refresh, Object Storage promotion, and refreshed vector parity.
@@ -103,8 +103,8 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | TASK-031 | Done | Oracle Vector Refresh Sync. | Rebuilt Oracle AI Vector Search shadow index from the promoted snapshot on the staging backend VM; upserted 47 chunks; table/index health passed with 47 chunks, 44 services, 14 service domains, valid schema, and no missing config; vector validation passed 26 cases with 0.977 average top-chunk overlap. Active retrieval remains `oci_object_storage`. |
 | TASK-032 | Done | OCI Function Image Packaging. | Built and pushed immutable OCIR image `iad.ocir.io/idsmrn7rvqb6/oci-architecture-studio/knowledge-refresh:20260516-d73fa2c-task032-r3` with digest `sha256:28b85ed1ee6cac61a335f92ee1d53c258a7aa47864ede02989282bf930c07fc9`; packaged forced candidate-only invocation passed candidate validation, retrieval health, and 26-case retrieval regression. |
 | TASK-033 | Done | OCI Resource Scheduler Enablement. | Terraform applied the safe-mode knowledge refresh Function and schedules with immutable image `iad.ocir.io/idsmrn7rvqb6/oci-architecture-studio/knowledge-refresh:20260516-d73fa2c-task032-r3`; created Function `ocid1.fnfunc.oc1.iad.amaaaaaa2j5jslyavxvlplv2buo4czblwyii6ozstksvvja7uukuyxak6fkq`, release schedule `ocid1.resourceschedule.oc1.iad.amaaaaaa2j5jslya4y4m3mgofzhmyappmdsaqfawzbh5bgcnethhwirjsxia`, stable-docs schedule `ocid1.resourceschedule.oc1.iad.amaaaaaa2j5jslya44pyqv5jarhnzmt66da4zx4gs5kbuv2oajowllxbl3cq`, dynamic group, and IAM policy. Post-apply Terraform no-change plan, Gateway smoke, and operational readiness passed with known OCI DevOps/rebuildability warnings only. Scheduler payloads remain safe: `no_fetch=true`, `quick_gates=true`, `candidate_only=true`, `upload=false`. |
-| TASK-034 | Next | Scheduled Refresh Dry Run. | Trigger scheduler/Function path in safe mode with `no_fetch=true`, `quick_gates=true`, `candidate_only=true`, `upload=false`; confirm logs, reports, and readiness show the scheduler path works. |
-| TASK-035 | Pending | Scheduled Release Refresh Activation. | Enable release-watch refresh with upload and gate-controlled promotion; keep stable-docs refresh less frequent; document failure, rollback, stale warning, Object Storage sync, and Oracle vector shadow sync operations. |
+| TASK-034 | Done | VM Cron Refresh Dry Run. | Disabled the failing OCI Function/Scheduler path with Terraform, installed `/etc/cron.d/oci-architecture-studio-knowledge-refresh` on the OCI backend VM, and ran safe release-watch plus stable-docs dry runs. Release-watch passed with `status=no_change`, `promoted=false`, `authoritative_snapshots_updated=false`, and `oci_upload_performed=false`; stable-docs passed candidate validation, retrieval health, and 26-case retrieval regression without promotion or upload. Gateway smoke, Object Storage retrieval health, operational readiness, Terraform no-change plan, and refresh status endpoint visibility passed. |
+| TASK-035 | Next | VM Cron Release Refresh Activation. | Enable release-watch refresh with upload and gate-controlled promotion only after VM safe mode passes; keep stable-docs refresh less frequent; document failure, rollback, stale warning, Object Storage sync, and Oracle vector shadow sync operations. |
 | TASK-036 | Pending | Return To Oracle Vector Promotion. | Resume active Oracle vector promotion only after refresh is stable; run Object Storage baseline, Oracle shadow parity, retrieval regression, and golden/edge evals. |
 
 ## Phase Gates
@@ -117,7 +117,7 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | OCI GenAI embeddings shadow activation | Not Started | Embedding dimension validation passes; retrieval regression does not degrade; fallback diagnostics clean. | `EMBEDDING_PROVIDER=local`; retain existing vector manifest. |
 | Oracle AI Vector Search shadow mode | Done | Schema/index validation passes; dual-read parity acceptable across golden, edge, and retrieval regression cases. | Keep `RETRIEVAL_PROVIDER=oci_object_storage`. |
 | Semantic retrieval active promotion | Not Started | Active-provider staging smoke, retrieval health, vector validation, eval suites, and rollback drill pass. | Restore `RETRIEVAL_PROVIDER=oci_object_storage` or `local_json`. |
-| Scheduled refresh activation | Safe Scheduler Enabled | Local Function handler, direct policy preflight, packaged image validation, Terraform apply, and scheduler OCID exposure passed. Next gate is a Resource Scheduler/Function dry run with no fetch, candidate-only quick gates, and no upload. | Disable schedules; return to operator-triggered refresh. |
+| Scheduled refresh activation | VM Cron Safe Mode Passed | OCI Function/Scheduler was safely disabled after deployed Function invocation failed container initialization. Backend VM cron is installed and safe release-watch/stable-docs dry runs passed with no authoritative promotion or Object Storage upload. | Remove `/etc/cron.d/oci-architecture-studio-knowledge-refresh`; continue operator-triggered refresh. |
 | OCI DevOps delivery promotion | Not Started | Pipeline deploys same artifact path as operator scripts; staging smoke and readiness gates pass. | Use existing operator scripts. |
 
 ## Required Validation Matrix
@@ -147,20 +147,20 @@ Run the appropriate subset after each increment; run the full matrix before a ne
 | API Gateway cutover breaks access | Staging outage or demo interruption | Keep direct backend path until Gateway smoke passes; document rollback variable. |
 | GenAI output becomes generic or unsupported | Advisory quality regression | Require parity reports, hallucination checks, citations, and deterministic fallback. |
 | Vector search loses citation parity | Weak grounding and lower trust | Dual-read against Object Storage before active promotion; keep Object Storage fallback. |
-| Scheduler refresh corrupts snapshots/index | Retrieval regression | Keep refresh operator-controlled until packaged Function and Resource Scheduler dry run pass; retain previous snapshots and rollback provider. |
+| Scheduler refresh corrupts snapshots/index | Retrieval regression | Keep VM cron in safe mode until dry run passes; require candidate gates before upload/promotion; retain previous snapshots and rollback provider. |
 | DevOps pipeline diverges from operator scripts | Deployment inconsistency | Define pipeline contract around existing scripts/artifacts before promotion. |
 | Docs overstate runtime maturity | Stakeholder trust risk | Update limitations with every promotion and avoid production claims before validation. |
 
 ## Next Actionable Increment
 
-Current task: `TASK-034`.
+Current task: `TASK-035`.
 
-Run a scheduled refresh dry run:
+Prepare VM cron release refresh activation:
 
-1. Trigger the Resource Scheduler/Function path in safe mode.
-2. Verify the Function receives `no_fetch=true`, `quick_gates=true`, `candidate_only=true`, and `upload=false`.
-3. Confirm Function logs and generated reports show no authoritative snapshot promotion or Object Storage upload.
-4. Re-run readiness and retrieval checks before considering live release-watch activation.
+1. Change only the release-watch VM cron path from candidate-only safe mode to gate-controlled upload/promotion.
+2. Keep stable-docs in safe mode until release-watch proves stable.
+3. Run a manual release-watch activation first and verify candidate gates, Object Storage upload, refresh status, Gateway smoke, retrieval regression, and rollback notes.
+4. Sync Oracle AI Vector Search shadow from the promoted snapshot only after Object Storage promotion passes.
 
 ## Operating Rules
 

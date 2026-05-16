@@ -76,7 +76,25 @@ Last updated: 2026-05-16
 - API Gateway smoke passed through `https://pkgmvyyi3itxklv6knh4xfm6ca.apigateway.us-ashburn-1.oci.customer-oci.com`.
 - Operational readiness passed with the existing known warnings for inactive OCI DevOps metadata and remaining rebuildability gaps.
 - Active retrieval remains `oci_object_storage`; Oracle AI Vector Search remains shadow-only.
-- Next gate is `TASK-034`: trigger and inspect the scheduler/Function path in safe mode before any live refresh activation.
+- A `TASK-034` deployed Function dry run later failed before handler execution with OCI `FunctionInvokeContainerInitFail`. Per operator direction, the immediate refresh scheduling path is pivoting to the existing OCI backend VM instead of spending this cycle on Docker/FDK repair.
+- Terraform disabled and destroyed the staging Function, Resource Scheduler schedules, dynamic group, and invoke policy: 0 added, 0 changed, 6 destroyed. The rest of staging infrastructure remained unchanged.
+- Next gate is `TASK-034`: install and run a safe-mode VM cron refresh path before any live refresh activation.
+
+## Latest VM Cron Refresh Pivot
+
+- `TASK-034` completed as a VM cron refresh dry run rather than an OCI Function/Scheduler dry run.
+- Added `infra/scripts/run_knowledge_refresh_vm.sh` as the backend VM refresh runner.
+- Added `infra/scripts/install_knowledge_refresh_vm_cron.sh` to install `/etc/cron.d/oci-architecture-studio-knowledge-refresh` on the staging backend VM.
+- Cron defaults are intentionally safe: `no_fetch=true`, `quick_gates=true`, `candidate_only=true`, and `upload=false`.
+- The VM path runs inside OCI Compute and uses the same repository `knowledge/refresh/refresh_policy.py`, preserving deterministic fallback and avoiding any external scheduler.
+- OCI Functions plus Resource Scheduler remain a later preferred path after the Function image startup issue is repaired.
+- Installed the safe cron file on staging backend VM `193.122.149.102`.
+- Synced the backend VM to current repo code after the first dry run found an older `refresh_policy.py` without `--candidate-only`.
+- Manual release-watch VM run passed with `status=no_change`, `passed=true`, `promoted=false`, `authoritative_snapshots_updated=false`, and `oci_upload_performed=false`.
+- Manual stable-docs VM run passed candidate validation, retrieval health, and 26-case retrieval regression with `promoted=false` and `oci_upload_performed=false`.
+- The VM runner now publishes latest `knowledge-refresh-status.json` and `knowledge-refresh-report.json` back to the backend-visible `knowledge/reports` path while retaining full run reports under `/var/lib/oci-architecture-studio/knowledge-refresh/reports`.
+- API Gateway `/knowledge/refresh/status` now reports the latest VM release-watch dry run.
+- Gateway smoke, Object Storage retrieval health, operational readiness, and Terraform no-change plan passed after the pivot.
 
 ## Latest Operational Promotion
 

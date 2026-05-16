@@ -60,7 +60,7 @@ Runtime profiles are configured with:
 DEPLOYMENT_PROFILE=local_dev|oci_vm|oke|oci_functions
 ```
 
-Profile examples live under `infra/runtime-profiles/`. Local development remains offline-safe. OCI VM and OKE profiles should use OCI IAM runtime identity and OCI Vault-backed sensitive configuration. OCI Functions-compatible execution is intended for scheduled refresh jobs invoked by OCI Resource Scheduler.
+Profile examples live under `infra/runtime-profiles/`. Local development remains offline-safe. OCI VM and OKE profiles should use OCI IAM runtime identity and OCI Vault-backed sensitive configuration. Scheduled refresh currently runs as a conservative cron job on the OCI backend VM using `infra/scripts/run_knowledge_refresh_vm.sh`; OCI Functions-compatible execution remains deferred until the Function image startup path is repaired.
 
 Run a lightweight endpoint gate:
 

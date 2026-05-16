@@ -185,19 +185,46 @@ Environment differences are config-only:
 - `knowledge/ingestion/ingest.py`
 - `knowledge/refresh/ingest_releases.py`
 - `infra/scripts/release_impact_report.py`
+- `infra/scripts/run_knowledge_refresh_vm.sh`
+- `infra/scripts/install_knowledge_refresh_vm_cron.sh`
 - `infra/terraform/modules/foundation/main.tf`
 - `infra/functions/knowledge-refresh/`
 
 ## OCI-Native Schedule
 
-OCI recurring execution is implemented with OCI Resource Scheduler invoking an OCI Function. OCI Events remains in use for operational notifications and resource lifecycle visibility, but recurring cron-style execution is modeled as Resource Scheduler because OCI Events rules do not expose a cron schedule field in the Terraform provider.
+Current staging recurring execution uses a conservative cron entry on the OCI backend VM. This keeps the refresh runtime inside OCI Compute, uses the same repository Python policy code, and avoids external schedulers while the OCI Function image startup issue is repaired.
 
 GitHub Actions is no longer used for scheduled knowledge refresh. The only
 remaining GitHub workflow is CI validation; refresh orchestration should be
-enabled through the Terraform Resource Scheduler and Functions path below after
-the function image is built and pushed to OCIR.
+run from OCI runtime infrastructure only.
 
-Terraform variables:
+VM cron safe-mode install:
+
+```bash
+infra/scripts/install_knowledge_refresh_vm_cron.sh <backend-host> opc ~/.ssh/oci-architecture-studio-staging
+```
+
+The installed cron file runs:
+
+```bash
+VM_REFRESH_MODE=release-watch \
+VM_REFRESH_NO_FETCH=true \
+VM_REFRESH_QUICK_GATES=true \
+VM_REFRESH_CANDIDATE_ONLY=true \
+VM_REFRESH_UPLOAD=false \
+/opt/oci-architecture-studio/infra/scripts/run_knowledge_refresh_vm.sh
+```
+
+Safe mode must pass before any upload or promotion is enabled. Reports are
+written under `/var/lib/oci-architecture-studio/knowledge-refresh/reports` and
+logs under `/var/log/oci-architecture-studio`.
+
+OCI Functions plus Resource Scheduler remain the preferred later OCI-native
+managed scheduling target, but they are currently deferred because deployed
+Function invocation failed container initialization during dry run.
+
+Deferred Terraform variables:
+
 
 ```hcl
 enable_knowledge_refresh_scheduler = true
@@ -215,7 +242,7 @@ Created resources when enabled:
 - dynamic group for the schedules
 - IAM policy allowing the schedules to invoke the function
 
-The function receives a JSON body:
+The deferred function receives a JSON body:
 
 ```json
 {"mode":"release-watch","upload":true}
