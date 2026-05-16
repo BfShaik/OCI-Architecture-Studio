@@ -16,10 +16,7 @@ QUICK_GATES="${VM_REFRESH_QUICK_GATES:-true}"
 CANDIDATE_ONLY="${VM_REFRESH_CANDIDATE_ONLY:-true}"
 UPLOAD="${VM_REFRESH_UPLOAD:-false}"
 FORCE="${VM_REFRESH_FORCE:-false}"
-OCI_AUTH_MODE="${OCI_AUTH_MODE:-instance_principal}"
-OCI_NAMESPACE="${OCI_OBJECT_STORAGE_NAMESPACE:-}"
-OCI_UPLOAD_BUCKET="${SNAPSHOTS_BUCKET:-${OCI_VECTOR_BUCKET:-}}"
-OCI_UPLOAD_OBJECT="${OCI_VECTOR_OBJECT_NAME:-oci-rag-index.json}"
+REINDEX_NO_FETCH="${VM_REFRESH_REINDEX_NO_FETCH:-true}"
 
 if [[ -r "${ENV_FILE}" ]]; then
   set -a
@@ -27,6 +24,13 @@ if [[ -r "${ENV_FILE}" ]]; then
   source "${ENV_FILE}"
   set +a
 fi
+
+OCI_AUTH_MODE="${OCI_AUTH_MODE:-instance_principal}"
+OCI_REGION="${OCI_REGION:-}"
+OCI_NAMESPACE="${OCI_OBJECT_STORAGE_NAMESPACE:-}"
+OCI_UPLOAD_BUCKET="${SNAPSHOTS_BUCKET:-${OCI_VECTOR_BUCKET:-}}"
+OCI_UPLOAD_OBJECT="${OCI_VECTOR_OBJECT_NAME:-oci-rag-index.json}"
+OCI_RELEASE_OBJECT="${OCI_RELEASE_OBJECT_NAME:-oci-release-snapshot.json}"
 
 mkdir -p "${REPORT_BASE}" "${LOG_DIR}" "$(dirname "${LOCK_FILE}")"
 
@@ -54,12 +58,16 @@ fi
 if [[ "${FORCE}" == "true" ]]; then
   command+=(--force)
 fi
+if [[ "${REINDEX_NO_FETCH}" != "true" ]]; then
+  command+=(--no-reindex-no-fetch)
+fi
 if [[ "${UPLOAD}" == "true" ]]; then
   if [[ -z "${OCI_NAMESPACE}" || -z "${OCI_UPLOAD_BUCKET}" ]]; then
     echo "Upload requested but OCI namespace or upload bucket is missing." >&2
     exit 2
   fi
   command+=(
+    --oci-region "${OCI_REGION}"
     --oci-namespace "${OCI_NAMESPACE}"
     --oci-upload-bucket "${OCI_UPLOAD_BUCKET}"
     --oci-upload-object "${OCI_UPLOAD_OBJECT}"
@@ -83,6 +91,18 @@ fi
   cd "${REPO_DIR}"
   "${command[@]}" >>"${LOG_FILE}" 2>&1
 ) 9>"${LOCK_FILE}"
+
+if [[ "${UPLOAD}" == "true" ]]; then
+  "${PYTHON_BIN}" "${REPO_DIR}/infra/scripts/upload_snapshots_to_object_storage.py" \
+    --knowledge-index "${REPO_DIR}/knowledge/snapshots/oci-rag-index.json" \
+    --release-snapshot "${REPO_DIR}/knowledge/snapshots/oci-release-snapshot.json" \
+    --oci-auth-mode "${OCI_AUTH_MODE}" \
+    --oci-region "${OCI_REGION}" \
+    --oci-namespace "${OCI_NAMESPACE}" \
+    --oci-upload-bucket "${OCI_UPLOAD_BUCKET}" \
+    --oci-upload-object "${OCI_UPLOAD_OBJECT}" \
+    --oci-release-object "${OCI_RELEASE_OBJECT}" >>"${LOG_FILE}" 2>&1
+fi
 
 mkdir -p "$(dirname "${STATUS_PATH}")" "$(dirname "${REPORT_PATH}")"
 if [[ -f "${REPORT_DIR}/knowledge-refresh-status.json" ]]; then

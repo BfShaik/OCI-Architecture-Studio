@@ -186,7 +186,7 @@ def build_selective_knowledge_index(
         max_source_chars=args.max_source_chars,
         min_fetched_words=args.min_fetched_words,
         timeout=args.timeout,
-        no_fetch=args.no_fetch,
+        no_fetch=args.no_fetch or args.reindex_no_fetch,
         source_ids=source_ids,
         existing_index=existing_index_path or args.knowledge_index,
     )
@@ -792,6 +792,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-items-per-source", type=int, default=12)
     parser.add_argument("--timeout", type=int, default=8)
     parser.add_argument("--no-fetch", action="store_true")
+    parser.add_argument(
+        "--reindex-no-fetch",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Use stable registry fallback content when reindexing affected knowledge sources.",
+    )
     parser.add_argument("--force", action="store_true")
     parser.add_argument("--candidate-only", action="store_true")
     parser.add_argument("--skip-gates", action="store_true")

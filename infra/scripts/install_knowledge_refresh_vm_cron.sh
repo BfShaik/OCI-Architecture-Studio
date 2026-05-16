@@ -27,7 +27,8 @@ fi
 
 rsync -az -e "${RSYNC_SSH}" \
   infra/scripts/run_knowledge_refresh_vm.sh \
-  "${SSH_USER}@${BACKEND_HOST}:${REMOTE_DIR}/infra/scripts/run_knowledge_refresh_vm.sh"
+  infra/scripts/upload_snapshots_to_object_storage.py \
+  "${SSH_USER}@${BACKEND_HOST}:${REMOTE_DIR}/infra/scripts/"
 
 ssh "${SSH_OPTS[@]}" "${SSH_USER}@${BACKEND_HOST}" "REMOTE_DIR='${REMOTE_DIR}' CRON_FILE='${CRON_FILE}' bash -s" <<'REMOTE'
 set -euo pipefail
@@ -35,13 +36,16 @@ set -euo pipefail
 sudo chmod 0755 "${REMOTE_DIR}/infra/scripts/run_knowledge_refresh_vm.sh"
 sudo mkdir -p /var/lib/oci-architecture-studio/knowledge-refresh/reports /var/log/oci-architecture-studio
 sudo chown -R opc:opc /var/lib/oci-architecture-studio /var/log/oci-architecture-studio
+if [[ -f /etc/oci-architecture-studio.env ]]; then
+  sudo chmod 0644 /etc/oci-architecture-studio.env
+fi
 
 sudo tee "${CRON_FILE}" >/dev/null <<CRON
 SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
-# Safe release-watch refresh: candidate-only, no fetch, no upload.
-17 */6 * * * opc VM_REFRESH_MODE=release-watch VM_REFRESH_NO_FETCH=true VM_REFRESH_QUICK_GATES=true VM_REFRESH_CANDIDATE_ONLY=true VM_REFRESH_UPLOAD=false ${REMOTE_DIR}/infra/scripts/run_knowledge_refresh_vm.sh
+# Gate-controlled release-watch refresh: live fetch, promote/upload only when policy gates pass.
+17 */6 * * * opc VM_REFRESH_MODE=release-watch VM_REFRESH_NO_FETCH=false VM_REFRESH_QUICK_GATES=true VM_REFRESH_CANDIDATE_ONLY=false VM_REFRESH_UPLOAD=true ${REMOTE_DIR}/infra/scripts/run_knowledge_refresh_vm.sh
 
 # Safe stable-docs refresh stays slower and conservative.
 23 2 * * 0 opc VM_REFRESH_MODE=stable-docs VM_REFRESH_NO_FETCH=true VM_REFRESH_QUICK_GATES=true VM_REFRESH_CANDIDATE_ONLY=true VM_REFRESH_UPLOAD=false ${REMOTE_DIR}/infra/scripts/run_knowledge_refresh_vm.sh

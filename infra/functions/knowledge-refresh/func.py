@@ -38,6 +38,8 @@ def handler(ctx, data: io.BytesIO | None = None) -> dict[str, Any]:
         command.append("--force")
     if payload.get("candidate_only") is True:
         command.append("--candidate-only")
+    if payload.get("reindex_no_fetch") is False:
+        command.append("--no-reindex-no-fetch")
     if payload.get("upload", True):
         namespace = os.getenv("OCI_OBJECT_STORAGE_NAMESPACE")
         bucket = os.getenv("SNAPSHOTS_BUCKET") or os.getenv("OCI_VECTOR_BUCKET")

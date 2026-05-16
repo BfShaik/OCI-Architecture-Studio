@@ -208,14 +208,17 @@ The installed cron file runs:
 
 ```bash
 VM_REFRESH_MODE=release-watch \
-VM_REFRESH_NO_FETCH=true \
+VM_REFRESH_NO_FETCH=false \
 VM_REFRESH_QUICK_GATES=true \
-VM_REFRESH_CANDIDATE_ONLY=true \
-VM_REFRESH_UPLOAD=false \
+VM_REFRESH_CANDIDATE_ONLY=false \
+VM_REFRESH_UPLOAD=true \
 /opt/oci-architecture-studio/infra/scripts/run_knowledge_refresh_vm.sh
 ```
 
-Safe mode must pass before any upload or promotion is enabled. Reports are
+Release-watch upload/promotion is gate-controlled: failed candidates remain
+under the run report directory and are not promoted or uploaded. Stable-docs
+remains safe-mode until its live-refresh cadence is separately validated.
+Reports are
 written under `/var/lib/oci-architecture-studio/knowledge-refresh/reports` and
 logs under `/var/log/oci-architecture-studio`.
 

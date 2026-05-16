@@ -167,13 +167,15 @@ def classify_release_item(item: str, source: dict[str, str], index: int, ingeste
     services = parse_services(item)
     primary_service = services[0] if services else "Oracle Cloud Infrastructure"
     tags = impact_tags(item)
+    parsed_release_date = parse_release_date(item)
     release = {
         "id": f"{source['id']}::{index}",
         "source_id": source["id"],
         "title": title,
         "source_url": source["url"],
         "source_type": source["source_type"],
-        "release_date": parse_release_date(item),
+        "release_date": parsed_release_date or ingested_at[:10],
+        "release_date_inferred": parsed_release_date is None,
         "service": primary_service,
         "services": services,
         "service_domain": service_domain(primary_service, item),
@@ -182,7 +184,7 @@ def classify_release_item(item: str, source: dict[str, str], index: int, ingeste
         "impact_level": "review" if any(tag in tags for tag in ("security", "dr", "migration", "architecture")) else "informational",
         "architecture_affecting": any(tag in tags for tag in ("architecture", "migration", "dr", "security", "cost")),
         "knowledge_scope": "current",
-        "valid_from": parse_release_date(item),
+        "valid_from": parsed_release_date or ingested_at[:10],
         "valid_to": None,
         "trust_level": source.get("trust_level", "official"),
         "ingested_timestamp": ingested_at,

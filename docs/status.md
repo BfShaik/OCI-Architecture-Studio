@@ -96,6 +96,29 @@ Last updated: 2026-05-16
 - API Gateway `/knowledge/refresh/status` now reports the latest VM release-watch dry run.
 - Gateway smoke, Object Storage retrieval health, operational readiness, and Terraform no-change plan passed after the pivot.
 
+## Latest VM Cron Release Refresh Activation
+
+- `TASK-035` completed for VM cron release-watch activation.
+- Release-watch cron now runs from the OCI backend VM with live release fetch, quick gates, candidate promotion enabled, and Object Storage upload enabled.
+- Stable-docs cron remains conservative: `no_fetch=true`, `quick_gates=true`, `candidate_only=true`, and `upload=false`.
+- The first live release-watch candidate was correctly blocked by gates: two live release items lacked parseable dates and the candidate caused retrieval regression misses. No authoritative snapshots were updated and no Object Storage upload occurred.
+- Hardened release ingestion so undated official release items get an explicit inferred date and `release_date_inferred=true`.
+- Hardened release-watch reindex behavior so live release notes can be fetched while affected knowledge-source reindexing uses stable curated fallback content by default. This keeps release freshness from destabilizing advisory retrieval.
+- Added `infra/scripts/upload_snapshots_to_object_storage.py` and wired the VM runner to upload both `oci-rag-index.json` and `oci-release-snapshot.json` after successful gated promotion.
+- Updated VM cron install so the `opc` cron runner can read `/etc/oci-architecture-studio.env` for non-secret runtime configuration.
+- Corrected manual activation passed:
+  - 12 live release items ingested
+  - 47 knowledge chunks preserved
+  - candidate validation passed
+  - retrieval health passed
+  - 26-case retrieval regression passed
+  - snapshots promoted locally on the VM
+  - both Object Storage objects uploaded
+  - refresh status endpoint reports `status=promoted`, `passed=true`, and `oci_upload_performed=true`
+- Gateway smoke, Object Storage retrieval health, operational readiness, backend refresh/API tests, and Terraform no-change plan passed after activation.
+- Oracle AI Vector Search shadow was rebuilt from the promoted snapshot: 47 chunks upserted, table/index health passed, and 26-case vector validation passed with 0.977 average top-chunk overlap.
+- Active retrieval remains `oci_object_storage`; Oracle AI Vector Search remains shadow-only until `TASK-036`.
+
 ## Latest Operational Promotion
 
 - `TASK-022` completed on staging: API Gateway runtime metadata was added to the running VM environment and the backend was redeployed from the current repository code without replacing the VM.

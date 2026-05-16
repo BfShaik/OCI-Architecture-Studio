@@ -104,8 +104,8 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | TASK-032 | Done | OCI Function Image Packaging. | Built and pushed immutable OCIR image `iad.ocir.io/idsmrn7rvqb6/oci-architecture-studio/knowledge-refresh:20260516-d73fa2c-task032-r3` with digest `sha256:28b85ed1ee6cac61a335f92ee1d53c258a7aa47864ede02989282bf930c07fc9`; packaged forced candidate-only invocation passed candidate validation, retrieval health, and 26-case retrieval regression. |
 | TASK-033 | Done | OCI Resource Scheduler Enablement. | Terraform applied the safe-mode knowledge refresh Function and schedules with immutable image `iad.ocir.io/idsmrn7rvqb6/oci-architecture-studio/knowledge-refresh:20260516-d73fa2c-task032-r3`; created Function `ocid1.fnfunc.oc1.iad.amaaaaaa2j5jslyavxvlplv2buo4czblwyii6ozstksvvja7uukuyxak6fkq`, release schedule `ocid1.resourceschedule.oc1.iad.amaaaaaa2j5jslya4y4m3mgofzhmyappmdsaqfawzbh5bgcnethhwirjsxia`, stable-docs schedule `ocid1.resourceschedule.oc1.iad.amaaaaaa2j5jslya44pyqv5jarhnzmt66da4zx4gs5kbuv2oajowllxbl3cq`, dynamic group, and IAM policy. Post-apply Terraform no-change plan, Gateway smoke, and operational readiness passed with known OCI DevOps/rebuildability warnings only. Scheduler payloads remain safe: `no_fetch=true`, `quick_gates=true`, `candidate_only=true`, `upload=false`. |
 | TASK-034 | Done | VM Cron Refresh Dry Run. | Disabled the failing OCI Function/Scheduler path with Terraform, installed `/etc/cron.d/oci-architecture-studio-knowledge-refresh` on the OCI backend VM, and ran safe release-watch plus stable-docs dry runs. Release-watch passed with `status=no_change`, `promoted=false`, `authoritative_snapshots_updated=false`, and `oci_upload_performed=false`; stable-docs passed candidate validation, retrieval health, and 26-case retrieval regression without promotion or upload. Gateway smoke, Object Storage retrieval health, operational readiness, Terraform no-change plan, and refresh status endpoint visibility passed. |
-| TASK-035 | Next | VM Cron Release Refresh Activation. | Enable release-watch refresh with upload and gate-controlled promotion only after VM safe mode passes; keep stable-docs refresh less frequent; document failure, rollback, stale warning, Object Storage sync, and Oracle vector shadow sync operations. |
-| TASK-036 | Pending | Return To Oracle Vector Promotion. | Resume active Oracle vector promotion only after refresh is stable; run Object Storage baseline, Oracle shadow parity, retrieval regression, and golden/edge evals. |
+| TASK-035 | Done | VM Cron Release Refresh Activation. | Activated release-watch VM cron with live release fetch, gate-controlled promotion, and Object Storage upload while keeping stable-docs safe-mode. First live candidate was blocked by gates, so release parsing now marks inferred dates and release-watch reindexes affected knowledge sources from stable curated fallback by default. The corrected manual activation passed candidate validation, retrieval health, and 26-case retrieval regression; promoted 47 chunks and 12 release items; uploaded `oci-rag-index.json` and `oci-release-snapshot.json`; Gateway smoke, Object Storage retrieval health, operational readiness, backend tests, and Terraform no-change plan passed. Oracle AI Vector Search shadow was rebuilt from the promoted snapshot and passed 26-case vector validation with 0.977 average top-chunk overlap. |
+| TASK-036 | Next | Return To Oracle Vector Promotion. | Resume active Oracle vector promotion only after refresh is stable; run Object Storage baseline, Oracle shadow parity, retrieval regression, and golden/edge evals. |
 
 ## Phase Gates
 
@@ -117,7 +117,7 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | OCI GenAI embeddings shadow activation | Not Started | Embedding dimension validation passes; retrieval regression does not degrade; fallback diagnostics clean. | `EMBEDDING_PROVIDER=local`; retain existing vector manifest. |
 | Oracle AI Vector Search shadow mode | Done | Schema/index validation passes; dual-read parity acceptable across golden, edge, and retrieval regression cases. | Keep `RETRIEVAL_PROVIDER=oci_object_storage`. |
 | Semantic retrieval active promotion | Not Started | Active-provider staging smoke, retrieval health, vector validation, eval suites, and rollback drill pass. | Restore `RETRIEVAL_PROVIDER=oci_object_storage` or `local_json`. |
-| Scheduled refresh activation | VM Cron Safe Mode Passed | OCI Function/Scheduler was safely disabled after deployed Function invocation failed container initialization. Backend VM cron is installed and safe release-watch/stable-docs dry runs passed with no authoritative promotion or Object Storage upload. | Remove `/etc/cron.d/oci-architecture-studio-knowledge-refresh`; continue operator-triggered refresh. |
+| Scheduled refresh activation | VM Cron Release-Watch Active | OCI Function/Scheduler was safely disabled after deployed Function invocation failed container initialization. Backend VM cron now runs live release-watch with gated promotion/upload; stable-docs remains safe-mode. | Set release-watch cron back to `VM_REFRESH_CANDIDATE_ONLY=true VM_REFRESH_UPLOAD=false`; continue operator-triggered refresh. |
 | OCI DevOps delivery promotion | Not Started | Pipeline deploys same artifact path as operator scripts; staging smoke and readiness gates pass. | Use existing operator scripts. |
 
 ## Required Validation Matrix
@@ -153,14 +153,14 @@ Run the appropriate subset after each increment; run the full matrix before a ne
 
 ## Next Actionable Increment
 
-Current task: `TASK-035`.
+Current task: `TASK-036`.
 
-Prepare VM cron release refresh activation:
+Prepare Oracle vector active-provider promotion:
 
-1. Change only the release-watch VM cron path from candidate-only safe mode to gate-controlled upload/promotion.
-2. Keep stable-docs in safe mode until release-watch proves stable.
-3. Run a manual release-watch activation first and verify candidate gates, Object Storage upload, refresh status, Gateway smoke, retrieval regression, and rollback notes.
-4. Sync Oracle AI Vector Search shadow from the promoted snapshot only after Object Storage promotion passes.
+1. Run Object Storage baseline retrieval regression against the refreshed 12-release snapshot.
+2. Run Oracle AI Vector Search shadow parity against the refreshed Object Storage baseline.
+3. Run golden/edge eval subsets and rollback validation.
+4. Promote Oracle vector only if refreshed parity passes and Object Storage fallback remains configured.
 
 ## Operating Rules
 
