@@ -15,6 +15,16 @@ Last updated: 2026-05-16
 - Historical report/archive documents now include current-state notes where their original milestone content predates Oracle AI Vector Search active reads.
 - No source code, runtime environment values, vector DB state, Object Storage objects, or infrastructure settings were changed in this documentation pass.
 
+## Latest OCI GenAI Synthesis Parity Readiness
+
+- `TASK-054` is partially advanced and currently blocked on approved live OCI GenAI synthesis configuration.
+- Strengthened `infra/scripts/genai_synthesis_parity_check.py` so parity reports now include required-service coverage, missing required services, latency guardrails, and an explicit promotion recommendation.
+- Local skip-safe parity run passed the deterministic baseline for all 4 GenAI comparison cases with 100% required-service coverage, then skipped live OCI GenAI because `OCI_GENAI_COMPARTMENT_ID` and `OCI_GENAI_CHAT_MODEL_ID` are not set locally.
+- Staging runtime key-presence check showed `OCI_REGION`, `OCI_AUTH_MODE`, and `ADVISORY_SYNTHESIS_PROVIDER` are set, while `OCI_GENAI_COMPARTMENT_ID`, `OCI_GENAI_CHAT_MODEL_ID`, and `OCI_GENAI_ENDPOINT` are not present in `/etc/oci-architecture-studio.env`.
+- Staging skip-safe parity run used the real runtime environment and active Oracle vector retrieval. The deterministic baseline passed all 4 GenAI comparison cases with 100% required-service coverage, then skipped live OCI GenAI because the required live synthesis keys are absent.
+- Focused backend validation passed: synthesis/API tests `17 passed`.
+- No runtime env values were printed, no env flags were changed, and deterministic synthesis remains the default.
+
 ## Latest Review History Operator Controls
 
 - `TASK-053` completed as the review-history retention/export policy increment.

@@ -50,7 +50,7 @@ Keep these items in the active work queue until each has validation evidence and
 | WIP-003 | Done | Expanded the curated OCI corpus beyond 47 sources with high-value official OCI docs. | Offline candidate rebuild produced 55 chunks from 55 sources; corpus health, retrieval regression, golden evals, advisory-quality evals, edge evals, and targeted backend tests passed. No Object Storage upload was performed. |
 | WIP-004 | Done | Ran OCI GenAI embeddings in shadow mode and compared against local deterministic embeddings. | Live `cohere.embed-v4.0` shadow candidate built with the project staging compartment at 256 dimensions; corpus health, candidate validation, retrieval regression, golden/advisory/edge evals, Oracle local-index validation, embedding visibility, and rollback baseline checks passed. No Object Storage upload or active promotion was performed. |
 | WIP-005 | Done | Promote Oracle AI Vector Search from shadow to active retrieval only after refreshed parity passes. | Completed through TASK-045 and TASK-050; active staging retrieval is `oracle_ai_vector_search` with 60 chunks and Object Storage fallback retained. |
-| WIP-006 | Ready | Run OCI GenAI synthesis live parity and decide whether to promote from deterministic default. | GenAI parity report, unsupported-claim check, citation coverage, latency/fallback metrics, deterministic rollback proof. |
+| WIP-006 | Blocked | Run OCI GenAI synthesis live parity and decide whether to promote from deterministic default. | Waiting for approved `OCI_GENAI_COMPARTMENT_ID` and `OCI_GENAI_CHAT_MODEL_ID` runtime configuration. Skip-safe local/staging parity runs passed deterministic baselines and preserved the deterministic default. |
 | WIP-007 | Ready | Add OCI Monitoring custom metrics for refresh latency, gate failures, candidate promotion count, rollback count, and retrieval regression failures. | Operational readiness, OCI metric visibility, safe local fallback. |
 | WIP-008 | Future | Move deployment automation from operator scripts toward OCI DevOps while preserving the current script-based rollback path. | OCI DevOps pipeline smoke, artifact parity with operator scripts, staging rollback validation. |
 | WIP-009 | Future | Add full current-vs-historical release comparison and richer bi-temporal retrieval. | Release-aware evals, temporal snapshot tests, advisory regression. |
@@ -154,7 +154,7 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | TASK-051 | Done | Add saved review history and prompt/session history after storage and security design are agreed. | Added redacted file-backed review history with 50-record retention, mode `600` writes, list/detail/delete APIs, `review_id` response metadata, and a Saved Reviews UI for refresh, open, active-state, and delete. Persisted records exclude retrieval/synthesis debug traces and redact obvious secrets. Deployment/eval smoke paths opt out of persistence. Passed backend full suite, focused API tests, frontend lint/build, golden evals, local browser smoke, VM focused tests, direct/API Gateway smoke, Gateway history redaction/delete smoke, staging browser smoke, retrieval health, env hash guardrail, and `git diff --check`. |
 | TASK-052 | Done | Improve section-level citation presentation for recommendation traceability. | Enriched section citation metadata with source URLs, relevance, trust level, source counts, and traceability notes; added eval checks for section citations; added UI section-to-source traceability cards, S-numbered recommendation evidence links, and S-number source badges. Passed backend full suite, focused response/API tests, frontend lint/build, retrieval regression, architecture-realism evals, golden evals, local browser smoke, and `git diff --check`. |
 | TASK-053 | Done | Add operator controls for review history retention/export policy. | Added policy metadata, redacted export, delete-all API, left-rail policy/export/clear controls, and recursive response redaction for saved history. Passed py_compile, focused API tests, backend full suite, frontend lint/build, local API/browser smoke, staging focused API tests, direct/API Gateway smoke, Gateway policy/redaction/export smoke, staging browser smoke, retrieval health, env hash guardrail, and `git diff --check`. |
-| TASK-054 | Next | Run OCI GenAI synthesis live parity without changing the deterministic default. | GenAI parity report, unsupported-claim check, citation coverage, latency/fallback metrics, deterministic rollback proof, frontend/backend smoke if response contracts change. |
+| TASK-054 | Blocked | Run OCI GenAI synthesis live parity without changing the deterministic default. | Parity checker now validates required-service coverage, missing required services, latency guardrails, fallback state, unsupported claims, hallucination findings, and promotion recommendation. Local and staging skip-safe runs passed deterministic baselines, but live OCI GenAI skipped because `OCI_GENAI_COMPARTMENT_ID` and `OCI_GENAI_CHAT_MODEL_ID` are not configured. |
 
 ## Phase Gates
 
@@ -202,14 +202,15 @@ Run the appropriate subset after each increment; run the full matrix before a ne
 
 ## Next Actionable Increment
 
-Current task: `TASK-054`.
+Current task: `TASK-054` is blocked on approved OCI GenAI synthesis runtime configuration.
 
 Next logical increment after review-history operator controls:
 
-1. Run OCI GenAI synthesis parity in shadow/evaluation mode without changing `ADVISORY_SYNTHESIS_PROVIDER`.
-2. Compare deterministic and OCI GenAI outputs for unsupported claims, citation coverage, quality warnings, and latency/fallback behavior.
-3. Keep active retrieval on `oracle_ai_vector_search`; do not change vector DB, wallet, or runtime secret settings.
-4. Promote OCI GenAI synthesis only after parity passes and deterministic rollback remains proven.
+1. Add approved `OCI_GENAI_COMPARTMENT_ID` and `OCI_GENAI_CHAT_MODEL_ID` through the reviewed runtime secret/config path.
+2. Run OCI GenAI synthesis parity in shadow/evaluation mode without changing `ADVISORY_SYNTHESIS_PROVIDER`.
+3. Compare deterministic and OCI GenAI outputs for unsupported claims, citation coverage, required-service coverage, quality warnings, and latency/fallback behavior.
+4. Keep active retrieval on `oracle_ai_vector_search`; do not change vector DB, wallet, or runtime secret settings.
+5. Promote OCI GenAI synthesis only after parity passes and deterministic rollback remains proven.
 
 ## Operating Rules
 

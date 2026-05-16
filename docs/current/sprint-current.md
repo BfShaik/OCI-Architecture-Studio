@@ -88,7 +88,7 @@ Latest validation/current posture:
 - saved review history: redacted file-backed history APIs and left-rail UI are deployed to staging; validation traffic opts out of persistence, and local/staging tests, direct/API Gateway smoke, Gateway history redaction/delete smoke, and staging browser smoke passed
 - section citation traceability: enriched section citation metadata and UI passed backend tests, frontend lint/build, retrieval regression, golden evals, architecture-realism evals, local browser smoke, staging focused tests, direct/gateway smoke, gateway traceability validation, and staging browser smoke
 - review-history operator controls: backend policy/export/delete-all APIs, recursive saved-response redaction, and left-rail controls are deployed to staging; local/staging tests, direct/API Gateway smoke, Gateway redaction/export smoke, retrieval health, env hash guardrail, and browser smoke passed
-- next pending: OCI GenAI synthesis parity in shadow/evaluation mode without changing the deterministic default
+- next pending: OCI GenAI synthesis parity is blocked until approved `OCI_GENAI_COMPARTMENT_ID` and `OCI_GENAI_CHAT_MODEL_ID` runtime configuration is available; deterministic default remains unchanged
 - OCI GenAI synthesis: implemented and configurable, not default
 - OCI GenAI embeddings: `cohere.embed-v4.0` shadow candidate validated at 256 dimensions, not default
 
