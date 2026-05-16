@@ -56,13 +56,26 @@ def main() -> int:
         return EXIT_MODEL_VISIBILITY_FAILED
 
     print("\n[STAGE 3] CHAT INFERENCE")
-    try:
-        text = chat_hello_world(inference_client, args)
-        print(f"response preview={text[:200]}")
-        print("chat ok")
-    except Exception as exc:  # noqa: BLE001 - diagnostic must report service/sdk failures.
-        print_exception(exc)
-        return EXIT_CHAT_FAILED
+    if args.skip_chat:
+        print("skipped by --skip-chat")
+    else:
+        try:
+            text = chat_hello_world(inference_client, args)
+            print(f"response preview={text[:200]}")
+            print("chat ok")
+        except Exception as exc:  # noqa: BLE001 - diagnostic must report service/sdk failures.
+            print_exception(exc)
+            return EXIT_CHAT_FAILED
+
+    if args.embed_smoke:
+        print("\n[STAGE 4] EMBED INFERENCE")
+        try:
+            dimensions = embed_hello_world(inference_client, args)
+            print(f"embedding dimensions={dimensions}")
+            print("embed ok")
+        except Exception as exc:  # noqa: BLE001 - diagnostic must report service/sdk failures.
+            print_exception(exc)
+            return EXIT_CHAT_FAILED
 
     return 0
 
@@ -82,6 +95,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--prompt", default="Say hello in one sentence.")
     parser.add_argument("--max-tokens", type=int, default=int(os.getenv("OCI_GENAI_MAX_TOKENS", "64")))
     parser.add_argument("--temperature", type=float, default=float(os.getenv("OCI_GENAI_TEMPERATURE", "0.1")))
+    parser.add_argument(
+        "--embed-smoke",
+        action="store_true",
+        help="Run an Embed v4 hello-world probe using the same inference client style as Oracle examples.",
+    )
+    parser.add_argument("--skip-chat", action="store_true", help="Skip Stage 3 chat and run auth/model visibility plus embed smoke.")
+    parser.add_argument("--embedding-model-id", default=os.getenv("OCI_GENAI_EMBEDDING_MODEL_ID", "cohere.embed-v4.0"))
     args = parser.parse_args()
     missing = [
         name
@@ -93,6 +113,8 @@ def parse_args() -> argparse.Namespace:
     ]
     if missing:
         parser.error("Missing required value(s): " + ", ".join(missing))
+    if not args.endpoint and args.region:
+        args.endpoint = f"https://inference.generativeai.{args.region}.oci.oraclecloud.com"
     return args
 
 
@@ -187,6 +209,21 @@ def chat_hello_world(client: Any, args: argparse.Namespace) -> str:
     if not text:
         raise RuntimeError("OCI GenAI returned no response text.")
     return text
+
+
+def embed_hello_world(client: Any, args: argparse.Namespace) -> int:
+    details = oci.generative_ai_inference.models.EmbedTextDetails()
+    details.serving_mode = oci.generative_ai_inference.models.OnDemandServingMode(
+        model_id=args.embedding_model_id,
+    )
+    details.inputs = ("Say hello in one sentence.",)
+    details.truncate = "NONE"
+    details.compartment_id = args.compartment_id
+    response = client.embed_text(details)
+    embeddings = getattr(response.data, "embeddings", None) or []
+    if not embeddings:
+        raise RuntimeError("OCI GenAI returned no embedding.")
+    return len(embeddings[0])
 
 
 def extract_text(chat_response: Any) -> str:
