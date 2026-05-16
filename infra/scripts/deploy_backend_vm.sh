@@ -37,7 +37,9 @@ rsync -az --delete \
   -e "$RSYNC_SSH" \
   --exclude ".git" \
   --exclude ".terraform" \
+  --exclude ".env" \
   --exclude "node_modules" \
+  --exclude "data" \
   --exclude ".venv" \
   --exclude "__pycache__" \
   --exclude ".pytest_cache" \
