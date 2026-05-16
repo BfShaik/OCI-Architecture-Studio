@@ -31,7 +31,10 @@ textarea {
 
 .sidebar {
   display: flex;
+  flex-direction: column;
+  gap: 28px;
   align-items: flex-start;
+  justify-content: space-between;
   padding: 40px 32px;
   color: #ffffff;
   background: #26313f;
@@ -87,6 +90,122 @@ h1 {
 
 .prompt-chip:hover {
   background: rgb(255 255 255 / 14%);
+}
+
+.history-panel {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+.history-heading {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.history-heading h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.history-heading .eyebrow {
+  margin-bottom: 4px;
+}
+
+.icon-action,
+.history-delete {
+  min-width: 36px;
+  min-height: 36px;
+  border: 1px solid rgb(255 255 255 / 16%);
+  padding: 0;
+  color: #e8eef7;
+  background: rgb(255 255 255 / 8%);
+}
+
+.icon-action:hover,
+.history-delete:hover {
+  background: rgb(255 255 255 / 14%);
+}
+
+.history-list {
+  display: grid;
+  gap: 8px;
+}
+
+.history-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: stretch;
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 8px;
+  padding: 8px;
+  background: rgb(255 255 255 / 7%);
+}
+
+.history-item-active {
+  border-color: #a7f3d0;
+  background: rgb(16 185 129 / 14%);
+}
+
+.history-open {
+  display: grid;
+  justify-items: start;
+  gap: 5px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  color: #e8eef7;
+  background: transparent;
+  text-align: left;
+}
+
+.history-open:hover {
+  background: transparent;
+}
+
+.history-open span {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  color: #b9c7d6;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.25;
+  text-transform: capitalize;
+}
+
+.history-open strong {
+  color: #ffffff;
+  font-size: 0.83rem;
+  line-height: 1.32;
+  overflow-wrap: anywhere;
+}
+
+.history-open small,
+.history-empty,
+.history-error {
+  color: #d8e1eb;
+  font-size: 0.76rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.history-empty,
+.history-error {
+  margin: 0;
+}
+
+.history-error {
+  border-left: 3px solid #fed7aa;
+  padding: 7px 9px;
+  color: #ffedd5;
+  background: rgb(154 52 18 / 26%);
 }
 
 .workspace {

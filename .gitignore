@@ -23,6 +23,7 @@ pnpm-debug.log*
 
 coverage/
 .coverage
+data/review_history*.json
 evals/reports/
 knowledge/reports/
 

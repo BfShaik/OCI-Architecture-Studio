@@ -43,6 +43,7 @@ In scope:
 - release-context advisory UI with release matches, affected services, snapshot timing, temporal boundary, and maturity notes
 - architecture map UI with topology summaries, lane-based service relationships, implementation path, and operational notes
 - OCI architecture accuracy corpus and retrieval tuning for landing zones, EKS-to-OKE migration, database DR, analytics platforms, and observability
+- secure saved review history and prompt/session recall
 - evidence-linked recommendations and confidence scoring
 - advisory-quality eval suite
 
@@ -67,7 +68,7 @@ See `docs/current/status.md` for the current completed/pending log.
 
 Latest validation/current posture:
 
-- backend tests: `131 passed`
+- backend tests: `132 passed`
 - frontend lint: passed
 - frontend build: passed
 - Terraform validation: passed for `dev`, `test`, and `staging`
@@ -82,6 +83,7 @@ Latest validation/current posture:
 - release-context UI: polished advisory panel is deployed to staging and passed local lint/build, backend tests, retrieval regression, local smoke, staging direct/API Gateway smoke, retrieval health, hash guardrails, and browser smoke
 - architecture map UI: deployed to staging and passed local lint/build, focused topology/API tests, backend full suite, retrieval regression, local smoke, staging direct/API Gateway smoke, retrieval health, hash guardrails, and browser smoke
 - OCI architecture accuracy: landing-zone, EKS-to-OKE, and database DR evals are in regression; live Gateway landing-zone evidence now prioritizes IAM, VCN, Vault, Cloud Guard, Audit, and Logging
+- saved review history: redacted file-backed history APIs and left-rail UI are deployed to staging; validation traffic opts out of persistence, and local/staging tests, direct/API Gateway smoke, Gateway history redaction/delete smoke, and staging browser smoke passed
 - OCI GenAI synthesis: implemented and configurable, not default
 - OCI GenAI embeddings: `cohere.embed-v4.0` shadow candidate validated at 256 dimensions, not default
 

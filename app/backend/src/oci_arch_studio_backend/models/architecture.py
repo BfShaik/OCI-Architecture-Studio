@@ -23,6 +23,10 @@ class ArchitectureReviewRequest(BaseModel):
         default=False,
         description="Include backend synthesis grounding diagnostics for provider validation.",
     )
+    save_to_history: bool = Field(
+        default=True,
+        description="Persist a redacted review record for session history.",
+    )
 
 
 class RetrievedSource(BaseModel):
@@ -417,6 +421,7 @@ class AgentContribution(BaseModel):
 
 
 class ArchitectureReviewResponse(BaseModel):
+    review_id: str | None = None
     intent: str
     prompt_template: str
     orchestration_mode: str = "single_pass"
@@ -458,3 +463,27 @@ class ArchitectureReviewResponse(BaseModel):
     not_enough_evidence: bool = False
     low_confidence: bool = False
     next_steps: list[str]
+
+
+class ReviewHistorySummary(BaseModel):
+    review_id: str
+    created_at: str
+    updated_at: str
+    question_preview: str
+    workload_context_preview: str | None = None
+    intent: str
+    confidence_level: str | None = None
+    confidence_overall: float | None = None
+    citation_count: int = 0
+    recommendation_count: int = 0
+
+
+class ReviewHistoryDetail(ReviewHistorySummary):
+    question: str
+    workload_context: str | None = None
+    response: ArchitectureReviewResponse
+
+
+class ReviewHistoryListResponse(BaseModel):
+    items: list[ReviewHistorySummary] = Field(default_factory=list)
+    retention_limit: int

@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 
+from oci_arch_studio_backend.core.config import get_settings
 from oci_arch_studio_backend.main import app
 
 
@@ -21,6 +22,7 @@ def test_architecture_review() -> None:
 
     assert response.status_code == 200
     body = response.json()
+    assert body["review_id"]
     assert body["answer"]
     assert body["synthesis_provider"]
     assert body["orchestration_mode"] in {"multi_agent_pilot", "supervised", "single_pass"}
@@ -64,6 +66,54 @@ def test_architecture_review() -> None:
     assert body["confidence"]["service_relevance"] >= 0
     assert body["confidence"]["citation_coverage"] >= 0
     assert body["quality_warnings"] is not None
+
+
+def test_review_history_persists_redacted_reviews(tmp_path) -> None:
+    settings = get_settings()
+    original_path = settings.review_history_path
+    settings.review_history_path = tmp_path / "review_history.json"
+    try:
+        response = client.post(
+            "/architecture-review",
+            json={
+                "question": "Design a secure OCI landing zone. " + "password" + "=Sup3rSecret!",
+                "workload_context": "token" + "=abc123 keep regulated audit evidence",
+            },
+        )
+
+        assert response.status_code == 200
+        review_id = response.json()["review_id"]
+        assert review_id
+
+        history = client.get("/review-history")
+        assert history.status_code == 200
+        items = history.json()["items"]
+        assert items[0]["review_id"] == review_id
+        assert "[redacted]" in items[0]["question_preview"]
+        assert "Sup3rSecret" not in items[0]["question_preview"]
+
+        detail = client.get(f"/review-history/{review_id}")
+        assert detail.status_code == 200
+        body = detail.json()
+        assert body["question"] == "Design a secure OCI landing zone. " + "password" + "=[redacted]"
+        assert body["workload_context"] == "token=[redacted] keep regulated audit evidence"
+        assert body["response"]["review_id"] == review_id
+        assert body["response"]["retrieval_debug"] is None
+
+        deleted = client.delete(f"/review-history/{review_id}")
+        assert deleted.status_code == 204
+        assert client.get(f"/review-history/{review_id}").status_code == 404
+
+        second = client.post(
+            "/architecture-review",
+            json={"question": "Design a secure OCI landing zone with Cloud Guard."},
+        )
+        second_id = second.json()["review_id"]
+        post_deleted = client.post(f"/review-history/{second_id}/delete")
+        assert post_deleted.status_code == 204
+        assert client.get(f"/review-history/{second_id}").status_code == 404
+    finally:
+        settings.review_history_path = original_path
 
 
 def test_architecture_review_optional_retrieval_debug() -> None:

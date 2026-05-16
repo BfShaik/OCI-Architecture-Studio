@@ -2,6 +2,8 @@ import type {
   ArchitectureReviewRequest,
   ArchitectureReviewResponse,
   KnowledgeRefreshStatus,
+  ReviewHistoryDetail,
+  ReviewHistoryListResponse,
   RetrievalHealth,
 } from "../types";
 
@@ -48,4 +50,39 @@ export async function requestRetrievalHealth(): Promise<RetrievalHealth> {
   }
 
   return response.json();
+}
+
+export async function requestReviewHistory(): Promise<ReviewHistoryListResponse> {
+  const response = await fetch(`${API_BASE_URL}/review-history`);
+
+  if (!response.ok) {
+    throw new Error(`Review history failed: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function requestReviewHistoryDetail(
+  reviewId: string,
+): Promise<ReviewHistoryDetail> {
+  const response = await fetch(`${API_BASE_URL}/review-history/${reviewId}`);
+
+  if (!response.ok) {
+    throw new Error(`Review history item failed: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function deleteReviewHistoryItem(reviewId: string): Promise<void> {
+  const response = await fetch(
+    `${API_BASE_URL}/review-history/${reviewId}/delete`,
+    {
+      method: "POST",
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`Delete history item failed: ${response.status}`);
+  }
 }

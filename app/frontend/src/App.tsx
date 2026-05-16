@@ -1,16 +1,20 @@
 import { FormEvent, useEffect, useState } from "react";
-import { Send } from "lucide-react";
+import { Clock, RotateCcw, Send, Trash2 } from "lucide-react";
 import { KnowledgeRefreshPanel } from "./components/KnowledgeRefreshPanel";
 import { RetrievalProviderPanel } from "./components/RetrievalProviderPanel";
 import { ReviewResult } from "./components/ReviewResult";
 import {
   requestArchitectureReview,
+  deleteReviewHistoryItem,
   requestKnowledgeRefreshStatus,
+  requestReviewHistory,
+  requestReviewHistoryDetail,
   requestRetrievalHealth,
 } from "./lib/api";
 import type {
   ArchitectureReviewResponse,
   KnowledgeRefreshStatus,
+  ReviewHistorySummary,
   RetrievalHealth,
 } from "./types";
 
@@ -39,6 +43,10 @@ export function App() {
     useState<RetrievalHealth | null>(null);
   const [retrievalError, setRetrievalError] = useState<string | null>(null);
   const [isRetrievalLoading, setIsRetrievalLoading] = useState(false);
+  const [historyItems, setHistoryItems] = useState<ReviewHistorySummary[]>([]);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [activeReviewId, setActiveReviewId] = useState<string | null>(null);
 
   async function loadRefreshStatus() {
     setRefreshError(null);
@@ -76,9 +84,31 @@ export function App() {
     }
   }
 
+  async function loadReviewHistory(activeId?: string | null) {
+    setHistoryError(null);
+    setIsHistoryLoading(true);
+
+    try {
+      const response = await requestReviewHistory();
+      setHistoryItems(response.items);
+      if (activeId !== undefined) {
+        setActiveReviewId(activeId);
+      }
+    } catch (caught) {
+      const message =
+        caught instanceof Error
+          ? caught.message
+          : "Unable to load review history.";
+      setHistoryError(message);
+    } finally {
+      setIsHistoryLoading(false);
+    }
+  }
+
   useEffect(() => {
     void loadRefreshStatus();
     void loadRetrievalHealth();
+    void loadReviewHistory();
   }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -91,14 +121,56 @@ export function App() {
         question,
         workload_context: workloadContext || undefined,
         retrieval_debug: true,
+        save_to_history: true,
       });
       setResult(response);
+      setActiveReviewId(response.review_id ?? null);
+      void loadReviewHistory(response.review_id ?? null);
     } catch (caught) {
       const message =
         caught instanceof Error ? caught.message : "Unable to request review.";
       setError(message);
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function handleOpenHistory(reviewId: string) {
+    setError(null);
+    setHistoryError(null);
+
+    try {
+      const detail = await requestReviewHistoryDetail(reviewId);
+      setQuestion(detail.question);
+      setWorkloadContext(detail.workload_context ?? "");
+      setResult(detail.response);
+      setActiveReviewId(reviewId);
+    } catch (caught) {
+      const message =
+        caught instanceof Error
+          ? caught.message
+          : "Unable to load saved review.";
+      setHistoryError(message);
+    }
+  }
+
+  async function handleDeleteHistory(reviewId: string) {
+    setHistoryError(null);
+
+    try {
+      await deleteReviewHistoryItem(reviewId);
+      setHistoryItems((items) =>
+        items.filter((item) => item.review_id !== reviewId),
+      );
+      if (activeReviewId === reviewId) {
+        setActiveReviewId(null);
+      }
+    } catch (caught) {
+      const message =
+        caught instanceof Error
+          ? caught.message
+          : "Unable to delete saved review.";
+      setHistoryError(message);
     }
   }
 
@@ -127,6 +199,69 @@ export function App() {
                 {prompt}
               </button>
             ))}
+          </div>
+        </div>
+        <div className="history-panel">
+          <div className="history-heading">
+            <div>
+              <p className="eyebrow">Review History</p>
+              <h2>Saved Reviews</h2>
+            </div>
+            <button
+              type="button"
+              className="icon-action"
+              onClick={() => void loadReviewHistory(activeReviewId)}
+              aria-label="Refresh saved reviews"
+              title="Refresh saved reviews"
+            >
+              <RotateCcw size={16} aria-hidden="true" />
+            </button>
+          </div>
+
+          {historyError ? <p className="history-error">{historyError}</p> : null}
+
+          <div className="history-list" aria-busy={isHistoryLoading}>
+            {historyItems.length === 0 ? (
+              <p className="history-empty">
+                {isHistoryLoading ? "Loading saved reviews." : "No saved reviews yet."}
+              </p>
+            ) : (
+              historyItems.map((item) => (
+                <article
+                  key={item.review_id}
+                  className={
+                    item.review_id === activeReviewId
+                      ? "history-item history-item-active"
+                      : "history-item"
+                  }
+                >
+                  <button
+                    type="button"
+                    className="history-open"
+                    onClick={() => void handleOpenHistory(item.review_id)}
+                  >
+                    <span>
+                      <Clock size={14} aria-hidden="true" />
+                      {item.intent.replace(/_/g, " ")}
+                    </span>
+                    <strong>{item.question_preview}</strong>
+                    <small>
+                      {item.confidence_level ?? "review"} confidence ·{" "}
+                      {item.citation_count} citations
+                    </small>
+                  </button>
+                  <button
+                    type="button"
+                    className="history-delete"
+                    onClick={() => void handleDeleteHistory(item.review_id)}
+                    aria-label="Delete saved review"
+                    title="Delete saved review"
+                  >
+                    <Trash2 size={15} aria-hidden="true" />
+                  </button>
+                </article>
+              ))
+            )}
           </div>
         </div>
       </aside>

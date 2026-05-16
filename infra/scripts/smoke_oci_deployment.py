@@ -45,7 +45,7 @@ def check_backend(api_base_url: str) -> None:
 
     architecture_review = post_json(
         f"{api_base_url.rstrip('/')}/architecture-review",
-        {"question": "Design a highly available ecommerce platform on OCI."},
+        {"question": "Design a highly available ecommerce platform on OCI.", "save_to_history": False},
     )
     assert architecture_review["intent"] == "architecture", architecture_review
     assert architecture_review["citations"], architecture_review
@@ -54,7 +54,7 @@ def check_backend(api_base_url: str) -> None:
 
     release_review = post_json(
         f"{api_base_url.rstrip('/')}/architecture-review",
-        {"question": "How does the latest OCI update affect this architecture?"},
+        {"question": "How does the latest OCI update affect this architecture?", "save_to_history": False},
     )
     assert release_review["intent"] == "release_awareness", release_review
     assert release_review["citations"], release_review

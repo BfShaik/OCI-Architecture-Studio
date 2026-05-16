@@ -1,9 +1,11 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, Response
 
 from oci_arch_studio_backend.models.architecture import (
     ArchitectureReviewRequest,
     ArchitectureReviewResponse,
     HealthResponse,
+    ReviewHistoryDetail,
+    ReviewHistoryListResponse,
 )
 from oci_arch_studio_backend.core.config import get_settings
 from oci_arch_studio_backend.services.advisory_metrics import advisory_quality_metrics
@@ -11,6 +13,7 @@ from oci_arch_studio_backend.services.orchestrator import ArchitectureReviewOrch
 from oci_arch_studio_backend.services.operational import OperationalDiagnostics, read_refresh_status
 from oci_arch_studio_backend.services.releases import ReleaseSnapshotStore
 from oci_arch_studio_backend.services.retrieval import build_retriever
+from oci_arch_studio_backend.services.review_history import ReviewHistoryStore
 from oci_arch_studio_backend.services.synthesis import build_synthesizer
 from oci_arch_studio_backend.services.supervised_orchestration import (
     SupervisedAgentOrchestrator,
@@ -51,7 +54,44 @@ async def architecture_review(
         ),
         synthesis_debug_enabled=settings.synthesis_debug_enabled,
     )
-    return await orchestrator.review(request)
+    response = await orchestrator.review(request)
+    if request.save_to_history:
+        saved = ReviewHistoryStore(settings.review_history_path).save(request, response)
+        response.review_id = saved.review_id
+    return response
+
+
+@router.get("/review-history", response_model=ReviewHistoryListResponse)
+async def review_history() -> ReviewHistoryListResponse:
+    settings = get_settings()
+    return ReviewHistoryStore(settings.review_history_path).list()
+
+
+@router.get("/review-history/{review_id}", response_model=ReviewHistoryDetail)
+async def review_history_detail(review_id: str) -> ReviewHistoryDetail:
+    settings = get_settings()
+    detail = ReviewHistoryStore(settings.review_history_path).get(review_id)
+    if detail is None:
+        raise HTTPException(status_code=404, detail="Review history item not found.")
+    return detail
+
+
+@router.delete("/review-history/{review_id}", status_code=204)
+async def delete_review_history_item(review_id: str) -> Response:
+    return _delete_review_history_item(review_id)
+
+
+@router.post("/review-history/{review_id}/delete", status_code=204)
+async def post_delete_review_history_item(review_id: str) -> Response:
+    return _delete_review_history_item(review_id)
+
+
+def _delete_review_history_item(review_id: str) -> Response:
+    settings = get_settings()
+    deleted = ReviewHistoryStore(settings.review_history_path).delete(review_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Review history item not found.")
+    return Response(status_code=204)
 
 
 @router.get("/retrieval/health")

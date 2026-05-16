@@ -96,6 +96,10 @@ class Settings(BaseSettings):
         default=REPO_ROOT / "knowledge" / "reports" / "knowledge-refresh-status.json",
         alias="KNOWLEDGE_REFRESH_STATUS_PATH",
     )
+    review_history_path: Path = Field(
+        default=REPO_ROOT / "data" / "review_history.json",
+        alias="REVIEW_HISTORY_PATH",
+    )
     frontend_dist_path: Path = Field(
         default=REPO_ROOT / "app" / "frontend" / "dist",
         alias="FRONTEND_DIST_PATH",
@@ -136,6 +140,13 @@ class Settings(BaseSettings):
     @field_validator("knowledge_refresh_status_path")
     @classmethod
     def resolve_knowledge_refresh_status_path(cls, value: Path) -> Path:
+        if value.is_absolute():
+            return value
+        return REPO_ROOT / value
+
+    @field_validator("review_history_path")
+    @classmethod
+    def resolve_review_history_path(cls, value: Path) -> Path:
         if value.is_absolute():
             return value
         return REPO_ROOT / value

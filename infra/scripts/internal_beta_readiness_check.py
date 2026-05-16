@@ -146,6 +146,7 @@ def run_advisory_checks(base: str) -> list[dict[str, Any]]:
     ]
     results = []
     for case in cases:
+        case["payload"]["save_to_history"] = False
         response = post_json(f"{base}/architecture-review", case["payload"])
         failures: list[str] = []
         warnings: list[str] = []

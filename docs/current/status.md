@@ -2,6 +2,31 @@
 
 Last updated: 2026-05-16
 
+## Latest Saved Review History
+
+- `TASK-051` completed as a secure saved review history increment.
+- Added a file-backed backend review history store at the default local path `data/review_history.json` with automatic parent directory creation, mode `600` writes, atomic replacement, and 50-record bounded retention.
+- Added secret redaction for obvious credential-like tokens and sensitive OCID patterns before a prompt or workload context is persisted.
+- Added history APIs for list, detail, and delete, and a `review_id` on architecture review responses.
+- Excluded retrieval and synthesis debug traces from persisted history records while retaining the review response needed to reload a saved advisory.
+- Added a left-rail Saved Reviews UI with refresh, open, active-state, and delete actions. The browser does not use `localStorage` for review history.
+- Updated deployment/eval smoke paths to opt out of persistence so validation traffic does not pollute saved review history.
+- No staging runtime environment values or retrieval provider flags were changed.
+- Validation passed:
+  - backend full suite: `132 passed`
+  - focused history/API tests: 25 passed
+  - frontend lint
+  - frontend production build
+  - local browser smoke for redacted history display, open, and delete
+  - golden evals: 18/18
+  - VM focused API/operational tests: 25 passed
+  - direct VM and API Gateway smoke
+  - Gateway history smoke for redaction, debug-trace removal, open, and POST delete
+  - staging browser smoke for Saved Reviews rendering
+  - Gateway retrieval health remained `oracle_ai_vector_search`, 60 chunks, fallback inactive
+  - env hash remained unchanged
+  - `git diff --check`
+
 ## Latest OCI Architecture Accuracy Promotion
 
 - `TASK-050` completed as an OCI architecture recommendation accuracy increment.

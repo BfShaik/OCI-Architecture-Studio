@@ -55,7 +55,10 @@ def load_cases(paths: list[Path]) -> list[dict[str, Any]]:
 
 def execute_case(client: TestClient, prompt: str) -> dict[str, Any]:
     started_at = perf_counter()
-    response = client.post("/architecture-review", json={"question": prompt, "synthesis_debug": True})
+    response = client.post(
+        "/architecture-review",
+        json={"question": prompt, "synthesis_debug": True, "save_to_history": False},
+    )
     latency_ms = round((perf_counter() - started_at) * 1000, 2)
     response.raise_for_status()
     payload = response.json()

@@ -314,6 +314,7 @@ export type ArchitectureReviewRequest = {
   question: string;
   workload_context?: string;
   retrieval_debug?: boolean;
+  save_to_history?: boolean;
 };
 
 export type KnowledgeRefreshLifecycle = {
@@ -424,6 +425,7 @@ export type RetrievalHealth = {
 };
 
 export type ArchitectureReviewResponse = {
+  review_id?: string | null;
   intent: string;
   prompt_template: string;
   orchestration_mode: string;
@@ -462,4 +464,28 @@ export type ArchitectureReviewResponse = {
   not_enough_evidence: boolean;
   low_confidence: boolean;
   next_steps: string[];
+};
+
+export type ReviewHistorySummary = {
+  review_id: string;
+  created_at: string;
+  updated_at: string;
+  question_preview: string;
+  workload_context_preview?: string | null;
+  intent: string;
+  confidence_level?: string | null;
+  confidence_overall?: number | null;
+  citation_count: number;
+  recommendation_count: number;
+};
+
+export type ReviewHistoryDetail = ReviewHistorySummary & {
+  question: string;
+  workload_context?: string | null;
+  response: ArchitectureReviewResponse;
+};
+
+export type ReviewHistoryListResponse = {
+  items: ReviewHistorySummary[];
+  retention_limit: number;
 };

@@ -72,7 +72,7 @@ def check_baseline(
 
     review = post_json(
         f"{api_base_url}/architecture-review",
-        {"question": "Design a highly available ecommerce platform on OCI."},
+        {"question": "Design a highly available ecommerce platform on OCI.", "save_to_history": False},
     )
     checks.append(
         {

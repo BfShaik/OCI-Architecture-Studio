@@ -298,7 +298,7 @@ def load_cases(path: Path) -> list[dict[str, Any]]:
 
 
 def execute_prompt(client: TestClient, prompt: str) -> dict[str, Any]:
-    response = client.post("/architecture-review", json={"question": prompt})
+    response = client.post("/architecture-review", json={"question": prompt, "save_to_history": False})
     response.raise_for_status()
     return response.json()
 
