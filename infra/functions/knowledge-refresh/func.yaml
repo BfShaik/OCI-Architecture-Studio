@@ -4,4 +4,4 @@ version: 0.0.1
 runtime: python
 entrypoint: /python/bin/fdk /function/infra/functions/knowledge-refresh/func.py handler
 memory: 1024
-timeout: 900
+timeout: 300

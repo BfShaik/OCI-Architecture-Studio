@@ -83,7 +83,7 @@ knowledge_refresh_function_image           = "iad.ocir.io/<namespace>/oci-archit
 knowledge_refresh_release_cron             = "17 */6 * * *"
 knowledge_refresh_stable_docs_cron         = "23 2 * * 0"
 knowledge_refresh_function_memory_mbs      = 1024
-knowledge_refresh_function_timeout_seconds = 900
+knowledge_refresh_function_timeout_seconds = 300
 ```
 
 Validation:

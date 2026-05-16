@@ -95,6 +95,12 @@ variable "knowledge_refresh_function_image" {
   default     = ""
 }
 
+variable "knowledge_refresh_scheduler_safe_mode" {
+  description = "When true, scheduler payloads run no-fetch, quick-gate, candidate-only refreshes without upload."
+  type        = bool
+  default     = true
+}
+
 variable "knowledge_refresh_release_cron" {
   description = "Cron expression for release-note refresh."
   type        = string
@@ -116,7 +122,7 @@ variable "knowledge_refresh_function_memory_mbs" {
 variable "knowledge_refresh_function_timeout_seconds" {
   description = "Timeout in seconds for the knowledge refresh OCI Function."
   type        = number
-  default     = 900
+  default     = 300
 }
 
 variable "deployment_profile" {

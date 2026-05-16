@@ -15,6 +15,7 @@ module "foundation" {
   alarm_email                                = var.alarm_email
   enable_knowledge_refresh_scheduler         = var.enable_knowledge_refresh_scheduler
   knowledge_refresh_function_image           = var.knowledge_refresh_function_image
+  knowledge_refresh_scheduler_safe_mode      = var.knowledge_refresh_scheduler_safe_mode
   knowledge_refresh_release_cron             = var.knowledge_refresh_release_cron
   knowledge_refresh_stable_docs_cron         = var.knowledge_refresh_stable_docs_cron
   knowledge_refresh_function_memory_mbs      = var.knowledge_refresh_function_memory_mbs

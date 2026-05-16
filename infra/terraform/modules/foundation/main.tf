@@ -10,6 +10,28 @@ locals {
     ? var.autonomous_vector_db_admin_password
     : try(random_password.autonomous_vector_db_admin[0].result, "")
   )
+  knowledge_refresh_release_payload = var.knowledge_refresh_scheduler_safe_mode ? jsonencode({
+    mode           = "release-watch"
+    no_fetch       = true
+    quick_gates    = true
+    candidate_only = true
+    upload         = false
+    }) : jsonencode({
+    mode        = "release-watch"
+    upload      = true
+    quick_gates = false
+  })
+  knowledge_refresh_stable_docs_payload = var.knowledge_refresh_scheduler_safe_mode ? jsonencode({
+    mode           = "stable-docs"
+    no_fetch       = true
+    quick_gates    = true
+    candidate_only = true
+    upload         = false
+    }) : jsonencode({
+    mode        = "stable-docs"
+    upload      = true
+    quick_gates = false
+  })
 }
 
 data "oci_identity_availability_domains" "ads" {
@@ -292,11 +314,7 @@ resource "oci_resource_scheduler_schedule" "knowledge_refresh_release_watch" {
     parameters {
       parameter_type = "BODY"
       value = [
-        jsonencode({
-          mode        = "release-watch"
-          upload      = true
-          quick_gates = false
-        })
+        local.knowledge_refresh_release_payload
       ]
     }
   }
@@ -318,11 +336,7 @@ resource "oci_resource_scheduler_schedule" "knowledge_refresh_stable_docs" {
     parameters {
       parameter_type = "BODY"
       value = [
-        jsonencode({
-          mode        = "stable-docs"
-          upload      = true
-          quick_gates = false
-        })
+        local.knowledge_refresh_stable_docs_payload
       ]
     }
   }

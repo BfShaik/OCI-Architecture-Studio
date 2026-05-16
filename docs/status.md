@@ -61,7 +61,22 @@ Last updated: 2026-05-16
 - OCIR digest: `sha256:28b85ed1ee6cac61a335f92ee1d53c258a7aa47864ede02989282bf930c07fc9`.
 - Packaged forced candidate-only invocation passed inside Docker with candidate validation, retrieval health, and 26-case retrieval regression.
 - Replaced the generic OCI auth token named `test` with a purpose-named OCIR token because the user already had the maximum two auth tokens. The temporary local token file was removed after Docker login.
-- Resource Scheduler remains disabled until Terraform plan review and controlled scheduler dry run pass.
+- Resource Scheduler enablement moved to `TASK-033`; live upload/promotion remains disabled until controlled scheduler dry run passes.
+
+## Latest Resource Scheduler Enablement
+
+- `TASK-033` completed for safe-mode OCI Resource Scheduler enablement.
+- Terraform applied the knowledge refresh OCI Function and schedules using immutable image `iad.ocir.io/idsmrn7rvqb6/oci-architecture-studio/knowledge-refresh:20260516-d73fa2c-task032-r3`.
+- Created Function OCID: `ocid1.fnfunc.oc1.iad.amaaaaaa2j5jslyavxvlplv2buo4czblwyii6ozstksvvja7uukuyxak6fkq`.
+- Created release-watch schedule OCID: `ocid1.resourceschedule.oc1.iad.amaaaaaa2j5jslya4y4m3mgofzhmyappmdsaqfawzbh5bgcnethhwirjsxia`.
+- Created stable-docs schedule OCID: `ocid1.resourceschedule.oc1.iad.amaaaaaa2j5jslya44pyqv5jarhnzmt66da4zx4gs5kbuv2oajowllxbl3cq`.
+- Terraform also created the Resource Scheduler dynamic group and IAM policy needed to invoke the Function.
+- Scheduler payloads are intentionally safe-mode only: `no_fetch=true`, `quick_gates=true`, `candidate_only=true`, and `upload=false`.
+- Post-apply Terraform drift check reported no changes.
+- API Gateway smoke passed through `https://pkgmvyyi3itxklv6knh4xfm6ca.apigateway.us-ashburn-1.oci.customer-oci.com`.
+- Operational readiness passed with the existing known warnings for inactive OCI DevOps metadata and remaining rebuildability gaps.
+- Active retrieval remains `oci_object_storage`; Oracle AI Vector Search remains shadow-only.
+- Next gate is `TASK-034`: trigger and inspect the scheduler/Function path in safe mode before any live refresh activation.
 
 ## Latest Operational Promotion
 

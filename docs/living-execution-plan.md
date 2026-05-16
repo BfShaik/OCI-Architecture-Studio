@@ -16,8 +16,8 @@ The plan favors OCI-native services, Terraform-managed infrastructure, determini
 | Retrieval | Staging uses `oci_object_storage` with `local_json` fallback. Oracle AI Vector Search is live, schema-loaded, and shadow-validated, but active DB-backed retrieval is not promoted. | Keep Object Storage active until refresh stability and refreshed vector parity pass. |
 | Synthesis | Deterministic synthesis is default. OCI GenAI synthesis exists behind configuration and fails closed to deterministic fallback. | Keep deterministic default until live GenAI parity passes. |
 | Embeddings | Deterministic local embeddings are the stable path. OCI GenAI embeddings are configurable but not the default. | Activate in shadow/parity mode before promotion. |
-| Runtime | OCI VM staging is active behind OCI API Gateway, with direct VM rollback preserved. OKE and Functions-compatible profiles exist. OCI DevOps metadata is scaffolded but not active. | Keep Gateway active and promote delivery/scheduler paths one gate at a time. |
-| IaC | Terraform covers core OCI foundation resources, API Gateway, Autonomous Database vector shadow infrastructure, and optional Functions/Scheduler scaffolds. State remains local unless Object Storage backend is configured manually. | Do not enable schedules until packaged Function validation and reviewed Terraform plan pass. |
+| Runtime | OCI VM staging is active behind OCI API Gateway, with direct VM rollback preserved. OKE and Functions-compatible profiles exist. OCI Functions plus Resource Scheduler are enabled for knowledge refresh in safe mode only. OCI DevOps metadata is scaffolded but not active. | Keep Gateway active and promote delivery/scheduler paths one gate at a time. |
+| IaC | Terraform covers core OCI foundation resources, API Gateway, Autonomous Database vector shadow infrastructure, OCI Functions, Resource Scheduler, and related IAM policy. State remains local unless Object Storage backend is configured manually. | Keep schedules in safe mode until Function invocation logs, reports, and dry-run readiness pass. |
 | Observability | Health, readiness, infrastructure, analytics, fallback, governance, and diagnostics endpoints exist. OCI Logging/Monitoring/Notifications are represented when configured. | Add live metric/log emission only after readiness checks are stable. |
 | Evaluation | Regression and advisory-quality suites cover retrieval, governance, migration, FinOps, release intelligence, runtime, and usability. | Keep every promotion tied to a quality gate. |
 | Documentation | Internal beta docs are broad and mostly aligned, with accepted limitations documented. | Keep plan and status docs current as work advances. |
@@ -80,7 +80,7 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | TASK-008 | Done | Add Oracle AI Vector Search dual-read parity workflow against Object Storage retrieval. | `retrieval_parity_check.py` now supports `--oci-native-provider oracle_ai_vector_search`; skip-safe run used Object Storage baseline with 44 chunks and reported missing Oracle DB config. |
 | TASK-009 | Blocked | Promote semantic retrieval through configuration only after parity approval. | Blocked until Oracle DB vector config exists and Oracle AI Vector Search parity passes without skip; promotion and rollback runbook documented. |
 | TASK-010 | Done | Activate controlled OCI Functions knowledge-refresh invocation path. | Local Function handler smoke passed with `no_fetch`, `quick_gates`, `upload=false`, `promoted=false`, and reports written under `/tmp`. |
-| TASK-011 | Blocked | Activate OCI Resource Scheduler for release refresh after function readiness. | Blocked until Function image is built/pushed to OCIR and packaged invocation passes; enablement and rollback path documented. |
+| TASK-011 | Superseded | Activate OCI Resource Scheduler for release refresh after function readiness. | Continued through TASK-032 and TASK-033 with immutable OCIR image packaging and safe-mode Resource Scheduler enablement. |
 | TASK-012 | Done | Define OCI DevOps delivery contract around existing operator artifact flow. | OCI DevOps artifact/stage/rollback contract documented; operator script remains fallback. |
 | TASK-013 | Done | Wire OCI DevOps metadata into runtime readiness checks for active deployments. | Passed `tests/test_operational_hardening.py`, `tests/test_api.py`, and `py_compile`; diagnostics distinguish inactive, partial, and promotion-ready DevOps metadata. |
 | TASK-014 | Done | Expand official OCI corpus for highest-value advisory gaps. | Added Budgets, Security Zones, and Compute Autoscaling sources; offline index rebuild produced 47 chunks; retrieval regression 18/18, advisory-quality 5/5, golden 18/18 passed. |
@@ -102,8 +102,8 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | TASK-030 | Done | Object Storage Refresh Promotion. | Promoted a validated controlled `release-watch` candidate with 47 chunks and 5 releases; uploaded refreshed `oci-rag-index.json` and `oci-release-snapshot.json` to OCI Object Storage bucket `oci-architecture-studio-staging-knowledge-snapshots`; Object Storage retrieval health passed, 26-case retrieval regression passed, Gateway smoke passed, and operational readiness passed with known OCI DevOps/rebuildability warnings only. |
 | TASK-031 | Done | Oracle Vector Refresh Sync. | Rebuilt Oracle AI Vector Search shadow index from the promoted snapshot on the staging backend VM; upserted 47 chunks; table/index health passed with 47 chunks, 44 services, 14 service domains, valid schema, and no missing config; vector validation passed 26 cases with 0.977 average top-chunk overlap. Active retrieval remains `oci_object_storage`. |
 | TASK-032 | Done | OCI Function Image Packaging. | Built and pushed immutable OCIR image `iad.ocir.io/idsmrn7rvqb6/oci-architecture-studio/knowledge-refresh:20260516-d73fa2c-task032-r3` with digest `sha256:28b85ed1ee6cac61a335f92ee1d53c258a7aa47864ede02989282bf930c07fc9`; packaged forced candidate-only invocation passed candidate validation, retrieval health, and 26-case retrieval regression. |
-| TASK-033 | Next | OCI Resource Scheduler Enablement. | Enable Terraform scheduler variables, review plan, apply only expected Functions, Resource Scheduler, dynamic group, policy, and output changes; diagnostics expose Function and schedule OCIDs. |
-| TASK-034 | Pending | Scheduled Refresh Dry Run. | Trigger scheduler/Function path in safe mode with `no_fetch=true`, `quick_gates=true`, `upload=false`; confirm logs, reports, and readiness show the scheduler path works. |
+| TASK-033 | Done | OCI Resource Scheduler Enablement. | Terraform applied the safe-mode knowledge refresh Function and schedules with immutable image `iad.ocir.io/idsmrn7rvqb6/oci-architecture-studio/knowledge-refresh:20260516-d73fa2c-task032-r3`; created Function `ocid1.fnfunc.oc1.iad.amaaaaaa2j5jslyavxvlplv2buo4czblwyii6ozstksvvja7uukuyxak6fkq`, release schedule `ocid1.resourceschedule.oc1.iad.amaaaaaa2j5jslya4y4m3mgofzhmyappmdsaqfawzbh5bgcnethhwirjsxia`, stable-docs schedule `ocid1.resourceschedule.oc1.iad.amaaaaaa2j5jslya44pyqv5jarhnzmt66da4zx4gs5kbuv2oajowllxbl3cq`, dynamic group, and IAM policy. Post-apply Terraform no-change plan, Gateway smoke, and operational readiness passed with known OCI DevOps/rebuildability warnings only. Scheduler payloads remain safe: `no_fetch=true`, `quick_gates=true`, `candidate_only=true`, `upload=false`. |
+| TASK-034 | Next | Scheduled Refresh Dry Run. | Trigger scheduler/Function path in safe mode with `no_fetch=true`, `quick_gates=true`, `candidate_only=true`, `upload=false`; confirm logs, reports, and readiness show the scheduler path works. |
 | TASK-035 | Pending | Scheduled Release Refresh Activation. | Enable release-watch refresh with upload and gate-controlled promotion; keep stable-docs refresh less frequent; document failure, rollback, stale warning, Object Storage sync, and Oracle vector shadow sync operations. |
 | TASK-036 | Pending | Return To Oracle Vector Promotion. | Resume active Oracle vector promotion only after refresh is stable; run Object Storage baseline, Oracle shadow parity, retrieval regression, and golden/edge evals. |
 
@@ -117,7 +117,7 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | OCI GenAI embeddings shadow activation | Not Started | Embedding dimension validation passes; retrieval regression does not degrade; fallback diagnostics clean. | `EMBEDDING_PROVIDER=local`; retain existing vector manifest. |
 | Oracle AI Vector Search shadow mode | Done | Schema/index validation passes; dual-read parity acceptable across golden, edge, and retrieval regression cases. | Keep `RETRIEVAL_PROVIDER=oci_object_storage`. |
 | Semantic retrieval active promotion | Not Started | Active-provider staging smoke, retrieval health, vector validation, eval suites, and rollback drill pass. | Restore `RETRIEVAL_PROVIDER=oci_object_storage` or `local_json`. |
-| Scheduled refresh activation | Preflight Passed | Local Function handler and direct policy preflight pass without authoritative snapshot changes; packaged image, Resource Scheduler OCIDs, release refresh, and selective reindex checks still required. | Disable schedules; return to operator-triggered refresh. |
+| Scheduled refresh activation | Safe Scheduler Enabled | Local Function handler, direct policy preflight, packaged image validation, Terraform apply, and scheduler OCID exposure passed. Next gate is a Resource Scheduler/Function dry run with no fetch, candidate-only quick gates, and no upload. | Disable schedules; return to operator-triggered refresh. |
 | OCI DevOps delivery promotion | Not Started | Pipeline deploys same artifact path as operator scripts; staging smoke and readiness gates pass. | Use existing operator scripts. |
 
 ## Required Validation Matrix
@@ -153,14 +153,14 @@ Run the appropriate subset after each increment; run the full matrix before a ne
 
 ## Next Actionable Increment
 
-Current task: `TASK-033`.
+Current task: `TASK-034`.
 
-Enable OCI Resource Scheduler:
+Run a scheduled refresh dry run:
 
-1. Set `enable_knowledge_refresh_scheduler=true` and `knowledge_refresh_function_image` to the immutable OCIR tag.
-2. Run Terraform validate and review the staging plan before apply.
-3. Apply only expected OCI Functions, Resource Scheduler, dynamic group, policy, and output changes.
-4. Validate runtime diagnostics expose Function and schedule OCIDs.
+1. Trigger the Resource Scheduler/Function path in safe mode.
+2. Verify the Function receives `no_fetch=true`, `quick_gates=true`, `candidate_only=true`, and `upload=false`.
+3. Confirm Function logs and generated reports show no authoritative snapshot promotion or Object Storage upload.
+4. Re-run readiness and retrieval checks before considering live release-watch activation.
 
 ## Operating Rules
 
