@@ -1,6 +1,6 @@
 # OCI-Native Retrieval Runbook
 
-Date: 2026-05-14
+Date: 2026-05-16
 
 ## Purpose
 
@@ -17,11 +17,13 @@ Current staging default:
 
 ```bash
 EMBEDDING_PROVIDER=local
-RETRIEVAL_PROVIDER=oci_object_storage
+RETRIEVAL_PROVIDER=oracle_ai_vector_search
 OCI_OBJECT_STORAGE_NAMESPACE=idsmrn7rvqb6
 OCI_VECTOR_BUCKET=oci-architecture-studio-staging-knowledge-snapshots
 OCI_VECTOR_OBJECT_NAME=oci-rag-index.json
 ```
+
+Object Storage remains the immediate config rollback provider; `local_json` remains the local development fallback.
 
 ## Provider Modes
 
@@ -86,7 +88,7 @@ OCI_VECTOR_DISTANCE_METRIC=COSINE
 RETRIEVAL_FALLBACK_ENABLED=true
 ```
 
-Current status: the provider code can create schema, upsert chunks, and serve reads when Oracle DB settings and schema are valid. Staging still uses `oci_object_storage`; Oracle vector active reads require live parity validation first.
+Current status: the provider code creates schema, upserts chunks, serves active reads, and reports health when Oracle DB settings and schema are valid. Staging uses `oracle_ai_vector_search` with the promoted 60-chunk corpus; Object Storage remains the immediate rollback provider.
 
 Local operational checks:
 
@@ -115,14 +117,14 @@ When Oracle DB settings exist, provide `OCI_VECTOR_DB_DSN`, `OCI_VECTOR_DB_USER`
 
 ## Oracle AI Vector Search Active Promotion
 
-Current decision: **do not promote yet**. Oracle AI Vector Search active reads require a non-skipped parity report against the active Object Storage baseline.
+Current decision: **promoted in staging**. Oracle AI Vector Search active reads passed non-skipped parity, retrieval regression, staging smoke, and rollback validation. Use this section for future re-promotions, rebuilds, and rollback drills.
 
-Prerequisites:
+Prerequisites for a future re-promotion:
 
 - Oracle DB DSN, user, and password are available through OCI Vault or approved runtime configuration.
 - `infra/scripts/oracle_vector_index.py validate-local-index` passes.
 - Oracle schema and vector index are created or verified.
-- `infra/scripts/retrieval_parity_check.py --baseline-provider oci_object_storage --oci-native-provider oracle_ai_vector_search` passes without `--allow-skip`.
+- `infra/scripts/retrieval_parity_check.py --baseline-provider oci_object_storage --oci-native-provider oracle_ai_vector_search` passes without fallback.
 - Golden, edge, retrieval regression, vector validation, and staging smoke checks pass.
 
 Configuration-only promotion:
@@ -176,7 +178,7 @@ After rollback, rerun `/retrieval/health`, retrieval regression, and staging smo
 
 ## Migration Gates
 
-Do not switch a staging provider until all are true:
+Do not switch or re-promote a staging provider until all are true:
 
 - backend tests pass
 - golden evals pass
@@ -249,4 +251,4 @@ cd app/backend && PYTHONPATH=src .venv/bin/pytest -q
 
 ## Next Operational Milestone
 
-Run Oracle AI Vector Search in shadow mode side by side with the active Object Storage provider for the golden, edge, retrieval-regression, and live scenario suites, then approve active reads only after citation parity is visible.
+Keep Object Storage rollback snapshots aligned with the active Oracle AI Vector Search index, then run OCI GenAI synthesis parity without changing retrieval provider settings.

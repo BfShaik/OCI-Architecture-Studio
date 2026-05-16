@@ -1,6 +1,6 @@
 # OCI Architecture Studio — Landing Zone Runbook
 
-Last updated: 2026-05-14
+Last updated: 2026-05-16
 
 ## Purpose
 
@@ -216,14 +216,14 @@ Terraform:
 - Staging Terraform apply is complete.
 - Backend/frontend staging deployment is working.
 - Object Storage snapshot bucket contains the knowledge and release snapshots.
-- OCI Object Storage retrieval has passed dual-provider parity against `local_json`.
-- Staging now uses `RETRIEVAL_PROVIDER=oci_object_storage` through configuration.
-- `local_json` remains the tested rollback provider.
+- OCI Object Storage retrieval passed dual-provider parity against `local_json` and remains the immediate rollback provider.
+- Staging now uses `RETRIEVAL_PROVIDER=oracle_ai_vector_search` through reviewed runtime configuration.
+- `local_json` remains the tested local fallback provider.
 
 ## Next Implementation Steps
 
-1. Prepare Oracle AI Vector Search schema and indexing prototype.
-2. Dual-run Oracle AI Vector Search against the active Object Storage provider.
-3. Add HTTPS ingress with Load Balancer or API Gateway.
+1. Keep Oracle AI Vector Search active reads and Object Storage rollback snapshots aligned.
+2. Run OCI GenAI synthesis parity before any synthesis-provider promotion.
+3. Add production HTTPS/domain hardening beyond the active API Gateway staging ingress.
 4. Move Terraform state to OCI Object Storage before broader team usage.
 5. Tighten IAM policies after access patterns stabilize.

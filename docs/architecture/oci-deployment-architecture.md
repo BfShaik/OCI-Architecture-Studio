@@ -1,6 +1,6 @@
 # OCI Architecture Studio — OCI Deployment Architecture
 
-Last updated: 2026-05-15
+Last updated: 2026-05-16
 
 ## Goal
 
@@ -28,19 +28,19 @@ flowchart TD
   Mon["OCI Monitoring"]
   Notif["OCI Notifications"]
   GenAI["OCI Generative AI\nPhase 2 embeddings/synthesis"]
-  Vector["Oracle AI Vector Search\nshadow vector retrieval"]
+  Vector["Oracle AI Vector Search\nactive vector retrieval"]
 
   User --> Frontend
   Frontend --> API
   API --> Backend
   Frontend -. direct VM rollback path .-> Backend
-  Backend --> Obj
+  Backend -. rollback snapshots .-> Obj
   Backend --> Vault
   Backend --> Logs
   Backend --> Mon
   Mon --> Notif
   Backend -. Phase 2 .-> GenAI
-  Backend -. shadow sync / future active read .-> Vector
+  Backend --> Vector
 ```
 
 ## OCI Service Mapping
@@ -53,7 +53,7 @@ flowchart TD
 | Knowledge snapshots | Object Storage | Durable, low-cost storage for generated JSON indexes, eval reports, release snapshots, and raw source archives. |
 | Secrets | OCI Vault | Central place for API keys, database credentials, signing keys, and future model/provider credentials. |
 | Embeddings | OCI Generative AI | OCI-native embedding provider path for production semantic retrieval. |
-| Vector search | Oracle AI Vector Search | Oracle AI Vector Search is the OCI-native enterprise path when metadata, audit, and vectors should live close together. Current staging has Autonomous Database, table/index, and shadow sync validated; active reads still use Object Storage snapshots until promotion gates pass. |
+| Vector search | Oracle AI Vector Search | Oracle AI Vector Search is the active staging read path with Autonomous Database, table/index, and active-read validation complete. Object Storage remains the immediate manifest rollback provider. |
 | Logging | OCI Logging | Centralized app, ingestion, and release job logs. |
 | Monitoring | OCI Monitoring | Metrics, alarms, health checks, ingestion failures, retrieval miss rate, eval pass/fail trend. |
 | Notifications | OCI Notifications | Alert routing for failed ingestion, failing evals, stale knowledge, and production health alarms. |
@@ -77,7 +77,7 @@ Steps:
 7. Send logs to OCI Logging.
 8. Add Monitoring alarms and Notifications for API availability and instance health.
 
-This phase is complete in staging. The active staging retrieval provider is `oci_object_storage` backed by the Object Storage snapshot; `local_json` remains the deterministic rollback provider.
+This phase is complete in staging. The active staging retrieval provider is `oracle_ai_vector_search`; `oci_object_storage` remains the immediate rollback provider and `local_json` remains the deterministic local fallback.
 
 ### Phase 2 — Replace Local Embeddings/Vector Index
 
@@ -165,7 +165,7 @@ Secrets should not be committed. Use OCI Vault for:
 ### Current
 
 ```text
-source registry -> local ingestion -> local hash embeddings -> Object Storage active snapshot -> FastAPI retrieval
+source registry -> local ingestion -> local hash embeddings -> Object Storage promoted snapshot -> Oracle AI Vector Search active retrieval -> FastAPI retrieval
 ```
 
 ### Phase 2
@@ -175,7 +175,7 @@ source registry
   -> ingestion cleanup
   -> chunk metadata/versioning
   -> OCI Generative AI embeddings
-  -> Oracle AI Vector Search shadow index
+  -> Oracle AI Vector Search active index
   -> metadata-filtered retrieval
   -> citation-aware synthesis
 ```
@@ -370,8 +370,8 @@ watch release sources -> classify update -> map affected services -> mark stale 
 10. Add Object Storage vector-manifest adapter. — Done
 11. Add dual-provider retrieval parity. — Done
 12. Promote Object Storage retrieval in staging. — Done
-13. Add Oracle AI Vector Search schema/index prototype. — Done in shadow mode
-14. Promote Oracle AI Vector Search active reads. — Pending
+13. Add Oracle AI Vector Search schema/index prototype. — Done
+14. Promote Oracle AI Vector Search active reads. — Done
 
 ## Top Risks And Mitigations
 
@@ -386,4 +386,4 @@ watch release sources -> classify update -> map affected services -> mark stale 
 
 ## Recommended Next Step
 
-Keep Oracle AI Vector Search shadow-synced from the promoted Object Storage snapshot, then run refreshed parity, retrieval regression, staging smoke, operational readiness, and rollback checks before any active-read cutover.
+Keep Oracle AI Vector Search and Object Storage rollback snapshots aligned, then run OCI GenAI synthesis parity in shadow/evaluation mode before any synthesis-provider promotion.

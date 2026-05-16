@@ -1,12 +1,12 @@
 # OCI Architecture Studio — Architecture Diagrams
 
-Date: 2026-05-15
+Date: 2026-05-16
 
-These diagrams summarize the current working platform, the completed Object Storage retrieval promotion, and the next Oracle AI Vector Search target state.
+These diagrams summarize the current working platform, the completed Oracle AI Vector Search active-read promotion, the Object Storage rollback path, release-awareness, and operational control points.
 
 ## 1. Current Working Staging Architecture
 
-Current staging is intentionally simple: one codebase, one backend VM, backend-served frontend, Object Storage manifest retrieval, and OCI services for deployment support, snapshots, secrets, logging, monitoring, and notifications.
+Current staging is intentionally simple: one codebase, one backend VM, backend-served frontend, Oracle AI Vector Search active retrieval, Object Storage rollback snapshots, and OCI services for deployment support, snapshots, secrets, logging, monitoring, and notifications.
 
 ```mermaid
 flowchart LR
@@ -16,7 +16,8 @@ flowchart LR
     subgraph Compartment["oci-architecture-studio-staging compartment"]
       VM["Compute VM\nFastAPI backend + served React frontend\nVM.Standard.E5.Flex\n8 OCPU / 128 GB"]
       LocalIndex["Local JSON knowledge index\nrollback provider"]
-      ObjectIndex["Object Storage vector manifest\nactive retrieval provider\noci-rag-index.json"]
+      ObjectIndex["Object Storage vector manifest\nrollback snapshot\noci-rag-index.json"]
+      VectorIndex["Oracle AI Vector Search\nactive retrieval provider\n60 chunks"]
       ReleaseSnap["Local release snapshot\noci-release-snapshot.json"]
       FrontendBucket["Object Storage\nfrontend assets"]
       SnapshotBucket["Object Storage\nknowledge + release snapshots"]
@@ -30,7 +31,8 @@ flowchart LR
 
   User -->|"HTTP staging URL"| VM
   VM -->|"serves React UI"| User
-  VM -->|"architecture-review API\nactive read"| ObjectIndex
+  VM -->|"architecture-review API\nactive read"| VectorIndex
+  VM -. "config rollback" .-> ObjectIndex
   VM -. "config rollback" .-> LocalIndex
   VM -->|"release-aware context"| ReleaseSnap
   VM -. "snapshot sync / backup" .-> SnapshotBucket
@@ -40,17 +42,18 @@ flowchart LR
   Monitoring --> Events
   Cron --> SnapshotBucket
   Cron --> ObjectIndex
+  ObjectIndex --> VectorIndex
 ```
 
 Current active retrieval provider:
 
 ```text
-RETRIEVAL_PROVIDER=oci_object_storage
+RETRIEVAL_PROVIDER=oracle_ai_vector_search
 ```
 
-## 2. Validated Dual-Provider Retrieval Migration Path
+## 2. Validated Retrieval Promotion Path
 
-The OCI Object Storage retrieval provider passed parity against the stable local provider and is now active in staging. Promotion was config-only and rollback was validated as config-only.
+OCI Object Storage first passed parity against the stable local provider, then Oracle AI Vector Search passed active-read parity and was promoted in staging. Rollback to Object Storage and local JSON remains config-only.
 
 ```mermaid
 flowchart TD
@@ -73,14 +76,15 @@ flowchart TD
 
   Parity["Retrieval parity gate\n14/14 passed\n1.0 top chunk overlap"]
   EvalGate["Golden + edge evals\nretrieval regression\nsmoke tests"]
-  Promote["Completed config-only staging promotion\nRETRIEVAL_PROVIDER=oci_object_storage"]
-  Rollback["Config-only rollback\nRETRIEVAL_PROVIDER=local_json"]
+  VectorGate["Oracle vector active-read gate\nparity + regression + smoke"]
+  Promote["Completed staging promotion\nRETRIEVAL_PROVIDER=oracle_ai_vector_search"]
+  Rollback["Config-only rollback\nRETRIEVAL_PROVIDER=oci_object_storage or local_json"]
 
   Prompt --> Classifier --> Query
   Query --> LocalEmbed --> LocalStore --> LocalResults --> Parity
   Query --> OCIEmbed --> ObjectStore --> OCIStore --> OCIResults --> Parity
-  Parity --> EvalGate
-  EvalGate --> Promote
+  Parity --> EvalGate --> VectorGate
+  VectorGate --> Promote
   Promote --> Rollback
 ```
 
@@ -88,16 +92,17 @@ Validated parity result:
 
 - `local_json`: passed
 - `oci_object_storage`: passed
+- `oracle_ai_vector_search`: passed active-read promotion gates
 - parity cases: `14/14`
 - golden evals: `6/6` for both provider paths
 - edge-case evals: `8/8` for both provider paths
 - retrieval regression: `14/14` for both provider paths
-- staging active provider: `oci_object_storage`
-- rollback provider: `local_json`
+- staging active provider: `oracle_ai_vector_search`
+- rollback providers: `oci_object_storage`, then `local_json`
 
-## 3. Target OCI-Native Retrieval Architecture
+## 3. Current OCI-Native Retrieval Architecture
 
-This is the next production retrieval target. Oracle AI Vector Search has schema, indexing, and shadow sync validated, but active reads remain guarded until refreshed query parity, regression, smoke, operational readiness, and rollback gates pass.
+Oracle AI Vector Search is the active staging read path. Object Storage remains the promoted manifest store and immediate rollback provider.
 
 ```mermaid
 flowchart LR
@@ -119,7 +124,7 @@ flowchart LR
   subgraph Storage["OCI Knowledge Storage"]
     Raw["Object Storage\nraw/source snapshots"]
     Manifest["Object Storage\nmigration-safe vector manifest"]
-    Vector["Oracle AI Vector Search\nguarded future read path"]
+    Vector["Oracle AI Vector Search\nactive read path"]
     ReleaseStore["Object Storage\nrelease snapshots"]
   end
 
@@ -136,12 +141,12 @@ flowchart LR
   Sources --> Fetch --> Clean --> Chunk --> Metadata --> Embed --> Candidate --> Gates --> Promote
   Metadata --> Raw
   Promote --> Manifest
-  Promote -. "future active read path" .-> Vector
+  Promote --> Vector
   Releases --> ReleaseStore
 
   UI --> API --> Intent --> Retriever
-  Retriever --> Manifest
-  Retriever -. "future" .-> Vector
+  Retriever --> Vector
+  Retriever -. "rollback" .-> Manifest
   Retriever --> Freshness
   ReleaseStore --> Freshness
   Freshness --> Response --> UI
@@ -152,9 +157,9 @@ Migration sequence:
 1. Keep `local_json` as rollback provider.
 2. Promote `oci_object_storage` as active staging provider after parity. — Done
 3. Validate staging smoke and evals. — Done
-4. Implement Oracle AI Vector Search table/index. — Done in shadow mode
-5. Dual-run Vector Search against `oci_object_storage`. — Done for shadow validation
-6. Promote Oracle AI Vector Search only after parity and rollback validation.
+4. Implement Oracle AI Vector Search table/index. — Done
+5. Dual-run Vector Search against `oci_object_storage`. — Done
+6. Promote Oracle AI Vector Search after parity and rollback validation. — Done
 
 ## 4. Continuous Release-Awareness Flow
 

@@ -2,6 +2,8 @@
 
 Date: 2026-05-15
 
+Current-state note: this report was written before the Oracle AI Vector Search active-read and 60-source architecture-corpus promotions. Current staging retrieval is `oracle_ai_vector_search` with Object Storage rollback; see `docs/current/status.md` and `docs/architecture/architecture-diagrams.md` for the latest architecture.
+
 ## Executive Summary
 
 The repository and staging deployment have been synchronized after the stabilization pass. Staging is now the authoritative live environment for the current baseline, with the same codebase deployed and environment-specific behavior controlled by configuration.
@@ -15,8 +17,9 @@ flowchart LR
   User["Browser UI"] --> Backend["FastAPI backend on OCI Compute"]
   Backend --> Intent["Intent classifier"]
   Intent --> Orchestrator["Controlled in-process orchestration"]
-  Orchestrator --> Retrieval["Retrieval provider: oci_object_storage"]
-  Retrieval --> Bucket["OCI Object Storage knowledge snapshot"]
+  Orchestrator --> Retrieval["Retrieval provider: oracle_ai_vector_search"]
+  Retrieval --> Vector["Oracle AI Vector Search active index"]
+  Retrieval -. rollback .-> Bucket["OCI Object Storage knowledge snapshot"]
   Orchestrator --> Synthesis["Synthesis provider: deterministic"]
   Synthesis --> Critic["Citation, confidence, freshness, and critic checks"]
   Critic --> Response["Structured advisory response"]

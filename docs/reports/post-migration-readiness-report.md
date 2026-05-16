@@ -6,7 +6,7 @@ Current validated baseline: `d3292d6`
 
 Staging URL: `http://193.122.149.102:8000/`
 
-Current-state note: this report captured the pre-promotion migration readiness gate. Staging has since been promoted to `oci_object_storage`; see `docs/reports/retrieval-provider-promotion-report.md` for the active provider validation.
+Current-state note: this report captured the pre-promotion migration readiness gate. Staging was later promoted to `oci_object_storage`, then to active `oracle_ai_vector_search` with Object Storage rollback. See `docs/current/status.md` and `docs/current/living-execution-plan.md` for the current active provider validation.
 
 ## Overall Health
 
@@ -14,7 +14,7 @@ Status: **GO for continued Sprint 2 development**
 
 The platform is stable after the Sprint 2 retrieval migration slice. Local validation, evals, retrieval regression, frontend build, Terraform validation, OCI staging smoke tests, and OCI resource visibility checks passed.
 
-Important caveat at the time of this report: the active staging retrieval provider was still `local_json`. OCI-native retrieval hooks, Object Storage snapshot integration, OCI embedding configuration, and the guarded Oracle AI Vector Search boundary existed, but Oracle AI Vector Search was not yet the active staging read path. This caveat has been superseded for Object Storage manifest retrieval by `docs/reports/retrieval-provider-promotion-report.md`; Oracle AI Vector Search remains guarded.
+Important caveat at the time of this report: the active staging retrieval provider was still `local_json`. OCI-native retrieval hooks, Object Storage snapshot integration, OCI embedding configuration, and the guarded Oracle AI Vector Search boundary existed, but Oracle AI Vector Search was not yet the active staging read path. This caveat has been superseded by the later Object Storage and Oracle AI Vector Search active-read promotions.
 
 ## Full Regression Summary
 

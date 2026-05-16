@@ -4,7 +4,7 @@ Date: 2026-05-14
 
 ## Baseline Identity
 
-Current-state note: this document freezes the original post-deploy baseline. Staging retrieval was later promoted from `local_json` to `oci_object_storage`; see `docs/reports/retrieval-provider-promotion-report.md` for the active provider validation.
+Current-state note: this document freezes the original post-deploy baseline. Staging retrieval was later promoted from `local_json` to `oci_object_storage`, and then to active `oracle_ai_vector_search`; see `docs/current/status.md` and `docs/current/living-execution-plan.md` for the current provider validation.
 
 - Branch: `main`
 - Baseline commit at verification start: `412c892`

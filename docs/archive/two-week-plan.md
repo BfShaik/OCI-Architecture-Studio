@@ -4,7 +4,7 @@ Plan window: 2026-05-14 to 2026-05-28
 
 ## Goal
 
-Completed the original foundation sprint and extended it into a validated staging baseline with OCI deployment, release-awareness, retrieval regression, Object Storage active retrieval, Oracle AI Vector Search shadow validation, and operational visibility.
+Completed the original foundation sprint and extended it into a validated staging baseline with OCI deployment, release-awareness, retrieval regression, Object Storage retrieval promotion, Oracle AI Vector Search validation, and operational visibility. Current staging now uses Oracle AI Vector Search active retrieval; this archive preserves the earlier plan history.
 
 This file is now an archive. Current work should be tracked in `docs/current/living-execution-plan.md`.
 

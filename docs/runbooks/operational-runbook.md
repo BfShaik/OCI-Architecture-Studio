@@ -107,8 +107,8 @@ Run:
 python3 infra/scripts/verify_staging_baseline.py \
   --api-base-url http://193.122.149.102:8000 \
   --frontend-url http://193.122.149.102:8000/ \
-  --expected-retrieval-provider oci_object_storage \
-  --expected-chunks 44
+  --expected-retrieval-provider oracle_ai_vector_search \
+  --expected-chunks 60
 ```
 
 Expected result:
@@ -470,13 +470,21 @@ app/backend/.venv/bin/python infra/scripts/genai_synthesis_parity_check.py \
 
 The parity gate must pass without GenAI fallback before staging is switched from deterministic synthesis.
 
-If `oci_object_storage` promotion fails:
+If active Oracle AI Vector Search retrieval fails:
+
+- set `RETRIEVAL_PROVIDER=oci_object_storage`
+- restart `oci-architecture-studio`
+- rerun baseline smoke tests
+- inspect `/retrieval/health`
+- restore `RETRIEVAL_PROVIDER=oracle_ai_vector_search` only after Oracle vector health, parity, and smoke checks pass again
+
+If the Object Storage rollback path also fails:
 
 - set `RETRIEVAL_PROVIDER=local_json`
 - restart `oci-architecture-studio`
 - rerun baseline smoke tests
 - inspect `/retrieval/health`
-- restore `RETRIEVAL_PROVIDER=oci_object_storage` only after the Object Storage manifest path is healthy again
+- restore `RETRIEVAL_PROVIDER=oci_object_storage` only after the Object Storage manifest path is healthy again, then re-promote Oracle vector after validation
 
 When restoring `/etc/oci-architecture-studio.env`, preserve systemd-readable permissions and SELinux context:
 
@@ -513,6 +521,6 @@ Use full destroy only for sandbox teardown. Capture logs and outputs first if de
 - placeholder Vault secret
 - no app log shipping into OCI Logging yet
 - no custom app metrics yet
-- active staging retrieval uses `oci_object_storage`; `local_json` remains the rollback provider
+- active staging retrieval uses `oracle_ai_vector_search`; `oci_object_storage` and `local_json` remain rollback providers
 
 The next hardening milestone is HTTPS ingress and restricted backend access.

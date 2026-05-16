@@ -4,6 +4,8 @@ Date: 2026-05-15
 
 Validated baseline: `d3292d6`
 
+Current-state note: this report records the Object Storage parity gate. Staging retrieval was later promoted to active `oracle_ai_vector_search` with Object Storage as rollback; see `docs/current/status.md` and `docs/current/living-execution-plan.md` for the current active provider.
+
 ## Goal
 
 Validate the OCI-native retrieval provider against the stable `local_json` baseline before promoting OCI-native retrieval into the active staging read path.

@@ -2,6 +2,8 @@
 
 Date: 2026-05-15
 
+Current-state note: this report records the Object Storage promotion milestone. Staging retrieval was later promoted to active `oracle_ai_vector_search` with Object Storage as rollback; see `docs/current/status.md` and `docs/current/living-execution-plan.md` for the current active provider.
+
 ## Decision
 
 Staging retrieval was promoted from `local_json` to `oci_object_storage` through configuration only.

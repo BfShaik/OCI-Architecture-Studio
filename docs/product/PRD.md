@@ -18,8 +18,8 @@ OCI Architecture Studio is an AI-powered OCI architecture intelligence platform 
 - Release-Aware Advisory
 - AWS-to-OCI service mapping before retrieval
 - Metadata-aware retrieval reranking and optional retrieval debug traces
-- Section citation metadata in the backend response
-- Curated 47-chunk OCI knowledge corpus in the current branch
+- Section citation metadata in the backend response and section traceability in the frontend
+- Curated 60-chunk OCI knowledge corpus active in staging
 - Ingestion scaffolding for source groups, source categorization, document hierarchy, chunk lineage, release tags, metadata enrichment, and source traceability
 - Corpus health validation for metadata completeness, duplicates, orphaned chunks, service tags, embeddings, and retrieval coverage gaps
 - Oracle AI Vector Search provider path with schema/index tooling, vector upsert, metadata-aware similarity search, health checks, and local fallback
@@ -60,7 +60,7 @@ User flow:
 7. The system uses deterministic in-process orchestration metadata and a single synthesis step to produce a structured advisory response. The deterministic path applies lightweight architecture pattern profiles, reasoning profiles, retrieved services, workload/domain heuristics, citation metadata, tradeoff analysis, and consistency validation. The OCI GenAI path injects a retrieval-grounded prompt with intent, mappings, workload/domain profile, pattern hints, reasoning profile, and retrieved chunks.
 8. Release-aware prompts are checked against point-in-time release snapshots, freshness metadata, release change categories, and release impact summaries. Current release awareness is snapshot-based and deterministic; it is not live request-time reconciliation with OCI release feeds.
 9. The backend returns recommendations, assumptions, risks, citations, evidence links, confidence, reasoning trace metadata, tradeoff analysis, per-recommendation confidence, decision reasoning metadata, consistency findings, deterministic enterprise-governance metadata, architecture topology metadata, executive experience metadata, migration/FinOps optimization metadata, section citation metadata, release context, temporal knowledge context, and optional retrieval debug traces.
-10. The UI displays the main advisory fields, executive brief, implementation sequence, lightweight topology/dependency summaries, decision comparisons, explainability highlights, migration/FinOps optimization summaries, citation cards, and a Markdown export action. Full section-level citation UI, live diagram rendering, and release-context UI are not implemented yet.
+10. The UI displays the main advisory fields, executive brief, implementation sequence, lightweight topology/dependency summaries, decision comparisons, explainability highlights, migration/FinOps optimization summaries, release context, section traceability, citation/source cards, saved-review history, review-history retention/export/delete controls, and a Markdown export action. Live diagram rendering is not implemented yet.
 
 Operational flow:
 
@@ -88,10 +88,11 @@ Evaluation flow:
 
 Current active staging retrieval:
 
-- `oci_object_storage`
+- `oracle_ai_vector_search`
 
 Validated rollback provider:
 
+- `oci_object_storage`
 - `local_json`
 - rollback and restore are config-only
 
@@ -136,16 +137,16 @@ Embedding behavior:
 Vector retrieval behavior:
 
 - `local_json` remains the local development default.
-- `oci_object_storage` remains the current staging provider until a new snapshot/provider is promoted.
-- `oracle_ai_vector_search` is implemented as an optional provider that requires Oracle Database vector search configuration.
+- `oci_object_storage` remains the immediate staging rollback provider.
+- `oracle_ai_vector_search` is the active staging provider and requires Oracle Database vector search configuration.
 - Oracle vector retrieval supports vector similarity search, chunk upsert, metadata filtering over service/domain/pattern/workload/tag fields, and retrieval health diagnostics.
 - `RETRIEVAL_FALLBACK_ENABLED=true` allows local JSON fallback if the Oracle vector provider is unavailable.
-- Oracle vector shadow infrastructure, schema/index, and sync are implemented and validated against the refreshed 47-chunk snapshot. Active-read promotion still requires refreshed parity, retrieval regression, staging smoke, rollback validation, production embedding alignment, and operational sign-off.
+- Oracle vector infrastructure, schema/index, sync, active reads, and rollback validation are implemented and validated against the promoted 60-chunk architecture corpus.
 
 Corpus and ingestion behavior:
 
 - The current local corpus is curated, not a complete OCI documentation mirror.
-- The current branch contains 47 chunks across architecture, networking, compute, containers, database, storage, edge, security, observability, cost, resilience, AI/ML, analytics, and DevOps-oriented domains.
+- The current staging corpus contains 60 chunks across architecture, networking, compute, containers, database, storage, edge, security, observability, cost, resilience, AI/ML, analytics, DevOps, landing-zone, migration, and DR-oriented domains.
 - Ingestion supports source-group defaults, source categories, source freshness metadata, release tags, context-preserving chunking, section paths, previous/next chunk lineage, chunk content hashes, and automatic metadata enrichment.
 - Corpus health checks are lightweight validation utilities; they are not autonomous crawlers or production refresh automation.
 
@@ -217,5 +218,5 @@ FinOps and migration optimization behavior:
 - No mandatory live OCI connectivity checks in local development.
 - No autonomous documentation crawling or full OCI documentation corpus yet.
 - No full bi-temporal retrieval; current-vs-historical support currently consists of schemas, retained historical snapshots, temporal response metadata, and current-first retrieval with release context terms.
-- Oracle AI Vector Search staging active reads remain guarded even though the shadow table/index exists; promotion waits for refreshed parity, regression, smoke, rollback, and operational approval gates.
+- Oracle AI Vector Search staging active reads are promoted and validated; Object Storage remains the immediate rollback provider.
 - HTTPS ingress and production HA are deferred beyond the current staging slice.

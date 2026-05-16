@@ -26,7 +26,7 @@ Exit criteria:
 - A machine-readable eval runner exists. — Done
 
 ## Phase 2 — Grounded Retrieval
-Status: In Progress — Object Storage active in staging
+Status: In Progress — Oracle AI Vector Search active in staging
 
 Architecture plan: `docs/architecture/phase-2-architecture.md`
 OCI deployment plan: `docs/architecture/oci-deployment-architecture.md`
@@ -47,9 +47,9 @@ Deliverables:
 - evidence-linked recommendations — Done
 - confidence scoring and low-confidence fallback — Done
 - advisory-quality eval suite — Done
-- production embedding provider — Pending
+- production embedding provider — Shadow validated, not default
 - Oracle AI Vector Search shadow index — Done
-- Oracle AI Vector Search active read path — Pending
+- Oracle AI Vector Search active read path — Done
 
 ## Phase 2B — Advisory Intelligence Quality
 Status: In Progress — controlled multi-agent pilot added
@@ -140,13 +140,24 @@ Deliverables:
 - staging baseline guardrail — Done
 
 ## Phase 5 — Retrieval Promotion And Vector Search
-Status: Started
+Status: Active Oracle Vector Promotion Complete
 
 Deliverables:
 - promote staging to `RETRIEVAL_PROVIDER=oci_object_storage` — Done
 - post-promotion smoke/eval/retrieval regression — Done
 - Object Storage rollback validation — Done
-- Oracle AI Vector Search schema design — Pending
-- Oracle AI Vector Search indexing prototype — Pending
-- Oracle AI Vector Search dual-run parity — Pending
-- controlled promotion from Object Storage manifest to Oracle AI Vector Search — Pending
+- Oracle AI Vector Search schema design — Done
+- Oracle AI Vector Search indexing prototype — Done
+- Oracle AI Vector Search dual-run parity — Done
+- controlled promotion from Object Storage manifest to Oracle AI Vector Search — Done
+- 60-source architecture-accuracy corpus promotion to Oracle AI Vector Search — Done
+
+## Phase 6 — OCI GenAI Synthesis Parity
+Status: Next
+
+Deliverables:
+- deterministic-vs-OCI GenAI synthesis parity with approved model config — Next
+- unsupported-claim and citation-coverage comparison — Next
+- latency/fallback report — Next
+- deterministic rollback proof — Next
+- config-only synthesis promotion decision — Future

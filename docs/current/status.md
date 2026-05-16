@@ -2,6 +2,19 @@
 
 Last updated: 2026-05-16
 
+## Latest Documentation Currency Pass
+
+- Reviewed and updated active Markdown documentation and diagrams to align with the current source/staging posture.
+- README, product docs, current-state docs, architecture diagrams, OCI deployment architecture, retrieval migration architecture, and retrieval/operational runbooks now consistently describe:
+  - active staging retrieval as `oracle_ai_vector_search`
+  - active staging corpus as 60 chunks
+  - Object Storage as the immediate rollback snapshot/provider
+  - `local_json` as the local fallback provider
+  - section traceability and saved-review operator controls as implemented UI/API capabilities
+  - OCI GenAI synthesis parity as the next pending task
+- Historical report/archive documents now include current-state notes where their original milestone content predates Oracle AI Vector Search active reads.
+- No source code, runtime environment values, vector DB state, Object Storage objects, or infrastructure settings were changed in this documentation pass.
+
 ## Latest Review History Operator Controls
 
 - `TASK-053` completed as the review-history retention/export policy increment.
@@ -246,7 +259,7 @@ Last updated: 2026-05-16
 ## Latest Ingestion-To-Retrieval Operator Doc
 
 - `TASK-041` completed as a docs-only operator/reviewer increment.
-- Added `docs/current/ingestion-to-retrieval-flow.md` to explain the path from approved OCI docs or fallback text through source registry, fetch/normalize, chunks, metadata enrichment, embeddings, `knowledge/snapshots/oci-rag-index.json`, OCI Object Storage active retrieval, and Oracle AI Vector Search shadow sync.
+- Added `docs/current/ingestion-to-retrieval-flow.md` to explain the path from approved OCI docs or fallback text through source registry, fetch/normalize, chunks, metadata enrichment, embeddings, `knowledge/snapshots/oci-rag-index.json`, OCI Object Storage promoted snapshots, and Oracle AI Vector Search active retrieval.
 - Linked the new guide from `knowledge/README.md`.
 - No runtime behavior, retrieval provider, refresh policy, or staging configuration changed.
 - Validation passed: `git diff --check`.

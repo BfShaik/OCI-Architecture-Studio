@@ -1,6 +1,6 @@
 # OCI Architecture Studio — OCI-Native Retrieval Migration
 
-Date: 2026-05-14
+Date: 2026-05-16
 
 ## Goal
 
@@ -30,9 +30,9 @@ What remains pre-production:
 - Deterministic local hash embeddings.
 - Local JSON vector index.
 - Small OCI source corpus.
-- Object Storage vector manifest is a migration-safe managed copy, not the final production vector engine.
-- Oracle AI Vector Search provider code and index tooling exist; staging read cutover remains disabled until a real DB index and parity validation are complete.
-- Release awareness uses local snapshots rather than live watcher/refresh intelligence.
+- Object Storage vector manifest is now the rollback copy, not the active staging vector engine.
+- Oracle AI Vector Search provider code, index tooling, live DB index, active reads, and rollback validation are complete in staging.
+- Release awareness uses scheduled snapshots and gated refresh rather than request-time live reconciliation.
 - Response synthesis is template/profile-driven rather than full LLM synthesis.
 
 What is already production-shaped:
@@ -55,8 +55,8 @@ flowchart LR
   Embeddings --> Vector["Oracle AI Vector Search"]
   Release["OCI release source registry"] --> ReleaseSnap["Release snapshots in Object Storage"]
   API["FastAPI backend"] --> Retriever["Retrieval adapter"]
-  Retriever --> Manifest
-  Retriever -. Phase 2 .-> Vector
+  Retriever -. rollback .-> Manifest
+  Retriever --> Vector
   Retriever --> ReleaseSnap
   Retriever --> Orchestrator["Intent-aware orchestration"]
   Orchestrator --> UI["React advisory UI"]
@@ -176,6 +176,8 @@ OCI_GENAI_COMPARTMENT_ID=...
 OCI_GENAI_EMBEDDING_MODEL_ID=...
 ```
 
+Current role: Object Storage is the immediate staging rollback provider and promoted manifest store.
+
 Validation:
 
 ```bash
@@ -220,8 +222,8 @@ Current implementation status:
 - The provider reports health, missing DB inputs, schema validity, chunk count, service/domain counts, fallback state, and last-query diagnostics.
 - Search reads execute when Oracle DB config and schema are valid.
 - In local/offline mode, Oracle vector validation is skip-safe and fallback-safe.
-- Staging active reads remain disabled until live index build and retrieval parity are proven.
-- Rollback remains configuration-only because `local_json` stays the default.
+- Staging active reads are promoted and validated against the 60-chunk architecture corpus.
+- Rollback remains configuration-only through `oci_object_storage`, with `local_json` retained for local fallback.
 
 ## Retrieval Intelligence Roadmap
 
@@ -238,7 +240,7 @@ Next:
 - service-specific filtering from classifier output
 - release snapshot recency boost
 - unsupported-claim suppression based on retrieved evidence
-- retrieval diff report for the demo prompt set
+- OCI GenAI synthesis parity report for the demo prompt set
 
 ## Observability Plan
 
@@ -341,9 +343,9 @@ Common issues:
 
 ## Next Operational Milestone
 
-Build the retrieval comparison report:
+Keep Oracle AI Vector Search active reads aligned with Object Storage rollback snapshots, then run OCI GenAI synthesis parity:
 
-- run local JSON retrieval for the five demo prompts
-- run OCI Object Storage manifest retrieval for the same prompts
-- compare top chunks, required services, citation presence, freshness, and eval scores
-- approve Oracle AI Vector Search implementation only after parity is visible
+- run deterministic synthesis for the demo/eval prompts
+- run OCI GenAI synthesis with the same retrieved evidence
+- compare unsupported claims, citation coverage, quality warnings, latency, and fallback behavior
+- keep deterministic synthesis as the default until parity passes

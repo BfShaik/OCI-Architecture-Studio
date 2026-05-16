@@ -9,11 +9,11 @@ Last updated: 2026-05-16
 | Backend API | Ready | `GET /health` and `POST /architecture-review` are working. |
 | Frontend UI | Ready | Chat-style workflow includes demo prompt shortcuts, loading state, error state, structured results, and source cards. |
 | Operations UI | Ready | Read-only Knowledge Refresh Status panel is visible at the top of the workspace and shows VM cron refresh state, gate result, Object Storage upload status, snapshot version, release-change count, affected-source count, and rollback posture. |
-| Retrieval | Ready | OCI Object Storage retrieval is active in staging after config-only promotion; `local_json` remains the tested rollback provider. |
+| Retrieval | Ready | Oracle AI Vector Search is active in staging with the 60-chunk architecture corpus; Object Storage and `local_json` remain tested rollback providers. |
 | Release awareness | Ready for foundation demo | Release-watch refresh is active on the backend OCI VM cron path with live release fetch, quick gates, gated promotion, and Object Storage upload. Release-aware prompts still separate current release context from historical/local guidance. |
 | Evals | Ready | Golden and edge-case evals pass. |
 | Tests/build | Ready | Backend tests, frontend lint, and frontend build pass. |
-| Known caveat | Accepted | OCI GenAI synthesis is optional rather than default; production semantic embeddings, Oracle AI Vector Search active reads, and full current-vs-historical answer comparison remain deferred. |
+| Known caveat | Accepted | OCI GenAI synthesis and OCI GenAI embeddings are optional rather than default; full current-vs-historical answer comparison remains deferred. |
 
 ## Recommended Demo Prompts
 
@@ -136,8 +136,8 @@ Release ingestion: passed
 Backend tests: 126 passed in the internal beta baseline; latest refresh/API regression subset passed 18 tests
 Golden evals: 18 passed, 0 failed
 Edge-case evals: 8 passed, 0 failed
-Retrieval regression: 26 passed, 0 failed
-Object Storage retrieval parity: 26 passed, 0 failed
+Retrieval regression: 18 passed, 0 failed for the latest architecture-accuracy corpus
+Oracle AI Vector Search active-read validation: passed
 Frontend build: passed
 OCI staging smoke tests: passed
 ```
@@ -163,12 +163,12 @@ OCI staging smoke tests: passed
 ## Remaining Gaps
 
 - Production semantic embeddings are not active.
-- Oracle AI Vector Search shadow table/index and sync are implemented and validated; active reads are not promoted.
+- Oracle AI Vector Search active reads are promoted and validated; Object Storage remains the immediate rollback provider.
 - OCI GenAI synthesis is implemented as a configurable path with deterministic fallback, but it is not the default staging mode.
 - Release impact analysis exists for snapshots and affected sources/chunks; release-watch refresh is live and gated, while full current-vs-historical answer comparison is not implemented.
 - OCI corpus coverage is still small.
 - Release parsing is heuristic-based.
-- UI does not yet include prompt history or saved reviews.
+- UI includes saved review history, section traceability, and review-history retention/export/delete controls.
 
 ## Technical Debt
 
@@ -182,11 +182,11 @@ OCI staging smoke tests: passed
 
 1. Add dedicated OCI sources for WAF, Vault, Cloud Guard, Logging, Monitoring, Budgets, IAM, Audit, and Data Guard.
 2. Replace local hash embeddings with the selected production embedding provider.
-3. Promote Oracle AI Vector Search only after refreshed dual-run parity, retrieval regression, smoke, and rollback gates pass.
+3. Keep Oracle AI Vector Search and Object Storage rollback snapshots aligned.
 4. Run live OCI GenAI synthesis parity with approved model configuration before activation.
 5. Add full current-vs-historical release comparison in release-aware responses.
 6. Expand release-impact eval cases as the corpus grows.
-7. Improve frontend source cards with grouped evidence and prompt history.
+7. Continue polishing frontend source cards, saved-review workflow, and export affordances.
 8. Add HTTPS ingress for staging/demo.
 
 ## Top Risks
@@ -198,6 +198,6 @@ OCI staging smoke tests: passed
 
 ## Next Highest-Value Build Block
 
-The next highest-value block is **Oracle AI Vector Search active-read promotion readiness**, starting with refreshed parity against the active Object Storage provider.
+The next highest-value block is **OCI GenAI synthesis parity**, run in shadow/evaluation mode without changing the deterministic default.
 
-That moves retrieval toward the managed production target while preserving the validated advisory workflow and instant rollback path to `local_json`.
+That moves answer quality forward while preserving the validated advisory workflow and rollback-safe deterministic synthesis path.

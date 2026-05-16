@@ -14,9 +14,9 @@ OCI Architecture Studio now has a validated working foundation:
 - configurable OCI GenAI embeddings with deterministic fallback and validation diagnostics
 - configurable OCI GenAI synthesis with retrieval-grounded prompt construction and fail-closed deterministic fallback
 - optional synthesis debug traces for prompt sections, retrieved chunks, token estimates, and fallback reasons
-- backend section citation metadata for chunk IDs, source documents, OCI service categories, and services
+- backend and frontend section citation traceability for chunk IDs, source documents, source URLs, trust/relevance, and S-numbered evidence links
 - AWS-to-OCI source service mapping and domain-aware heuristics for ecommerce, fintech, SaaS, AI/ML inference, observability, and analytics scenarios
-- 47-chunk curated OCI corpus with scalable ingestion scaffolding for source groups, source categories, chunk lineage, document hierarchy, release tags, and corpus health validation
+- 60-chunk curated OCI corpus with scalable ingestion scaffolding for source groups, source categories, chunk lineage, document hierarchy, release tags, and corpus health validation
 - deterministic architecture pattern profiles, reasoning profiles, and synthesis quality signals that make fallback responses more useful while remaining explainable
 - concise decision reasoning metadata, explicit tradeoff analysis, per-recommendation confidence indicators, and lightweight consistency validation for recommendation coherence
 - deterministic enterprise governance metadata for executive framing, security posture checks, risk classification, recommendation priority, architecture comparison, enterprise review findings, and auditability trace
@@ -25,9 +25,9 @@ OCI Architecture Studio now has a validated working foundation:
 - lightweight architecture topology metadata for service relationships, deployment topology, HA/DR posture, operational notes, and future visualization
 - confidence sub-signals for retrieval grounding, service relevance, workload alignment, migration mapping certainty, and citation coverage
 - deterministic evaluation intelligence for advisory quality scoring, hallucination heuristics, benchmark expectation checks, provider comparison signals, and configurable quality gates
-- OCI Object Storage retrieval manifest as the active staging retrieval provider
-- Oracle AI Vector Search provider, Autonomous Database scaffold, table/index tooling, and validated shadow sync for the next OCI-native retrieval step
-- local JSON retrieval preserved as the config-only rollback provider
+- Oracle AI Vector Search as the active staging retrieval provider
+- OCI Object Storage retrieval manifest and local JSON retrieval preserved as config-only rollback providers
+- Oracle AI Vector Search provider, Autonomous Database, table/index tooling, active-read validation, and rollback proof
 - point-in-time release snapshots, deterministic release impact metadata, selective refresh overlays, retained historical snapshots, and current-vs-historical schema scaffolding for release-aware guidance
 - OCI-native operational diagnostics, runtime readiness checks, runtime profiles, API Gateway/OCI DevOps readiness metadata, and scheduled refresh support through backend OCI VM cron
 - golden, edge-case, advisory-quality, orchestration-quality, architecture-realism, evaluation-intelligence, enterprise-governance, enterprise-platform-maturity, retrieval regression, and parity validation gates
@@ -35,7 +35,7 @@ OCI Architecture Studio now has a validated working foundation:
 - FinOps/migration optimization evals for phased sequencing, coexistence/rollback realism, modernization planning, cost-performance guidance, workload optimization, and implementation readiness
 - Terraform-based OCI staging slice with Object Storage, Vault, Logging, Monitoring, Events, and Notifications
 
-The next platform milestone is to keep improving advisory quality with richer official OCI corpus coverage, production-aligned embeddings/vector indexing, and stricter evaluation gates before promoting more GenAI-assisted or OCI-native retrieval behavior.
+The next platform milestone is OCI GenAI synthesis parity in shadow/evaluation mode, while keeping deterministic synthesis as the default until citation coverage, unsupported-claim behavior, latency, fallback, and rollback gates pass.
 
 The current orchestration layer is deterministic and in-process. Autonomous agent planning, persistent agent memory, and independent tool-using agents are future research and productization items, not current runtime behavior.
 

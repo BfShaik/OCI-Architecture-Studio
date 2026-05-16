@@ -367,7 +367,7 @@ When a response is weak:
 - Local hashing embeddings are still active for deterministic parity.
 - OCI GenAI synthesis is adapter-backed and config-gated; deterministic synthesis remains the rollback-safe default.
 - The multi-agent pilot is a bounded control layer, not autonomous multi-step planning.
-- Oracle AI Vector Search active reads remain guarded.
+- Oracle AI Vector Search active reads are promoted in staging; Object Storage remains the immediate rollback provider.
 - Evaluation intelligence scores are deterministic guardrails, not objective architecture truth.
 
 ## Next Milestone
