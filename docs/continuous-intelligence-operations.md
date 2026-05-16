@@ -16,7 +16,8 @@ ingest candidate -> validate candidate -> promote only if gates pass -> rollback
 
 ```mermaid
 flowchart LR
-    A["OCI Resource Scheduler"] --> B["Knowledge refresh function"]
+    A["OCI Compute VM cron\ncurrent staging scheduler"] --> B["Refresh policy runner"]
+    F1["OCI Functions + Resource Scheduler\ndeferred retry path"] -. "after packaged invocation passes" .-> B
     B --> C["Release ingestion"]
     C --> D["Normalize and classify release changes"]
     D --> E["Impact analysis"]
@@ -164,9 +165,9 @@ Use provider rollback if Object Storage retrieval degrades independently of the 
 
 Cadence:
 
-- release notes: every 6 hours in staging/prod
-- fast-changing service pages: daily
-- stable OCI docs: weekly
+- release notes: every 6 hours in staging/prod through the backend OCI VM cron path
+- fast-changing service pages: daily when explicitly enabled
+- stable OCI docs: weekly, currently safe/candidate-only in staging
 - full reindex: manual only
 
 Promotion rules:
@@ -204,19 +205,18 @@ If promoted retrieval degrades:
 - set `RETRIEVAL_PROVIDER=local_json` if Object Storage manifest retrieval is unhealthy
 - rerun retrieval regression before restoring `oci_object_storage`
 
+## Current Staging Scheduler
+
+Current decision: staging refresh is scheduled by cron on the backend OCI Compute VM. This keeps orchestration inside OCI, avoids external schedulers, and preserves the same Python refresh policy used locally.
+
+Current staging posture:
+
+- release-watch: live fetch, quick gates, gated promotion, Object Storage upload
+- stable-docs: `no_fetch=true`, `quick_gates=true`, `candidate_only=true`, `upload=false`
+- rollback: restore previous snapshots and re-upload rollback copies to Object Storage if needed
+
+OCI Functions plus Resource Scheduler remain the preferred managed-serverless retry path, but they are deferred because the packaged Function invocation failed before handler execution with `FunctionInvokeContainerInitFail`. Re-enable only after a packaged no-fetch invocation passes and Terraform shows only expected Functions/Scheduler/IAM changes.
+
 ## Next Milestone
 
-Add OCI Monitoring metrics for refresh latency, gate failures, candidate promotion count, rollback count, and retrieval regression failures so staging can alert before users see stale or degraded advisory responses.
-
-## OCI Resource Scheduler Activation Gate
-
-OCI Resource Scheduler should invoke the knowledge-refresh OCI Function only after the Function image and IAM path are validated.
-
-Activation remains blocked until:
-
-- the Function image is built and pushed to OCIR
-- the controlled no-fetch Function invocation passes from the packaged image
-- Terraform plan shows only expected Functions/Scheduler/IAM resources
-- runtime diagnostics expose configured Function and schedule OCIDs
-
-Rollback is configuration-only: set `enable_knowledge_refresh_scheduler=false`, apply the reviewed Terraform plan, and continue using operator-triggered refresh commands.
+Add OCI Monitoring metrics for refresh latency, gate failures, candidate promotion count, rollback count, and retrieval regression failures so staging can alert before users see stale or degraded advisory responses. Then repair the Function image path and retry Resource Scheduler in safe mode.

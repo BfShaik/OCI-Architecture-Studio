@@ -18,11 +18,11 @@ OCI Architecture Studio currently supports a validated advisory flow in local de
 6. Local development defaults to `local_json`; it also remains the tested config-only rollback provider for staging.
 7. The controlled orchestration layer selects deterministic specialist roles, shares the same retrieved evidence across them, and runs a validation critic over evidence support, citations, freshness, and unsupported-claim risk. These are in-process role boundaries, not autonomous agents.
 8. One final synthesis step generates the advisory response through the configured provider with deterministic rollback available. Deterministic synthesis now uses lightweight architecture pattern profiles, retrieved evidence, workload heuristics, and consistency checks rather than only profile boilerplate. OCI GenAI synthesis can be enabled through configuration and uses the same retrieved context through a dedicated grounding prompt builder.
-9. Release-awareness uses local release snapshots, deterministic release classification, impact analysis, release overlays on affected chunks, and refresh-policy scaffolding. Scheduled refresh and promotion automation exist, but live release reconciliation is not part of request-time advisory behavior.
+9. Release-awareness uses local release snapshots, deterministic release classification, impact analysis, release overlays on affected chunks, and refresh-policy automation. In staging, release-watch refresh now runs from the OCI backend VM cron path with live release fetch, quick gates, gated promotion, and Object Storage upload; stable-doc refresh remains safe/candidate-only. Refresh still never runs on user queries.
 10. The backend returns structured recommendations, concise decision reasoning metadata, consistency findings, confidence, evidence links, section citation metadata, deterministic enterprise-governance assessment metadata, lightweight architecture topology metadata, executive experience metadata, FinOps/migration optimization metadata, optional retrieval debug traces, release context, temporal knowledge context, and standard architecture response sections. The current UI renders the main advisory fields, executive brief, implementation sequence, topology/dependency summaries, comparison summaries, explainability highlights, migration/FinOps optimization summaries, exportable Markdown summary, and citation cards. Full section-level citation UI, live diagram rendering, and release-context UI are future work.
 11. Operational diagnostics expose deployment profile, retrieval health, release refresh freshness, synthesis availability, OCI secret/config posture, API Gateway/OCI DevOps readiness metadata, infrastructure visibility, governance/risk counters, runtime readiness, and lightweight runtime analytics through additive endpoints. Live OCI connectivity checks are opt-in so local development stays offline-safe.
 
-LangGraph, advanced memory, and autonomous agent execution remain deferred. Oracle AI Vector Search provider code and tooling exist, but staging active-read promotion is deferred until a real Oracle vector index is built and parity checks pass.
+LangGraph, advanced memory, and autonomous agent execution remain deferred. Oracle AI Vector Search provider code, Autonomous Database infrastructure, schema/index tooling, and shadow sync exist and have been validated against the refreshed 47-chunk snapshot, but staging active-read promotion remains deferred until refreshed parity, regression, smoke, and rollback gates pass without exception.
 
 ## Repository Layout
 
@@ -40,7 +40,7 @@ tests/                Backend and integration tests
 ## Current Capabilities
 
 - Local OCI source registry and ingestion pipeline
-- Curated local OCI architecture corpus with 44 registry sources/chunks in the current branch
+- Curated local OCI architecture corpus with 47 chunks in the current branch
 - Scalable ingestion scaffolding for source groups, source categories, release tags, chunk lineage, section hierarchy, and source traceability
 - Deterministic local embeddings for development
 - Optional OCI Generative AI embeddings with provider switching, dimensional validation, failure diagnostics, and deterministic local fallback
@@ -76,7 +76,8 @@ tests/                Backend and integration tests
 - Hybrid retrieval path combining provider vector similarity, metadata filters, reranking heuristics, intent/domain heuristics, and intent-critical service coverage
 - Separate local OCI release snapshot pipeline
 - Knowledge refresh policy scaffolding for release-note watching, candidate snapshot validation, selective reindex, release overlay tagging, eval-gated promotion, historical snapshot retention, version lineage, and rollback-safe updates
-- Optional OCI-native recurring refresh scaffold with OCI Functions and OCI Resource Scheduler; this is not active request-time release intelligence
+- OCI-native release-watch refresh from the backend OCI Compute VM cron path with live release fetch, quick gates, gated promotion, and Object Storage upload; stable-doc refresh remains conservative/candidate-only
+- Deferred OCI Functions and OCI Resource Scheduler refresh scaffold retained for a later retry after the packaged Function image startup issue is fixed
 - Continuous intelligence status endpoint at `/knowledge/refresh/status`
 - OCI-native runtime profiles for `local_dev`, `oci_vm`, `oke`, and `oci_functions` under `infra/runtime-profiles/`
 - Additive operational diagnostics endpoints: `/operations/profile`, `/operations/health`, `/operations/readiness`, `/operations/infrastructure`, and `/operations/analytics`
@@ -148,7 +149,7 @@ Implemented today:
 
 Current limitations:
 
-- The active local corpus is still curated and incomplete, but has expanded to 44 OCI registry sources/chunks across 41 services and 14 service domains in the current branch.
+- The active local corpus is still curated and incomplete, but has expanded to 47 chunks across 44 services and 14 service domains in the current branch.
 - OCI GenAI mode requires valid OCI SDK auth, compartment, model IDs, region/endpoint policy access, and parity validation before promotion.
 - Live GenAI comparison is skipped when required OCI GenAI environment variables are absent.
 - GenAI output is still constrained by retrieved evidence quality; deeper official OCI documentation coverage remains necessary before production-grade breadth.
@@ -266,11 +267,11 @@ VITE_API_BASE_URL=http://localhost:8000 npm run dev
 ## Recommended Next Steps
 
 1. Keep staging on `RETRIEVAL_PROVIDER=oci_object_storage` and monitor retrieval latency, citations, and failure handling.
-2. Run the scheduled refresh function in staging with candidate-first promotion, release impact reporting, and `/knowledge/refresh/status` monitoring.
+2. Keep release-watch refresh on the backend OCI VM cron path, monitor `/knowledge/refresh/status`, and treat OCI Functions/Resource Scheduler as deferred until the packaged image startup issue is fixed.
 3. Continue expanding the source registry with Budgets, Audit, Data Guard, and deeper service-specific architecture sources.
 4. Replace local hashing embeddings with OCI Generative AI embeddings once provider settings and cost controls are finalized.
-5. Build and validate the Oracle AI Vector Search table/index with production embeddings before enabling staging active reads.
-6. Run Oracle AI Vector Search dual-run checks against local JSON and the Object Storage provider before any active-read promotion.
+5. Keep Oracle AI Vector Search shadow-synced from the promoted Object Storage snapshot before enabling staging active reads.
+6. Run refreshed Oracle AI Vector Search dual-run checks against the Object Storage provider before any active-read promotion.
 7. Replace fallback release parsing with stronger extraction from official OCI release pages and keep impact-category mappings under review.
 8. Use the evaluation-intelligence suite and advisory quality gate before promoting retrieval, synthesis, prompt, or provider changes.
 9. Use OCI-native runtime profiles and `/operations/health` before staging changes; enable live OCI connectivity checks only after IAM policies and Vault access are ready.
@@ -417,17 +418,16 @@ Latest full validation: 2026-05-15.
 - FinOps-migration-optimization evals: `4 passed, 0 failed`
 - Advisory quality gate: passed with MVP thresholds
 - Internal beta readiness gate: passed locally and against OCI staging
-- Operational readiness check: passed locally; API Gateway and OCI DevOps are reported as readiness warnings until configured
-- Retrieval regression: `18 passed, 0 failed`
-- Retrieval health: passed for local `local_json` and staging `oci_object_storage` with 44 chunks
-- Oracle AI Vector Search local fallback health: passed with fallback active when DB settings are absent
-- Oracle vector local-index validation: passed for 44 chunks at 256 dimensions
-- Vector retrieval validation: skip-safe report generated when Oracle DB settings are absent
-- Corpus health: passed for 44 chunks, 44 sources, 41 services, and 14 service domains
-- Knowledge ingestion: `44 chunks`
-- Release ingestion: `5 release items` in offline fallback mode
+- Operational readiness check: passed locally and against staging; OCI DevOps remains a readiness warning until configured
+- Retrieval regression: `26 passed, 0 failed` for the refreshed Object Storage path
+- Retrieval health: passed for local `local_json` and staging `oci_object_storage` with 47 chunks
+- Oracle AI Vector Search shadow health: passed with 47 chunks, valid table/index, 44 services, and 14 service domains
+- Oracle vector shadow validation: passed 26 cases with average top-chunk overlap `0.977`
+- Corpus health: passed for 47 chunks, 44 services, and 14 service domains
+- Knowledge ingestion: `47 chunks`
+- Release ingestion: `12 live release items` in the latest gated release-watch activation
 - Release impact report: passed with deterministic classification, impacted sources/chunks, targeted eval cases, refresh actions, and unresolved-risk reporting
-- Knowledge refresh policy smoke: passed in offline release-watch quick-gate mode
+- Knowledge refresh policy: backend VM release-watch path passed with live fetch, quick gates, gated promotion, and Object Storage upload; stable-doc refresh remains safe/candidate-only
 - Frontend build: passed
 - Terraform fmt/validate: passed for `dev`, `test`, and `staging`
 - OCI staging smoke: passed for backend, frontend, OCI SDK, retrieval, and resource visibility

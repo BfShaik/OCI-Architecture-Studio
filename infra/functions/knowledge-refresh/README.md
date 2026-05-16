@@ -2,6 +2,8 @@
 
 This is the OCI Functions execution target for the scheduled knowledge refresh policy.
 
+Current staging decision: this path is **deferred**. The image was built and pushed with an immutable OCIR tag, and local/container candidate validation passed, but the deployed OCI Function invocation failed before handler execution with `FunctionInvokeContainerInitFail`. Staging refresh now runs from cron on the backend OCI Compute VM while this Function image startup issue is repaired.
+
 The Terraform foundation can create:
 
 - OCI Functions application
@@ -9,11 +11,11 @@ The Terraform foundation can create:
 - Resource Scheduler release-note schedule
 - Resource Scheduler stable-docs schedule
 
-Build and push the function image to OCIR, then set:
+After the packaged invocation issue is fixed, build and push the function image to OCIR, then set:
 
 ```hcl
 enable_knowledge_refresh_scheduler = true
-knowledge_refresh_function_image   = "iad.ocir.io/<namespace>/oci-architecture-studio/knowledge-refresh:latest"
+knowledge_refresh_function_image   = "iad.ocir.io/<namespace>/oci-architecture-studio/knowledge-refresh:<immutable-tag>"
 ```
 
 The function uses the same repository refresh policy:
@@ -64,9 +66,24 @@ PY
 
 This validates the Function invocation contract without fetching live documentation, uploading snapshots, promoting candidates, or enabling schedules. Keep Resource Scheduler disabled until this controlled invocation passes with the packaged image and runtime IAM policy.
 
+## Current VM Cron Alternative
+
+The active staging refresh scheduler is documented in:
+
+- `infra/scripts/run_knowledge_refresh_vm.sh`
+- `infra/scripts/install_knowledge_refresh_vm_cron.sh`
+- `docs/continuous-intelligence-operations.md`
+
+Current staging posture:
+
+- release-watch: live fetch, quick gates, gated promotion, Object Storage upload
+- stable-docs: no-fetch, quick gates, candidate-only, no upload
+
+This still runs inside OCI, uses the same Python refresh policy, and avoids GitHub Actions or external schedulers.
+
 ## Resource Scheduler Enablement
 
-Current decision: keep schedules disabled until the Function image is built, pushed to OCIR, and validated through a controlled invocation.
+Current decision: keep schedules disabled until the Function image is rebuilt, pushed to OCIR, and validated through a controlled packaged invocation.
 
 Prerequisites:
 

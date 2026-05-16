@@ -24,8 +24,8 @@ flowchart LR
       Logs["OCI Logging\napp and deployment logs"]
       Monitoring["OCI Monitoring\nbackend CPU alarm"]
       Events["OCI Events + Notifications\nresource lifecycle alerts"]
-      Scheduler["OCI Resource Scheduler\nrelease + stable-doc refresh"]
-      Function["OCI Function\nknowledge refresh runner"]
+      Cron["VM cron\nrelease-watch active\nstable-docs safe mode"]
+      Function["OCI Function + Resource Scheduler\ndeferred retry path"]
     end
   end
 
@@ -39,9 +39,9 @@ flowchart LR
   VM -. "secrets access" .-> Vault
   VM -. "logs" .-> Logs
   Monitoring --> Events
-  Scheduler --> Function
-  Function --> SnapshotBucket
-  Function --> ObjectIndex
+  Cron --> SnapshotBucket
+  Cron --> ObjectIndex
+  Function -. "deferred after FunctionInvokeContainerInitFail" .-> SnapshotBucket
 ```
 
 Current active retrieval provider:
@@ -99,13 +99,14 @@ Validated parity result:
 
 ## 3. Target OCI-Native Retrieval Architecture
 
-This is the next production retrieval target. Oracle AI Vector Search remains guarded until schema, indexing, query behavior, and parity are validated.
+This is the next production retrieval target. Oracle AI Vector Search has schema, indexing, and shadow sync validated, but active reads remain guarded until refreshed query parity, regression, smoke, operational readiness, and rollback gates pass.
 
 ```mermaid
 flowchart LR
   Sources["Approved OCI docs\nsource registry"]
   Releases["OCI release sources\nrelease registry"]
-  Scheduler["OCI Resource Scheduler\nrelease-watch + stable-docs"]
+  Scheduler["Backend OCI VM cron\ncurrent release-watch scheduler"]
+  FunctionRetry["OCI Functions + Resource Scheduler\ndeferred retry path"]
 
   subgraph Ingestion["Knowledge Refresh Pipeline"]
     Fetch["Fetch or fallback"]
@@ -135,6 +136,7 @@ flowchart LR
   end
 
   Scheduler --> Fetch
+  FunctionRetry -. "after packaged invocation passes" .-> Fetch
   Sources --> Fetch --> Clean --> Chunk --> Metadata --> Embed --> Candidate --> Gates --> Promote
   Metadata --> Raw
   Promote --> Manifest
@@ -154,8 +156,8 @@ Migration sequence:
 1. Keep `local_json` as rollback provider.
 2. Promote `oci_object_storage` as active staging provider after parity. — Done
 3. Validate staging smoke and evals. — Done
-4. Implement Oracle AI Vector Search table/index.
-5. Dual-run Vector Search against `oci_object_storage`.
+4. Implement Oracle AI Vector Search table/index. — Done in shadow mode
+5. Dual-run Vector Search against `oci_object_storage`. — Done for shadow validation
 6. Promote Oracle AI Vector Search only after parity and rollback validation.
 
 ## 4. Continuous Release-Awareness Flow
@@ -164,7 +166,7 @@ Release-awareness is a differentiator because release context is stored separate
 
 ```mermaid
 flowchart TD
-  Scheduler["Scheduled release watcher"]
+  Scheduler["VM cron release watcher"]
   ReleaseIngest["Release ingestion"]
   Classify["Classify service, domain, impact"]
   Candidate["Candidate release + knowledge snapshots"]
@@ -194,10 +196,11 @@ flowchart TD
 Current release-awareness maturity:
 
 - point-in-time release snapshot exists
-- scheduled release watcher scaffold exists
+- scheduled release watcher runs from backend OCI VM cron
 - candidate-first refresh and eval-gated promotion exist
 - release-aware intent exists
 - stale-source caution exists
+- OCI Functions plus Resource Scheduler retry remains deferred until packaged invocation passes
 - deeper semantic impact analysis remains future work
 
 ## 5. Operational Control Points

@@ -9,10 +9,10 @@ Last updated: 2026-05-15
 | Backend API | Ready | `GET /health` and `POST /architecture-review` are working. |
 | Frontend UI | Ready | Chat-style workflow includes demo prompt shortcuts, loading state, error state, structured results, and source cards. |
 | Retrieval | Ready | OCI Object Storage retrieval is active in staging after config-only promotion; `local_json` remains the tested rollback provider. |
-| Release awareness | Ready for foundation demo | Point-in-time release snapshot ingestion exists and release-aware prompts separate current-release context from historical/local guidance. |
+| Release awareness | Ready for foundation demo | Release-watch refresh is active on the backend OCI VM cron path with live release fetch, quick gates, gated promotion, and Object Storage upload. Release-aware prompts still separate current release context from historical/local guidance. |
 | Evals | Ready | Golden and edge-case evals pass. |
 | Tests/build | Ready | Backend tests and frontend build pass. |
-| Known caveat | Accepted | OCI GenAI synthesis is optional rather than default; production semantic embeddings, Oracle AI Vector Search active reads, HTTPS ingress, and full live release reconciliation remain deferred. |
+| Known caveat | Accepted | OCI GenAI synthesis is optional rather than default; production semantic embeddings, Oracle AI Vector Search active reads, and full current-vs-historical answer comparison remain deferred. |
 
 ## Recommended Demo Prompts
 
@@ -132,11 +132,11 @@ Latest local validation:
 ```text
 Knowledge ingestion: passed
 Release ingestion: passed
-Backend tests: 30 passed
-Golden evals: 6 passed, 0 failed
+Backend tests: 126 passed in the internal beta baseline; latest refresh/API regression subset passed 18 tests
+Golden evals: 18 passed, 0 failed
 Edge-case evals: 8 passed, 0 failed
-Retrieval regression: 14 passed, 0 failed
-Dual-provider retrieval parity: 14 passed, 0 failed
+Retrieval regression: 26 passed, 0 failed
+Object Storage retrieval parity: 26 passed, 0 failed
 Frontend build: passed
 OCI staging smoke tests: passed
 ```
@@ -162,9 +162,9 @@ OCI staging smoke tests: passed
 ## Remaining Gaps
 
 - Production semantic embeddings are not active.
-- Oracle AI Vector Search active reads are not implemented.
+- Oracle AI Vector Search shadow table/index and sync are implemented and validated; active reads are not promoted.
 - OCI GenAI synthesis is implemented as a configurable path with deterministic fallback, but it is not the default staging mode.
-- Release impact analysis exists for snapshots and affected sources/chunks, but full live release reconciliation is not implemented.
+- Release impact analysis exists for snapshots and affected sources/chunks; release-watch refresh is live and gated, while full current-vs-historical answer comparison is not implemented.
 - OCI corpus coverage is still small.
 - Release parsing is heuristic-based.
 - UI does not yet include prompt history or saved reviews.
@@ -181,7 +181,7 @@ OCI staging smoke tests: passed
 
 1. Add dedicated OCI sources for WAF, Vault, Cloud Guard, Logging, Monitoring, Budgets, IAM, Audit, and Data Guard.
 2. Replace local hash embeddings with the selected production embedding provider.
-3. Implement Oracle AI Vector Search indexing and dual-run parity.
+3. Promote Oracle AI Vector Search only after refreshed dual-run parity, retrieval regression, smoke, and rollback gates pass.
 4. Run live OCI GenAI synthesis parity with approved model configuration before activation.
 5. Add full current-vs-historical release comparison in release-aware responses.
 6. Expand release-impact eval cases as the corpus grows.
@@ -197,6 +197,6 @@ OCI staging smoke tests: passed
 
 ## Next Highest-Value Build Block
 
-The next highest-value block is **Oracle AI Vector Search schema and indexing in shadow mode, followed by parity against the active Object Storage provider**.
+The next highest-value block is **Oracle AI Vector Search active-read promotion readiness**, starting with refreshed parity against the active Object Storage provider.
 
 That moves retrieval toward the managed production target while preserving the validated advisory workflow and instant rollback path to `local_json`.

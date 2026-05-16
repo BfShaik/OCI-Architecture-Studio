@@ -29,6 +29,9 @@ Phase 1 keeps the MVP simple:
 
 Phase 2 replaces local embeddings/vector index with OCI-native embeddings and vector search.
 
-Operational orchestration is OCI-native. Scheduled knowledge refresh belongs in
-OCI Resource Scheduler invoking OCI Functions; staging deploys should use the
-local operator scripts or future OCI DevOps, not GitHub Actions.
+Operational orchestration stays OCI-native. Current staging scheduled knowledge
+refresh runs as cron on the backend OCI Compute VM because the packaged OCI
+Function image failed before handler execution. OCI Resource Scheduler invoking
+OCI Functions remains the preferred managed retry path after packaged invocation
+validation passes. Staging deploys should use the local operator scripts or
+future OCI DevOps, not GitHub Actions.

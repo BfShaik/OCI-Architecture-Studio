@@ -14,12 +14,12 @@ This milestone is an internal beta baseline, not a production HA certification. 
 
 | Area | Current State | Internal Beta Decision |
 |---|---|---|
-| Retrieval | `oci_object_storage` is active in staging with 47 chunks and `local_json` fallback. Oracle AI Vector Search provider and tooling exist but live DB-backed promotion is not complete. | Accept for beta. Keep Oracle AI Vector Search as the next retrieval promotion gate. |
+| Retrieval | `oci_object_storage` is active in staging with 47 chunks and `local_json` fallback. Oracle AI Vector Search provider, Autonomous Database, table/index, and shadow sync are validated, but live DB-backed active-read promotion is not complete. | Accept for beta. Keep Oracle AI Vector Search active reads as the next retrieval promotion gate. |
 | Advisory synthesis | Deterministic synthesis is default. OCI GenAI chat path exists with fail-closed deterministic fallback. | Accept for beta. Enable live OCI GenAI only after parity checks pass with approved model config. |
 | Governance | Deterministic governance annotations, risk classification, security posture checks, prioritization, comparisons, and auditability trace exist. | Accept for beta as human-review metadata, not policy enforcement. |
 | Migration and FinOps | `optimization_plan` adds phased migration, modernization options, FinOps levers, workload optimization, comparisons, and implementation readiness. | Accept for beta. It is heuristic advisory guidance and does not call live OCI billing APIs. |
-| Release intelligence | Release ingestion, normalization, impact analysis, overlays, historical snapshot retention, and release-aware response metadata exist. | Accept for beta. Full live release reconciliation and full bi-temporal retrieval remain future work. |
-| Runtime deployment | OCI VM staging is active. OKE and OCI Functions-compatible profiles exist. API Gateway and OCI DevOps metadata are scaffolded but not active in staging. | Accept for beta with documented readiness warnings. Promote API Gateway before production-style external exposure. |
+| Release intelligence | Release ingestion, normalization, impact analysis, overlays, historical snapshot retention, release-aware response metadata, and VM-cron release-watch refresh with gated Object Storage upload exist. | Accept for beta. Full current-vs-historical answer comparison and full bi-temporal retrieval remain future work. |
+| Runtime deployment | OCI VM staging and OCI API Gateway ingress are active, with direct VM rollback preserved. OKE and OCI Functions-compatible profiles exist. OCI DevOps metadata is scaffolded but not active in staging. | Accept for beta with documented readiness warnings. Keep direct VM rollback until production ingress hardening is complete. |
 | IaC | Terraform covers compartment, VCN/subnet, gateway, route/security, Compute, Object Storage, Vault/key/secret, Logging, Monitoring alarm, Notifications, Events, optional API Gateway, optional Functions/Scheduler, IAM dynamic groups/policies, and rebuild outputs. | Accept for beta. Move Terraform state to OCI Object Storage before team/shared operations. |
 | Observability | Operational endpoints expose health, readiness, infrastructure, analytics, provider usage, fallback events, governance trends, recommendation trends, and runtime degradation counters. OCI Logging/Monitoring/Notifications/Event OCIDs are visible when configured. | Accept for beta. Custom metric export to OCI Monitoring is a later hardening task. |
 | Evaluation | Golden, edge, advisory, orchestration, architecture realism, evaluation intelligence, governance, platform maturity, runtime readiness, executive experience, FinOps/migration, retrieval regression, vector skip-safe, and provider-parity tooling exist. | Accept for beta. Keep eval additions tied to real failures and platform gaps. |
@@ -29,7 +29,7 @@ This milestone is an internal beta baseline, not a production HA certification. 
 
 1. Added `infra/scripts/internal_beta_readiness_check.py` as a single high-signal internal beta gate for deployed environments.
 2. Improved scheduler diagnostics so OCI Resource Scheduler/Functions readiness is based on configured Function and Schedule OCIDs, not only the process deployment profile.
-3. Extended Terraform cloud-init and runtime profile examples to carry knowledge-refresh Function/Schedule OCIDs when the scheduler is enabled.
+3. Pivoted staging refresh scheduling to backend OCI VM cron after the packaged Function image failed with `FunctionInvokeContainerInitFail`.
 4. Added regression coverage for scheduler diagnostic visibility.
 5. Added release-refresh lifecycle reporting so candidate creation, gate status, promotion, upload, rollback, and query-time refresh posture are visible in one report.
 6. Synced the refreshed 47-chunk knowledge snapshot and release snapshot to OCI Object Storage staging.
@@ -37,9 +37,9 @@ This milestone is an internal beta baseline, not a production HA certification. 
 
 ## Accepted Internal Beta Limitations
 
-- The active staging API is still direct backend VM exposure unless OCI API Gateway is explicitly enabled.
+- OCI API Gateway is active for staging ingress, but the direct backend VM endpoint remains available as a rollback path.
 - OCI DevOps is not configured for active staging deployment; local operator scripts remain the current deployment mechanism.
-- Oracle AI Vector Search is implemented but not the active staging read path.
+- Oracle AI Vector Search shadow infrastructure and index are implemented and validated, but not the active staging read path.
 - OCI GenAI synthesis and OCI GenAI embeddings are implemented but not active by default.
 - The corpus is curated and intentionally small; it is not a complete OCI documentation mirror.
 - Cost guidance is deterministic FinOps advisory logic. It does not inspect live tenancy spend or call OCI Cost Analysis APIs.
@@ -152,15 +152,15 @@ The `v1.0.1` validation on 2026-05-15 passed:
 - FinOps-migration-optimization evals: 4 of 4 passed.
 - Local retrieval regression: 18 of 18 passed against 47 chunks.
 - Object Storage retrieval parity: 26 of 26 passed against the refreshed staging snapshot.
-- Vector retrieval validation: skipped safely because Oracle AI Vector Search DB settings are not configured.
-- Oracle AI Vector Search parity: skipped safely because Oracle DB vector settings are not configured.
+- Oracle AI Vector Search shadow validation: passed 26 cases with 0.977 average top-chunk overlap against the refreshed Object Storage baseline.
+- Oracle AI Vector Search active-read parity: not yet promoted; final active-provider parity and rollback gate remain pending.
 - OCI GenAI synthesis parity: skipped safely because OCI GenAI model and compartment settings are not configured.
 - Terraform validation: dev, test, and staging validated after backend-disabled init.
 - Deployment config validation: passed for staging tfvars.
 - Terraform remote-state readiness: passed in non-mutating `--skip-oci` mode with expected warnings that remote state is not yet enabled.
-- Release-watch refresh validation: passed in no-fetch mode with no query-time refresh.
+- Release-watch refresh validation: passed with live fetch, quick gates, gated promotion, and Object Storage upload from the backend OCI VM cron path.
 - Staging Object Storage snapshot sync: uploaded `oci-rag-index.json` and `oci-release-snapshot.json`.
 - Staging retrieval health: passed with `oci_object_storage`, 47 chunks, 44 services, and 14 service domains.
-- Staging smoke: passed for backend and frontend.
-- Staging operational readiness: passed with expected API Gateway and OCI DevOps warnings.
-- Staging internal beta readiness: passed with expected API Gateway and OCI DevOps warnings.
+- Staging smoke: passed through OCI API Gateway for backend and frontend.
+- Staging operational readiness: passed with expected OCI DevOps warning.
+- Staging internal beta readiness: passed with expected OCI DevOps warning.

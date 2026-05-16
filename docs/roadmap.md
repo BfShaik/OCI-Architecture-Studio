@@ -48,6 +48,7 @@ Deliverables:
 - confidence scoring and low-confidence fallback — Done
 - advisory-quality eval suite — Done
 - production embedding provider — Pending
+- Oracle AI Vector Search shadow index — Done
 - Oracle AI Vector Search active read path — Pending
 
 ## Phase 2B — Advisory Intelligence Quality
@@ -96,7 +97,7 @@ Deliverables:
 - distributed orchestration framework — Deferred
 
 ## Phase 3 — Release-Aware Knowledge
-Status: Continuous intelligence foundation implemented
+Status: Continuous intelligence foundation implemented; release-watch active on OCI VM cron
 
 Deliverables:
 - OCI release source registry — Done
@@ -114,8 +115,9 @@ Deliverables:
 - refresh status endpoint — Done
 - manifest-driven rollback automation — Done
 - rollback-safe refresh snapshots — Done
-- OCI scheduled refresh scaffold — Done
-- release impact summaries — Pending
+- OCI scheduled refresh scaffold — Done; Functions/Resource Scheduler retry deferred after packaged Function startup failure
+- backend OCI VM cron release-watch refresh — Done
+- release impact summaries — MVP Done
 - stale-knowledge warnings — MVP Done
 - OCI Monitoring metrics for refresh/gate health — Pending
 

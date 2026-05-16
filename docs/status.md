@@ -662,8 +662,8 @@ Last validation run: 2026-05-15
   - Phase 1 configuration hooks, metadata enrichment, Object Storage manifest path, health checks, and regression checks exist
   - Object Storage manifest retrieval is the active staging provider
   - `local_json` remains the validated rollback provider
-  - Oracle AI Vector Search provider code, schema/upsert/search tooling, fallback safety, and skip-safe validation exist
-  - Oracle AI Vector Search is not the active staging read path until a real DB index is built and parity checks pass
+  - Oracle AI Vector Search provider code, schema/upsert/search tooling, fallback safety, Autonomous Database infrastructure, table/index, and shadow validation exist
+  - Oracle AI Vector Search is not the active staging read path until refreshed active-provider parity, smoke, regression, operational readiness, and rollback checks pass
   - post-migration readiness report is captured in `docs/post-migration-readiness-report.md`
   - dual-provider parity report is captured in `docs/retrieval-parity-validation-report.md`
   - promotion report is captured in `docs/retrieval-provider-promotion-report.md`
@@ -687,11 +687,11 @@ Last validation run: 2026-05-15
 
 ## Current Known Limitations
 
-- The local RAG index is a curated 44-source corpus, not a complete OCI documentation corpus.
+- The local RAG index is a curated 47-chunk corpus, not a complete OCI documentation corpus.
 - Embeddings are deterministic local hash embeddings, useful for workflow validation but not production semantic retrieval.
 - Reranking improves ordering and traceability but still depends on the curated corpus and local hash embeddings.
-- Oracle AI Vector Search code and tooling are implemented, but live Oracle vector retrieval has not been validated without DB configuration in this branch.
-- Release awareness has scheduled snapshot refresh, deterministic impact analysis, candidate validation, historical snapshot retention, and status visibility; it does not yet perform live OCI release reconciliation or full bi-temporal retrieval.
+- Oracle AI Vector Search code, tooling, live DB connection, table/index, and shadow validation are implemented, but active staging reads are not promoted.
+- Release awareness has scheduled VM-cron snapshot refresh, deterministic impact analysis, candidate validation, historical snapshot retention, Object Storage upload, and status visibility; it does not yet perform full current-vs-historical answer comparison or full bi-temporal retrieval.
 - OCI GenAI synthesis adapter exists, but deterministic synthesis remains the rollback-safe default unless enabled by environment configuration.
 - Deterministic architecture patterns improve fallback usefulness but are still heuristic and bounded by the retrieved corpus.
 - Deterministic reasoning profiles improve explainability and tradeoff structure, but they are heuristic and do not replace expert OCI solution review.
@@ -700,4 +700,4 @@ Last validation run: 2026-05-15
 - Controlled multi-agent orchestration is currently an in-process control layer; it does not yet perform autonomous planning, tool use, or multi-step agent memory.
 - Operational diagnostics are additive and lightweight. They do not replace OCI Monitoring alarms, OCI Logging ingestion, or a production incident-management process.
 - Generated vector snapshots are local and gitignored.
-- The first OCI deployment exposes the backend directly on port `8000`; this is acceptable for staging validation but should be replaced with HTTPS ingress before demo/prod.
+- Staging uses OCI API Gateway for the promoted ingress path and keeps direct backend port `8000` as a rollback path; production HA and hardened HTTPS/custom-domain ingress remain future work.

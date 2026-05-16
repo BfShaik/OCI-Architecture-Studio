@@ -231,7 +231,7 @@ Deferred Terraform variables:
 
 ```hcl
 enable_knowledge_refresh_scheduler = true
-knowledge_refresh_function_image   = "iad.ocir.io/<namespace>/oci-architecture-studio/knowledge-refresh:latest"
+knowledge_refresh_function_image   = "iad.ocir.io/<namespace>/oci-architecture-studio/knowledge-refresh:<immutable-tag>"
 knowledge_refresh_release_cron     = "17 */6 * * *"
 knowledge_refresh_stable_docs_cron = "23 2 * * 0"
 ```

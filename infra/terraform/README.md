@@ -14,7 +14,7 @@ This scaffold is intentionally small:
 - Notifications topic
 - Events rule for environment resource lifecycle notifications
 - optional OCI API Gateway in front of the backend VM
-- optional OCI Functions + Resource Scheduler knowledge refresh schedules
+- optional OCI Functions + Resource Scheduler knowledge refresh schedules, currently deferred in staging after packaged Function startup failed before handler execution
 - runtime environment profile bootstrap for the backend VM
 - operational diagnostics configuration for OCI Vault, Logging, OCI Audit posture, Monitoring, Notifications, and Events
 - `governance_resource_summary` output for rebuild and audit review of IAM, Vault, logging, monitoring, notification, event, API Gateway, DevOps metadata, and scheduler resources
@@ -66,8 +66,9 @@ terraform apply
 - Use the generated Object Storage buckets for frontend assets, knowledge snapshots, release snapshots, and eval reports.
 - Enable `enable_api_gateway` only when the backend VM exposure path is ready to move behind OCI API Gateway; it is default-off for staging stability.
 - Provide optional `oci_devops_project_ocid` and `oci_devops_deploy_pipeline_ocid` when deployment is managed through OCI DevOps; current operator-script deployment remains supported.
-- Enable `enable_knowledge_refresh_scheduler` only after the knowledge refresh function image is built and pushed to OCIR.
-- When `enable_knowledge_refresh_scheduler` is enabled, Terraform passes the Function and Resource Scheduler OCIDs into cloud-init so runtime diagnostics can report the OCI-native refresh workflow accurately.
+- The current staging refresh scheduler is a cron job on the backend OCI Compute VM. It runs release-watch with live fetch, quick gates, gated promotion, and Object Storage upload; stable-docs remains safe/candidate-only.
+- Enable `enable_knowledge_refresh_scheduler` only after the knowledge refresh function image is rebuilt, pushed to OCIR, and passes a controlled packaged no-fetch invocation. The previous staged Function path was disabled after `FunctionInvokeContainerInitFail`.
+- When `enable_knowledge_refresh_scheduler` is enabled in a future retry, Terraform passes the Function and Resource Scheduler OCIDs into cloud-init so runtime diagnostics can report the OCI-native refresh workflow accurately.
 - Use `terraform output runtime_infrastructure_summary` during deployment reviews to distinguish active resources from default-off scaffolding.
 - The backend instance is intentionally simple; move to Container Instances or a Load Balancer + instance pool only after the MVP deployment is stable.
 - Use `backend.object-storage.example.tf` as the starting point for remote Terraform state once a shared state bucket exists.
@@ -208,7 +209,7 @@ Rollback:
 
 ## Autonomous AI Database Vector Search Scaffold
 
-Oracle Autonomous AI Database is scaffolded as the OCI-native target for Oracle AI Vector Search shadow mode. It is default-off and should not be enabled until the operator has approved database cost, password/state handling, and a shadow-read parity plan.
+Oracle Autonomous AI Database is scaffolded as the OCI-native target for Oracle AI Vector Search shadow mode. Staging has used this scaffold to create the shadow database, load the vector table/index, and validate sync against the refreshed 47-chunk Object Storage snapshot. Keep active retrieval on Object Storage until the active-read promotion gates pass.
 
 The scaffold creates, only when explicitly enabled:
 
@@ -235,7 +236,7 @@ Security and state notes:
 
 - Generated and override passwords are marked sensitive, but Terraform state can still contain sensitive values. Move state to the OCI Object Storage backend, restrict state access, and review the state plan before shared/team operation.
 - OCI Vault is the operational retrieval point for the generated database admin password after apply; do not copy the password into committed files.
-- The database is intended for shadow validation first. Keep `RETRIEVAL_PROVIDER=oci_object_storage` until Oracle AI Vector Search parity passes without skip.
+- The database is intended for shadow validation first. Keep `RETRIEVAL_PROVIDER=oci_object_storage` until Oracle AI Vector Search refreshed parity, staging smoke, retrieval regression, operational readiness, and rollback checks pass.
 - After apply, store runtime connection details in OCI Vault or the approved deployment secret path instead of plaintext shell files.
 
 Preflight:

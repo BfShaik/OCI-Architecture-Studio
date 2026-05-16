@@ -19,7 +19,7 @@ OCI Architecture Studio is an AI-powered OCI architecture intelligence platform 
 - AWS-to-OCI service mapping before retrieval
 - Metadata-aware retrieval reranking and optional retrieval debug traces
 - Section citation metadata in the backend response
-- Curated 44-source local OCI knowledge corpus in the current branch
+- Curated 47-chunk OCI knowledge corpus in the current branch
 - Ingestion scaffolding for source groups, source categorization, document hierarchy, chunk lineage, release tags, metadata enrichment, and source traceability
 - Corpus health validation for metadata completeness, duplicates, orphaned chunks, service tags, embeddings, and retrieval coverage gaps
 - Oracle AI Vector Search provider path with schema/index tooling, vector upsert, metadata-aware similarity search, health checks, and local fallback
@@ -67,7 +67,7 @@ Operational flow:
 - Runtime mode is selected by `DEPLOYMENT_PROFILE=local_dev|oci_vm|oke|oci_functions`.
 - Local development keeps deterministic local retrieval/synthesis and does not require OCI connectivity.
 - OCI VM and OKE profiles prefer OCI IAM-based runtime identity, OCI Vault for sensitive configuration, OCI Object Storage or Oracle AI Vector Search for retrieval, and OCI Logging/Monitoring/Notifications for operations.
-- OCI Functions-compatible execution is supported for scheduled refresh jobs through OCI Resource Scheduler invoking OCI Functions.
+- The current staging scheduled refresh path runs from backend OCI Compute VM cron because the packaged OCI Function image failed container initialization before handler execution. OCI Functions-compatible execution and Resource Scheduler Terraform scaffolding remain deferred until packaged no-fetch invocation passes.
 - `/operations/profile`, `/operations/health`, `/operations/readiness`, `/operations/infrastructure`, and `/operations/analytics` expose additive diagnostics without changing the architecture-review API.
 - Operational analytics include deterministic governance policy-trigger and risk-trend counters from generated advisory metadata.
 - Runtime readiness diagnostics check startup paths, dependency configuration, API Gateway readiness, OCI DevOps readiness, runtime safeguards, fallback paths, and release-refresh state.
@@ -140,12 +140,12 @@ Vector retrieval behavior:
 - `oracle_ai_vector_search` is implemented as an optional provider that requires Oracle Database vector search configuration.
 - Oracle vector retrieval supports vector similarity search, chunk upsert, metadata filtering over service/domain/pattern/workload/tag fields, and retrieval health diagnostics.
 - `RETRIEVAL_FALLBACK_ENABLED=true` allows local JSON fallback if the Oracle vector provider is unavailable.
-- Oracle vector promotion still requires a built index, production embedding alignment, retrieval regression, parity validation, and operational sign-off.
+- Oracle vector shadow infrastructure, schema/index, and sync are implemented and validated against the refreshed 47-chunk snapshot. Active-read promotion still requires refreshed parity, retrieval regression, staging smoke, rollback validation, production embedding alignment, and operational sign-off.
 
 Corpus and ingestion behavior:
 
 - The current local corpus is curated, not a complete OCI documentation mirror.
-- The current branch contains 44 registry sources/chunks across architecture, networking, compute, containers, database, storage, edge, security, observability, cost, resilience, AI/ML, analytics, and DevOps-oriented domains.
+- The current branch contains 47 chunks across architecture, networking, compute, containers, database, storage, edge, security, observability, cost, resilience, AI/ML, analytics, and DevOps-oriented domains.
 - Ingestion supports source-group defaults, source categories, source freshness metadata, release tags, context-preserving chunking, section paths, previous/next chunk lineage, chunk content hashes, and automatic metadata enrichment.
 - Corpus health checks are lightweight validation utilities; they are not autonomous crawlers or production refresh automation.
 
@@ -212,10 +212,10 @@ FinOps and migration optimization behavior:
 - No LLM-as-judge scoring, model fine-tuning, or autonomous evaluation agent in the current evaluation intelligence layer.
 - No always-on live LLM synthesis by default.
 - No promotion of OCI GenAI mode without parity and operational validation.
-- No continuous live release intelligence beyond scheduled snapshot refresh, deterministic impact analysis, and gated promotion.
-- No external scheduler or operational workflow platform; scheduled refresh uses OCI Resource Scheduler and OCI Functions scaffolding.
+- No request-time live release intelligence beyond scheduled snapshot refresh, deterministic impact analysis, and gated promotion.
+- No external scheduler or operational workflow platform; current scheduled refresh uses cron on the OCI backend VM, with OCI Functions and Resource Scheduler scaffolding deferred until the Function image startup issue is repaired.
 - No mandatory live OCI connectivity checks in local development.
 - No autonomous documentation crawling or full OCI documentation corpus yet.
 - No full bi-temporal retrieval; current-vs-historical support currently consists of schemas, retained historical snapshots, temporal response metadata, and current-first retrieval with release context terms.
-- Oracle AI Vector Search staging active reads remain guarded until a real index is built and query parity is validated.
+- Oracle AI Vector Search staging active reads remain guarded even though the shadow table/index exists; promotion waits for refreshed parity, regression, smoke, rollback, and operational approval gates.
 - HTTPS ingress and production HA are deferred beyond the current staging slice.

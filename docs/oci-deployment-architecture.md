@@ -20,7 +20,7 @@ Avoid premature microservices, Kubernetes, and complex orchestration until traff
 flowchart TD
   User["User / Architect"]
   Frontend["React Frontend\nObject Storage static site or build artifact"]
-  API["Optional OCI API Gateway\ncurrently default-off"]
+  API["OCI API Gateway\nactive staging ingress"]
   Backend["FastAPI Backend\nCompute VM / container host"]
   Obj["Object Storage\nknowledge snapshots, eval reports, frontend assets"]
   Vault["OCI Vault\nAPI keys, app secrets"]
@@ -28,19 +28,19 @@ flowchart TD
   Mon["OCI Monitoring"]
   Notif["OCI Notifications"]
   GenAI["OCI Generative AI\nPhase 2 embeddings/synthesis"]
-  Vector["Oracle AI Vector Search\nPhase 2 vector retrieval"]
+  Vector["Oracle AI Vector Search\nshadow vector retrieval"]
 
   User --> Frontend
   Frontend --> API
   API --> Backend
-  Frontend -. current staging direct API .-> Backend
+  Frontend -. direct VM rollback path .-> Backend
   Backend --> Obj
   Backend --> Vault
   Backend --> Logs
   Backend --> Mon
   Mon --> Notif
   Backend -. Phase 2 .-> GenAI
-  Backend -. Phase 2 .-> Vector
+  Backend -. shadow sync / future active read .-> Vector
 ```
 
 ## OCI Service Mapping
@@ -48,12 +48,12 @@ flowchart TD
 | Platform Need | Recommended OCI Service | Why |
 |---|---|---|
 | Backend API hosting | OCI Compute VM first; OKE later when operational need justifies it | Lowest migration risk. The current FastAPI app runs as-is with `uvicorn`; OKE is a supported profile/scaffold, not the active staging runtime. |
-| API exposure | Direct backend VM in current staging; OCI API Gateway scaffolded default-off | Keeps staging stable while allowing a controlled move to API Gateway once ingress hardening is promoted. |
+| API exposure | OCI API Gateway active in staging; direct backend VM retained as rollback | Keeps a managed OCI ingress path while preserving a simple rollback endpoint during beta. |
 | Frontend hosting | Object Storage static website or static assets behind CDN later | React build is static and can be uploaded with little operational overhead. |
 | Knowledge snapshots | Object Storage | Durable, low-cost storage for generated JSON indexes, eval reports, release snapshots, and raw source archives. |
 | Secrets | OCI Vault | Central place for API keys, database credentials, signing keys, and future model/provider credentials. |
 | Embeddings | OCI Generative AI | OCI-native embedding provider path for production semantic retrieval. |
-| Vector search | Oracle AI Vector Search | Oracle AI Vector Search is the OCI-native enterprise path when metadata, audit, and vectors should live close together. Current staging retrieval uses Object Storage snapshots, not live Oracle AI Vector Search reads. |
+| Vector search | Oracle AI Vector Search | Oracle AI Vector Search is the OCI-native enterprise path when metadata, audit, and vectors should live close together. Current staging has Autonomous Database, table/index, and shadow sync validated; active reads still use Object Storage snapshots until promotion gates pass. |
 | Logging | OCI Logging | Centralized app, ingestion, and release job logs. |
 | Monitoring | OCI Monitoring | Metrics, alarms, health checks, ingestion failures, retrieval miss rate, eval pass/fail trend. |
 | Notifications | OCI Notifications | Alert routing for failed ingestion, failing evals, stale knowledge, and production health alarms. |
@@ -98,13 +98,14 @@ Goal:
 - make knowledge refresh and release awareness operational.
 
 Steps:
-1. Move ingestion jobs to OCI Resource Scheduler invoking OCI Functions when the function image and permissions are ready.
+1. Keep release-watch refresh on the backend OCI Compute VM cron path while the packaged OCI Function image startup issue is repaired.
 2. Archive raw fetched docs and parsed snapshots in Object Storage.
 3. Add content hashing and selective reindexing.
 4. Add release impact classifier.
 5. Mark affected chunks as `needs_release_review`.
 6. Rerun impacted eval suites automatically.
 7. Notify owners when recommendations may be stale.
+8. Retry OCI Functions plus Resource Scheduler only after a packaged no-fetch invocation passes.
 
 ## Terraform Structure
 
@@ -165,7 +166,7 @@ Secrets should not be committed. Use OCI Vault for:
 ### Current
 
 ```text
-source registry -> local ingestion -> local hash embeddings -> Object Storage or JSON vector snapshot -> FastAPI retrieval
+source registry -> local ingestion -> local hash embeddings -> Object Storage active snapshot -> FastAPI retrieval
 ```
 
 ### Phase 2
@@ -175,7 +176,7 @@ source registry
   -> ingestion cleanup
   -> chunk metadata/versioning
   -> OCI Generative AI embeddings
-  -> Oracle AI Vector Search
+  -> Oracle AI Vector Search shadow index
   -> metadata-filtered retrieval
   -> citation-aware synthesis
 ```
@@ -370,7 +371,8 @@ watch release sources -> classify update -> map affected services -> mark stale 
 10. Add Object Storage vector-manifest adapter. — Done
 11. Add dual-provider retrieval parity. — Done
 12. Promote Object Storage retrieval in staging. — Done
-13. Add Oracle AI Vector Search schema/index prototype. — Pending
+13. Add Oracle AI Vector Search schema/index prototype. — Done in shadow mode
+14. Promote Oracle AI Vector Search active reads. — Pending
 
 ## Top Risks And Mitigations
 
@@ -385,6 +387,4 @@ watch release sources -> classify update -> map affected services -> mark stale 
 
 ## Recommended Next Step
 
-Implement Oracle AI Vector Search schema and indexing in shadow mode, then rerun staging smoke tests, golden evals, edge-case evals, retrieval regression, and parity checks against the active `oci_object_storage` provider.
-
-That proves the managed vector path before any active-read cutover.
+Keep Oracle AI Vector Search shadow-synced from the promoted Object Storage snapshot, then run refreshed parity, retrieval regression, staging smoke, operational readiness, and rollback checks before any active-read cutover.
