@@ -2,9 +2,9 @@
 
 ## Sprint Goal
 
-Maintain the validated OCI Architecture Studio staging baseline while advancing Sprint 2 retrieval promotion safely.
+Maintain the validated OCI Architecture Studio staging baseline while advancing enterprise-beta retrieval, knowledge refresh, and operational visibility safely.
 
-The current state uses `oci_object_storage` as the active staging retrieval provider after controlled config-only promotion. `local_json` remains the validated rollback provider. Oracle AI Vector Search remains guarded until schema, indexing, and live query parity are validated.
+The current state uses `oci_object_storage` as the active staging retrieval provider after controlled config-only promotion. `local_json` remains the validated rollback provider. Oracle AI Vector Search is shadow-loaded and validated, but active reads remain gated until final parity, regression, smoke, operational readiness, and rollback checks pass.
 
 ## Timebox
 
@@ -12,12 +12,13 @@ The current state uses `oci_object_storage` as the active staging retrieval prov
 
 ## Current Priorities
 
-1. Monitor the promoted `oci_object_storage` staging provider
-2. Improve advisory intelligence quality and confidence reporting
-3. Expand source registry for WAF, Vault, Cloud Guard, Logging, Monitoring, Budgets, IAM, Audit, and Data Guard
-4. Add vector-search dual-run parity against the Object Storage provider
-5. Keep release-awareness snapshot flow honest and clearly point-in-time
-6. Add HTTPS ingress plan for staging/demo readiness
+1. Keep the Knowledge Refresh Status panel and `/knowledge/refresh/status` aligned with the OCI VM cron path.
+2. Add a beginner-friendly ingestion-to-retrieval flow doc section.
+3. Add a read-only Retrieval Provider Status panel for active provider, chunk count, Object Storage source, fallback status, and Oracle vector shadow posture.
+4. Expand the curated official OCI corpus beyond 47 sources.
+5. Run OCI GenAI embeddings in shadow/parity mode before any embedding promotion.
+6. Promote Oracle AI Vector Search active reads only after refreshed parity and rollback gates pass.
+7. Add OCI Monitoring custom metrics for refresh/gate health.
 
 ## Sprint Scope
 
@@ -36,16 +37,19 @@ In scope:
 - deployment scripts, smoke tests, and staging workflow
 - dual-provider retrieval parity validation
 - Object Storage retrieval promotion and rollback validation
+- backend OCI VM cron release-watch refresh with gated Object Storage upload
+- Knowledge Refresh Status UI panel
+- Oracle AI Vector Search shadow table/index and sync validation
 - evidence-linked recommendations and confidence scoring
 - advisory-quality eval suite
 
 Out of scope:
-- production RAG/vector database cutover
+- Oracle AI Vector Search active-read cutover until promotion gates pass
 - LangGraph
 - advanced memory systems
-- production ingestion jobs beyond local CLI and Object Storage snapshots
-- production-grade cloud deployment beyond the current staging slice
-- HTTPS ingress and HA cloud runtime
+- external schedulers or GitHub Actions for operational orchestration
+- production-grade HA cloud runtime
+- live OCI GenAI default mode before parity validation
 
 ## Demo Readiness
 
@@ -59,17 +63,23 @@ See `docs/phase-2-architecture.md` for the productionization architecture, scala
 
 See `docs/status.md` for the current completed/pending log.
 
-Latest full validation on 2026-05-15 passed locally and in OCI staging:
+Latest validation/current posture:
 
-- backend tests: `30 passed`
-- golden evals: `6 passed`
-- edge-case evals: `8 passed`
-- retrieval regression: `14 passed`
-- advisory-quality evals: `5 passed`
+- backend tests: `129 passed`
+- frontend lint: passed
 - frontend build: passed
 - Terraform validation: passed for `dev`, `test`, and `staging`
-- staging smoke and resource visibility checks: passed
+- staging smoke passed through OCI API Gateway and direct VM rollback path
+- active staging retrieval: `oci_object_storage`
+- current corpus: 47 chunks/sources
+- latest promoted release-watch refresh: 12 live release items
+- Oracle AI Vector Search: shadow-loaded and validated, not active
+- OCI GenAI synthesis/embeddings: implemented and configurable, not default
 
 ## Two-Week Plan
 
 See `docs/two-week-plan.md` for dated tasks from 2026-05-14 through 2026-05-28.
+
+## Working In Progress List
+
+The active WIP list now lives in `docs/living-execution-plan.md` under **Work In Progress / Not Yet Implemented**. Keep that list authoritative for the next small task.

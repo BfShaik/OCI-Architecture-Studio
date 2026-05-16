@@ -12,15 +12,49 @@ The plan favors OCI-native services, Terraform-managed infrastructure, determini
 
 | Area | Current position | Baseline decision |
 |---|---|---|
-| Git baseline | `v1.0.1` is the validated internal beta code baseline; current execution branch is `codex/oci-native-continuous-execution`. | Treat `v1.0.1` as the current recovery point after the tag is pushed. |
+| Git baseline | `main` is the active branch. Current pushed closeout commit is `0a40470` with the Knowledge Refresh Status panel documented and deployed to staging. | Treat the latest pushed `main` commit and existing version tags as recovery points; do not move existing tags. |
 | Retrieval | Staging uses `oci_object_storage` with `local_json` fallback. Oracle AI Vector Search is live, schema-loaded, and shadow-validated, but active DB-backed retrieval is not promoted. | Keep Object Storage active until refresh stability and refreshed vector parity pass. |
 | Synthesis | Deterministic synthesis is default. OCI GenAI synthesis exists behind configuration and fails closed to deterministic fallback. | Keep deterministic default until live GenAI parity passes. |
 | Embeddings | Deterministic local embeddings are the stable path. OCI GenAI embeddings are configurable but not the default. | Activate in shadow/parity mode before promotion. |
 | Runtime | OCI VM staging is active behind OCI API Gateway, with direct VM rollback preserved. OKE profile examples exist. Knowledge refresh scheduling runs as a conservative cron job on the OCI backend VM. OCI DevOps metadata is scaffolded but not active. | Keep Gateway active and run refresh scheduling from the VM cron path. |
-| IaC | Terraform covers core OCI foundation resources, API Gateway, Autonomous Database vector shadow infrastructure, backend VM cron refresh support, and deployment outputs. State remains local unless Object Storage backend is configured manually. | Keep the VM cron release-watch path active and stable-docs in safe mode until separately validated. |
+| IaC | Terraform covers core OCI foundation resources, API Gateway, Autonomous Database vector shadow infrastructure, backend VM cron refresh support, and deployment outputs. Staging Terraform state is configured for OCI Object Storage backend storage. | Keep the VM cron release-watch path active and stable-docs in safe mode until separately validated. |
 | Observability | Health, readiness, infrastructure, analytics, fallback, governance, and diagnostics endpoints exist. OCI Logging/Monitoring/Notifications are represented when configured. | Add live metric/log emission only after readiness checks are stable. |
 | Evaluation | Regression and advisory-quality suites cover retrieval, governance, migration, FinOps, release intelligence, runtime, and usability. | Keep every promotion tied to a quality gate. |
 | Documentation | Internal beta docs are broad and mostly aligned, with accepted limitations documented. | Keep plan and status docs current as work advances. |
+
+## Implemented Baseline Summary
+
+The current working baseline includes:
+
+- React/FastAPI advisory app deployed locally and in OCI staging.
+- OCI API Gateway staging ingress with direct OCI VM rollback preserved.
+- Active staging retrieval from OCI Object Storage using the validated `oci-rag-index.json` snapshot.
+- Local JSON retrieval as deterministic rollback.
+- Curated OCI corpus with 47 knowledge chunks/sources.
+- Release-watch refresh on the OCI backend VM cron path with live fetch, quick gates, gated promotion, Object Storage upload, rollback support, and status visibility.
+- Oracle AI Vector Search shadow infrastructure, table/index, and refreshed 47-chunk shadow sync.
+- Deterministic synthesis as the default with OCI GenAI synthesis available behind configuration.
+- Deterministic local embeddings as the default with OCI GenAI embeddings available behind configuration.
+- Governance, risk, migration, FinOps, executive summary, topology, explainability, and auditability metadata in advisory responses.
+- Knowledge Refresh Status UI panel showing VM cron state, gates, promotion/upload state, snapshot version, release-change count, affected-source count, and rollback posture.
+- Regression and readiness gates for backend tests, frontend build/lint, retrieval health, retrieval regression, advisory evals, vector validation, Terraform validation, staging smoke, and operational readiness.
+
+## Work In Progress / Not Yet Implemented
+
+Keep these items in the active work queue until each has validation evidence and documentation updates:
+
+| ID | Status | Item | Next validation |
+|---|---|---|---|
+| WIP-001 | Ready | Add a beginner-friendly ingestion/retrieval flow doc section: HTML/docs source -> chunks -> metadata -> embeddings -> `oci-rag-index.json` -> OCI Object Storage active retrieval -> Oracle AI Vector Search shadow sync. | Docs diff check; no code validation required. |
+| WIP-002 | Ready | Add a read-only Retrieval Provider Status panel beside the refresh panel. | Frontend lint/build, backend retrieval health endpoint smoke, browser smoke. |
+| WIP-003 | Ready | Expand the curated OCI corpus beyond 47 sources with high-value official OCI docs. | Corpus health, retrieval regression, golden/advisory eval subset, Object Storage upload if promoted. |
+| WIP-004 | Gated | Run OCI GenAI embeddings in shadow mode and compare against local deterministic embeddings. | Embedding dimension validation, retrieval regression, Object Storage parity, Oracle shadow reload, rollback proof. |
+| WIP-005 | Gated | Promote Oracle AI Vector Search from shadow to active retrieval only after refreshed parity passes. | Object Storage baseline, Oracle vector parity, retrieval regression, golden/edge eval subset, staging smoke, operational readiness, rollback drill. |
+| WIP-006 | Gated | Run OCI GenAI synthesis live parity and decide whether to promote from deterministic default. | GenAI parity report, unsupported-claim check, citation coverage, latency/fallback metrics, deterministic rollback proof. |
+| WIP-007 | Ready | Add OCI Monitoring custom metrics for refresh latency, gate failures, candidate promotion count, rollback count, and retrieval regression failures. | Operational readiness, OCI metric visibility, safe local fallback. |
+| WIP-008 | Future | Move deployment automation from operator scripts toward OCI DevOps while preserving the current script-based rollback path. | OCI DevOps pipeline smoke, artifact parity with operator scripts, staging rollback validation. |
+| WIP-009 | Future | Add full current-vs-historical release comparison and richer bi-temporal retrieval. | Release-aware evals, temporal snapshot tests, advisory regression. |
+| WIP-010 | Future | Add saved review history, prompt/session history, and richer visualization rendering. | Frontend tests/build, UX smoke, storage/security review. |
 
 ## Priority Order
 
@@ -101,6 +135,11 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | TASK-038 | Done | Add typed frontend API support for refresh status. | Added TypeScript status models and API helper for `/knowledge/refresh/status`; existing architecture review API contract is unchanged. |
 | TASK-039 | Done | Render Knowledge Refresh Status panel in the main UI. | Added read-only panel showing last run, pass/fail status, Object Storage upload, snapshot version, gate result, promotion status, release count, affected source count, and rollback state with a reload action. |
 | TASK-040 | Done | Validate and document refresh status panel. | Frontend build passed, backend refresh status endpoint subset passed, `git diff --check` passed, browser smoke verified panel rendering and reload, and README/plan documentation were updated. |
+| TASK-041 | Next | Document the ingestion-to-retrieval flow for operators and reviewers. | Add a concise explainer covering HTML/docs source -> chunks -> metadata -> embeddings -> `oci-rag-index.json` -> OCI Object Storage -> Oracle AI Vector Search shadow sync; run `git diff --check`. |
+| TASK-042 | Planned | Add Retrieval Provider Status UI panel. | Frontend lint/build, `/retrieval/health` smoke, browser smoke. |
+| TASK-043 | Planned | Expand curated official OCI corpus beyond 47 sources. | Corpus health, retrieval regression, golden/advisory eval subset, Object Storage upload if promoted. |
+| TASK-044 | Gated | Run OCI GenAI embeddings shadow activation. | Embedding dimension validation, retrieval regression, Object Storage parity, Oracle shadow reload, rollback proof. |
+| TASK-045 | Gated | Run Oracle AI Vector Search active-read promotion gate. | Object Storage baseline, Oracle vector parity, retrieval regression, golden/edge eval subset, staging smoke, operational readiness, rollback drill. |
 
 ## Phase Gates
 
@@ -148,14 +187,15 @@ Run the appropriate subset after each increment; run the full matrix before a ne
 
 ## Next Actionable Increment
 
-Current task: `TASK-036`.
+Current task: `TASK-041`.
 
-Prepare Oracle vector active-provider promotion:
+Document the ingestion-to-retrieval flow:
 
-1. Run Object Storage baseline retrieval regression against the refreshed 12-release snapshot.
-2. Run Oracle AI Vector Search shadow parity against the refreshed Object Storage baseline.
-3. Run golden/edge eval subsets and rollback validation.
-4. Promote Oracle vector only if refreshed parity passes and Object Storage fallback remains configured.
+1. Explain how `knowledge/source_registry.json` and official OCI docs/fallback text become chunks.
+2. Show where metadata and embeddings are added.
+3. Show how `knowledge/snapshots/oci-rag-index.json` becomes the promoted Object Storage manifest.
+4. Show how the same promoted snapshot is loaded into Oracle AI Vector Search shadow mode.
+5. Keep Oracle vector active-provider promotion gated behind `TASK-045`.
 
 ## Operating Rules
 
