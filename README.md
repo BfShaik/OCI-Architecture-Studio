@@ -375,7 +375,7 @@ The first OCI deployment path keeps one codebase and uses environment-specific c
 Start with the execution runbook:
 
 ```bash
-docs/oci-deployment-execution.md
+docs/runbooks/oci-deployment-execution.md
 ```
 
 The scaffold includes Terraform environments, backend VM deployment, frontend Object Storage upload, snapshot upload, OCI access checks, and deployment smoke tests.
@@ -459,44 +459,46 @@ Latest full validation: 2026-05-15.
 - GenAI activation readiness: parity checker implemented; live OCI GenAI comparison is gated on `OCI_GENAI_COMPARTMENT_ID` and `OCI_GENAI_CHAT_MODEL_ID`
 - Live post-promotion scenario checks: passed for architecture, migration, HA/DR, cost, and release-awareness prompts
 
-See `docs/status.md` for the current completed work, pending work, and known limitations.
+See `docs/README.md` for the organized documentation index.
 
-See `docs/internal-beta-readiness-summary.md` for the internal beta gap assessment, accepted limitations, validation baseline, and milestone tagging guidance.
+See `docs/current/status.md` for the current completed work, pending work, and known limitations.
 
-See `docs/architecture-diagrams.md` for presentation-friendly diagrams covering current staging, dual-provider retrieval parity, target OCI-native retrieval, release-awareness, and operational control points.
+See `docs/current/internal-beta-readiness-summary.md` for the internal beta gap assessment, accepted limitations, validation baseline, and milestone tagging guidance.
 
-See `docs/living-execution-plan.md` for the active execution plan and `docs/two-week-plan.md` for the completed two-week plan archive.
+See `docs/architecture/architecture-diagrams.md` for presentation-friendly diagrams covering current staging, dual-provider retrieval parity, target OCI-native retrieval, release-awareness, and operational control points.
 
-See `docs/demo-readiness.md` for the demo checklist, recommended demo prompts, backlog, and closeout notes.
+See `docs/current/living-execution-plan.md` for the active execution plan and `docs/archive/two-week-plan.md` for the completed two-week plan archive.
 
-See `docs/phase-2-architecture.md` for the productionization architecture and roadmap.
+See `docs/current/demo-readiness.md` for the demo checklist, recommended demo prompts, backlog, and closeout notes.
 
-See `docs/oci-deployment-architecture.md` and `infra/terraform/` for the first OCI-native deployment architecture and Terraform scaffold.
+See `docs/architecture/phase-2-architecture.md` for the productionization architecture and roadmap.
 
-See `docs/oci-landing-zone-runbook.md` for the first OCI landing-zone deployment workflow and smoke tests.
+See `docs/architecture/oci-deployment-architecture.md` and `infra/terraform/` for the first OCI-native deployment architecture and Terraform scaffold.
 
-See `docs/oci-deployment-execution.md` for the command-by-command staging deployment sequence.
+See `docs/runbooks/oci-landing-zone-runbook.md` for the first OCI landing-zone deployment workflow and smoke tests.
 
-See `docs/pre-migration-readiness-report.md` for the OCI-native retrieval pre-migration validation, stability review, and go/no-go decision.
+See `docs/runbooks/oci-deployment-execution.md` for the command-by-command staging deployment sequence.
 
-See `docs/oci-native-retrieval-migration.md` for the OCI-native retrieval architecture, phased migration guide, validation strategy, observability plan, and rollback path.
+See `docs/reports/pre-migration-readiness-report.md` for the OCI-native retrieval pre-migration validation, stability review, and go/no-go decision.
 
-See `docs/oci-native-retrieval-runbook.md` for provider modes, validation gates, rollback steps, and troubleshooting for OCI-native retrieval migration.
+See `docs/architecture/oci-native-retrieval-migration.md` for the OCI-native retrieval architecture, phased migration guide, validation strategy, observability plan, and rollback path.
 
-See `docs/post-migration-readiness-report.md` for the full post-migration validation, retrieval quality assessment, OCI platform validation, risks, and go/no-go decision.
+See `docs/runbooks/oci-native-retrieval-runbook.md` for provider modes, validation gates, rollback steps, and troubleshooting for OCI-native retrieval migration.
 
-See `docs/retrieval-parity-validation-report.md` for dual-provider parity results, promotion criteria, config switching, rollback validation, and the go/no-go decision for `oci_object_storage` staging promotion.
+See `docs/reports/post-migration-readiness-report.md` for the full post-migration validation, retrieval quality assessment, OCI platform validation, risks, and go/no-go decision.
 
-See `docs/retrieval-provider-promotion-report.md` for the completed staging promotion, post-promotion validation results, rollback proof, and the next Oracle AI Vector Search boundary.
+See `docs/reports/retrieval-parity-validation-report.md` for dual-provider parity results, promotion criteria, config switching, rollback validation, and the go/no-go decision for `oci_object_storage` staging promotion.
 
-See `docs/advisory-intelligence.md` for evidence-linked recommendations, confidence scoring, citation enforcement, enterprise-governance metadata, uncertainty handling, and advisory-quality observability.
+See `docs/reports/retrieval-provider-promotion-report.md` for the completed staging promotion, post-promotion validation results, rollback proof, and the next Oracle AI Vector Search boundary.
 
-See `docs/genai-advisory-hardening.md` for GenAI synthesis configuration, fail-closed fallback behavior, citation enforcement, confidence scoring, eval strategy, and rollback guidance.
+See `docs/architecture/advisory-intelligence.md` for evidence-linked recommendations, confidence scoring, citation enforcement, enterprise-governance metadata, uncertainty handling, and advisory-quality observability.
 
-See `docs/post-stabilization-architecture-review.md` for the factual current-state architecture after repo/staging synchronization, active providers, GenAI readiness, validation summary, and next milestone.
+See `docs/architecture/genai-advisory-hardening.md` for GenAI synthesis configuration, fail-closed fallback behavior, citation enforcement, confidence scoring, eval strategy, and rollback guidance.
 
-See `docs/terraform-plan-review.md` for the first staging Terraform planning workflow, plan review, apply readiness criteria, and post-apply smoke-test plan.
+See `docs/reports/post-stabilization-architecture-review.md` for the factual current-state architecture after repo/staging synchronization, active providers, GenAI readiness, validation summary, and next milestone.
 
-See `docs/oci-staging-deployment-report.md` for the first OCI staging apply result, deployment validation, smoke-test output, and next hardening steps.
+See `docs/reports/terraform-plan-review.md` for the first staging Terraform planning workflow, plan review, apply readiness criteria, and post-apply smoke-test plan.
 
-See `docs/baseline-freeze.md` and `docs/operational-runbook.md` for the frozen working baseline, post-deploy verification checklist, regression guardrails, and day-to-day staging operations.
+See `docs/reports/oci-staging-deployment-report.md` for the first OCI staging apply result, deployment validation, smoke-test output, and next hardening steps.
+
+See `docs/archive/baseline-freeze.md` and `docs/runbooks/operational-runbook.md` for the frozen working baseline, post-deploy verification checklist, regression guardrails, and day-to-day staging operations.

@@ -178,12 +178,12 @@ Last updated: 2026-05-16
 
 ## Active Plan
 
-- Living execution plan: `docs/living-execution-plan.md`
-- Two-week plan archive: `docs/two-week-plan.md`
+- Living execution plan: `docs/current/living-execution-plan.md`
+- Two-week plan archive: `docs/archive/two-week-plan.md`
 
 ## Plan Progress
 
-The original two-week plan is complete and archived in `docs/two-week-plan.md`. Current work is tracked in `docs/living-execution-plan.md`.
+The original two-week plan is complete and archived in `docs/archive/two-week-plan.md`. Current work is tracked in `docs/current/living-execution-plan.md`.
 
 | Status | Count | Percent of total |
 |---|---:|---:|
@@ -255,7 +255,7 @@ Remaining enterprise-beta work, including ingestion-flow documentation, Retrieva
 - Added machine-readable golden eval dataset under `evals/golden-prompts.jsonl`.
 - Added edge-case eval dataset under `evals/edge-cases.jsonl`.
 - Added local golden eval runner under `evals/run_golden.py`.
-- Added evaluation architecture design under `docs/evaluation-architecture.md`.
+- Added evaluation architecture design under `docs/architecture/evaluation-architecture.md`.
 - Added CI workflow under `.github/workflows/ci.yml`.
 - Added backend tests for:
   - API health and architecture review
@@ -272,9 +272,9 @@ Remaining enterprise-beta work, including ingestion-flow documentation, Retrieva
   - golden eval runner passes its then-current golden cases
   - edge-case eval runner passes 8 of 8 cases
   - eval runner now checks retrieval support and stale or unverified guidance
-- Added demo readiness closeout under `docs/demo-readiness.md`.
-- Added OCI deployment architecture and Terraform scaffold under `docs/oci-deployment-architecture.md` and `infra/terraform/`.
-- Added OCI landing-zone runbook and deployment smoke test under `docs/oci-landing-zone-runbook.md` and `infra/scripts/`.
+- Added demo readiness closeout under `docs/current/demo-readiness.md`.
+- Added OCI deployment architecture and Terraform scaffold under `docs/architecture/oci-deployment-architecture.md` and `infra/terraform/`.
+- Added OCI landing-zone runbook and deployment smoke test under `docs/runbooks/oci-landing-zone-runbook.md` and `infra/scripts/`.
 - Added first OCI deployment execution slice:
   - staging Terraform environment
   - Compute-backed FastAPI deployment script
@@ -302,7 +302,7 @@ Remaining enterprise-beta work, including ingestion-flow documentation, Retrieva
 - Validated Terraform configuration for `dev`, `test`, and `staging`.
 - Validated local OCI access through the configured `DEFAULT` profile.
 - Completed the pre-migration validation and stability review for OCI-native retrieval migration.
-- Added `docs/pre-migration-readiness-report.md` with validation results, retrieval quality assessment, scenario spot checks, operational readiness findings, migration risks, rollback guidance, and the go/no-go decision.
+- Added `docs/reports/pre-migration-readiness-report.md` with validation results, retrieval quality assessment, scenario spot checks, operational readiness findings, migration risks, rollback guidance, and the go/no-go decision.
 - Added the first OCI-native retrieval migration slice:
   - optional OCI Generative AI embedding adapter
   - optional OCI Object Storage vector-manifest retrieval adapter
@@ -311,14 +311,14 @@ Remaining enterprise-beta work, including ingestion-flow documentation, Retrieva
   - retrieval latency and result-count diagnostics
   - ingestion support for OCI embedding generation and Object Storage vector manifest upload
   - retrieval health validation script
-  - `docs/oci-native-retrieval-migration.md`
+  - `docs/architecture/oci-native-retrieval-migration.md`
 - Started Sprint 2 OCI-native retrieval migration while preserving the local default:
   - added metadata-aware retrieval boosts for intent, service domain, architecture pattern, trust, freshness, and release-aware prompts
   - added per-chunk `content_hash`, `chunk_word_count`, and `vector_ready` metadata during ingestion
   - initially added a guarded `oracle_ai_vector_search` retrieval provider boundary for Phase 2 schema validation
   - added vector DB environment settings without hardcoded secrets
   - added retrieval regression reporting under `infra/scripts/retrieval_regression_check.py`
-  - added `docs/oci-native-retrieval-runbook.md`
+  - added `docs/runbooks/oci-native-retrieval-runbook.md`
   - added retrieval regression checks to CI and staging deployment validation workflows
 - Completed the staging Terraform planning phase before first apply:
   - `terraform fmt -check -recursive` passed
@@ -327,7 +327,7 @@ Remaining enterprise-beta work, including ingestion-flow documentation, Retrieva
   - deployment config validation passed
   - fresh staging `terraform plan -out=tfplan` passed
   - plan remains 19 to add, 0 to change, 0 to destroy
-  - added `docs/terraform-plan-review.md`
+  - added `docs/reports/terraform-plan-review.md`
 - Completed the first OCI staging infrastructure apply:
   - Terraform apply completed with 19 added, 0 changed, 0 destroyed
   - backend VM created and deployed
@@ -337,10 +337,10 @@ Remaining enterprise-beta work, including ingestion-flow documentation, Retrieva
   - frontend Object Storage smoke test passed
   - OCI resource visibility checks passed for bucket, secret, log group, alarm, and Events rule
   - initial retrieval health passed on the OCI-hosted backend with 13 local JSON chunks
-  - added `docs/oci-staging-deployment-report.md`
+  - added `docs/reports/oci-staging-deployment-report.md`
 - Froze the current working staging baseline:
-  - documented baseline commit, environment config, deployed OCI resources, verification results, known limitations, and technical debt in `docs/baseline-freeze.md`
-  - added `docs/operational-runbook.md`
+  - documented baseline commit, environment config, deployed OCI resources, verification results, known limitations, and technical debt in `docs/archive/baseline-freeze.md`
+  - added `docs/runbooks/operational-runbook.md`
   - added `infra/scripts/verify_staging_baseline.py`
   - verified the live app through backend, frontend, retrieval, OCI resource, golden eval, and edge-case checks
 - Renamed GitHub repository to `OCI-Architecture-Studio`.
@@ -350,7 +350,7 @@ Remaining enterprise-beta work, including ingestion-flow documentation, Retrieva
   - verified `/retrieval/health` reports `provider=oci_object_storage`
   - initially validated Object Storage manifest retrieval with 13 chunks and 10 service domains before the later 21-source corpus expansion
   - validated rollback to `local_json` and restored `oci_object_storage`
-  - added `docs/retrieval-provider-promotion-report.md`
+  - added `docs/reports/retrieval-provider-promotion-report.md`
 - Added advisory intelligence quality foundation:
   - recommendation-to-citation evidence links
   - confidence scoring for retrieval, evidence, freshness, release-awareness, recommendations, and overall response quality
@@ -358,7 +358,7 @@ Remaining enterprise-beta work, including ingestion-flow documentation, Retrieva
   - `/advisory/quality` operational metrics endpoint
   - advisory-quality eval suite under `evals/advisory-quality.jsonl`
   - CI advisory-quality eval gate
-  - `docs/advisory-intelligence.md`
+  - `docs/architecture/advisory-intelligence.md`
 - Added GenAI advisory hardening foundation:
   - config-selected synthesis provider
   - OCI GenAI chat synthesis adapter
@@ -367,7 +367,7 @@ Remaining enterprise-beta work, including ingestion-flow documentation, Retrieva
   - synthesis fallback and latency observability in `/advisory/quality`
   - deterministic-vs-OCI GenAI parity checker under `infra/scripts/genai_synthesis_parity_check.py`
   - versioned local and staging config examples
-  - `docs/genai-advisory-hardening.md`
+  - `docs/architecture/genai-advisory-hardening.md`
 - Added deterministic synthesis grounding improvements:
   - lightweight architecture pattern profiles for HA web apps, Kubernetes modernization, fintech DR, AI inference, analytics/data lake, and multi-region SaaS
   - deterministic synthesis now uses retrieved services, source chunk IDs, architecture patterns, workload/domain heuristics, and service-specific design moves
@@ -400,7 +400,7 @@ Remaining enterprise-beta work, including ingestion-flow documentation, Retrieva
   - `/orchestration/health` endpoint for operational visibility
   - orchestration-quality eval suite under `evals/orchestration-quality.jsonl`
   - CI orchestration eval gate
-  - `docs/supervised-orchestration.md`
+  - `docs/architecture/supervised-orchestration.md`
 - Added controlled multi-agent pilot:
   - default local orchestration mode is now `multi_agent_pilot`
   - deterministic specialist selection can include architecture, migration, HA/DR, cost, and release-awareness advisors
@@ -409,7 +409,7 @@ Remaining enterprise-beta work, including ingestion-flow documentation, Retrieva
   - additive response fields for `agent_contributions` and `aggregation_decision`
   - `/orchestration/health` now includes aggregation decision and active agent count
   - orchestration evals now validate multi-agent mode, specialist contribution counts, aggregation, critic findings, and rollback-safe metadata
-  - `docs/controlled-multi-agent-pilot.md`
+  - `docs/architecture/controlled-multi-agent-pilot.md`
 - Added retrieval precision and grounding foundation:
   - modular retrieval reranker using semantic similarity, intent match, service relevance, metadata overlap, architecture pattern match, workload/domain relevance, topic match, and migration mapping match
   - optional retrieval debug trace via request flag `retrieval_debug` or `RETRIEVAL_DEBUG_ENABLED`
@@ -429,8 +429,8 @@ Remaining enterprise-beta work, including ingestion-flow documentation, Retrieva
   - `/knowledge/refresh/status` endpoint for operational visibility
   - slower stable-doc cadence guidance
   - backend OCI VM cron support for recurring refresh
-  - `docs/knowledge-refresh-policy.md`
-  - `docs/continuous-intelligence-operations.md`
+  - `docs/runbooks/knowledge-refresh-policy.md`
+  - `docs/runbooks/continuous-intelligence-operations.md`
 - Added corpus expansion foundation:
   - expanded the local source registry to 44 curated OCI sources/chunks
   - added source-group defaults for service families, reference architectures, and architecture-center sources
@@ -498,7 +498,7 @@ Remaining enterprise-beta work, including ingestion-flow documentation, Retrieva
   - operational analytics counters for migration, modernization, FinOps, and workload-optimization trends
   - FinOps/migration optimization eval suite under `evals/finops-migration-optimization.jsonl`
 - Added internal beta completion foundation:
-  - internal beta gap assessment and readiness summary under `docs/internal-beta-readiness-summary.md`
+  - internal beta gap assessment and readiness summary under `docs/current/internal-beta-readiness-summary.md`
   - deployed-environment readiness gate under `infra/scripts/internal_beta_readiness_check.py`
   - scheduler diagnostics now report the backend OCI VM cron refresh runtime directly
   - Terraform cloud-init and runtime profile examples align to the VM cron refresh runtime
@@ -589,7 +589,7 @@ Last validation run: 2026-05-15
 - Rollback validation: passed, `local_json` was restored and then `oci_object_storage` was restored without code or prompt changes; the restore runbook now preserves or restores SELinux context on `/etc/oci-architecture-studio.env`
 - OCI Object Storage-provider eval parity: passed for golden evals, edge evals, and retrieval regression against the staging snapshot bucket
 - OCI API Gateway staging apply: passed for gateway and deployment; Gateway endpoint `https://pkgmvyyi3itxklv6knh4xfm6ca.apigateway.us-ashburn-1.oci.customer-oci.com/` smoke and operational readiness passed, direct backend VM rollback path remains healthy, and post-apply Terraform plan reports no changes
-- Presentation-friendly architecture diagrams: added in `docs/architecture-diagrams.md`
+- Presentation-friendly architecture diagrams: added in `docs/architecture/architecture-diagrams.md`
 - Documentation refresh: README, PRD, roadmap, vision, sprint docs, runbooks, demo readiness, architecture docs, promotion report, GenAI hardening notes, and supervised orchestration notes now reflect the current promoted staging state
 
 ## Pending
@@ -650,9 +650,9 @@ Last validation run: 2026-05-15
   - `local_json` remains the validated rollback provider
   - Oracle AI Vector Search provider code, schema/upsert/search tooling, fallback safety, Autonomous Database infrastructure, table/index, and shadow validation exist
   - Oracle AI Vector Search is not the active staging read path until refreshed active-provider parity, smoke, regression, operational readiness, and rollback checks pass
-  - post-migration readiness report is captured in `docs/post-migration-readiness-report.md`
-  - dual-provider parity report is captured in `docs/retrieval-parity-validation-report.md`
-  - promotion report is captured in `docs/retrieval-provider-promotion-report.md`
+  - post-migration readiness report is captured in `docs/reports/post-migration-readiness-report.md`
+  - dual-provider parity report is captured in `docs/reports/retrieval-parity-validation-report.md`
+  - promotion report is captured in `docs/reports/retrieval-provider-promotion-report.md`
 - Controlled orchestration:
   - active as an additive backend response layer by default in local config through `multi_agent_pilot`
   - rollback modes are `ADVISORY_ORCHESTRATION_MODE=supervised` and `ADVISORY_ORCHESTRATION_MODE=single_pass`

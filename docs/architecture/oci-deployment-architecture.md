@@ -131,7 +131,7 @@ infra/
         outputs.tf
 ```
 
-The companion deployment runbook is `docs/oci-landing-zone-runbook.md`.
+The companion deployment runbook is `docs/runbooks/oci-landing-zone-runbook.md`.
 
 ## Configuration Strategy
 

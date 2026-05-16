@@ -93,7 +93,7 @@ npm run dev
 
 ## OCI Deployment Flow
 
-For exact command-by-command execution, see `docs/oci-deployment-execution.md`.
+For exact command-by-command execution, see `docs/runbooks/oci-deployment-execution.md`.
 
 ### 1. Configure Terraform
 

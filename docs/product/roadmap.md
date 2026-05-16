@@ -28,9 +28,9 @@ Exit criteria:
 ## Phase 2 — Grounded Retrieval
 Status: In Progress — Object Storage active in staging
 
-Architecture plan: `docs/phase-2-architecture.md`
-OCI deployment plan: `docs/oci-deployment-architecture.md`
-OCI deployment execution runbook: `docs/oci-deployment-execution.md`
+Architecture plan: `docs/architecture/phase-2-architecture.md`
+OCI deployment plan: `docs/architecture/oci-deployment-architecture.md`
+OCI deployment execution runbook: `docs/runbooks/oci-deployment-execution.md`
 
 Deliverables:
 - curated seed corpus — In Progress

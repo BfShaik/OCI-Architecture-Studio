@@ -5,9 +5,9 @@ Deployment and CI/CD assets live here.
 ## Current State
 
 - GitHub Actions CI exists under `.github/workflows/ci.yml` for validation only.
-- OCI deployment architecture is documented in `docs/oci-deployment-architecture.md`.
-- OCI landing-zone deployment workflow is documented in `docs/oci-landing-zone-runbook.md`.
-- Command-by-command deployment execution is documented in `docs/oci-deployment-execution.md`.
+- OCI deployment architecture is documented in `docs/architecture/oci-deployment-architecture.md`.
+- OCI landing-zone deployment workflow is documented in `docs/runbooks/oci-landing-zone-runbook.md`.
+- Command-by-command deployment execution is documented in `docs/runbooks/oci-deployment-execution.md`.
 - Starter Terraform lives under `infra/terraform/`.
 - Non-secret deployment config examples live under `infra/deploy/`.
 - Deployment smoke checks live under `infra/scripts/`.

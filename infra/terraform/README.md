@@ -253,4 +253,4 @@ Promotion gate:
 4. Run Oracle AI Vector Search parity against the active Object Storage baseline without `--allow-skip`.
 5. Keep active retrieval on Object Storage until parity, staging smoke, retrieval regression, and rollback checks pass.
 
-- See `docs/oci-landing-zone-runbook.md` for the deployment and validation workflow.
+- See `docs/runbooks/oci-landing-zone-runbook.md` for the deployment and validation workflow.

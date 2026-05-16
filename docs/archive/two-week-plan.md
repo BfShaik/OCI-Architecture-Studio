@@ -6,7 +6,7 @@ Plan window: 2026-05-14 to 2026-05-28
 
 Completed the original foundation sprint and extended it into a validated staging baseline with OCI deployment, release-awareness, retrieval regression, Object Storage active retrieval, Oracle AI Vector Search shadow validation, and operational visibility.
 
-This file is now an archive. Current work should be tracked in `docs/living-execution-plan.md`.
+This file is now an archive. Current work should be tracked in `docs/current/living-execution-plan.md`.
 
 ## Tracking Legend
 
@@ -35,7 +35,7 @@ This file is now an archive. Current work should be tracked in `docs/living-exec
 
 - Final task count: 11 Done, 0 In Progress, 0 Not Started, 0 Blocked.
 - Strict completion: 11 of 11 tasks, or 100%.
-- The remaining work is no longer part of this two-week archive; it is tracked in `docs/living-execution-plan.md`.
+- The remaining work is no longer part of this two-week archive; it is tracked in `docs/current/living-execution-plan.md`.
 - 2026-05-15 structured golden evals are `Done`: `evals/golden-prompts.jsonl` exists.
 - 2026-05-18 local eval runner is `Done`: `evals/run_golden.py` executes prompts and writes JSON/Markdown reports. Current suites pass 14 of 14 cases.
 - 2026-05-19 eval runner integration is `Done`: the repo-level script is included in CI.
@@ -54,7 +54,7 @@ This file is now an archive. Current work should be tracked in `docs/living-exec
 
 ## Follow-On Priority Order
 
-The original two-week plan is complete. Follow-on priorities are tracked in `docs/living-execution-plan.md`:
+The original two-week plan is complete. Follow-on priorities are tracked in `docs/current/living-execution-plan.md`:
 
 1. Document the ingestion-to-retrieval flow.
 2. Add Retrieval Provider Status UI.
@@ -72,5 +72,5 @@ The original two-week plan is complete. Follow-on priorities are tracked in `doc
 ## Review Cadence
 
 - Do not add new work to this archive.
-- Use `docs/living-execution-plan.md` for current task status.
+- Use `docs/current/living-execution-plan.md` for current task status.
 - Update this archive only if correcting historical facts.

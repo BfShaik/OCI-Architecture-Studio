@@ -6,7 +6,7 @@ Date: 2026-05-14
 
 The first OCI staging infrastructure slice was applied successfully.
 
-Current-state note: this report records the initial infrastructure apply. The retrieval provider was later promoted from `local_json` to `oci_object_storage`; see `docs/retrieval-provider-promotion-report.md` for the active retrieval state.
+Current-state note: this report records the initial infrastructure apply. The retrieval provider was later promoted from `local_json` to `oci_object_storage`; see `docs/reports/retrieval-provider-promotion-report.md` for the active retrieval state.
 
 Result:
 

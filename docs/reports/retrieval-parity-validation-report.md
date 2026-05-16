@@ -78,7 +78,7 @@ Fixes completed:
 
 ## Staging Smoke And OCI Checks
 
-Post-promotion staging now reports `oci_object_storage` as the active provider. See `docs/retrieval-provider-promotion-report.md` for the completed promotion validation.
+Post-promotion staging now reports `oci_object_storage` as the active provider. See `docs/reports/retrieval-provider-promotion-report.md` for the completed promotion validation.
 
 Staging checks passed:
 

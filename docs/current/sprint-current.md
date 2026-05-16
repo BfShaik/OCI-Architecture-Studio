@@ -8,7 +8,7 @@ The current state uses `oci_object_storage` as the active staging retrieval prov
 
 ## Timebox / Status
 
-The original two-week sprint is complete and archived in `docs/two-week-plan.md`. Current work is now managed through the living enterprise-beta plan in `docs/living-execution-plan.md`.
+The original two-week sprint is complete and archived in `docs/archive/two-week-plan.md`. Current work is now managed through the living enterprise-beta plan in `docs/current/living-execution-plan.md`.
 
 ## Current Priorities
 
@@ -53,15 +53,15 @@ Out of scope:
 
 ## Demo Readiness
 
-See `docs/demo-readiness.md` for the demo checklist, recommended prompts, backlog, and closeout notes.
+See `docs/current/demo-readiness.md` for the demo checklist, recommended prompts, backlog, and closeout notes.
 
 ## Phase 2 Planning
 
-See `docs/phase-2-architecture.md` for the productionization architecture and scalability roadmap. Use `docs/living-execution-plan.md` for the current implementation order.
+See `docs/architecture/phase-2-architecture.md` for the productionization architecture and scalability roadmap. Use `docs/current/living-execution-plan.md` for the current implementation order.
 
 ## Status
 
-See `docs/status.md` for the current completed/pending log.
+See `docs/current/status.md` for the current completed/pending log.
 
 Latest validation/current posture:
 
@@ -78,8 +78,8 @@ Latest validation/current posture:
 
 ## Two-Week Plan Archive
 
-See `docs/two-week-plan.md` for the completed dated tasks from 2026-05-14 through 2026-05-28. It is no longer the active work tracker.
+See `docs/archive/two-week-plan.md` for the completed dated tasks from 2026-05-14 through 2026-05-28. It is no longer the active work tracker.
 
 ## Working In Progress List
 
-The active WIP list now lives in `docs/living-execution-plan.md` under **Work In Progress / Not Yet Implemented**. Keep that list authoritative for the next small task.
+The active WIP list now lives in `docs/current/living-execution-plan.md` under **Work In Progress / Not Yet Implemented**. Keep that list authoritative for the next small task.
