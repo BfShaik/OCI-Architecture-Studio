@@ -161,6 +161,7 @@ def refresh_args(tmp_path: Path) -> Namespace:
         timeout=8,
         no_fetch=True,
         force=False,
+        candidate_only=False,
         skip_gates=False,
         quick_gates=True,
         rollback_on_failure=True,
@@ -273,6 +274,66 @@ def test_refresh_promotes_candidate_only_after_gates_pass(tmp_path: Path, monkey
     assert status["last_run"]["lifecycle"]["promotion_status"] == "promoted"
     assert status["current_promoted_snapshot"]["historical_snapshots"]["knowledge_index"]
     assert status["current_promoted_snapshot"]["lineage"]["knowledge_snapshot_version"].startswith("knowledge-")
+
+
+def test_candidate_only_validates_without_promoting(tmp_path: Path, monkeypatch) -> None:
+    args = refresh_args(tmp_path)
+    args.candidate_only = True
+    original_index = args.knowledge_index.read_text(encoding="utf-8")
+    original_release_snapshot = args.release_snapshot.read_text(encoding="utf-8")
+
+    monkeypatch.setattr(
+        refresh_policy,
+        "build_release_snapshot",
+        lambda _args: {
+            "generated_at": "2026-05-02T00:00:00+00:00",
+            "releases": [
+                {
+                    "id": "new-release",
+                    "source_id": "release-source",
+                    "title": "New Object Storage security update",
+                    "release_date": "May 2, 2026",
+                    "service": "Object Storage",
+                    "services": ["Object Storage"],
+                    "impact_tags": ["security"],
+                    "impact_level": "review",
+                    "summary": "New Object Storage security update.",
+                }
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        refresh_policy,
+        "build_selective_knowledge_index",
+        lambda _args, source_ids, existing_index_path=None: {
+            "generated_at": "2026-05-02T00:00:00+00:00",
+            "embedding_model": "local-hashing-v1",
+            "embedding_provider": "local",
+            "metadata_schema_version": "test-v2",
+            "refreshed_source_ids": source_ids,
+            "chunk_count": 1,
+            "chunks": [{"id": "new::1", "source_id": source_ids[0], "text": "new"}],
+        },
+    )
+    monkeypatch.setattr(
+        refresh_policy,
+        "run_post_refresh_gates",
+        lambda *_args: [{"command": "test gate", "returncode": 0, "passed": True}],
+    )
+
+    report = refresh_policy.execute_refresh_policy(args)
+    status = json.loads((args.report_dir / "knowledge-refresh-status.json").read_text(encoding="utf-8"))
+
+    assert report["status"] == "candidate_validated"
+    assert report["passed"] is True
+    assert report["promoted"] is False
+    assert report["candidate_only"] is True
+    assert report["lifecycle"]["promotion_status"] == "validated_without_promotion"
+    assert report["lifecycle"]["authoritative_snapshots_updated"] is False
+    assert args.knowledge_index.read_text(encoding="utf-8") == original_index
+    assert args.release_snapshot.read_text(encoding="utf-8") == original_release_snapshot
+    assert status["last_run"]["status"] == "candidate_validated"
+    assert status["current_promoted_snapshot"] is None
 
 
 def test_failed_gates_do_not_overwrite_authoritative_snapshots(tmp_path: Path, monkeypatch) -> None:

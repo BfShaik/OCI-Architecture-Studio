@@ -16,6 +16,17 @@ Last updated: 2026-05-16
 - Backend refresh/status regression passed: `tests/test_refresh_policy.py` and `tests/test_api.py`.
 - Active retrieval remains `oci_object_storage`; Oracle AI Vector Search remains shadow-only until refresh candidate promotion and refreshed parity pass.
 
+## Latest Refresh Candidate Quality Gate
+
+- `TASK-029` completed as a controlled candidate-only refresh quality gate.
+- Added `--candidate-only` support to `knowledge/refresh/refresh_policy.py` and the OCI Function payload path so changed candidates can be validated without promotion or Object Storage upload.
+- Added `infra/scripts/validate_refresh_candidate.py` and wired it into post-refresh gates to validate chunk count, source metadata completeness, release snapshot integrity, and embedding dimensions.
+- Controlled forced `release-watch` candidate run passed with `--no-fetch --quick-gates --force --candidate-only`.
+- Candidate validation passed with 47 chunks, 5 releases, metadata schema `2026-05-oci-advisory-v2`, and no integrity errors.
+- Candidate retrieval health passed and retrieval regression passed 26 cases.
+- Advisory subset passed: 18/18 golden evals and 5/5 advisory-quality evals against the candidate snapshot.
+- Authoritative snapshots remained unchanged and no OCI upload was performed.
+
 ## Latest Operational Promotion
 
 - `TASK-022` completed on staging: API Gateway runtime metadata was added to the running VM environment and the backend was redeployed from the current repository code without replacing the VM.

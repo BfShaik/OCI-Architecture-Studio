@@ -98,8 +98,8 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | TASK-026 | Done | Validate live Oracle AI Vector Search connectivity and schema/index prerequisites. | Added wallet-aware Oracle vector configuration, validated mTLS connectivity from the backend VM to the Autonomous Database private endpoint, and confirmed the vector table is not created yet. Active retrieval remains `oci_object_storage`. |
 | TASK-027 | Done | Create Oracle AI Vector Search schema and load shadow index. | Deployed wallet-aware code, created Oracle vector schema and index, upserted 47 chunks, fixed Oracle LOB materialization before connection close, and passed health plus vector retrieval validation with 0.967 average top-chunk overlap. Active retrieval remains `oci_object_storage`. |
 | TASK-028 | Done | Refresh Pipeline Preflight. | Passed local Function handler smoke with `no_fetch=true`, `quick_gates=true`, `upload=false`; passed direct `refresh_policy.py --mode release-watch --no-fetch --quick-gates`; fixed selective-refresh embedding validation argument propagation; passed forced temp-snapshot quick gates with retrieval health and 26-case retrieval regression; authoritative snapshot SHA-256 hashes remained unchanged; passed backend refresh/status tests and `git diff --check`. |
-| TASK-029 | Next | Refresh Candidate Quality Gate. | Run a live or controlled candidate refresh, validate chunk count, source metadata completeness, release snapshot integrity, retrieval regression, and advisory/golden eval subset; failed candidates remain under `knowledge/reports/runs/...` and are not promoted. |
-| TASK-030 | Pending | Object Storage Refresh Promotion. | Promote only a validated candidate, upload refreshed `oci-rag-index.json` and `oci-release-snapshot.json` to OCI Object Storage, then run retrieval health, retrieval regression, Gateway smoke, and operational readiness. |
+| TASK-029 | Done | Refresh Candidate Quality Gate. | Added candidate-only refresh mode and candidate snapshot validator; controlled forced `release-watch` candidate run passed without promotion or upload: 47 chunks, 5 releases, candidate metadata/release integrity validation, retrieval health, 26-case retrieval regression, 18/18 golden evals, and 5/5 advisory-quality evals. Authoritative snapshot SHA-256 hashes remained unchanged. |
+| TASK-030 | Next | Object Storage Refresh Promotion. | Promote only a validated candidate, upload refreshed `oci-rag-index.json` and `oci-release-snapshot.json` to OCI Object Storage, then run retrieval health, retrieval regression, Gateway smoke, and operational readiness. |
 | TASK-031 | Pending | Oracle Vector Refresh Sync. | Rebuild Oracle AI Vector Search shadow index from the promoted Object Storage snapshot; validate table/index health, chunk count parity, service/domain counts, and vector parity. |
 | TASK-032 | Pending | OCI Function Image Packaging. | Build `infra/functions/knowledge-refresh`, push immutable OCIR image tag, and validate packaged Function invocation before scheduler enablement. |
 | TASK-033 | Pending | OCI Resource Scheduler Enablement. | Enable Terraform scheduler variables, review plan, apply only expected Functions, Resource Scheduler, dynamic group, policy, and output changes; diagnostics expose Function and schedule OCIDs. |
@@ -153,14 +153,14 @@ Run the appropriate subset after each increment; run the full matrix before a ne
 
 ## Next Actionable Increment
 
-Current task: `TASK-029`.
+Current task: `TASK-030`.
 
-Run the refresh candidate quality gate:
+Run Object Storage refresh promotion:
 
 1. Keep `RETRIEVAL_PROVIDER=oci_object_storage` as the active runtime default.
-2. Run a candidate refresh without query-time refresh or automatic promotion.
-3. Validate candidate chunk counts, metadata completeness, release snapshot integrity, retrieval regression, and advisory/golden eval subset.
-4. Promote nothing unless gates pass and rollback paths are clear.
+2. Promote only the already validated candidate or a newly validated equivalent candidate.
+3. Upload promoted `oci-rag-index.json` and `oci-release-snapshot.json` to OCI Object Storage.
+4. Validate staging reads the refreshed Object Storage manifest with retrieval health, retrieval regression, Gateway smoke, and operational readiness.
 
 ## Operating Rules
 

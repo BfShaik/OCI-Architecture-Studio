@@ -245,6 +245,16 @@ def run_post_refresh_gates(
     gates = [
         [
             python,
+            "infra/scripts/validate_refresh_candidate.py",
+            "--knowledge-index",
+            str(candidate_knowledge_index),
+            "--release-snapshot",
+            str(candidate_release_snapshot),
+            "--output",
+            str(run_report_dir / "candidate-validation.json"),
+        ],
+        [
+            python,
             "infra/scripts/check_retrieval_health.py",
             "--provider",
             "local_json",
@@ -290,7 +300,7 @@ def run_post_refresh_gates(
         ],
     ]
     if args.quick_gates:
-        gates = gates[:2]
+        gates = gates[:3]
     return [run_gate(gate, REPO_ROOT, env=gate_env) for gate in gates]
 
 
@@ -620,11 +630,11 @@ def execute_refresh_policy(args: argparse.Namespace) -> dict[str, Any]:
         },
     )
 
-    if passed and knowledge_index and args.oci_upload_bucket:
+    if passed and knowledge_index and args.oci_upload_bucket and not args.candidate_only:
         ingest.upload_index_to_object_storage(knowledge_index, args)
         upload_performed = True
 
-    if passed and candidate_changed:
+    if passed and candidate_changed and not args.candidate_only:
         historical_snapshots = {
             "knowledge_index": preserve_historical_snapshot(
                 args.knowledge_index,
@@ -670,6 +680,15 @@ def execute_refresh_policy(args: argparse.Namespace) -> dict[str, Any]:
             rollback_sources=rollback_sources,
         )
 
+    if promoted:
+        report_status = "promoted"
+    elif not candidate_changed:
+        report_status = "no_change"
+    elif passed:
+        report_status = "candidate_validated"
+    else:
+        report_status = "failed_gate"
+
     report = {
         "run_id": run_id,
         "generated_at": datetime.now(UTC).isoformat(),
@@ -677,9 +696,10 @@ def execute_refresh_policy(args: argparse.Namespace) -> dict[str, Any]:
         "policy_version": policy.get("policy_version"),
         "mode": args.mode,
         "refresh_reason": refresh_reason,
-        "status": "promoted" if promoted else "no_change" if not candidate_changed else "failed_gate",
+        "status": report_status,
         "cadence": policy.get("cadence", {}),
         "query_time_refresh": False,
+        "candidate_only": bool(args.candidate_only),
         "changed_release_count": len(changed_releases),
         "changed_releases": normalized_changed_releases or changed_releases,
         "release_intelligence": {
@@ -773,6 +793,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--timeout", type=int, default=8)
     parser.add_argument("--no-fetch", action="store_true")
     parser.add_argument("--force", action="store_true")
+    parser.add_argument("--candidate-only", action="store_true")
     parser.add_argument("--skip-gates", action="store_true")
     parser.add_argument("--quick-gates", action="store_true")
     parser.add_argument("--rollback-on-failure", action="store_true", default=True)

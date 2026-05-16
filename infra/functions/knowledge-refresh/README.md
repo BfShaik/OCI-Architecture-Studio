@@ -53,6 +53,7 @@ payload = {
     "mode": "release-watch",
     "no_fetch": True,
     "quick_gates": True,
+    "candidate_only": True,
     "upload": False,
 }
 result = module.handler(None, io.BytesIO(json.dumps(payload).encode("utf-8")))
