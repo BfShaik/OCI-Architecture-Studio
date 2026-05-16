@@ -65,9 +65,9 @@ This metadata is not decorative. It is used for retrieval filters, reranking, ci
 
 ## Embed
 
-Each chunk receives an embedding before it can be used for retrieval. The current stable path uses deterministic local embeddings so local development, CI, and rollback tests are repeatable.
+Each chunk receives an embedding before it can be used for retrieval. Staging currently uses OCI Generative AI `cohere.embed-v4.0` document embeddings at 1536 dimensions. Query retrieval uses the matching OCI GenAI query embedding path, and `/retrieval/health` refuses to serve if the configured provider/model/dimensions do not match the active index metadata.
 
-OCI Generative AI embeddings are implemented behind configuration, but they are not the default. They must pass shadow parity, dimension validation, retrieval regression, Object Storage parity, Oracle shadow reload, and rollback proof before promotion.
+Local deterministic embeddings remain useful for offline development and rollback validation. The previous 256-dimension local-hash Object Storage manifest and Oracle vector table are retained for config-only rollback.
 
 ## Snapshot
 
@@ -100,7 +100,7 @@ python3 infra/scripts/oracle_vector_index.py rebuild \
   --index-path knowledge/snapshots/oci-rag-index.json
 ```
 
-The rebuild validates that chunks have embeddings, expected dimensions, and required service metadata before upserting them into the Autonomous Database table `OCI_ARCHITECTURE_CHUNKS`. The table stores chunk text, vector embeddings, metadata JSON, service/domain fields, source lineage, and citation-friendly fields.
+The rebuild validates that chunks have embeddings, expected dimensions, and required service metadata before upserting them into the Autonomous Database table. The active staging table is `OCI_ARCHITECTURE_CHUNKS_V4`; the prior local-hash rollback table is `OCI_ARCHITECTURE_CHUNKS`. Each table stores chunk text, vector embeddings, metadata JSON, service/domain fields, source lineage, and citation-friendly fields.
 
 A safe promotion keeps runtime env values unchanged unless a reviewed provider change is required, uploads the validated snapshot, rebuilds Oracle AI Vector Search from that exact snapshot, restarts the backend, then verifies `/retrieval/health` shows `oracle_ai_vector_search`, the expected chunk count, fallback inactive, and no primary store error.
 
@@ -117,9 +117,9 @@ For a normal local ingestion check:
 
 ## Safe Defaults
 
-- Local development defaults to deterministic embeddings and `local_json`.
-- Staging active retrieval uses `oracle_ai_vector_search`.
+- Local development can use deterministic embeddings and `local_json`.
+- Staging active retrieval uses `oracle_ai_vector_search` with OCI GenAI embeddings.
 - Object Storage remains the immediate rollback provider.
 - Refresh candidates are validated before promotion.
 - Stable-doc refresh stays conservative until separately validated.
-- Rollback uses the prior promoted snapshot or `local_json`.
+- Rollback uses the prior promoted local-hash snapshot/table or `local_json`.

@@ -12,10 +12,10 @@ The plan favors OCI-native services, Terraform-managed infrastructure, determini
 
 | Area | Current position | Baseline decision |
 |---|---|---|
-| Git baseline | `main` is the active branch. The latest closeout commits document and deploy section traceability plus review-history operator controls to staging. | Treat the latest pushed `main` commit and existing version tags as recovery points; do not move existing tags. |
-| Retrieval | Staging uses `oracle_ai_vector_search` as the active provider with fallback enabled. Object Storage remains the immediate config-only rollback provider; `local_json` remains the deterministic local fallback. | Keep Oracle vector active only while health, smoke, regression, and rollback evidence stay current. |
-| Synthesis | Deterministic synthesis is default. OCI GenAI synthesis exists behind configuration and fails closed to deterministic fallback. | Keep deterministic default until live GenAI parity passes. |
-| Embeddings | Deterministic local embeddings are the stable path. OCI GenAI embeddings are configurable but not the default. | Activate in shadow/parity mode before promotion. |
+| Git baseline | `main` is the active branch. The latest closeout commits document and deploy OCI GenAI synthesis plus OCI GenAI embedding promotion to staging. | Treat the latest pushed `main` commit and existing version tags as recovery points; do not move existing tags. |
+| Retrieval | Staging uses `oracle_ai_vector_search` as the active provider through `OCI_ARCHITECTURE_CHUNKS_V4`. Object Storage remains the immediate config-only rollback provider; `local_json` remains the deterministic local fallback. | Keep Oracle vector active only while health, smoke, regression, and rollback evidence stay current. |
+| Synthesis | OCI GenAI synthesis is active in staging with deterministic fallback design retained. | Monitor quality, latency, fallback, and unsupported-claim gates. |
+| Embeddings | OCI GenAI embeddings are active in staging with `cohere.embed-v4.0` at 1536 dimensions. | Keep local-hash rollback assets until the v4 path has enough real usage history. |
 | Runtime | OCI VM staging is active behind OCI API Gateway, with direct VM rollback preserved. OKE profile examples exist. Knowledge refresh scheduling runs as a conservative cron job on the OCI backend VM. OCI DevOps metadata is scaffolded but not active. | Keep Gateway active and run refresh scheduling from the VM cron path. |
 | IaC | Terraform covers core OCI foundation resources, API Gateway, Autonomous Database vector infrastructure, backend VM cron refresh support, and deployment outputs. Staging Terraform state is configured for OCI Object Storage backend storage. | Keep the VM cron release-watch path active and stable-docs in safe mode until separately validated. |
 | Observability | Health, readiness, infrastructure, analytics, fallback, governance, and diagnostics endpoints exist. OCI Logging/Monitoring/Notifications are represented when configured. | Add live metric/log emission only after readiness checks are stable. |
@@ -33,8 +33,8 @@ The current working baseline includes:
 - Curated OCI corpus with 60 active staging knowledge chunks.
 - Release-watch refresh on the OCI backend VM cron path with live fetch, quick gates, gated promotion, Object Storage upload, rollback support, and status visibility.
 - Oracle AI Vector Search infrastructure, table/index, and active-read sync from the promoted snapshot.
-- Deterministic synthesis as the default with OCI GenAI synthesis available behind configuration.
-- Deterministic local embeddings as the default with OCI GenAI embeddings available behind configuration.
+- OCI GenAI synthesis active in staging with deterministic fallback design retained.
+- OCI GenAI embeddings active in staging with a retained deterministic local-hash rollback path.
 - Governance, risk, migration, FinOps, executive summary, topology, explainability, and auditability metadata in advisory responses.
 - Knowledge Refresh Status UI panel showing VM cron state, gates, promotion/upload state, snapshot version, release-change count, affected-source count, and rollback posture.
 - Regression and readiness gates for backend tests, frontend build/lint, retrieval health, retrieval regression, advisory evals, vector validation, Terraform validation, staging smoke, and operational readiness.
@@ -50,7 +50,7 @@ Keep these items in the active work queue until each has validation evidence and
 | WIP-003 | Done | Expanded the curated OCI corpus beyond 47 sources with high-value official OCI docs. | Offline candidate rebuild produced 55 chunks from 55 sources; corpus health, retrieval regression, golden evals, advisory-quality evals, edge evals, and targeted backend tests passed. No Object Storage upload was performed. |
 | WIP-004 | Done | Ran OCI GenAI embeddings in shadow mode and compared against local deterministic embeddings. | Live `cohere.embed-v4.0` shadow candidate built with the project staging compartment at 256 dimensions; corpus health, candidate validation, retrieval regression, golden/advisory/edge evals, Oracle local-index validation, embedding visibility, and rollback baseline checks passed. No Object Storage upload or active promotion was performed. |
 | WIP-005 | Done | Promote Oracle AI Vector Search from shadow to active retrieval only after refreshed parity passes. | Completed through TASK-045 and TASK-050; active staging retrieval is `oracle_ai_vector_search` with 60 chunks and Object Storage fallback retained. |
-| WIP-006 | Blocked | Run OCI GenAI synthesis live parity and decide whether to promote from deterministic default. | Waiting for approved `OCI_GENAI_COMPARTMENT_ID` and `OCI_GENAI_CHAT_MODEL_ID` runtime configuration. Skip-safe local/staging parity runs passed deterministic baselines and preserved the deterministic default. |
+| WIP-006 | Done | Run OCI GenAI synthesis live parity and decide whether to promote from deterministic default. | Completed through TASK-054; staging now uses OCI GenAI synthesis with fallback disabled in smoke/eval checks. |
 | WIP-007 | Ready | Add OCI Monitoring custom metrics for refresh latency, gate failures, candidate promotion count, rollback count, and retrieval regression failures. | Operational readiness, OCI metric visibility, safe local fallback. |
 | WIP-008 | Future | Move deployment automation from operator scripts toward OCI DevOps while preserving the current script-based rollback path. | OCI DevOps pipeline smoke, artifact parity with operator scripts, staging rollback validation. |
 | WIP-009 | Future | Add full current-vs-historical release comparison and richer bi-temporal retrieval. | Release-aware evals, temporal snapshot tests, advisory regression. |
@@ -203,13 +203,14 @@ Run the appropriate subset after each increment; run the full matrix before a ne
 
 ## Next Actionable Increment
 
-Current task: `TASK-054` is blocked on approved OCI GenAI synthesis runtime configuration. `TASK-055` has its D1 guardrail prepared, but the embedding migration remains gated until `TASK-054` is live-validated and the 1536-dimension `cohere.embed-v4.0` scope change is explicitly promoted through the reindex/config sequence.
+Current task: post-migration stabilization after `TASK-054` and `TASK-055` promotion. OCI GenAI synthesis is live in staging, OCI GenAI embeddings are live through `cohere.embed-v4.0` at 1536 dimensions, and `/retrieval/health` reports a passing embedding/index guardrail.
 
-Next logical increment after review-history operator controls:
+Next logical increment:
 
-1. Add approved `OCI_GENAI_COMPARTMENT_ID` and `OCI_GENAI_CHAT_MODEL_ID` through the reviewed runtime secret/config path.
-2. Run OCI GenAI synthesis parity in shadow/evaluation mode without changing `ADVISORY_SYNTHESIS_PROVIDER`.
-3. Compare deterministic and OCI GenAI outputs for unsupported claims, citation coverage, required-service coverage, quality warnings, and latency/fallback behavior.
+1. Restore or create `evals/team-real-prompts.jsonl` and run it against live staging.
+2. Monitor v4 retrieval latency, cost, and fallback state.
+3. Decide whether query embedding caching is needed.
+4. Keep rollback assets until the v4 path has enough real usage history.
 4. Keep active retrieval on `oracle_ai_vector_search`; do not change vector DB, wallet, or runtime secret settings.
 5. Promote OCI GenAI synthesis only after parity passes and deterministic rollback remains proven.
 

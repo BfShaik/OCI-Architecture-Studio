@@ -133,11 +133,11 @@ Latest local validation:
 ```text
 Knowledge ingestion: passed
 Release ingestion: passed
-Backend tests: 126 passed in the internal beta baseline; latest refresh/API regression subset passed 18 tests
+Focused backend tests: 29 passed
 Golden evals: 18 passed, 0 failed
 Edge-case evals: 8 passed, 0 failed
-Retrieval regression: 18 passed, 0 failed for the latest architecture-accuracy corpus
-Oracle AI Vector Search active-read validation: passed
+Retrieval regression: 32 passed, 0 failed
+Oracle AI Vector Search active-read validation: passed with cohere.embed-v4.0 at 1536 dimensions
 Frontend build: passed
 OCI staging smoke tests: passed
 ```
@@ -162,9 +162,9 @@ OCI staging smoke tests: passed
 
 ## Remaining Gaps
 
-- Production semantic embeddings are not active.
-- Oracle AI Vector Search active reads are promoted and validated; Object Storage remains the immediate rollback provider.
-- OCI GenAI synthesis is implemented as a configurable path with deterministic fallback, but it is not the default staging mode.
+- `evals/team-real-prompts.jsonl` is not present yet, so that acceptance set still needs to be restored or created.
+- Oracle AI Vector Search active reads are promoted and validated; Object Storage and the previous local-hash table remain rollback paths.
+- OCI GenAI synthesis is active in staging with deterministic fallback design retained.
 - Release impact analysis exists for snapshots and affected sources/chunks; release-watch refresh is live and gated, while full current-vs-historical answer comparison is not implemented.
 - OCI corpus coverage is still small.
 - Release parsing is heuristic-based.
@@ -181,9 +181,9 @@ OCI staging smoke tests: passed
 ## Sprint 2 Backlog
 
 1. Add dedicated OCI sources for WAF, Vault, Cloud Guard, Logging, Monitoring, Budgets, IAM, Audit, and Data Guard.
-2. Replace local hash embeddings with the selected production embedding provider.
+2. Restore or create `evals/team-real-prompts.jsonl` and run it against staging.
 3. Keep Oracle AI Vector Search and Object Storage rollback snapshots aligned.
-4. Run live OCI GenAI synthesis parity with approved model configuration before activation.
+4. Monitor live OCI GenAI synthesis and embedding latency/cost before adding query embedding caching.
 5. Add full current-vs-historical release comparison in release-aware responses.
 6. Expand release-impact eval cases as the corpus grows.
 7. Continue polishing frontend source cards, saved-review workflow, and export affordances.

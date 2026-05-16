@@ -1,10 +1,18 @@
-# OCI Architecture Studio Docs
+# OCI Architecture Studio Documentation
 
-This directory is organized by document purpose. Start with the current-state docs, then use architecture, runbooks, reports, and archive material as needed.
+Start here when you need the current project truth. The top-level README is the product overview; this index points to the docs that operators and contributors use most often.
+
+## Quick Start Reading Path
+
+1. [Current status](current/status.md) - concise live staging posture, validation, rollback, and next tasks.
+2. [Architecture diagrams](architecture/architecture-diagrams.md) - current runtime, retrieval, embedding, orchestration, rollback, and refresh diagrams.
+3. [OCI-native retrieval runbook](runbooks/oci-native-retrieval-runbook.md) - provider promotion and rollback operations.
+4. [Operational runbook](runbooks/operational-runbook.md) - staging operations and troubleshooting.
+5. [Living execution plan](current/living-execution-plan.md) - task history and current execution plan.
 
 ## Current State
 
-- [Status log](current/status.md) - latest implementation status, validations, and limitations.
+- [Status](current/status.md) - latest live staging posture, validations, rollback, and limitations.
 - [Living execution plan](current/living-execution-plan.md) - active WIP list and next tasks.
 - [Sprint current](current/sprint-current.md) - current sprint posture and priorities.
 - [Demo readiness](current/demo-readiness.md) - demo checklist and suggested prompts.

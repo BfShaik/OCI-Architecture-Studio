@@ -1,264 +1,146 @@
-# OCI Architecture Studio — Architecture Diagrams
+# Architecture Diagrams
 
 Date: 2026-05-16
 
-These diagrams summarize the current working platform, the completed Oracle AI Vector Search active-read promotion, the Object Storage rollback path, release-awareness, and operational control points.
+These diagrams reflect the current code and staging runtime after OCI GenAI synthesis and OCI GenAI embedding promotion.
 
-## 1. Current Working Staging Architecture
-
-Current staging is intentionally simple: one codebase, one backend VM, backend-served frontend, Oracle AI Vector Search active retrieval, Object Storage rollback snapshots, and OCI services for deployment support, snapshots, secrets, logging, monitoring, and notifications.
-
-```mermaid
-flowchart LR
-  User["Architect / User"]
-
-  subgraph OCI["OCI us-ashburn-1"]
-    subgraph Compartment["oci-architecture-studio-staging compartment"]
-      VM["Compute VM\nFastAPI backend + served React frontend\nVM.Standard.E5.Flex\n8 OCPU / 128 GB"]
-      LocalIndex["Local JSON knowledge index\nrollback provider"]
-      ObjectIndex["Object Storage vector manifest\nrollback snapshot\noci-rag-index.json"]
-      VectorIndex["Oracle AI Vector Search\nactive retrieval provider\n60 chunks"]
-      ReleaseSnap["Local release snapshot\noci-release-snapshot.json"]
-      FrontendBucket["Object Storage\nfrontend assets"]
-      SnapshotBucket["Object Storage\nknowledge + release snapshots"]
-      Vault["OCI Vault\nruntime config / secrets"]
-      Logs["OCI Logging\napp and deployment logs"]
-      Monitoring["OCI Monitoring\nbackend CPU alarm"]
-      Events["OCI Events + Notifications\nresource lifecycle alerts"]
-      Cron["VM cron\nrelease-watch active\nstable-docs safe mode"]
-    end
-  end
-
-  User -->|"HTTP staging URL"| VM
-  VM -->|"serves React UI"| User
-  VM -->|"architecture-review API\nactive read"| VectorIndex
-  VM -. "config rollback" .-> ObjectIndex
-  VM -. "config rollback" .-> LocalIndex
-  VM -->|"release-aware context"| ReleaseSnap
-  VM -. "snapshot sync / backup" .-> SnapshotBucket
-  VM -. "frontend artifact upload path" .-> FrontendBucket
-  VM -. "secrets access" .-> Vault
-  VM -. "logs" .-> Logs
-  Monitoring --> Events
-  Cron --> SnapshotBucket
-  Cron --> ObjectIndex
-  ObjectIndex --> VectorIndex
-```
-
-Current active retrieval provider:
-
-```text
-RETRIEVAL_PROVIDER=oracle_ai_vector_search
-```
-
-## 2. Validated Retrieval Promotion Path
-
-OCI Object Storage first passed parity against the stable local provider, then Oracle AI Vector Search passed active-read parity and was promoted in staging. Rollback to Object Storage and local JSON remains config-only.
+## 1. Runtime Architecture
 
 ```mermaid
 flowchart TD
-  Prompt["User prompt"]
-  Classifier["Intent classifier"]
-  Query["Intent-expanded retrieval query"]
+  User["Architect / Reviewer"] --> Gateway["OCI API Gateway"]
+  Gateway --> Backend["FastAPI Backend\nOCI Compute VM"]
+  Backend --> UI["React UI\nserved by backend"]
 
-  subgraph Local["Baseline Provider"]
-    LocalEmbed["LocalHashingEmbedder"]
-    LocalStore["JsonVectorStore\nlocal oci-rag-index.json"]
-    LocalResults["RetrievedSource citations"]
-  end
+  Backend --> API["/architecture-review"]
+  API --> Intent["Intent Classifier\narchitecture, migration, DR,\ncost, security, SaaS, release"]
+  Intent --> Retrieval["Retrieval Pipeline\nservice mapping + heuristics + reranking"]
 
-  subgraph OCIManifest["OCI-Native Manifest Provider"]
-    OCIEmbed["LocalHashingEmbedder\nsame embedding contract for parity"]
-    ObjectStore["OCI Object Storage\noci-rag-index.json"]
-    OCIStore["OciObjectStorageVectorStore\ncached manifest"]
-    OCIResults["RetrievedSource citations"]
-  end
+  Retrieval --> QueryEmbed["OCI GenAI Embedding\ncohere.embed-v4.0\nSEARCH_QUERY, 1536 dims"]
+  QueryEmbed --> OracleVector["Oracle AI Vector Search\nOCI_ARCHITECTURE_CHUNKS_V4"]
+  Retrieval -. rollback .-> ObjectStorage["OCI Object Storage\noci-rag-index.json\noci-rag-index.local-hash.json"]
+  Retrieval -. local dev .-> LocalJson["Local JSON Snapshot"]
 
-  Parity["Retrieval parity gate\n14/14 passed\n1.0 top chunk overlap"]
-  EvalGate["Golden + edge evals\nretrieval regression\nsmoke tests"]
-  VectorGate["Oracle vector active-read gate\nparity + regression + smoke"]
-  Promote["Completed staging promotion\nRETRIEVAL_PROVIDER=oracle_ai_vector_search"]
-  Rollback["Config-only rollback\nRETRIEVAL_PROVIDER=oci_object_storage or local_json"]
+  Intent --> Orchestration["Controlled In-Process Orchestration\nsupervisor + specialists + critic"]
+  Retrieval --> Orchestration
+  Orchestration --> GenAIChat["OCI GenAI Chat\nxai.grok-4.3"]
+  GenAIChat --> Response["Structured Advisory Response\nrecommendations, citations,\nconfidence, topology, governance"]
+  Response --> UI
 
-  Prompt --> Classifier --> Query
-  Query --> LocalEmbed --> LocalStore --> LocalResults --> Parity
-  Query --> OCIEmbed --> ObjectStore --> OCIStore --> OCIResults --> Parity
-  Parity --> EvalGate --> VectorGate
-  VectorGate --> Promote
-  Promote --> Rollback
+  Backend --> Ops["Operational APIs\n/health, /retrieval/health,\n/orchestration/health, /operations/*"]
 ```
 
-Validated parity result:
-
-- `local_json`: passed
-- `oci_object_storage`: passed
-- `oracle_ai_vector_search`: passed active-read promotion gates
-- parity cases: `14/14`
-- golden evals: `6/6` for both provider paths
-- edge-case evals: `8/8` for both provider paths
-- retrieval regression: `14/14` for both provider paths
-- staging active provider: `oracle_ai_vector_search`
-- rollback providers: `oci_object_storage`, then `local_json`
-
-## 3. Current OCI-Native Retrieval Architecture
-
-Oracle AI Vector Search is the active staging read path. Object Storage remains the promoted manifest store and immediate rollback provider.
+## 2. Knowledge And Embedding Pipeline
 
 ```mermaid
 flowchart LR
-  Sources["Approved OCI docs\nsource registry"]
-  Releases["OCI release sources\nrelease registry"]
-  Scheduler["Backend OCI VM cron\ncurrent release-watch scheduler"]
+  Registry["knowledge/source_registry.json\napproved OCI sources"]
+  Fetch["Fetch or registry fallback"]
+  Chunk["Clean + chunk documents"]
+  Metadata["Enrich metadata\nservice, domain, category,\nintent tags, migration mappings,\nfreshness, trust"]
+  EmbedDocs["OCI GenAI Embedding\ncohere.embed-v4.0\nSEARCH_DOCUMENT, 1536 dims"]
+  Manifest["Vector manifest\noci-rag-index.json"]
+  ObjectStorage["Object Storage\nactive + rollback manifests"]
+  OracleVector["Oracle AI Vector Search\nOCI_ARCHITECTURE_CHUNKS_V4"]
+  Gates["Validation gates\nhealth, regression, golden, edge"]
+  Promote["Runtime promotion\nVault/runtime env path"]
 
-  subgraph Ingestion["Knowledge Refresh Pipeline"]
-    Fetch["Fetch or fallback"]
-    Clean["Clean boilerplate"]
-    Chunk["Chunk documents"]
-    Metadata["Add metadata\nservice, domain, intent tags,\nfreshness, trust, content hash"]
-    Embed["OCI Generative AI embeddings"]
-    Candidate["Candidate snapshots\nrun-scoped"]
-    Gates["Retrieval + eval gates"]
-    Promote["Promote only if gates pass"]
-  end
-
-  subgraph Storage["OCI Knowledge Storage"]
-    Raw["Object Storage\nraw/source snapshots"]
-    Manifest["Object Storage\nmigration-safe vector manifest"]
-    Vector["Oracle AI Vector Search\nactive read path"]
-    ReleaseStore["Object Storage\nrelease snapshots"]
-  end
-
-  subgraph Runtime["Advisory Runtime"]
-    UI["React UI"]
-    API["FastAPI backend"]
-    Intent["Intent-aware orchestration"]
-    Retriever["Retrieval adapter\nconfig-selected provider"]
-    Freshness["Freshness + release checks"]
-    Response["Structured advisory response\nrecommendations, risks, citations"]
-  end
-
-  Scheduler --> Fetch
-  Sources --> Fetch --> Clean --> Chunk --> Metadata --> Embed --> Candidate --> Gates --> Promote
-  Metadata --> Raw
-  Promote --> Manifest
-  Promote --> Vector
-  Releases --> ReleaseStore
-
-  UI --> API --> Intent --> Retriever
-  Retriever --> Vector
-  Retriever -. "rollback" .-> Manifest
-  Retriever --> Freshness
-  ReleaseStore --> Freshness
-  Freshness --> Response --> UI
+  Registry --> Fetch --> Chunk --> Metadata --> EmbedDocs --> Manifest
+  Manifest --> Gates
+  Gates --> ObjectStorage
+  Gates --> OracleVector
+  ObjectStorage --> Promote
+  OracleVector --> Promote
 ```
 
-Migration sequence:
+Current promoted embedding metadata:
 
-1. Keep `local_json` as rollback provider.
-2. Promote `oci_object_storage` as active staging provider after parity. — Done
-3. Validate staging smoke and evals. — Done
-4. Implement Oracle AI Vector Search table/index. — Done
-5. Dual-run Vector Search against `oci_object_storage`. — Done
-6. Promote Oracle AI Vector Search after parity and rollback validation. — Done
+```text
+embedding_provider=oci_genai
+embedding_model=cohere.embed-v4.0
+dimensions=1536
+chunk_count=60
+```
 
-## 4. Continuous Release-Awareness Flow
-
-Release-awareness is a differentiator because release context is stored separately from normal architecture knowledge. The system can avoid treating old architecture guidance as current release truth.
+## 3. Retrieval Guardrail
 
 ```mermaid
 flowchart TD
-  Scheduler["VM cron release watcher"]
-  ReleaseIngest["Release ingestion"]
-  Classify["Classify service, domain, impact"]
-  Candidate["Candidate release + knowledge snapshots"]
-  Gates["Eval and retrieval gates"]
-  Promote["Promoted authoritative snapshot"]
-  Status["/knowledge/refresh/status"]
-  UserPrompt["User asks about latest OCI update"]
-  Intent["Intent classifier\nrelease_awareness"]
-  Knowledge["Architecture retrieval\ncurrent promoted snapshot"]
-  ReleaseSnapshot["Point-in-time release snapshot"]
-  FreshnessCheck["Freshness / staleness check"]
-  Answer["Response separates\ncurrent guidance from release-sensitive guidance"]
+  Settings["Runtime settings\nprovider, model, dimensions"]
+  StoreHealth["Index metadata\nprovider, model, dimensions"]
+  Guardrail{"Do settings match index?"}
+  Serve["Serve retrieval"]
+  Refuse["Refuse retrieval\nsurface clear health error"]
 
-  Scheduler --> ReleaseIngest --> Classify --> Candidate --> Gates
-  Gates -->|pass| Promote --> Status
-  Gates -->|fail| Status
-  UserPrompt --> Intent
-  Intent --> Knowledge
-  Intent --> ReleaseSnapshot
-  Promote --> Knowledge
-  Promote --> ReleaseSnapshot
-  Knowledge --> FreshnessCheck
-  ReleaseSnapshot --> FreshnessCheck
-  FreshnessCheck --> Answer
+  Settings --> Guardrail
+  StoreHealth --> Guardrail
+  Guardrail -->|yes| Serve
+  Guardrail -->|no| Refuse
 ```
 
-Current release-awareness maturity:
+The guardrail prevents silent mismatches such as sending `cohere.embed-v4.0` query vectors to a 256-dimension local-hash index.
 
-- point-in-time release snapshot exists
-- scheduled release watcher runs from backend OCI VM cron
-- candidate-first refresh and eval-gated promotion exist
-- release-aware intent exists
-- stale-source caution exists
-- deeper semantic impact analysis remains future work
-
-## 5. Operational Control Points
+## 4. Advisory Orchestration
 
 ```mermaid
 flowchart LR
-  Dev["Local dev/test"]
-  CI["CI gates\nbackend, frontend, evals,\ningestion, retrieval"]
-  Stage["OCI staging"]
-  Smoke["Smoke tests\nhealth, UI, API, OCI SDK"]
-  Guardrails["Retrieval parity\nrelease checks\nrollback checks"]
-  Promote["Config promotion"]
-  Rollback["Config rollback"]
-
-  Dev --> CI --> Stage --> Smoke --> Guardrails --> Promote
-  Promote --> Rollback
-  Rollback --> Stage
-```
-
-Core operating rule:
-
-```text
-ONE codebase / MULTIPLE environments
-Local = development and testing
-OCI = staging, demo, production
-Provider changes happen through config, not code forks.
-```
-
-## 6. Controlled Multi-Agent Advisory Orchestration
-
-The current agent foundation is controlled and in-process. It adds bounded specialist collaboration and critic visibility while preserving the same retrieval, synthesis, and eval paths.
-
-```mermaid
-flowchart LR
-  Prompt["User prompt"]
+  Prompt["Prompt"]
   Classifier["Intent classifier"]
-  Evidence["Shared retrieval evidence"]
+  Evidence["Shared retrieved evidence"]
   Supervisor["Supervisor\nrouting decision"]
-  Specialists["Selected specialists\narchitecture / migration / HA-DR / cost / release"]
-  Aggregator["Final synthesizer\nsingle-writer response"]
-  Synth["Configured synthesis provider\ndeterministic or OCI GenAI"]
-  Quality["Citation + confidence analyzer"]
-  Critic["Validation critic\ngrounding, citations, freshness,\nunsupported claims"]
-  Response["Structured response\nactive agents, critic findings,\nconfidence, citations"]
+  Specialists["Specialists\narchitecture / migration /\nHA-DR / cost / release"]
+  Synth["Final synthesizer\nsingle writer"]
+  Critic["Validation critic\ngrounding, citations,\nfreshness, unsupported claims"]
+  Response["API response"]
 
-  Prompt --> Classifier --> Evidence --> Supervisor --> Specialists --> Aggregator --> Synth --> Quality --> Critic --> Response
+  Prompt --> Classifier --> Evidence --> Supervisor --> Specialists --> Synth --> Critic --> Response
+  Evidence --> Synth
 ```
 
-Rollback remains config-only:
+This is controlled in-process orchestration. It is not autonomous multi-agent execution, does not use long-running memory, and does not let specialists mutate citations independently.
 
-```text
-ADVISORY_ORCHESTRATION_MODE=supervised
-ADVISORY_ORCHESTRATION_MODE=single_pass
+## 5. Rollback Architecture
+
+```mermaid
+flowchart TD
+  Current["Current live path\noci_genai + cohere.embed-v4.0\n1536 dims"]
+  V4Table["OCI_ARCHITECTURE_CHUNKS_V4"]
+  V4Manifest["Object Storage\noci-rag-index.json"]
+
+  Rollback["Embedding rollback"]
+  HashTable["OCI_ARCHITECTURE_CHUNKS\n256 dims"]
+  HashManifest["Object Storage\noci-rag-index.local-hash.json"]
+  Local["local_json emergency fallback"]
+
+  Current --> V4Table
+  Current --> V4Manifest
+  Current -. config rollback .-> Rollback
+  Rollback --> HashTable
+  Rollback --> HashManifest
+  Rollback -. emergency .-> Local
 ```
 
-Deferred by design:
+Rollback is intentionally config-only through the reviewed runtime path, followed by backend restart and `/retrieval/health` verification.
 
-- autonomous agent swarms
-- distributed orchestration frameworks
-- agent-specific memory
-- provider-specific agent code paths
+## 6. Release-Aware Refresh
+
+```mermaid
+flowchart TD
+  Cron["VM cron\nrelease-watch"]
+  ReleaseSources["OCI release sources"]
+  Ingest["Release ingestion"]
+  Classify["Impact classification\nservice, domain, change type"]
+  Candidate["Candidate snapshot"]
+  Gates["Quick gates + eval checks"]
+  Promote["Promoted release snapshot"]
+  Runtime["Architecture review runtime"]
+  Answer["Response with temporal context"]
+
+  Cron --> Ingest
+  ReleaseSources --> Ingest --> Classify --> Candidate --> Gates
+  Gates -->|pass| Promote --> Runtime
+  Gates -->|fail| Runtime
+  Runtime --> Answer
+```
+
+Release refresh never runs during a user query. User queries consume the last promoted release snapshot and freshness metadata.

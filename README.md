@@ -1,243 +1,86 @@
 # OCI Architecture Studio
 
-OCI Architecture Studio is an enterprise AI platform for OCI architecture guidance, migration advisory, cost optimization, and release-aware OCI knowledge synchronization.
+OCI Architecture Studio is an AI-powered architecture advisory platform for Oracle Cloud Infrastructure. It helps reviewers turn OCI, migration, resilience, security, observability, and cost questions into grounded recommendations with citations, confidence signals, and rollback-safe operational controls.
 
 Current version: `1.0.3`
 
-The project is monorepo-first, RAG-first, modular, and evaluation-driven. Prompts, retrieval code, evals, and application code are treated as first-class assets from the start.
+## Current State
 
-## High-Level Architecture
+- **Staging synthesis:** OCI Generative AI chat is active through `ADVISORY_SYNTHESIS_PROVIDER=oci_genai`.
+- **Chat model:** `xai.grok-4.3`.
+- **Retrieval provider:** Oracle AI Vector Search.
+- **Embedding provider:** OCI Generative AI embeddings with `cohere.embed-v4.0`.
+- **Vector dimensions:** `1536`.
+- **Active vector table:** `OCI_ARCHITECTURE_CHUNKS_V4`.
+- **Active corpus:** `60` curated OCI architecture chunks across `52` services and `15` service domains.
+- **Rollback:** previous 256-dimension local-hash Oracle table and Object Storage manifest are retained.
+- **Validation:** live retrieval regression `32/32`, golden evals `18/18`, edge evals `8/8`.
+
+## Architecture
 
 ```mermaid
 flowchart TD
-  User["Architect / User"] --> Gateway["OCI API Gateway"]
-  Gateway --> Backend["FastAPI backend\nOCI Compute VM"]
-  Backend --> Frontend["React UI\nserved by backend"]
-  Backend --> Retrieval["Retrieval orchestration\nintent + reranking + citations"]
-  Retrieval --> OracleVector["Oracle AI Vector Search\nAutonomous Database active index"]
-  Retrieval -. rollback .-> ObjectStorage["OCI Object Storage\npromoted knowledge snapshot"]
-  Retrieval --> LocalJson["Local JSON\nfallback snapshot"]
-  Backend --> Advisory["Governance, migration,\nFinOps, release-aware advisory"]
-  Cron["VM cron\nknowledge refresh"] --> Refresh["refresh_policy.py\ncandidate + gates + promotion"]
-  Refresh --> ObjectStorage
-  Refresh --> OracleVector
-  Backend --> Ops["Operations endpoints\nhealth, readiness, analytics"]
-  Ops --> OciOps["OCI Logging / Monitoring\nNotifications / Vault posture"]
+  User["Architect / Reviewer"] --> Gateway["OCI API Gateway"]
+  Gateway --> Backend["FastAPI Backend\nOCI Compute VM"]
+  Backend --> UI["React UI\nserved by backend"]
+
+  Backend --> Orchestrator["Advisory Orchestrator\nintent, profiles, critic, governance"]
+  Orchestrator --> Retrieval["Retrieval Pipeline\nservice mapping, heuristics, reranking"]
+  Retrieval --> EmbedQuery["OCI GenAI Embed\ncohere.embed-v4.0\nSEARCH_QUERY, 1536 dims"]
+  EmbedQuery --> VectorDB["Oracle AI Vector Search\nOCI_ARCHITECTURE_CHUNKS_V4"]
+  Retrieval -. rollback .-> ObjectStore["Object Storage\noci-rag-index.json\noci-rag-index.local-hash.json"]
+  Retrieval -. local dev .-> LocalJson["Local JSON Snapshot"]
+
+  Orchestrator --> Synthesis["OCI GenAI Chat\nxai.grok-4.3\nfallback-aware"]
+  Synthesis --> Response["Structured Advisory Response\nrecommendations, citations,\nconfidence, topology, next steps"]
+  Response --> UI
+
+  Cron["VM Cron\nrelease-watch refresh"] --> Ingestion["Knowledge Ingestion\nfetch, chunk, metadata, embeddings"]
+  Ingestion --> ObjectStore
+  Ingestion --> VectorDB
+
+  Backend --> Ops["Operational APIs\n/health, /retrieval/health,\n/operations/*"]
+  Ops --> OciOps["OCI Vault / Logging /\nMonitoring / Notifications posture"]
 ```
 
-## Current Working Flow
+## Request Flow
 
-OCI Architecture Studio currently supports a validated advisory flow in local development and OCI staging:
-
-1. User asks an OCI architecture, migration, DR, cost, security, or release-awareness question in the React UI.
-2. The frontend calls the FastAPI backend.
-3. The backend classifies the request intent and applies the matching advisory profile.
-4. Retrieval runs through a config-selected provider, applies source-service mapping, detects architecture-domain heuristics, and reranks a wider candidate set before selecting final chunks.
-5. The active staging provider is `oracle_ai_vector_search`, reading the validated 60-source architecture corpus from Oracle AI Vector Search.
-6. OCI Object Storage remains the immediate config rollback provider for staging; local development defaults to `local_json`.
-7. The controlled orchestration layer selects deterministic specialist roles, shares the same retrieved evidence across them, and runs a validation critic over evidence support, citations, freshness, and unsupported-claim risk. These are in-process role boundaries, not autonomous agents.
-8. One final synthesis step generates the advisory response through the configured provider with deterministic rollback available. Deterministic synthesis now uses lightweight architecture pattern profiles, retrieved evidence, workload heuristics, and consistency checks rather than only profile boilerplate. OCI GenAI synthesis can be enabled through configuration and uses the same retrieved context through a dedicated grounding prompt builder.
-9. Release-awareness uses local release snapshots, deterministic release classification, impact analysis, release overlays on affected chunks, and refresh-policy automation. In staging, release-watch refresh now runs from the OCI backend VM cron path with live release fetch, quick gates, gated promotion, and Object Storage upload; stable-doc refresh remains safe/candidate-only. Refresh still never runs on user queries.
-10. The backend returns structured recommendations, concise decision reasoning metadata, consistency findings, confidence, evidence links, enriched section citation metadata, deterministic enterprise-governance assessment metadata, lightweight architecture topology metadata, executive experience metadata, FinOps/migration optimization metadata, optional retrieval debug traces, release context, temporal knowledge context, and standard architecture response sections. The current UI renders the main advisory fields, executive brief, implementation sequence, topology/dependency summaries, comparison summaries, explainability highlights, migration/FinOps optimization summaries, release context, section traceability, exportable Markdown summary, citation/source cards, a read-only Knowledge Refresh Status panel backed by `/knowledge/refresh/status`, a read-only Retrieval Provider Status panel backed by `/retrieval/health`, and saved-review history with retention/export/delete operator controls. Live diagram rendering remains future work.
-11. Operational diagnostics expose deployment profile, retrieval health, release refresh freshness, synthesis availability, OCI secret/config posture, API Gateway/OCI DevOps readiness metadata, infrastructure visibility, governance/risk counters, runtime readiness, and lightweight runtime analytics through additive endpoints. Live OCI connectivity checks are opt-in so local development stays offline-safe.
-
-LangGraph, advanced memory, and autonomous agent execution remain deferred. Oracle AI Vector Search provider code, Autonomous Database infrastructure, schema/index tooling, active reads, Object Storage rollback, and staging validation are implemented; OCI GenAI synthesis remains configurable but not the default until live parity passes.
+1. The user submits an architecture question from the React UI or API.
+2. The backend classifies intent, maps known source services such as AWS EKS/RDS to OCI targets, and selects an advisory profile.
+3. Retrieval embeds the expanded query with OCI GenAI, searches Oracle AI Vector Search, reranks candidates, and protects intent-critical services such as Logging, Monitoring, Object Storage, Load Balancer, and Database Services.
+4. The controlled in-process orchestration layer shares the same evidence across specialist roles and runs a validation critic for grounding, citations, freshness, and unsupported service claims.
+5. OCI GenAI synthesis produces the final structured response using the retrieved evidence and grounding prompt.
+6. The API returns recommendations, risks, assumptions, citations, decision reasoning, confidence, topology metadata, governance metadata, release context, and optional debug traces.
 
 ## Repository Layout
 
 ```text
-docs/                 Product, roadmap, sprint, and architecture docs
-app/backend/          Python 3.12 FastAPI backend
-app/frontend/         React + Vite frontend
-knowledge/            Source registries, ingestion, release refresh, and snapshots
-prompts/              Versioned prompt templates
-evals/                Regression prompts and expected behavior
-infra/                Deployment and CI/CD assets
-tests/                Backend and integration tests
+app/backend/       FastAPI API, retrieval, synthesis, orchestration, operations
+app/frontend/      React + Vite user interface
+docs/              Product, architecture, current status, runbooks, reports
+evals/             Golden, edge, retrieval, and quality eval datasets
+infra/             Deployment scripts, runtime profiles, Terraform assets
+knowledge/         Source registries, ingestion, refresh policy, snapshots
+prompts/           Versioned advisory prompt templates
+tests/             Integration and regression test scaffolding
 ```
 
-## Current Capabilities
+## Core Capabilities
 
-- Local OCI source registry and ingestion pipeline
-- Curated OCI architecture corpus with 60 chunks active in staging after the latest architecture-accuracy promotion
-- Scalable ingestion scaffolding for source groups, source categories, release tags, chunk lineage, section hierarchy, and source traceability
-- Deterministic local embeddings for development
-- OCI Generative AI embeddings with provider switching, active `cohere.embed-v4.0` staging validation at 1536 dimensions, dimensional validation, failure diagnostics, and deterministic local rollback
-- JSON vector index for local retrieval
-- Citation-friendly chunk metadata with service, service category, domain, workload, architecture pattern, trust, intent tags, migration mappings, and freshness score
-- Automatic chunk-level metadata enrichment for OCI service references, workload/domain labels, migration relevance, HA/DR relevance, cost relevance, security/compliance tags, and architecture pattern tags
-- Lightweight corpus health validation for chunk count, metadata completeness, missing service tags, orphaned chunks, duplicate content, empty embeddings, and coverage gaps
-- Lightweight retrieval reranking that combines semantic similarity, intent match, service relevance, metadata overlap, architecture pattern match, workload/domain relevance, topic match, and migration mapping match
-- Optional retrieval debug traces through request flag `retrieval_debug` or environment flag `RETRIEVAL_DEBUG_ENABLED`
-- Backend and frontend section citation traceability with chunk IDs, source documents, source URLs, relevance scores, trust levels, source counts, section notes, and S-numbered source links
-- Architecture-domain heuristics for ecommerce, fintech, SaaS, AI/ML inference, observability platforms, and analytics platforms
-- AWS-to-OCI service mapping for container, database, storage, CDN/DNS, networking, observability, security, AI/ML, and data engineering source services
-- Deterministic architecture pattern profiles for HA web apps, Kubernetes modernization, fintech DR, AI inference, analytics/data lake, multi-region SaaS, active/passive DR, event-driven systems, serverless workloads, and secure landing zones
-- Deterministic architecture reasoning profiles for HA/DR, migration, SaaS, fintech, AI/ML inference, analytics/data platforms, observability platforms, and cost-optimized workloads
-- Lightweight synthesis quality signals for grounding, OCI specificity, workload alignment, migration accuracy, recommendation diversity, and citation coverage
-- Concise architecture decision reasoning metadata with service choice rationale, workload signals, tradeoffs, rejected alternatives, source chunk IDs, and confidence
-- Explicit architecture tradeoff analysis for cost/resilience, performance/complexity, managed/self-managed, latency/multi-region resilience, simplicity/scalability, and flexibility/operational overhead
-- Per-recommendation confidence indicators with reasoning basis, supporting chunk IDs, assumptions, and known limitations
-- Lightweight architecture consistency validation for conflicting requirements, migration mapping coverage, HA/DR alignment, observability coverage, security coverage, and simple unsupported combination risks
-- Deterministic enterprise governance assessment metadata with executive summary, governance annotations, security posture checks, risk classifications, recommendation priorities, architecture comparisons, enterprise review findings, and auditability trace
-- Lightweight architecture topology metadata with service nodes, dependencies, deployment topology, HA/DR topology, operational notes, and a simple Mermaid flow for future UI rendering
-- Executive experience metadata and UI rendering for executive summaries, decision briefs, implementation sequencing, topology/dependency summaries, architecture comparisons, explainability highlights, and Markdown review export
-- Deterministic migration and FinOps optimization metadata with phased migration waves, modernization options, rightsizing/autoscaling/storage lifecycle guidance, workload optimization signals, implementation readiness checks, and cost-vs-resilience comparison reasoning
-- Frontend rendering for migration and FinOps optimization summaries, including phased migration steps, FinOps levers, workload-specific optimization signals, and implementation readiness notes
-- Expanded confidence sub-signals for service relevance, workload alignment, migration mapping certainty, and citation coverage
-- Release snapshot schema and temporal knowledge metadata schema for current-vs-historical scaffolding
-- Deterministic release intelligence for release normalization, change-category classification, impacted-service/source/chunk analysis, targeted eval impact reporting, and refresh action recommendations
-- OCI-native retrieval migration hooks:
-  - optional OCI Generative AI embedding adapter
-  - optional Object Storage vector-manifest retrieval
-  - optional Oracle AI Vector Search provider with schema SQL, vector upsert, similarity search, metadata filters, health checks, and local fallback
-  - retrieval regression reporting for citations, intents, and required service coverage
-- Hybrid retrieval path combining provider vector similarity, metadata filters, reranking heuristics, intent/domain heuristics, and intent-critical service coverage
-- Separate local OCI release snapshot pipeline
-- Knowledge refresh policy scaffolding for release-note watching, candidate snapshot validation, selective reindex, release overlay tagging, eval-gated promotion, historical snapshot retention, version lineage, and rollback-safe updates
-- OCI-native release-watch refresh from the backend OCI Compute VM cron path with live release fetch, quick gates, gated promotion, and Object Storage upload; stable-doc refresh remains conservative/candidate-only
-- Continuous intelligence status endpoint at `/knowledge/refresh/status`
-- Read-only frontend Knowledge Refresh Status panel for VM cron run state, gate result, promotion/upload status, snapshot version, affected-source count, and rollback posture
-- Read-only frontend Retrieval Provider Status panel for active provider, chunk count, Object Storage rollback posture, fallback state, embedding model, and Oracle AI Vector Search active-read posture
-- OCI-native runtime profiles for `local_dev`, `oci_vm`, and `oke` under `infra/runtime-profiles/`
-- Additive operational diagnostics endpoints: `/operations/profile`, `/operations/health`, `/operations/readiness`, `/operations/infrastructure`, and `/operations/analytics`
-- Runtime readiness checks for startup paths, provider/dependency configuration, fallback paths, API Gateway readiness, OCI DevOps readiness, and runtime safeguards
-- Lightweight operational analytics for retrieval provider usage, synthesis provider usage, fallback events, hallucination findings, governance policy triggers, governance risk trends, architecture comparison usage, recommendation category trends, visualization generation, review artifact generation, runtime degradation events, workload-category usage, confidence distribution, and response latency
-- OCI Vault configuration-secret readiness checks, with local environment compatibility for development
-- OCI Logging, Audit, Monitoring, Notifications, and Events configuration visibility in operational diagnostics. Audit support is currently surfaced as platform-native OCI Audit posture metadata, not custom audit event export.
-- Operational readiness checker under `infra/scripts/operational_readiness_check.py`
-- Internal beta readiness gate under `infra/scripts/internal_beta_readiness_check.py` for deployed endpoint, retrieval, operational diagnostics, governance, executive, topology, migration/FinOps, and release-context validation
-- Intent-aware orchestration for:
-  - product overview
-  - architecture
-  - migration
-  - disaster recovery
-  - cost
-  - observability
-  - AI/ML
-  - security
-  - modernization
-  - SaaS platform
-  - analytics
-  - release awareness
-  - general questions
-- Golden prompt regression suite
-- Machine-readable golden eval dataset
-- Negative and edge-case eval dataset
-- Local eval runner with JSON/Markdown reports, failure diagnostics, retrieval-support checks, and stale-guidance checks
-- Evaluation intelligence layer with multi-dimensional architecture scoring, hallucination findings, benchmark checks, response-quality analytics, and configurable quality gates
-- Enterprise governance eval dataset for security realism, migration governance, FinOps, auditability, operational ownership, and implementation-priority signals
-- Enterprise platform maturity eval dataset for topology, executive usability, runtime degradation handling, observability readiness, migration realism, and internal beta readiness signals
-- Executive experience eval dataset for executive-summary quality, recommendation readability, architecture visualization usefulness, comparison quality, migration presentation quality, operational guidance clarity, and export-friendly review artifacts
-- FinOps and migration optimization eval dataset for phased migration realism, modernization guidance, rightsizing/autoscaling/storage lifecycle guidance, cost-performance tradeoffs, workload optimization, rollback planning, and implementation readiness
-- CI workflow for knowledge/release ingestion smoke tests, backend tests, golden/edge evals, and frontend build
-- Backend tests covering API, retrieval, and intent routing
-- OCI staging deployment with smoke tests, resource visibility checks, and rollback runbooks
-- Dual-provider retrieval parity gates comparing `local_json`, `oci_object_storage`, and `oracle_ai_vector_search`
-- Config-only staging promotions to `oci_object_storage` and then `oracle_ai_vector_search`, with rollback validation
-- Evidence-linked recommendations, confidence scoring, decision reasoning metadata, consistency findings, synthesis quality signals, uncertainty flags, and advisory quality metrics
-- Config-selectable advisory synthesis with deterministic rollback and an OCI GenAI chat adapter
-- Retrieval-grounded GenAI prompt construction with detected intent, mapped OCI services, workload/domain profile, architecture pattern hints, reasoning profile, retrieved OCI chunks, and required response structure
-- Optional synthesis debug traces with selected provider, retrieved chunk IDs, grounding prompt sections, approximate input tokens, token usage when available, and fallback reason
-- Controlled in-process orchestration pilot with:
-  - one in-process supervisor
-  - deterministic specialist selection for architecture, migration, HA/DR, cost, and release-awareness advisors
-  - shared retrieval evidence across all agents
-  - one final synthesis step
-  - specialist contribution metadata
-  - aggregation decision visibility
-  - validation critic findings
-  - config-only rollback to `supervised` or `single_pass`
-  - `/orchestration/health` observability
-
-The orchestration pilot does not perform autonomous tool use, long-running planning, multi-step memory, or independent agent execution. Those remain deferred until there is enough quality data to justify them.
-
-## GenAI Activation Status
-
-OCI Architecture Studio is evolving from deterministic scaffolding into an OCI GenAI-assisted advisor. The current runtime still defaults to deterministic mode for safety and offline repeatability.
-
-Implemented today:
-
-- `EMBEDDING_PROVIDER=local|oci_genai`
-- `EMBEDDING_FALLBACK_ENABLED=true|false`
-- `ADVISORY_SYNTHESIS_PROVIDER=deterministic|oci_genai`
-- `SYNTHESIS_DEBUG_ENABLED=true|false`
-- request-level `synthesis_debug`
-- fail-closed OCI GenAI synthesis fallback to deterministic synthesis
-- deterministic fallback for OCI GenAI embedding activation or generation failures when fallback is enabled
-- deterministic-vs-OCI GenAI comparison reporting under `infra/scripts/genai_synthesis_parity_check.py`
-
-Current limitations:
-
-- The active corpus is still curated and incomplete, but staging now serves 60 promoted chunks from Oracle AI Vector Search using `cohere.embed-v4.0` at 1536 dimensions. The previous 256-dimension local-hash manifest and Oracle vector table remain available for rollback.
-- OCI GenAI mode requires valid OCI SDK auth, compartment, model IDs, region/endpoint policy access, and parity validation before promotion.
-- Live GenAI comparison is skipped when required OCI GenAI environment variables are absent.
-- GenAI output is still constrained by retrieved evidence quality; deeper official OCI documentation coverage remains necessary before production-grade breadth.
+- OCI architecture, migration, DR, cost, observability, security, AI/ML, analytics, SaaS, and release-aware advisory intents.
+- Retrieval-grounded recommendations with OCI source citations and section-level traceability.
+- OCI GenAI synthesis with deterministic fallback design.
+- OCI GenAI semantic embeddings on Oracle AI Vector Search.
+- Rollback-safe Object Storage and local JSON retrieval paths.
+- Controlled in-process specialist orchestration with one final synthesis step.
+- Advisory quality checks for hallucinations, unsupported OCI claims, stale guidance, citation coverage, and confidence.
+- Saved review history with redaction, retention, export, and delete controls.
+- Knowledge refresh pipeline with candidate snapshots, eval gates, promotion, and rollback.
+- Operational diagnostics for retrieval, synthesis, release freshness, runtime readiness, OCI posture, and lightweight analytics.
 
 ## Run Locally
 
-### Build the Local OCI RAG Index
-
-Run this once before starting the backend if `knowledge/snapshots/oci-rag-index.json` does not exist:
-
-```bash
-python3 knowledge/ingestion/ingest.py
-```
-
-The ingestion pipeline reads `knowledge/source_registry.json`, applies source-group defaults, fetches the approved OCI documentation pages when network access is available, preserves document and section context during chunking, enriches chunk metadata, creates deterministic local embeddings by default, and writes a JSON vector index to `knowledge/snapshots/oci-rag-index.json`.
-
-For a fully offline seed index using the registry fallback text:
-
-```bash
-python3 knowledge/ingestion/ingest.py --no-fetch
-```
-
-Validate corpus health:
-
-```bash
-app/backend/.venv/bin/python knowledge/ingestion/corpus_health.py \
-  --index knowledge/snapshots/oci-rag-index.json \
-  --min-chunks 40
-```
-
-### Build the Local OCI Release Snapshot
-
-Release awareness uses a separate source registry and snapshot so current-release checks do not get mixed into the normal architecture knowledge index:
-
-```bash
-python3 knowledge/refresh/ingest_releases.py
-```
-
-For an offline seed snapshot:
-
-```bash
-python3 knowledge/refresh/ingest_releases.py --no-fetch
-```
-
-### Run the Knowledge Refresh Policy
-
-Release notes and fast-changing sources are refreshed by policy, not on user queries:
-
-```bash
-python3 knowledge/refresh/refresh_policy.py --mode release-watch --no-fetch --quick-gates
-```
-
-The policy runner classifies changed release items, runs deterministic impact analysis, maps affected services/domains/change categories to source IDs and chunk IDs, builds candidate snapshots under `knowledge/reports/runs/<run_id>/candidates`, applies release overlay metadata to affected chunks, runs retrieval/eval gates against the candidate paths, and promotes refreshed knowledge only when validation passes.
-
-Report release impact without promoting snapshots:
-
-```bash
-python3 infra/scripts/release_impact_report.py \
-  --output knowledge/reports/release-impact-report.json
-```
-
-Rollback the latest promoted refresh:
-
-```bash
-python3 knowledge/refresh/refresh_policy.py --rollback-latest
-```
-
-### Backend
+Create a backend environment:
 
 ```bash
 cd app/backend
@@ -248,29 +91,13 @@ cp ../../.env.example .env
 PYTHONPATH=src uvicorn oci_arch_studio_backend.main:app --reload --port 8000
 ```
 
-Health check:
+Create or refresh the local knowledge index:
 
 ```bash
-curl http://localhost:8000/health
+python3 knowledge/ingestion/ingest.py --no-fetch
 ```
 
-Architecture review:
-
-```bash
-curl -X POST http://localhost:8000/architecture-review \
-  -H "Content-Type: application/json" \
-  -d '{"question":"How should I design a highly available web app on OCI?"}'
-```
-
-Optional retrieval debug trace:
-
-```bash
-curl -X POST http://localhost:8000/architecture-review \
-  -H "Content-Type: application/json" \
-  -d '{"question":"Migrate CloudWatch and IAM controls for a SaaS platform to OCI.","retrieval_debug":true}'
-```
-
-### Frontend
+Run the frontend:
 
 ```bash
 cd app/frontend
@@ -278,233 +105,51 @@ npm install
 npm run dev
 ```
 
-The frontend expects the backend at `http://localhost:8000` by default. Override with:
+## Useful Checks
+
+Backend focused tests:
 
 ```bash
-VITE_API_BASE_URL=http://localhost:8000 npm run dev
+PYTHONPATH=app/backend/src app/backend/.venv/bin/python -m pytest \
+  app/backend/tests/test_advisory_quality.py \
+  app/backend/tests/test_retrieval.py \
+  app/backend/tests/test_oracle_vector_store.py \
+  app/backend/tests/test_embeddings.py
 ```
 
-## Recommended Next Steps
-
-1. Keep staging on `RETRIEVAL_PROVIDER=oracle_ai_vector_search` and monitor retrieval latency, citations, fallback state, and failure handling.
-2. Keep release-watch refresh on the backend OCI VM cron path, monitor `/knowledge/refresh/status`, and keep stable-doc refresh in safe/candidate-only mode until its live cadence is validated.
-3. Continue expanding the source registry with Budgets, Audit, Data Guard, and deeper service-specific architecture sources.
-4. Run OCI GenAI synthesis live parity without changing the deterministic default.
-5. Replace local hashing embeddings with OCI Generative AI embeddings only after provider settings, cost controls, and rollback gates are finalized.
-6. Keep Object Storage rollback snapshots aligned with the active Oracle AI Vector Search index.
-7. Replace fallback release parsing with stronger extraction from official OCI release pages and keep impact-category mappings under review.
-8. Use the evaluation-intelligence suite and advisory quality gate before promoting retrieval, synthesis, prompt, or provider changes.
-9. Use OCI-native runtime profiles and `/operations/health` before staging changes; enable live OCI connectivity checks only after IAM policies and Vault access are ready.
-
-## Run Evaluations
+Retrieval health:
 
 ```bash
-app/backend/.venv/bin/python evals/run_golden.py --output-dir evals/reports/golden
-app/backend/.venv/bin/python evals/run_golden.py --cases evals/edge-cases.jsonl --output-dir evals/reports/edge-cases
-app/backend/.venv/bin/python evals/run_golden.py --cases evals/advisory-quality.jsonl --output-dir evals/reports/advisory-quality
-app/backend/.venv/bin/python evals/run_golden.py --cases evals/orchestration-quality.jsonl --output-dir evals/reports/orchestration-quality
-app/backend/.venv/bin/python evals/run_golden.py --cases evals/architecture-realism.jsonl --output-dir evals/reports/architecture-realism
-app/backend/.venv/bin/python evals/run_golden.py --cases evals/evaluation-intelligence.jsonl --output-dir evals/reports/evaluation-intelligence
-app/backend/.venv/bin/python infra/scripts/advisory_quality_gate.py \
-  --report evals/reports/evaluation-intelligence/evaluation-intelligence-report.json \
-  --min-overall 0.55 \
-  --min-oci-specificity 0.45 \
-  --min-architecture-completeness 0.45 \
-  --min-tradeoff-quality 0.35
-app/backend/.venv/bin/python infra/scripts/genai_synthesis_parity_check.py --cases evals/genai-comparison.jsonl --output-dir evals/reports/genai-comparison --allow-skip
-app/backend/.venv/bin/python infra/scripts/genai_synthesis_parity_check.py --cases evals/golden-prompts.jsonl --output-dir evals/reports/genai-parity --allow-skip
+curl http://localhost:8000/retrieval/health
 ```
 
-Reports are written to `evals/reports/` and ignored by git.
-
-## Run Retrieval Regression Checks
+Golden evals:
 
 ```bash
-app/backend/.venv/bin/python infra/scripts/check_retrieval_health.py --provider local_json
-app/backend/.venv/bin/python infra/scripts/check_retrieval_health.py --provider oracle_ai_vector_search \
-  --oci-vector-db-dsn "$OCI_VECTOR_DB_DSN" \
-  --oci-vector-db-user "$OCI_VECTOR_DB_USER" \
-  --oci-vector-db-password "$OCI_VECTOR_DB_PASSWORD" \
-  --oci-vector-wallet-location "$OCI_VECTOR_WALLET_LOCATION" \
-  --oci-vector-wallet-password "$OCI_VECTOR_WALLET_PASSWORD"
-app/backend/.venv/bin/python infra/scripts/check_retrieval_health.py --provider oci_object_storage \
-  --oci-region us-ashburn-1 \
-  --oci-profile DEFAULT \
-  --oci-namespace idsmrn7rvqb6 \
-  --oci-vector-bucket oci-architecture-studio-staging-knowledge-snapshots \
-  --oci-vector-object-name oci-rag-index.json
-app/backend/.venv/bin/python infra/scripts/retrieval_regression_check.py \
+PYTHONPATH=app/backend/src app/backend/.venv/bin/python evals/run_golden.py \
   --cases evals/golden-prompts.jsonl \
-  --cases evals/edge-cases.jsonl \
-  --output-dir evals/reports/retrieval
-app/backend/.venv/bin/python infra/scripts/operational_readiness_check.py \
-  --api-base-url http://localhost:8000
+  --output-dir evals/reports/local-golden
 ```
 
-This checks retrieval health, intent alignment, citation availability, top chunks, stale citations, and required OCI service coverage before changing retrieval providers.
+## Staging Rollback Summary
 
-## Run Oracle Vector Index Checks
+Embedding rollback is config-only through the reviewed runtime path:
 
-```bash
-app/backend/.venv/bin/python infra/scripts/oracle_vector_index.py validate-local-index \
-  --index-path knowledge/snapshots/oci-rag-index.json
-app/backend/.venv/bin/python infra/scripts/oracle_vector_index.py print-schema
-app/backend/.venv/bin/python infra/scripts/vector_retrieval_validation.py \
-  --cases evals/vector-retrieval-cases.jsonl \
-  --allow-skip \
-  --output-dir evals/reports/vector-retrieval
+```text
+EMBEDDING_PROVIDER=local
+OCI_VECTOR_OBJECT_NAME=oci-rag-index.local-hash.json
+OCI_VECTOR_TABLE_NAME=OCI_ARCHITECTURE_CHUNKS
+OCI_VECTOR_INDEX_NAME=OCI_ARCH_CHUNKS_VEC_IDX
+OCI_VECTOR_DIMENSIONS=256
 ```
 
-`oracle_ai_vector_search` requires `OCI_VECTOR_DB_DSN`, `OCI_VECTOR_DB_USER`, `OCI_VECTOR_DB_PASSWORD`, and the `python-oracledb` package from backend requirements. When `RETRIEVAL_FALLBACK_ENABLED=true`, the backend can fall back to `local_json` if the Oracle vector provider is unavailable.
+After rollback, restart the backend and confirm `/retrieval/health` reports `embedding_provider=local`, `index_dimensions=256`, and `embedding_index_guardrail.ok=true`.
 
-## Run Retrieval Parity Checks
+## Documentation
 
-```bash
-app/backend/.venv/bin/python infra/scripts/retrieval_parity_check.py \
-  --oci-region us-ashburn-1 \
-  --oci-profile DEFAULT \
-  --oci-namespace idsmrn7rvqb6 \
-  --oci-vector-bucket oci-architecture-studio-staging-knowledge-snapshots \
-  --oci-vector-object-name oci-rag-index.json \
-  --output-dir evals/reports/retrieval-parity
-```
+Start with [docs/README.md](docs/README.md), then use:
 
-Use this before promoting or rolling back retrieval provider config.
-
-## OCI Deployment
-
-The first OCI deployment path keeps one codebase and uses environment-specific configuration:
-
-- local for development and testing
-- OCI staging for the first cloud-hosted slice
-- OCI demo/prod for later promoted environments
-
-Start with the execution runbook:
-
-```bash
-docs/runbooks/oci-deployment-execution.md
-```
-
-The scaffold includes Terraform environments, backend VM deployment, frontend Object Storage upload, snapshot upload, OCI access checks, and deployment smoke tests.
-
-Current staging defaults:
-
-- region: `us-ashburn-1`
-- backend shape: `VM.Standard.E5.Flex`
-- backend size: `8 OCPUs`, `128 GB`
-- backend OS image family: Oracle Linux 9
-- notifications: `baba.shaik@oracle.com`
-- local SSH key path: `~/.ssh/oci-architecture-studio-staging`
-
-The real staging `terraform.tfvars`, saved plan files, and SSH keys are intentionally ignored by git.
-
-Validate deployment inputs with:
-
-```bash
-python3 infra/scripts/validate_deployment_config.py \
-  --tfvars infra/terraform/envs/staging/terraform.tfvars \
-  --profile DEFAULT
-```
-
-## Rerun After Changes
-
-```bash
-app/backend/.venv/bin/python evals/run_golden.py --output-dir evals/reports/golden
-app/backend/.venv/bin/python evals/run_golden.py --cases evals/edge-cases.jsonl --output-dir evals/reports/edge-cases
-app/backend/.venv/bin/python evals/run_golden.py --cases evals/advisory-quality.jsonl --output-dir evals/reports/advisory-quality
-app/backend/.venv/bin/python evals/run_golden.py --cases evals/orchestration-quality.jsonl --output-dir evals/reports/orchestration-quality
-app/backend/.venv/bin/python evals/run_golden.py --cases evals/architecture-realism.jsonl --output-dir evals/reports/architecture-realism
-app/backend/.venv/bin/python evals/run_golden.py --cases evals/evaluation-intelligence.jsonl --output-dir evals/reports/evaluation-intelligence
-app/backend/.venv/bin/python infra/scripts/advisory_quality_gate.py --report evals/reports/evaluation-intelligence/evaluation-intelligence-report.json --min-overall 0.55 --min-oci-specificity 0.45 --min-architecture-completeness 0.45 --min-tradeoff-quality 0.35
-app/backend/.venv/bin/python infra/scripts/retrieval_regression_check.py --cases evals/golden-prompts.jsonl --cases evals/edge-cases.jsonl --output-dir evals/reports/retrieval
-app/backend/.venv/bin/python infra/scripts/retrieval_parity_check.py --oci-region us-ashburn-1 --oci-profile DEFAULT --oci-namespace idsmrn7rvqb6 --oci-vector-bucket oci-architecture-studio-staging-knowledge-snapshots --oci-vector-object-name oci-rag-index.json --output-dir evals/reports/retrieval-parity
-app/backend/.venv/bin/python knowledge/ingestion/ingest.py --no-fetch
-app/backend/.venv/bin/python knowledge/refresh/ingest_releases.py --no-fetch
-app/backend/.venv/bin/python infra/scripts/release_impact_report.py --output knowledge/reports/release-impact-report.json
-app/backend/.venv/bin/python knowledge/refresh/refresh_policy.py --mode release-watch --no-fetch --quick-gates
-cd app/backend && PYTHONPATH=src .venv/bin/pytest -q
-cd ../frontend && npm run build
-```
-
-## Project Status
-
-Latest full validation: 2026-05-16.
-
-- Local backend tests: `132 passed`
-- Golden evals: `18 passed, 0 failed`
-- Edge-case evals: `8 passed, 0 failed`
-- Advisory-quality evals: `5 passed, 0 failed`
-- Controlled orchestration evals: `5 passed, 0 failed`
-- Architecture-realism evals: `7 passed, 0 failed`
-- Evaluation-intelligence evals: `9 passed, 0 failed`
-- Enterprise-governance evals: `5 passed, 0 failed`
-- Enterprise-platform-maturity evals: `4 passed, 0 failed`
-- Runtime-production-readiness evals: `3 passed, 0 failed`
-- Executive-experience evals: `3 passed, 0 failed`
-- FinOps-migration-optimization evals: `4 passed, 0 failed`
-- Advisory quality gate: passed with MVP thresholds
-- Internal beta readiness gate: passed locally and against OCI staging
-- Operational readiness check: passed locally and against staging; OCI DevOps remains a readiness warning until configured
-- Retrieval regression: `18 passed, 0 failed` for the latest architecture-accuracy corpus
-- Retrieval health: passed for active staging `oracle_ai_vector_search` with 60 chunks, fallback inactive, and no store error
-- Oracle AI Vector Search active-read validation: passed active-provider parity, retrieval regression, direct/API Gateway smoke, rollback drill, and latest section/history UI staging smoke
-- Corpus health: passed for the promoted 60-source architecture-accuracy corpus
-- Knowledge ingestion: 60 active staging chunks
-- Release ingestion: `12 live release items` in the latest gated release-watch activation
-- Release impact report: passed with deterministic classification, impacted sources/chunks, targeted eval cases, refresh actions, and unresolved-risk reporting
-- Knowledge refresh policy: backend VM release-watch path passed with live fetch, quick gates, gated promotion, and Object Storage upload; stable-doc refresh remains safe/candidate-only
-- Knowledge Refresh Status panel: deployed locally and to OCI staging; read-only UI shows VM cron state, gate result, Object Storage upload status, snapshot version, release-change count, affected-source count, and rollback posture
-- Frontend build: passed
-- Terraform fmt/validate: passed for `dev`, `test`, and `staging`
-- OCI staging smoke: passed for backend, frontend, OCI SDK, retrieval, and resource visibility
-- Staging enterprise governance smoke: passed, including `enterprise_governance` response metadata and governance analytics counters
-- Dual-provider retrieval parity: passed during Object Storage and Oracle vector promotions
-- Staging retrieval promotion: passed, active provider is `oracle_ai_vector_search`
-- Rollback validation: passed, `oci_object_storage` and `local_json` can be restored through config only
-- Deployment synchronization: passed, staging exposes current repo endpoints including `/orchestration/health` and `/knowledge/refresh/status`, and the staged frontend bundle includes the Knowledge Refresh Status panel
-- GenAI activation readiness: parity checker implemented; live OCI GenAI synthesis parity is the next pending task
-- Live post-promotion scenario checks: passed for architecture, migration, HA/DR, cost, and release-awareness prompts
-
-See `docs/README.md` for the organized documentation index.
-
-See `docs/current/status.md` for the current completed work, pending work, and known limitations.
-
-See `docs/current/internal-beta-readiness-summary.md` for the internal beta gap assessment, accepted limitations, validation baseline, and milestone tagging guidance.
-
-See `docs/architecture/architecture-diagrams.md` for presentation-friendly diagrams covering current staging, dual-provider retrieval parity, target OCI-native retrieval, release-awareness, and operational control points.
-
-See `docs/current/living-execution-plan.md` for the active execution plan and `docs/archive/two-week-plan.md` for the completed two-week plan archive.
-
-See `docs/current/demo-readiness.md` for the demo checklist, recommended demo prompts, backlog, and closeout notes.
-
-See `docs/architecture/phase-2-architecture.md` for the productionization architecture and roadmap.
-
-See `docs/architecture/oci-deployment-architecture.md` and `infra/terraform/` for the first OCI-native deployment architecture and Terraform scaffold.
-
-See `docs/runbooks/oci-landing-zone-runbook.md` for the first OCI landing-zone deployment workflow and smoke tests.
-
-See `docs/runbooks/oci-deployment-execution.md` for the command-by-command staging deployment sequence.
-
-See `docs/reports/pre-migration-readiness-report.md` for the OCI-native retrieval pre-migration validation, stability review, and go/no-go decision.
-
-See `docs/architecture/oci-native-retrieval-migration.md` for the OCI-native retrieval architecture, phased migration guide, validation strategy, observability plan, and rollback path.
-
-See `docs/runbooks/oci-native-retrieval-runbook.md` for provider modes, validation gates, rollback steps, and troubleshooting for OCI-native retrieval migration.
-
-See `docs/reports/post-migration-readiness-report.md` for the full post-migration validation, retrieval quality assessment, OCI platform validation, risks, and go/no-go decision.
-
-See `docs/reports/retrieval-parity-validation-report.md` for dual-provider parity results, promotion criteria, config switching, rollback validation, and the go/no-go decision for `oci_object_storage` staging promotion.
-
-See `docs/reports/retrieval-provider-promotion-report.md` for the completed staging promotion, post-promotion validation results, rollback proof, and the next Oracle AI Vector Search boundary.
-
-See `docs/architecture/advisory-intelligence.md` for evidence-linked recommendations, confidence scoring, citation enforcement, enterprise-governance metadata, uncertainty handling, and advisory-quality observability.
-
-See `docs/architecture/genai-advisory-hardening.md` for GenAI synthesis configuration, fail-closed fallback behavior, citation enforcement, confidence scoring, eval strategy, and rollback guidance.
-
-See `docs/reports/post-stabilization-architecture-review.md` for the factual current-state architecture after repo/staging synchronization, active providers, GenAI readiness, validation summary, and next milestone.
-
-See `docs/reports/terraform-plan-review.md` for the first staging Terraform planning workflow, plan review, apply readiness criteria, and post-apply smoke-test plan.
-
-See `docs/reports/oci-staging-deployment-report.md` for the first OCI staging apply result, deployment validation, smoke-test output, and next hardening steps.
-
-See `docs/archive/baseline-freeze.md` and `docs/runbooks/operational-runbook.md` for the frozen working baseline, post-deploy verification checklist, regression guardrails, and day-to-day staging operations.
+- [Current status](docs/current/status.md)
+- [Architecture diagrams](docs/architecture/architecture-diagrams.md)
+- [OCI-native retrieval runbook](docs/runbooks/oci-native-retrieval-runbook.md)
+- [Embedding migration report](evals/reports/embedding-migration/report.md)
