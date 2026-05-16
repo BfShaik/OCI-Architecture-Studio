@@ -8,6 +8,18 @@ OCI Architecture Studio should keep OCI guidance current without refreshing on e
 
 The refresh policy separates fast-changing release knowledge from slower-moving OCI service documentation.
 
+## Release-Awareness Flow
+
+```mermaid
+flowchart TD
+  ReleaseSources["OCI release sources"] --> Ingest["ingest_releases.py"]
+  Ingest --> ReleaseSnapshot["oci-release-snapshot.json"]
+  ReleaseSnapshot --> Impact["release_intelligence.py"]
+  Impact --> Affected["Affected services / source IDs / chunk IDs"]
+  Affected --> Overlay["Release overlay metadata on chunks"]
+  Overlay --> Retrieval["Release-aware retrieval"]
+```
+
 ## Recommended Ingestion Cadence
 
 | Source class | Cadence | Reason |
