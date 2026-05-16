@@ -101,6 +101,7 @@ class JsonVectorStore:
     def __init__(self, index_path: Path) -> None:
         self.index_path = index_path
         self._chunks: list[VectorChunk] | None = None
+        self._manifest_metadata: dict[str, object] | None = None
 
     @property
     def exists(self) -> bool:
@@ -150,6 +151,7 @@ class JsonVectorStore:
             "exists": self.exists,
             "chunk_count": len(chunks),
             "index_path": str(self.index_path),
+            **self._embedding_health(),
             "service_count": len(services),
             "service_domain_count": len(domains),
             "services": services[:20],
@@ -215,6 +217,7 @@ class JsonVectorStore:
         with self.index_path.open("r", encoding="utf-8") as file:
             payload = json.load(file)
 
+        self._manifest_metadata = self._extract_manifest_metadata(payload)
         self._chunks = [
             VectorChunk(
                 id=chunk["id"],
@@ -228,6 +231,27 @@ class JsonVectorStore:
             for chunk in payload.get("chunks", [])
         ]
         return self._chunks
+
+    def _embedding_health(self) -> dict[str, object]:
+        metadata = self._manifest_metadata or {}
+        return {
+            "index_embedding_provider": metadata.get("embedding_provider"),
+            "index_embedding_model": metadata.get("embedding_model"),
+            "index_dimensions": metadata.get("dimensions"),
+        }
+
+    def _extract_manifest_metadata(self, payload: dict[str, object]) -> dict[str, object]:
+        dimensions = payload.get("dimensions")
+        chunks = payload.get("chunks", [])
+        if dimensions is None and isinstance(chunks, list) and chunks:
+            first_embedding = chunks[0].get("embedding") if isinstance(chunks[0], dict) else None
+            if isinstance(first_embedding, list):
+                dimensions = len(first_embedding)
+        return {
+            "embedding_provider": payload.get("embedding_provider"),
+            "embedding_model": payload.get("embedding_model"),
+            "dimensions": dimensions,
+        }
 
 
 @dataclass(frozen=True)
@@ -293,6 +317,7 @@ class OciObjectStorageVectorStore(JsonVectorStore):
             "namespace": self.config.namespace,
             "bucket": self.config.bucket_name,
             "object_name": self.config.object_name,
+            **self._embedding_health(),
             "service_count": len(services),
             "service_domain_count": len(domains),
             "services": services[:20],
@@ -305,6 +330,7 @@ class OciObjectStorageVectorStore(JsonVectorStore):
             return self._chunks
 
         payload = json.loads(self._read_object_text())
+        self._manifest_metadata = self._extract_manifest_metadata(payload)
         self._chunks = [
             VectorChunk(
                 id=chunk["id"],
@@ -890,12 +916,17 @@ class FallbackVectorStore:
         primary_health = self.primary.health()
         fallback_health = self.fallback.health()
         fallback_active = not bool(primary_health.get("exists"))
+        active_health = fallback_health if fallback_active else primary_health
         return {
             "provider": self.provider_name,
             "exists": bool(primary_health.get("exists")) or bool(fallback_health.get("exists")),
             "fallback_enabled": True,
             "fallback_active": fallback_active,
             "fallback_reason": self._last_fallback_reason,
+            "active_store": "fallback" if fallback_active else "primary",
+            "index_embedding_provider": active_health.get("index_embedding_provider"),
+            "index_embedding_model": active_health.get("index_embedding_model"),
+            "index_dimensions": active_health.get("index_dimensions"),
             "primary": primary_health,
             "fallback": fallback_health,
             "chunk_count": (

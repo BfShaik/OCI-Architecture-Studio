@@ -143,6 +143,7 @@ class OciKnowledgeRetriever:
         embedder: Embedder | None = None,
         store: VectorStore | None = None,
         provider_name: str = "local_json",
+        embedding_provider: str = "local",
         debug_enabled: bool = False,
         candidate_multiplier: int = 6,
     ) -> None:
@@ -150,6 +151,7 @@ class OciKnowledgeRetriever:
         self.top_k = top_k
         self.embedder = embedder or LocalHashingEmbedder()
         self.provider_name = provider_name
+        self.embedding_provider = embedding_provider
         self.service_mapper = OciServiceMapper()
         self.heuristic_classifier = ArchitectureHeuristicClassifier()
         self.pattern_selector = ArchitecturePatternSelector()
@@ -182,6 +184,18 @@ class OciKnowledgeRetriever:
                 warning="retrieval index is missing or unreachable",
             )
             return sources
+        mismatch = self._embedding_index_mismatch()
+        if mismatch:
+            warning = str(mismatch["message"])
+            retrieval_metrics.record(
+                started_at=started_at,
+                provider=self.provider_name,
+                embedding_model=self._configured_embedding_model(),
+                result_count=0,
+                intent=intent,
+                warning=warning,
+            )
+            raise RuntimeError(warning)
 
         combined_text = " ".join(part for part in (question, workload_context) if part)
         service_mapping = self.service_mapper.map_text(combined_text)
@@ -308,12 +322,78 @@ class OciKnowledgeRetriever:
         )
         return {
             "provider": self.provider_name,
-            "embedding_model": self.embedder.model_name,
-            "embedding_provider": self.embedder.model_name,
+            "embedding_model": self._configured_embedding_model(),
+            "embedding_provider": self.embedding_provider,
             "embedding": embedding_diagnostics,
             "store": self.store.health(),
+            "embedding_index_guardrail": self._embedding_index_guardrail(),
             "metrics": retrieval_metrics.snapshot(),
         }
+
+    def _embedding_index_guardrail(self) -> dict[str, object]:
+        mismatch = self._embedding_index_mismatch()
+        store_health = self.store.health()
+        index_provider = store_health.get("index_embedding_provider")
+        index_model = store_health.get("index_embedding_model")
+        index_dimensions = store_health.get("index_dimensions")
+        configured_dimensions = self._configured_embedding_dimensions()
+        return {
+            "ok": mismatch is None,
+            "message": mismatch["message"] if mismatch else None,
+            "configured_provider": self.embedding_provider,
+            "configured_model": self._configured_embedding_model(),
+            "configured_dimensions": configured_dimensions,
+            "index_provider": index_provider,
+            "index_model": index_model,
+            "index_dimensions": index_dimensions,
+        }
+
+    def _embedding_index_mismatch(self) -> dict[str, object] | None:
+        store_health = self.store.health()
+        index_model = store_health.get("index_embedding_model")
+        index_provider = store_health.get("index_embedding_provider")
+        index_dimensions = store_health.get("index_dimensions")
+        configured_model = self._configured_embedding_model()
+        configured_dimensions = self._configured_embedding_dimensions()
+        mismatches: list[str] = []
+        if index_provider and str(index_provider) != self.embedding_provider:
+            mismatches.append(
+                f"provider configured={self.embedding_provider} index={index_provider}"
+            )
+        if index_model and str(index_model) != configured_model:
+            mismatches.append(
+                f"model configured={configured_model} index={index_model}"
+            )
+        if (
+            configured_dimensions is not None
+            and index_dimensions is not None
+            and int(index_dimensions) != configured_dimensions
+        ):
+            mismatches.append(
+                f"dimensions configured={configured_dimensions} index={index_dimensions}"
+            )
+        if not mismatches:
+            return None
+        message = "Embedding/index mismatch; refusing retrieval until the configured embedder matches the loaded index: "
+        return {"message": message + "; ".join(mismatches)}
+
+    def _configured_embedding_model(self) -> str:
+        if isinstance(self.embedder, FallbackEmbedder):
+            if self.embedder.primary is not None:
+                return self.embedder.primary.model_name
+            return self.embedder.fallback.model_name
+        return self.embedder.model_name
+
+    def _configured_embedding_dimensions(self) -> int | None:
+        if isinstance(self.embedder, FallbackEmbedder):
+            embedder = self.embedder.primary or self.embedder.fallback
+        else:
+            embedder = self.embedder
+        if isinstance(embedder, LocalHashingEmbedder):
+            return embedder.dimensions
+        if isinstance(embedder, OciGenerativeAiEmbedder):
+            return embedder.config.expected_dimensions
+        return None
 
     def _to_retrieved_source(self, chunk, score: float) -> RetrievedSource:
         metadata = chunk.metadata
@@ -704,6 +784,7 @@ def build_retriever(settings: Settings, top_k: int = 6) -> OciKnowledgeRetriever
         embedder=embedder,
         store=store,
         provider_name=provider_name,
+        embedding_provider=settings.embedding_provider,
         debug_enabled=settings.retrieval_debug_enabled,
         candidate_multiplier=settings.retrieval_candidate_multiplier,
     )

@@ -15,6 +15,14 @@ Last updated: 2026-05-16
 - Historical report/archive documents now include current-state notes where their original milestone content predates Oracle AI Vector Search active reads.
 - No source code, runtime environment values, vector DB state, Object Storage objects, or infrastructure settings were changed in this documentation pass.
 
+## Latest Embedding Migration Guardrail
+
+- `TASK-055` remains gated behind completed staging validation for `TASK-054`; no embedding provider, Object Storage manifest, Oracle vector table, or staging runtime env value was changed.
+- Approved visible embedding candidate selected by operator direction: `cohere.embed-v4.0` in `us-ashburn-1`, requiring a scope update from 1024 to 1536 dimensions before any future reindex.
+- Added a retrieval guardrail that compares the configured embedding provider/model/dimensions with the loaded index manifest metadata and refuses retrieval on mismatch.
+- `/retrieval/health` now reports the configured embedding provider separately from the embedding model, exposes active index embedding metadata, and includes an `embedding_index_guardrail` verdict for promotion checks.
+- Validation passed: focused retrieval/API tests `27 passed`; backend full suite `133 passed`; `git diff --check` passed; changed-file secret scan returned no findings.
+
 ## Latest OCI GenAI Synthesis Parity Readiness
 
 - `TASK-054` is partially advanced and currently blocked on approved live OCI GenAI synthesis configuration.

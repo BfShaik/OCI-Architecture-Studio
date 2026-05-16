@@ -69,6 +69,45 @@ def test_retriever_returns_ranked_chunks(tmp_path) -> None:
     assert results[0].relevance_score is not None
 
 
+def test_retriever_refuses_embedding_index_model_mismatch(tmp_path) -> None:
+    embedder = LocalHashingEmbedder()
+    index_path = tmp_path / "index.json"
+    chunk_text = "OCI Load Balancer supports highly available application entry points."
+    index_path.write_text(
+        json.dumps(
+            {
+                "embedding_provider": "oci_genai",
+                "embedding_model": "model-example-cohere-v4",
+                "dimensions": 1536,
+                "chunks": [
+                    {
+                        "id": "load-balancer::1",
+                        "title": "OCI Load Balancer Overview",
+                        "url": "https://example.com/load-balancer",
+                        "source_type": "oci_service_doc",
+                        "text": chunk_text,
+                        "embedding": embedder.embed(chunk_text),
+                        "metadata": {"service": "Load Balancer"},
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    retriever = OciKnowledgeRetriever(index_path=index_path, embedder=embedder)
+
+    diagnostics = retriever.diagnostics()
+
+    assert diagnostics["embedding_index_guardrail"]["ok"] is False
+    assert diagnostics["embedding_index_guardrail"]["configured_provider"] == "local"
+    assert diagnostics["embedding_index_guardrail"]["index_provider"] == "oci_genai"
+    assert diagnostics["store"]["index_embedding_model"] == "model-example-cohere-v4"
+    with pytest.raises(RuntimeError, match="Embedding/index mismatch"):
+        import asyncio
+
+        asyncio.run(retriever.retrieve("How do I make web ingress highly available?"))
+
+
 def test_vector_store_filters_by_service_domain(tmp_path) -> None:
     embedder = LocalHashingEmbedder()
     index_path = tmp_path / "index.json"
