@@ -6,6 +6,25 @@ Current version: `1.0.3`
 
 The project is monorepo-first, RAG-first, modular, and evaluation-driven. Prompts, retrieval code, evals, and application code are treated as first-class assets from the start.
 
+## High-Level Architecture
+
+```mermaid
+flowchart TD
+  User["Architect / User"] --> Gateway["OCI API Gateway"]
+  Gateway --> Backend["FastAPI backend\nOCI Compute VM"]
+  Backend --> Frontend["React UI\nserved by backend"]
+  Backend --> Retrieval["Retrieval orchestration\nintent + reranking + citations"]
+  Retrieval --> ObjectStorage["OCI Object Storage\nactive knowledge snapshot"]
+  Retrieval --> LocalJson["Local JSON\nfallback snapshot"]
+  Retrieval -. shadow validation .-> OracleVector["Oracle AI Vector Search\nAutonomous Database shadow index"]
+  Backend --> Advisory["Governance, migration,\nFinOps, release-aware advisory"]
+  Cron["VM cron\nknowledge refresh"] --> Refresh["refresh_policy.py\ncandidate + gates + promotion"]
+  Refresh --> ObjectStorage
+  Refresh -. shadow sync .-> OracleVector
+  Backend --> Ops["Operations endpoints\nhealth, readiness, analytics"]
+  Ops --> OciOps["OCI Logging / Monitoring\nNotifications / Vault posture"]
+```
+
 ## Current Working Flow
 
 OCI Architecture Studio currently supports a validated advisory flow in local development and OCI staging:
