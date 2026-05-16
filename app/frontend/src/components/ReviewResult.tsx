@@ -26,6 +26,7 @@ import type {
   ArchitectureTopologyNode,
   ArchitectureTopologyRelationship,
   MigrationPhasePlan,
+  RecommendationPriority,
   SectionCitationSource,
 } from "../types";
 
@@ -60,6 +61,11 @@ function percent(value: number) {
 
 function readable(value: string) {
   return value.replace(/_/g, " ");
+}
+
+function sentenceCase(value: string) {
+  const text = readable(value).trim();
+  return text ? `${text[0].toUpperCase()}${text.slice(1)}` : text;
 }
 
 function normalizedText(value: string) {
@@ -115,6 +121,60 @@ function sourceCardKey(source: SectionCitationSource, index: number) {
 
 function displayList(values: string[], fallback = "None reported") {
   return values.length ? values.map(readable).join(", ") : fallback;
+}
+
+function stripRecommendationPrefix(value: string) {
+  return value.replace(/^R\d+:\s*/i, "").trim();
+}
+
+function formatRecommendationRefs(indexes: number[]) {
+  const sorted = [...new Set(indexes)].sort((a, b) => a - b);
+  const ranges: string[] = [];
+  let start = sorted[0];
+  let end = sorted[0];
+
+  for (const index of sorted.slice(1)) {
+    if (index === end + 1) {
+      end = index;
+      continue;
+    }
+    ranges.push(start === end ? `R${start}` : `R${start}-R${end}`);
+    start = index;
+    end = index;
+  }
+
+  if (typeof start === "number") {
+    ranges.push(start === end ? `R${start}` : `R${start}-R${end}`);
+  }
+
+  return ranges.join(", ");
+}
+
+function groupRecommendationPriorities(priorities: RecommendationPriority[]) {
+  const groups = new Map<
+    string,
+    RecommendationPriority & { recommendation_indexes: number[]; grouped_rationale: string }
+  >();
+
+  priorities.forEach((item) => {
+    const rationale = stripRecommendationPrefix(item.rationale);
+    const key = normalizedText(`${item.priority}|${item.implementation_phase}|${rationale}`);
+    const recommendationNumber = item.recommendation_index + 1;
+    const existing = groups.get(key);
+
+    if (existing) {
+      existing.recommendation_indexes.push(recommendationNumber);
+      return;
+    }
+
+    groups.set(key, {
+      ...item,
+      recommendation_indexes: [recommendationNumber],
+      grouped_rationale: rationale,
+    });
+  });
+
+  return Array.from(groups.values());
 }
 
 function displayTimestamp(value?: string | null) {
@@ -247,10 +307,7 @@ export function ReviewResult({ result }: ReviewResultProps) {
     [...result.quality_warnings, ...result.synthesis_warnings, ...result.orchestration_warnings],
     (warning) => warning,
   );
-  const priorityItems = uniqueByNormalized(
-    governance?.recommendation_priorities.slice(0, 4) ?? [],
-    (item) => `${item.priority}|${item.implementation_phase}|${item.rationale}`,
-  );
+  const priorityItems = groupRecommendationPriorities(governance?.recommendation_priorities.slice(0, 4) ?? []);
   const recommendationTextByIndex = new Map(result.recommendations.map((item, index) => [normalizedText(item), index + 1]));
   const recommendationConfidenceItems = uniqueByNormalized(
     result.recommendation_confidence.slice(0, 4),
@@ -508,12 +565,12 @@ export function ReviewResult({ result }: ReviewResultProps) {
           {priorityItems.length ? (
             <div className="priority-strip">
               {priorityItems.map((item) => (
-                <article key={`${item.recommendation_index}-${item.priority}`}>
-                  <span>{readable(item.priority)}</span>
+                <article key={`${item.priority}-${item.implementation_phase}-${item.grouped_rationale}`}>
+                  <span>{sentenceCase(item.priority)}</span>
                   <strong>
-                    R{item.recommendation_index + 1} · {item.implementation_phase}
+                    {formatRecommendationRefs(item.recommendation_indexes)} · {sentenceCase(item.implementation_phase)}
                   </strong>
-                  <p>{item.rationale}</p>
+                  <p>{item.grouped_rationale}</p>
                 </article>
               ))}
             </div>
