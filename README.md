@@ -465,11 +465,11 @@ See `docs/internal-beta-readiness-summary.md` for the internal beta gap assessme
 
 See `docs/architecture-diagrams.md` for presentation-friendly diagrams covering current staging, dual-provider retrieval parity, target OCI-native retrieval, release-awareness, and operational control points.
 
-See `docs/two-week-plan.md` for the active two-week execution plan.
+See `docs/living-execution-plan.md` for the active execution plan and `docs/two-week-plan.md` for the completed two-week plan archive.
 
-See `docs/demo-readiness.md` for the demo checklist, recommended demo prompts, Sprint 2 backlog, and closeout notes.
+See `docs/demo-readiness.md` for the demo checklist, recommended demo prompts, backlog, and closeout notes.
 
-See `docs/phase-2-architecture.md` for the productionization architecture and Sprint 2 roadmap.
+See `docs/phase-2-architecture.md` for the productionization architecture and roadmap.
 
 See `docs/oci-deployment-architecture.md` and `infra/terraform/` for the first OCI-native deployment architecture and Terraform scaffold.
 
@@ -481,7 +481,7 @@ See `docs/pre-migration-readiness-report.md` for the OCI-native retrieval pre-mi
 
 See `docs/oci-native-retrieval-migration.md` for the OCI-native retrieval architecture, phased migration guide, validation strategy, observability plan, and rollback path.
 
-See `docs/oci-native-retrieval-runbook.md` for provider modes, validation gates, rollback steps, and troubleshooting for Sprint 2 retrieval migration.
+See `docs/oci-native-retrieval-runbook.md` for provider modes, validation gates, rollback steps, and troubleshooting for OCI-native retrieval migration.
 
 See `docs/post-migration-readiness-report.md` for the full post-migration validation, retrieval quality assessment, OCI platform validation, risks, and go/no-go decision.
 

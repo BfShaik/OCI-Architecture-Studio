@@ -6,9 +6,9 @@ Maintain the validated OCI Architecture Studio staging baseline while advancing 
 
 The current state uses `oci_object_storage` as the active staging retrieval provider after controlled config-only promotion. `local_json` remains the validated rollback provider. Oracle AI Vector Search is shadow-loaded and validated, but active reads remain gated until final parity, regression, smoke, operational readiness, and rollback checks pass.
 
-## Timebox
+## Timebox / Status
 
-2 weeks
+The original two-week sprint is complete and archived in `docs/two-week-plan.md`. Current work is now managed through the living enterprise-beta plan in `docs/living-execution-plan.md`.
 
 ## Current Priorities
 
@@ -32,7 +32,7 @@ In scope:
 - Prompt templates and golden prompt assets
 - edge-case evals and validation reports
 - demo prompt shortcuts and polished source cards
-- Status and two-week tracking docs
+- Status and living execution plan docs
 - first OCI landing-zone Terraform scaffold
 - deployment scripts, smoke tests, and staging workflow
 - dual-provider retrieval parity validation
@@ -53,11 +53,11 @@ Out of scope:
 
 ## Demo Readiness
 
-See `docs/demo-readiness.md` for the demo checklist, recommended prompts, Sprint 2 backlog, and closeout notes.
+See `docs/demo-readiness.md` for the demo checklist, recommended prompts, backlog, and closeout notes.
 
 ## Phase 2 Planning
 
-See `docs/phase-2-architecture.md` for the productionization architecture, scalability roadmap, and recommended Sprint 2 implementation order.
+See `docs/phase-2-architecture.md` for the productionization architecture and scalability roadmap. Use `docs/living-execution-plan.md` for the current implementation order.
 
 ## Status
 
@@ -76,9 +76,9 @@ Latest validation/current posture:
 - Oracle AI Vector Search: shadow-loaded and validated, not active
 - OCI GenAI synthesis/embeddings: implemented and configurable, not default
 
-## Two-Week Plan
+## Two-Week Plan Archive
 
-See `docs/two-week-plan.md` for dated tasks from 2026-05-14 through 2026-05-28.
+See `docs/two-week-plan.md` for the completed dated tasks from 2026-05-14 through 2026-05-28. It is no longer the active work tracker.
 
 ## Working In Progress List
 

@@ -183,30 +183,25 @@ Last updated: 2026-05-16
 
 ## Plan Progress
 
-Current two-week task count:
+The original two-week plan is complete and archived in `docs/two-week-plan.md`. Current work is tracked in `docs/living-execution-plan.md`.
 
 | Status | Count | Percent of total |
 |---|---:|---:|
-| Done | 10 | 91% |
-| In Progress | 1 | 9% |
+| Done | 11 | 100% |
+| In Progress | 0 | 0% |
 | Not Started | 0 | 0% |
 | Blocked | 0 | 0% |
 | Total | 11 | 100% |
 
 Strict completion:
-- 10 of 11 tasks completed
-- 91% complete
+- 11 of 11 original two-week tasks completed
+- 100% complete
 
 Started or partially complete:
 - 11 of 11 tasks touched
 - 100% started
 
-Weighted progress estimate:
-- Done tasks count as 100%
-- In-progress tasks count as 50%
-- Current weighted progress: 95%
-
-This progress is based on `docs/two-week-plan.md`.
+Remaining enterprise-beta work, including ingestion-flow documentation, Retrieval Provider Status UI, corpus expansion, OCI GenAI shadow activation, and Oracle AI Vector Search active promotion gates, is tracked separately in the living execution plan.
 
 ## Completed
 
