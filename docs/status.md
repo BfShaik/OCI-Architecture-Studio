@@ -27,6 +27,21 @@ Last updated: 2026-05-16
 - Advisory subset passed: 18/18 golden evals and 5/5 advisory-quality evals against the candidate snapshot.
 - Authoritative snapshots remained unchanged and no OCI upload was performed.
 
+## Latest Object Storage Refresh Promotion
+
+- `TASK-030` completed as a controlled Object Storage refresh promotion.
+- Promoted a validated `release-watch` candidate generated with `--no-fetch --quick-gates --force`; no query-time refresh was introduced.
+- Promotion updated authoritative snapshots to:
+  - `knowledge/snapshots/oci-rag-index.json`: `a451fc4db9493ff694073d8e59ed4b112691ea0f3a236b2fcd2274858b2198c0`
+  - `knowledge/snapshots/oci-release-snapshot.json`: `b1bf53c9fde5ec599effedee0ee669b19b498b2029c1106112290801579c0327`
+- Uploaded promoted snapshots to OCI Object Storage bucket `oci-architecture-studio-staging-knowledge-snapshots` in namespace `idsmrn7rvqb6`.
+- Hardened `infra/scripts/sync_snapshots_to_object_storage.sh` so it validates promoted snapshots before upload and no longer rebuilds snapshots by default.
+- Object Storage retrieval health passed with 47 chunks, 44 services, 14 service domains, and fallback inactive.
+- Object Storage retrieval regression passed 26 cases.
+- API Gateway smoke passed through `https://pkgmvyyi3itxklv6knh4xfm6ca.apigateway.us-ashburn-1.oci.customer-oci.com`.
+- Operational readiness passed with known warnings limited to inactive OCI DevOps metadata and remaining infrastructure rebuildability gaps.
+- Active retrieval remains `oci_object_storage`; Oracle AI Vector Search remains shadow-only until refreshed vector sync and parity pass.
+
 ## Latest Operational Promotion
 
 - `TASK-022` completed on staging: API Gateway runtime metadata was added to the running VM environment and the backend was redeployed from the current repository code without replacing the VM.
