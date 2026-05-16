@@ -54,7 +54,13 @@ Keep these items in the active work queue until each has validation evidence and
 | WIP-007 | Ready | Add OCI Monitoring custom metrics for refresh latency, gate failures, candidate promotion count, rollback count, and retrieval regression failures. | Operational readiness, OCI metric visibility, safe local fallback. |
 | WIP-008 | Future | Move deployment automation from operator scripts toward OCI DevOps while preserving the current script-based rollback path. | OCI DevOps pipeline smoke, artifact parity with operator scripts, staging rollback validation. |
 | WIP-009 | Future | Add full current-vs-historical release comparison and richer bi-temporal retrieval. | Release-aware evals, temporal snapshot tests, advisory regression. |
-| WIP-010 | Future | Add saved review history, prompt/session history, and richer visualization rendering. | Frontend tests/build, UX smoke, storage/security review. |
+| WIP-010 | Future | Improve the broader advisor UX shell after the near-term visibility and readability work lands, including navigation polish, review workflow affordances, and demo-readiness cleanup. | Frontend tests/build, UX smoke, browser smoke. |
+| WIP-011 | Planned | Refine the main advisory response layout for stronger executive and architecture-review readability. Group executive summary, recommended-now items, recommended-later items, risks, evidence, and rollout guidance into clearer scan-friendly sections. | Frontend lint/build, browser smoke with representative architecture, migration, cost, and release-aware prompts. |
+| WIP-012 | Planned | Improve explainability UI so users can see why services were selected, why alternatives were not selected, and how retrieval, governance, release-awareness, and confidence influenced the recommendation. | Frontend lint/build, backend response-contract check, browser smoke, advisory eval subset. |
+| WIP-013 | Planned | Improve release-context visibility in the UI, including whether an answer used release-aware knowledge, whether sources are stale, and which release items influenced the response. | Frontend lint/build, release-aware prompt smoke, `/knowledge/refresh/status` and advisory response smoke. |
+| WIP-014 | Future | Add lightweight architecture visualization for OCI service relationships, topology summaries, HA/DR posture, and migration phases without introducing a heavy diagram engine. | Frontend tests/build, browser smoke, representative topology output review. |
+| WIP-015 | Future | Add saved review history and prompt/session history with a storage and security design that fits the OCI-native runtime direction. | Storage/security review, backend tests, frontend tests/build, local and staging smoke. |
+| WIP-016 | Future | Improve section-level citation presentation so recommendations and rationale can be traced more directly to retrieved sources. | Advisory eval subset, citation coverage check, frontend build, browser smoke. |
 
 ## Priority Order
 
@@ -140,6 +146,12 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | TASK-043 | Planned | Expand curated official OCI corpus beyond 47 sources. | Corpus health, retrieval regression, golden/advisory eval subset, Object Storage upload if promoted. |
 | TASK-044 | Gated | Run OCI GenAI embeddings shadow activation. | Embedding dimension validation, retrieval regression, Object Storage parity, Oracle shadow reload, rollback proof. |
 | TASK-045 | Gated | Run Oracle AI Vector Search active-read promotion gate. | Object Storage baseline, Oracle vector parity, retrieval regression, golden/edge eval subset, staging smoke, operational readiness, rollback drill. |
+| TASK-046 | Planned | Refine the advisory response layout for executive and architecture-review readability. | Frontend lint/build, browser smoke with representative architecture, migration, cost, and release-aware prompts. |
+| TASK-047 | Planned | Add explainability UI for service selection, rejected alternatives, retrieval influence, governance influence, release-awareness influence, and confidence scoring. | Frontend lint/build, backend response-contract check, browser smoke, advisory eval subset. |
+| TASK-048 | Planned | Improve release-context visibility in the advisory UI. | Frontend lint/build, release-aware prompt smoke, `/knowledge/refresh/status` and advisory response smoke. |
+| TASK-049 | Future | Add lightweight architecture visualization for service relationships, topology summaries, HA/DR posture, and migration phases. | Frontend tests/build, browser smoke, representative topology output review. |
+| TASK-050 | Future | Add saved review history and prompt/session history after storage and security design are agreed. | Storage/security review, backend tests, frontend tests/build, local and staging smoke. |
+| TASK-051 | Future | Improve section-level citation presentation for recommendation traceability. | Advisory eval subset, citation coverage check, frontend build, browser smoke. |
 
 ## Phase Gates
 
