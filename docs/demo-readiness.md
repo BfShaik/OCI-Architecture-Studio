@@ -1,6 +1,6 @@
 # OCI Architecture Studio — Demo Readiness
 
-Last updated: 2026-05-15
+Last updated: 2026-05-16
 
 ## Demo Readiness Checklist
 
@@ -8,10 +8,11 @@ Last updated: 2026-05-15
 |---|---|---|
 | Backend API | Ready | `GET /health` and `POST /architecture-review` are working. |
 | Frontend UI | Ready | Chat-style workflow includes demo prompt shortcuts, loading state, error state, structured results, and source cards. |
+| Operations UI | Ready | Read-only Knowledge Refresh Status panel is visible at the top of the workspace and shows VM cron refresh state, gate result, Object Storage upload status, snapshot version, release-change count, affected-source count, and rollback posture. |
 | Retrieval | Ready | OCI Object Storage retrieval is active in staging after config-only promotion; `local_json` remains the tested rollback provider. |
 | Release awareness | Ready for foundation demo | Release-watch refresh is active on the backend OCI VM cron path with live release fetch, quick gates, gated promotion, and Object Storage upload. Release-aware prompts still separate current release context from historical/local guidance. |
 | Evals | Ready | Golden and edge-case evals pass. |
-| Tests/build | Ready | Backend tests and frontend build pass. |
+| Tests/build | Ready | Backend tests, frontend lint, and frontend build pass. |
 | Known caveat | Accepted | OCI GenAI synthesis is optional rather than default; production semantic embeddings, Oracle AI Vector Search active reads, and full current-vs-historical answer comparison remain deferred. |
 
 ## Recommended Demo Prompts

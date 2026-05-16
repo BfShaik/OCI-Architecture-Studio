@@ -423,7 +423,7 @@ cd ../frontend && npm run build
 
 Latest full validation: 2026-05-15.
 
-- Local backend tests: `121 passed`
+- Local backend tests: `129 passed`
 - Golden evals: `18 passed, 0 failed`
 - Edge-case evals: `8 passed, 0 failed`
 - Advisory-quality evals: `5 passed, 0 failed`
@@ -447,6 +447,7 @@ Latest full validation: 2026-05-15.
 - Release ingestion: `12 live release items` in the latest gated release-watch activation
 - Release impact report: passed with deterministic classification, impacted sources/chunks, targeted eval cases, refresh actions, and unresolved-risk reporting
 - Knowledge refresh policy: backend VM release-watch path passed with live fetch, quick gates, gated promotion, and Object Storage upload; stable-doc refresh remains safe/candidate-only
+- Knowledge Refresh Status panel: deployed locally and to OCI staging; read-only UI shows VM cron state, gate result, Object Storage upload status, snapshot version, release-change count, affected-source count, and rollback posture
 - Frontend build: passed
 - Terraform fmt/validate: passed for `dev`, `test`, and `staging`
 - OCI staging smoke: passed for backend, frontend, OCI SDK, retrieval, and resource visibility
@@ -454,7 +455,7 @@ Latest full validation: 2026-05-15.
 - Dual-provider retrieval parity: passed, `14/14`, comparing `local_json` with `oci_object_storage`
 - Staging retrieval promotion: passed, active provider is `oci_object_storage`
 - Rollback validation: passed, `local_json` can be restored through config only and `oci_object_storage` was restored after the rollback test
-- Deployment synchronization: passed, staging exposes current repo endpoints including `/orchestration/health` and `/knowledge/refresh/status`
+- Deployment synchronization: passed, staging exposes current repo endpoints including `/orchestration/health` and `/knowledge/refresh/status`, and the staged frontend bundle includes the Knowledge Refresh Status panel
 - GenAI activation readiness: parity checker implemented; live OCI GenAI comparison is gated on `OCI_GENAI_COMPARTMENT_ID` and `OCI_GENAI_CHAT_MODEL_ID`
 - Live post-promotion scenario checks: passed for architecture, migration, HA/DR, cost, and release-awareness prompts
 

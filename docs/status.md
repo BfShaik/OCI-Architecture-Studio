@@ -10,9 +10,18 @@ Last updated: 2026-05-16
 - No query-time refresh, external scheduler, or new operational orchestration was introduced.
 - Validation passed:
   - frontend production build
+  - frontend lint
+  - backend full test suite: `129 passed`
   - backend `/knowledge/refresh/status` endpoint subset
   - `git diff --check`
   - local browser smoke for panel render and reload
+- Staging deployment passed after the panel was pushed:
+  - current `main` deployed to the OCI backend VM
+  - backend systemd service restarted successfully
+  - OCI API Gateway smoke passed
+  - direct VM rollback endpoint smoke passed
+  - deployed frontend bundle contains the Knowledge Refresh Status panel
+  - `/knowledge/refresh/status` returned the promoted release-watch state through both Gateway and direct VM paths
 
 ## Latest Knowledge Refresh Preflight
 
