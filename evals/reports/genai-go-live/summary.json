@@ -1,0 +1,76 @@
+{
+  "status": "failed_do_not_promote",
+  "model": "xai.grok-4.3",
+  "case_count": 30,
+  "summary": {
+    "genai_passed": 29,
+    "genai_failed": 1,
+    "deterministic_passed": 30,
+    "deterministic_failed": 0,
+    "genai_latency_p50_ms": 4520.8,
+    "genai_latency_p95_ms": 5777.63,
+    "deterministic_latency_p50_ms": 172.09,
+    "deterministic_latency_p95_ms": 210.31,
+    "genai_latency_avg_ms": 4587.29,
+    "estimated_input_tokens": 82033,
+    "estimated_output_tokens": 15008,
+    "estimated_total_tokens": 97041
+  },
+  "by_suite": {
+    "golden": {
+      "total": 18,
+      "passed": 17,
+      "failed": 1
+    },
+    "edge": {
+      "total": 8,
+      "passed": 8,
+      "failed": 0
+    },
+    "genai-comparison": {
+      "total": 4,
+      "passed": 4,
+      "failed": 0
+    }
+  },
+  "failures": [
+    {
+      "id": "saas-multi-region-002",
+      "suite": "golden",
+      "failures": [
+        "missing required services: load balancing"
+      ],
+      "summary": {
+        "status": 200,
+        "latency_ms": 5613.86,
+        "intent": "saas_platform",
+        "synthesis_provider": "oci_genai",
+        "synthesis_model": "xai.grok-4.3",
+        "synthesis_fallback_used": false,
+        "citation_count": 6,
+        "recommendation_count": 10,
+        "missing_required_services": [
+          "load balancing"
+        ],
+        "synthesis_quality_overall": 0.905,
+        "grounding_quality": 1.0,
+        "oci_specificity": 1.0,
+        "estimated_input_tokens": 2794,
+        "estimated_output_tokens": 624,
+        "estimated_total_tokens": 3418,
+        "prompt_sections": [
+          "task",
+          "intent",
+          "mapped_oci_services",
+          "workload_domain_profile",
+          "architecture_pattern_hints",
+          "reasoning_profile",
+          "retrieved_oci_chunks",
+          "response_structure",
+          "grounding_rules"
+        ],
+        "unsupported_claim_count": 0
+      }
+    }
+  ]
+}
