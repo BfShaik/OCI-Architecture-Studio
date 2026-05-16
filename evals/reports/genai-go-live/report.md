@@ -1,6 +1,6 @@
 # TASK-054 GenAI Go-Live Report
 
-Status: **Do not promote yet**.
+Status: **Eligible for user sign-off**.
 
 Staging was validated with a localhost-only test backend using `ADVISORY_SYNTHESIS_PROVIDER=oci_genai`. The live staging default remained `ADVISORY_SYNTHESIS_PROVIDER=deterministic` throughout the run.
 
@@ -19,21 +19,21 @@ Staging was validated with a localhost-only test backend using `ADVISORY_SYNTHES
 
 ## Summary
 
-- OCI GenAI cases passed: `29 / 30`
+- OCI GenAI cases passed: `30 / 30`
 - Deterministic baseline cases passed: `30 / 30`
-- OCI GenAI p50 latency: `4520.8 ms`
-- OCI GenAI p95 latency: `5777.63 ms`
-- Deterministic p95 latency: `210.31 ms`
-- p95 latency ratio vs deterministic: `27.47x`
-- Estimated input tokens: `82033`
-- Estimated output tokens: `15008`
-- Estimated total tokens: `97041`
+- OCI GenAI p50 latency: `4591.54 ms`
+- OCI GenAI p95 latency: `5679.36 ms`
+- Deterministic p95 latency: `238.32 ms`
+- p95 latency ratio vs deterministic: `23.83x`
+- Estimated input tokens: `83686`
+- Estimated output tokens: `15410`
+- Estimated total tokens: `99096`
 
 ## Suite Results
 
 | Suite | Passed | Total |
 | --- | ---: | ---: |
-| `golden` | 17 | 18 |
+| `golden` | 18 | 18 |
 | `edge` | 8 | 8 |
 | `genai-comparison` | 4 | 4 |
 
@@ -44,28 +44,16 @@ Staging was validated with a localhost-only test backend using `ADVISORY_SYNTHES
 | G1 Grounding | PASS | All citation-required cases returned citations and grounding prompt sections. |
 | G2 No hallucinated services | PASS | No forbidden or invented service pattern was detected in the 30 GenAI responses. |
 | G3 Schema compliance | PASS | All 30 GenAI responses returned HTTP 200, parsed as JSON, populated required response fields, reported `synthesis_provider=oci_genai`, and did not use fallback. |
-| G4 Qualitative sign-off | FAIL | 29/30 cases passed. One golden case missed a required service signal. |
+| G4 Qualitative sign-off | PASS | 30/30 available staging cases passed after the multi-region SaaS Load Balancer coverage fix. |
 | G5 Cost ceiling | REVIEW REQUIRED | Token volume was recorded, but final USD estimate should be confirmed against the tenancy billing/OCI price list before promotion. |
 
-## Blocking Failure
+## Prior Failure Fix
 
-### `saas-multi-region-002`
-
-- Suite: `golden`
-- Expected intent: `saas_platform`
-- Actual intent: `saas_platform`
-- Failures: `missing required services: load balancing`
-- Citations: `6`
-- Synthesis quality overall: `0.905`
-- Grounding quality: `1.0`
-- OCI specificity: `1.0`
-- Latency: `5613.86 ms`
-
-Recommended fix: strengthen service coverage for multi-region SaaS so Load Balancer / Load Balancing is explicitly included when the prompt requires multi-region ingress or SaaS resiliency.
+The earlier `saas-multi-region-002` failure was addressed by strengthening the SaaS intent profile and GenAI grounding rule so multi-region SaaS ingress/failover guidance explicitly names OCI Load Balancer / Load Balancing when relevant.
 
 ## Decision
 
-Do not promote `ADVISORY_SYNTHESIS_PROVIDER=oci_genai` to staging default yet. Fix the multi-region SaaS service coverage miss, confirm the cost estimate against approved OCI billing/pricing, and rerun this report.
+Do not auto-promote `ADVISORY_SYNTHESIS_PROVIDER=oci_genai`. The gate run is now eligible for user sign-off after final cost review.
 
 ## Rollback Readiness
 

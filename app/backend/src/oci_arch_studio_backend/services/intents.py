@@ -291,6 +291,9 @@ INTENT_PROFILES: dict[Intent, IntentProfile] = {
             "SaaS platform",
             "tenant isolation",
             "multi region",
+            "load balancer",
+            "load balancing",
+            "traffic failover",
             "shared services",
             "database resilience",
             "cost allocation",
@@ -299,6 +302,7 @@ INTENT_PROFILES: dict[Intent, IntentProfile] = {
         focus="tenant isolation, shared platform services, multi-region resilience, observability, cost allocation, and migration-aware platform growth",
         recommendations=(
             "Define the tenant isolation model before choosing network, database, IAM, and operational boundaries.",
+            "Use OCI Load Balancer or Load Balancing as the explicit regional ingress and health-check layer for multi-region SaaS traffic failover.",
             "Separate public ingress, shared platform services, tenant workloads, data tiers, and observability controls.",
             "Use tagging, budgets, and cost reporting patterns to support tenant, environment, and shared-service cost visibility.",
             "Treat multi-region expansion as an HA/DR and data-placement decision with explicit consistency, failover, and residency assumptions.",

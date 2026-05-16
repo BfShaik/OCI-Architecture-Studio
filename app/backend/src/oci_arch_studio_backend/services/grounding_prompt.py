@@ -103,6 +103,7 @@ class GroundingPromptBuilder:
                 "# grounding_rules\n"
                 "Use only retrieved OCI chunks and the supplied metadata for service claims. "
                 "Prefer architecture-specific recommendations over broad cloud summaries. "
+                "For multi-region SaaS platform prompts, explicitly include OCI Load Balancer or Load Balancing as the regional ingress, health-check, and traffic-failover layer when load balancing evidence or service priorities are present. "
                 "State assumptions and evidence gaps instead of inventing missing OCI services. "
                 "For migrations, preserve source-to-target mappings and validation/cutover/rollback steps. "
                 "For release prompts, do not claim current impact unless release evidence is present. "
