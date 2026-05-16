@@ -21,6 +21,7 @@ Last updated: 2026-05-16
 - Approved visible embedding candidate selected by operator direction: `cohere.embed-v4.0` in `us-ashburn-1`, requiring a scope update from 1024 to 1536 dimensions before any future reindex.
 - Added a retrieval guardrail that compares the configured embedding provider/model/dimensions with the loaded index manifest metadata and refuses retrieval on mismatch.
 - `/retrieval/health` now reports the configured embedding provider separately from the embedding model, exposes active index embedding metadata, and includes an `embedding_index_guardrail` verdict for promotion checks.
+- Prepared the Embed v4 migration code path: OCI GenAI document ingestion now uses `SEARCH_DOCUMENT`, query retrieval uses `SEARCH_QUERY`, generated manifests and Oracle vector row metadata carry embedding provider/model/dimensions, and Oracle vector health can surface that metadata for the guardrail.
 - Validation passed: focused retrieval/API tests `27 passed`; backend full suite `133 passed`; `git diff --check` passed; changed-file secret scan returned no findings.
 
 ## Latest OCI GenAI Synthesis Parity Readiness

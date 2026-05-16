@@ -532,6 +532,7 @@ class OracleAiVectorSearchStore:
     def health(self) -> dict[str, object]:
         missing = self._missing_config()
         schema: dict[str, object] = {"configured": False, "valid": False}
+        embedding_metadata: dict[str, object] = {}
         chunk_count = 0
         service_count = 0
         service_domain_count = 0
@@ -542,6 +543,7 @@ class OracleAiVectorSearchStore:
                     chunk_count = self.chunk_count()
                     service_count = self._distinct_count("service")
                     service_domain_count = self._distinct_count("service_domain")
+                    embedding_metadata = self._embedding_metadata()
                 self._last_error = None
             except Exception as exc:
                 self._last_error = str(exc)
@@ -554,6 +556,9 @@ class OracleAiVectorSearchStore:
             "embedding_column": self.config.embedding_column,
             "metadata_column": self.config.metadata_column,
             "expected_dimensions": self.config.dimensions,
+            "index_embedding_provider": embedding_metadata.get("embedding_provider"),
+            "index_embedding_model": embedding_metadata.get("embedding_model"),
+            "index_dimensions": embedding_metadata.get("dimensions") or self.config.dimensions,
             "distance_metric": self.config.distance_metric,
             "chunk_count": chunk_count,
             "service_count": service_count,
@@ -860,6 +865,25 @@ FETCH FIRST {limit} ROWS ONLY""".strip()
             raise ValueError(
                 f"Vector embedding dimension mismatch: expected {self.config.dimensions}, got {len(embedding)}."
             )
+
+    def _embedding_metadata(self) -> dict[str, object]:
+        table = _safe_identifier(self.config.table_name)
+        metadata_column = _safe_identifier(self.config.metadata_column)
+        sql = f"""
+SELECT {metadata_column}
+FROM {table}
+WHERE {metadata_column} IS NOT NULL
+FETCH FIRST 1 ROWS ONLY""".strip()
+        with self._connect() as connection:
+            cursor = connection.cursor()
+            cursor.execute(sql)
+            row = cursor.fetchone()
+        metadata = _loads_json(row[0]) if row else {}
+        return {
+            "embedding_provider": metadata.get("embedding_provider"),
+            "embedding_model": metadata.get("embedding_model"),
+            "dimensions": metadata.get("embedding_dimensions") or metadata.get("dimensions"),
+        }
 
     def _filter_summary(self, filters: VectorSearchFilters) -> dict[str, object]:
         return {

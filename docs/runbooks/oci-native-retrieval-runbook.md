@@ -90,6 +90,8 @@ RETRIEVAL_FALLBACK_ENABLED=true
 
 Current status: the provider code creates schema, upserts chunks, serves active reads, and reports health when Oracle DB settings and schema are valid. Staging uses `oracle_ai_vector_search` with the promoted 60-chunk corpus; Object Storage remains the immediate rollback provider.
 
+Embedding migration note: the active staging table is still the 256-dimension local-hash index. For the approved `cohere.embed-v4.0` migration path, build a separate 1536-dimension Oracle vector table/index first, generate document embeddings with OCI GenAI `SEARCH_DOCUMENT`, use `SEARCH_QUERY` for runtime questions, and promote only after `/retrieval/health` shows matching provider, model, and dimensions with the guardrail passing.
+
 Local operational checks:
 
 ```bash

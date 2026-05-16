@@ -54,6 +54,7 @@ class OciGenerativeAiEmbeddingConfig:
     model_id: str
     endpoint: str | None = None
     expected_dimensions: int | None = None
+    input_type: str | None = None
 
 
 class OciGenerativeAiEmbedder:
@@ -90,6 +91,8 @@ class OciGenerativeAiEmbedder:
         )
         if self.config.expected_dimensions is not None:
             details.output_dimensions = self.config.expected_dimensions
+        if self.config.input_type:
+            details.input_type = self.config.input_type
         response = client.embed_text(details)
         embeddings = getattr(response.data, "embeddings", None) or []
         if not embeddings:

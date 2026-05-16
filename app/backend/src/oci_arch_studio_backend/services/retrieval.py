@@ -692,6 +692,7 @@ def build_retriever(settings: Settings, top_k: int = 6) -> OciKnowledgeRetriever
                     model_id=settings.oci_genai_embedding_model_id,
                     endpoint=settings.oci_genai_endpoint,
                     expected_dimensions=settings.oci_genai_embedding_dimensions,
+                    input_type="SEARCH_QUERY",
                 )
             )
             embedder = (

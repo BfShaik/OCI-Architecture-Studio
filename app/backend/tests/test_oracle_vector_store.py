@@ -145,6 +145,33 @@ def test_oracle_vector_upsert_serializes_metadata_and_tags() -> None:
     assert connection.committed is True
 
 
+def test_oracle_vector_health_reports_embedding_metadata() -> None:
+    connection = FakeConnection(
+        metadata_row=json.dumps(
+            {
+                "embedding_provider": "oci_genai",
+                "embedding_model": "cohere.embed-v4.0",
+                "embedding_dimensions": 1536,
+            }
+        )
+    )
+    store = OracleAiVectorSearchStore(
+        OracleAiVectorSearchConfig(
+            dsn="db",
+            username="user",
+            dimensions=1536,
+            **{"password": "placeholder"},
+        ),
+        connection_factory=lambda: connection,
+    )
+
+    health = store.health()
+
+    assert health["index_embedding_provider"] == "oci_genai"
+    assert health["index_embedding_model"] == "cohere.embed-v4.0"
+    assert health["index_dimensions"] == 1536
+
+
 def test_oracle_vector_retriever_uses_local_fallback_when_unconfigured(tmp_path) -> None:
     embedder = LocalHashingEmbedder()
     index_path = tmp_path / "index.json"
@@ -220,8 +247,9 @@ def test_oracle_vector_store_passes_wallet_connection_arguments(monkeypatch) -> 
 
 
 class FakeConnection:
-    def __init__(self, search_rows=None) -> None:
+    def __init__(self, search_rows=None, metadata_row=None) -> None:
         self.search_rows = search_rows or []
+        self.metadata_row = metadata_row
         self.last_execute_sql = ""
         self.last_execute_binds = {}
         self.last_executemany_sql = ""
@@ -256,6 +284,8 @@ class FakeCursor:
     def fetchone(self):
         if "user_tab_columns" in self.connection.last_execute_sql:
             return (4,)
+        if "FETCH FIRST 1 ROWS ONLY" in self.connection.last_execute_sql:
+            return (self.connection.metadata_row,) if self.connection.metadata_row else None
         if "COUNT(*)" in self.connection.last_execute_sql:
             return (len(self.connection.search_rows),)
         return None

@@ -489,6 +489,7 @@ def build_embedder(args: argparse.Namespace):
                 model_id=args.oci_genai_embedding_model_id,
                 endpoint=args.oci_genai_endpoint,
                 expected_dimensions=args.oci_genai_embedding_dimensions,
+                input_type="SEARCH_DOCUMENT",
             )
         )
         return (
@@ -544,6 +545,17 @@ def build_index(args: argparse.Namespace) -> dict[str, object]:
             chunk_id = chunk_ids[index - 1]
             clean_chunk = cleanup_chunk_text(chunk.text)
             chunk_metadata = enrich_chunk_metadata(source_metadata, clean_chunk)
+            chunk_metadata.update(
+                {
+                    "embedding_provider": args.embedding_provider,
+                    "embedding_model": embedder.model_name,
+                    "embedding_dimensions": (
+                        args.dimensions
+                        if args.embedding_provider == "local"
+                        else args.oci_genai_embedding_dimensions
+                    ),
+                }
+            )
             chunks.append(
                 {
                     "id": chunk_id,
@@ -572,11 +584,17 @@ def build_index(args: argparse.Namespace) -> dict[str, object]:
             )
 
     refreshed_source_ids = [source["id"] for source in sources]
+    index_dimensions = (
+        args.dimensions
+        if args.embedding_provider == "local"
+        else args.oci_genai_embedding_dimensions
+        or (len(chunks[0]["embedding"]) if chunks else None)
+    )
     return {
         "generated_at": generated_at,
         "embedding_model": embedder.model_name,
         "embedding_provider": args.embedding_provider,
-        "dimensions": args.dimensions if args.embedding_provider == "local" else None,
+        "dimensions": index_dimensions,
         "embedding_validation": {
             "fallback_enabled": bool(args.embedding_fallback_enabled),
             "expected_dimensions": args.oci_genai_embedding_dimensions,
