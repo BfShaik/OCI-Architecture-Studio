@@ -364,6 +364,32 @@ export function App() {
       </aside>
 
       <section className="workspace">
+        <form className="composer" onSubmit={handleSubmit}>
+          <label htmlFor="question">Architecture question</label>
+          <textarea
+            id="question"
+            value={question}
+            onChange={(event) => setQuestion(event.target.value)}
+            rows={3}
+            minLength={3}
+            required
+          />
+
+          <label htmlFor="context">Workload context</label>
+          <textarea
+            id="context"
+            value={workloadContext}
+            onChange={(event) => setWorkloadContext(event.target.value)}
+            rows={2}
+            placeholder="Optional: compliance, traffic, availability, budget, migration constraints"
+          />
+
+          <button type="submit" disabled={isLoading}>
+            <Send size={18} aria-hidden="true" />
+            {isLoading ? "Reviewing" : "Request Review"}
+          </button>
+        </form>
+
         <div className="conversation">
           <div className="ops-panel-grid">
             <KnowledgeRefreshPanel
@@ -413,32 +439,6 @@ export function App() {
             </div>
           ) : null}
         </div>
-
-        <form className="composer" onSubmit={handleSubmit}>
-          <label htmlFor="question">Architecture question</label>
-          <textarea
-            id="question"
-            value={question}
-            onChange={(event) => setQuestion(event.target.value)}
-            rows={3}
-            minLength={3}
-            required
-          />
-
-          <label htmlFor="context">Workload context</label>
-          <textarea
-            id="context"
-            value={workloadContext}
-            onChange={(event) => setWorkloadContext(event.target.value)}
-            rows={2}
-            placeholder="Optional: compliance, traffic, availability, budget, migration constraints"
-          />
-
-          <button type="submit" disabled={isLoading}>
-            <Send size={18} aria-hidden="true" />
-            {isLoading ? "Reviewing" : "Request Review"}
-          </button>
-        </form>
       </section>
     </main>
   );
