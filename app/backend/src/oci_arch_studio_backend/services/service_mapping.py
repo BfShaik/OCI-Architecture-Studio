@@ -54,8 +54,8 @@ AWS_TO_OCI_MAPPINGS: tuple[ServiceMapping, ...] = (
     ),
     ServiceMapping(
         source_service="ECR",
-        target_services=("OCI Registry",),
-        retrieval_terms=("OCI Registry", "container registry", "image migration", "container image security"),
+        target_services=("Container Registry",),
+        retrieval_terms=("Container Registry", "container registry", "image migration", "container image security"),
         source_aliases=("Elastic Container Registry",),
     ),
     ServiceMapping(

@@ -2,6 +2,30 @@
 
 Last updated: 2026-05-16
 
+## Latest OCI Architecture Accuracy Promotion
+
+- `TASK-050` completed as an OCI architecture recommendation accuracy increment.
+- Added five Architecture Center-style reference sources for secure enterprise landing zones, EKS-to-OKE migration, Data Guard / Full Stack Disaster Recovery, analytics data lake platforms, and enterprise observability.
+- Added three architecture-realism regression cases covering secure landing zones, EKS-to-OKE migration, and database DR.
+- Tightened retrieval/service selection so explicit OCI services in the prompt participate in final citation selection, with security-specific priority for IAM, VCN, Vault, Cloud Guard, Audit, Logging, and Monitoring.
+- Corrected AWS ECR mapping to `Container Registry` and added secure landing-zone intent classification.
+- Promoted the refreshed 60-source snapshot to staging Object Storage and rebuilt Oracle AI Vector Search from the same snapshot. Staging remains `RETRIEVAL_PROVIDER=oracle_ai_vector_search`, fallback enabled but inactive.
+- Secret posture: `/etc/oci-architecture-studio.env` hash remained unchanged; no runtime env values were printed or changed.
+- Current Gateway retrieval health: active provider `oracle_ai_vector_search`, 60 chunks, fallback inactive, no Oracle vector store error.
+- Validation passed:
+  - source registry JSON validation
+  - corpus health with `--min-chunks 60`
+  - local retrieval regression: 18/18
+  - architecture-realism retrieval regression: 7/7
+  - architecture-realism evals: 7/7
+  - golden evals: 18/18
+  - backend full suite: `131 passed`
+  - frontend lint and production build
+  - VM focused backend tests: 34 passed
+  - direct VM and API Gateway smoke
+  - live Gateway landing-zone prompt returned security intent with IAM, VCN, Vault, Cloud Guard, Audit, and Logging as the first six evidence labels
+  - hash guardrails: env unchanged, release snapshot unchanged, knowledge snapshot updated
+
 ## Latest Explainability UI
 
 - `TASK-047` completed as a frontend-only explainability increment.

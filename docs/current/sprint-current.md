@@ -42,6 +42,7 @@ In scope:
 - explainability UI for retrieval, governance, release-awareness, service selection, rejected alternatives, and confidence scoring
 - release-context advisory UI with release matches, affected services, snapshot timing, temporal boundary, and maturity notes
 - architecture map UI with topology summaries, lane-based service relationships, implementation path, and operational notes
+- OCI architecture accuracy corpus and retrieval tuning for landing zones, EKS-to-OKE migration, database DR, analytics platforms, and observability
 - evidence-linked recommendations and confidence scoring
 - advisory-quality eval suite
 
@@ -66,20 +67,21 @@ See `docs/current/status.md` for the current completed/pending log.
 
 Latest validation/current posture:
 
-- backend tests: `129 passed`
+- backend tests: `131 passed`
 - frontend lint: passed
 - frontend build: passed
 - Terraform validation: passed for `dev`, `test`, and `staging`
 - staging smoke passed through OCI API Gateway and direct VM rollback path
 - active staging retrieval: `oracle_ai_vector_search`
-- current registry candidate corpus: 55 chunks/sources
-- active staging retrieval snapshot: 47 chunks until operator promotion/upload
+- current registry corpus: 60 chunks/sources
+- active staging retrieval snapshot: 60 chunks
 - latest promoted release-watch refresh: 12 live release items
-- Oracle AI Vector Search: active on staging with 47 chunks, fallback enabled but inactive; parity, regression, smoke, operational readiness, and rollback drill passed
+- Oracle AI Vector Search: active on staging with 60 chunks, fallback enabled but inactive; regression, smoke, prompt-level accuracy checks, and hash guardrails passed
 - advisory UI: Decision Snapshot, priority cards, implementation exit criteria, comparison evidence, recommendation-confidence cards, and tradeoff cards are deployed to staging
 - explainability UI: dedicated influence cards, service-selection rationale, rejected alternatives, mapped services, domain signals, and selected evidence labels are deployed to staging
 - release-context UI: polished advisory panel is deployed to staging and passed local lint/build, backend tests, retrieval regression, local smoke, staging direct/API Gateway smoke, retrieval health, hash guardrails, and browser smoke
 - architecture map UI: deployed to staging and passed local lint/build, focused topology/API tests, backend full suite, retrieval regression, local smoke, staging direct/API Gateway smoke, retrieval health, hash guardrails, and browser smoke
+- OCI architecture accuracy: landing-zone, EKS-to-OKE, and database DR evals are in regression; live Gateway landing-zone evidence now prioritizes IAM, VCN, Vault, Cloud Guard, Audit, and Logging
 - OCI GenAI synthesis: implemented and configurable, not default
 - OCI GenAI embeddings: `cohere.embed-v4.0` shadow candidate validated at 256 dimensions, not default
 

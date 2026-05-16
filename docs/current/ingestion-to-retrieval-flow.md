@@ -14,8 +14,8 @@ Official OCI docs or fallback source text
   -> metadata enrichment
   -> embeddings
   -> knowledge/snapshots/oci-rag-index.json
-  -> OCI Object Storage active retrieval
-  -> Oracle AI Vector Search shadow sync
+  -> OCI Object Storage promoted snapshot
+  -> Oracle AI Vector Search active retrieval
 ```
 
 Refresh jobs follow the same basic shape, but they build candidate snapshots first and promote them only after quality gates pass.
@@ -81,17 +81,17 @@ That JSON snapshot is the portable retrieval manifest. It contains index metadat
 
 Before promotion, operators validate the snapshot with corpus health, retrieval health, retrieval regression, and the relevant advisory eval subset. Refresh-policy runs write candidate snapshots under `knowledge/reports/runs/<run_id>/candidates` first; authoritative snapshots are updated only after gates pass.
 
-## Object Storage Active Retrieval
+## Object Storage Snapshot And Rollback
 
-In staging, `oci_object_storage` is the active retrieval provider. After a gated promotion, the validated `oci-rag-index.json` and `oci-release-snapshot.json` are uploaded to the staging Object Storage bucket.
+In staging, Object Storage keeps the promoted `oci-rag-index.json` and `oci-release-snapshot.json` snapshots that feed the active Oracle vector index and remain available for rollback. After a gated promotion, the validated snapshots are uploaded to the staging Object Storage bucket before Oracle AI Vector Search is rebuilt.
 
-At query time, the backend loads the active Object Storage manifest, applies metadata-aware retrieval and reranking, and returns grounded chunks to the advisory orchestration layer. `local_json` remains the tested rollback provider and uses the same snapshot format.
+If Oracle vector active reads need to be rolled back, the backend can be switched to `oci_object_storage` and load the same promoted manifest. `local_json` remains the tested local rollback provider and uses the same snapshot format.
 
 Refresh never runs on user queries. It is operator-triggered or scheduled through the OCI backend VM cron path, and it promotes only after candidate gates pass.
 
-## Oracle AI Vector Search Shadow Sync
+## Oracle AI Vector Search Active Sync
 
-Oracle AI Vector Search is currently a shadow provider, not the active read path. The shadow index is rebuilt from the same promoted `oci-rag-index.json` snapshot used by Object Storage.
+Oracle AI Vector Search is the active staging read path. The Oracle vector index is rebuilt from the same promoted `oci-rag-index.json` snapshot uploaded to Object Storage, so the active database-backed provider and immediate Object Storage rollback source stay aligned.
 
 The sync tool is:
 
@@ -102,7 +102,7 @@ python3 infra/scripts/oracle_vector_index.py rebuild \
 
 The rebuild validates that chunks have embeddings, expected dimensions, and required service metadata before upserting them into the Autonomous Database table `OCI_ARCHITECTURE_CHUNKS`. The table stores chunk text, vector embeddings, metadata JSON, service/domain fields, source lineage, and citation-friendly fields.
 
-Oracle AI Vector Search active-provider promotion remains gated behind `TASK-045`. Until that gate passes, Object Storage stays active and Oracle vector validation is used only for parity, latency, and rollback confidence.
+A safe promotion keeps runtime env values unchanged unless a reviewed provider change is required, uploads the validated snapshot, rebuilds Oracle AI Vector Search from that exact snapshot, restarts the backend, then verifies `/retrieval/health` shows `oracle_ai_vector_search`, the expected chunk count, fallback inactive, and no primary store error.
 
 ## Operator Checklist
 
@@ -112,14 +112,14 @@ For a normal local ingestion check:
 2. Run corpus health against `knowledge/snapshots/oci-rag-index.json`.
 3. Run retrieval regression before treating the snapshot as promotion-ready.
 4. Promote and upload only through the refresh policy or a reviewed operator flow.
-5. Rebuild Oracle AI Vector Search shadow from the promoted snapshot, not from an unvalidated candidate.
-6. Keep `RETRIEVAL_PROVIDER=oci_object_storage` until the Oracle active-read promotion gate passes.
+5. Rebuild Oracle AI Vector Search from the promoted snapshot, not from an unvalidated candidate.
+6. Verify Object Storage remains ready as the config-only rollback provider.
 
 ## Safe Defaults
 
 - Local development defaults to deterministic embeddings and `local_json`.
-- Staging active retrieval uses `oci_object_storage`.
-- Oracle AI Vector Search remains shadow-only.
+- Staging active retrieval uses `oracle_ai_vector_search`.
+- Object Storage remains the immediate rollback provider.
 - Refresh candidates are validated before promotion.
 - Stable-doc refresh stays conservative until separately validated.
 - Rollback uses the prior promoted snapshot or `local_json`.

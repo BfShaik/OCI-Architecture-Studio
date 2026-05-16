@@ -115,10 +115,17 @@ INTENT_RETRIEVAL_HINTS: dict[str, dict[str, tuple[str, ...]]] = {
 }
 
 SERVICE_QUERY_TERMS: dict[str, tuple[str, ...]] = {
+    "Audit": ("audit", "audit trails", "audit evidence"),
+    "Cloud Guard": ("cloud guard", "posture management", "threat detection"),
+    "Container Registry": ("container registry", "image registry", "ecr"),
+    "Database Migration": ("database migration", "rds", "database migration service"),
+    "DNS": ("dns", "traffic steering", "traffic failover"),
+    "Full Stack Disaster Recovery": ("full stack disaster recovery", "disaster recovery", "dr runbook"),
     "Load Balancer": ("load balancer", "load balancing"),
     "Logging": ("logging", "logs", "audit"),
     "Monitoring": ("monitoring", "metrics", "alarms"),
     "Vault": ("vault", "secrets", "keys"),
+    "Virtual Cloud Network": ("vcn", "virtual cloud network", "network segmentation"),
     "Web Application Firewall": ("waf", "web application firewall"),
     "Identity and Access Management": ("iam", "identity", "policies"),
     "Autonomous Database": ("autonomous database", "adb"),
@@ -179,6 +186,7 @@ class OciKnowledgeRetriever:
         combined_text = " ".join(part for part in (question, workload_context) if part)
         service_mapping = self.service_mapper.map_text(combined_text)
         heuristics = self.heuristic_classifier.detect(combined_text)
+        explicit_services = self._explicit_query_services(question)
         reasoning_profile = (
             self.reasoning_engine.select_profile(
                 question=question,
@@ -210,7 +218,14 @@ class OciKnowledgeRetriever:
         embedding_started_at = perf_counter()
         query_embedding = self.embedder.embed(retrieval_query)
         embedding_latency_ms = round((perf_counter() - embedding_started_at) * 1000, 2)
-        filters = self._build_filters(question, intent_profile, service_mapping.mapped_services, heuristics, reasoning_profile)
+        filters = self._build_filters(
+            question,
+            intent_profile,
+            service_mapping.mapped_services,
+            heuristics,
+            reasoning_profile,
+            explicit_services=explicit_services,
+        )
         candidate_count = max(
             self.top_k * self.candidate_multiplier,
             self.top_k + 4,
@@ -245,7 +260,7 @@ class OciKnowledgeRetriever:
         )
         selected = self._select_final_chunks(
             reranked,
-            mapped_services=service_mapping.mapped_services,
+            mapped_services=tuple(dict.fromkeys((*explicit_services, *service_mapping.mapped_services))),
             pattern_services=pattern_services,
             intent=intent,
         )
@@ -367,15 +382,11 @@ class OciKnowledgeRetriever:
         mapped_services: tuple[str, ...] = (),
         heuristics: ArchitectureDomainHeuristics | None = None,
         reasoning_profile: ReasoningProfile | None = None,
+        explicit_services: tuple[str, ...] | None = None,
     ) -> VectorSearchFilters:
         if intent_profile is None:
             return VectorSearchFilters()
-        normalized_question = question.lower()
-        explicit_services = tuple(
-            service
-            for service, terms in SERVICE_QUERY_TERMS.items()
-            if any(term in normalized_question for term in terms)
-        )
+        explicit_services = explicit_services if explicit_services is not None else self._explicit_query_services(question)
         services = tuple(dict.fromkeys((*explicit_services, *mapped_services)))
         hints = INTENT_RETRIEVAL_HINTS.get(intent_profile.intent.value, {})
         if not hints:
@@ -430,7 +441,7 @@ class OciKnowledgeRetriever:
         selected_ids: set[str] = set()
 
         for service in (
-            *self._prioritized_mapped_services(mapped_services),
+            *self._prioritized_mapped_services(mapped_services, intent=intent),
             *pattern_services,
             *self._intent_critical_services(intent),
         ):
@@ -466,19 +477,55 @@ class OciKnowledgeRetriever:
             selected_ids.add(chunk.id)
         return selected
 
-    def _prioritized_mapped_services(self, mapped_services: tuple[str, ...]) -> tuple[str, ...]:
-        priority = {
+    def _explicit_query_services(self, question: str) -> tuple[str, ...]:
+        normalized_question = question.lower()
+        return tuple(
+            service
+            for service, terms in SERVICE_QUERY_TERMS.items()
+            if any(term in normalized_question for term in terms)
+        )
+
+    def _prioritized_mapped_services(self, mapped_services: tuple[str, ...], intent: str | None = None) -> tuple[str, ...]:
+        priority_by_intent = {
+            "security": {
+                "Identity and Access Management": 0,
+                "Virtual Cloud Network": 1,
+                "Vault": 2,
+                "Cloud Guard": 3,
+                "Audit": 4,
+                "Logging": 5,
+                "Monitoring": 6,
+                "Security Zones": 7,
+                "Network Security Groups": 8,
+            },
+            "dr": {
+                "Data Guard": 0,
+                "Full Stack Disaster Recovery": 1,
+                "DNS": 2,
+                "Vault": 3,
+                "Logging": 4,
+                "Monitoring": 5,
+                "Database Services": 6,
+                "Object Storage": 7,
+            },
+        }
+        default_priority = {
             "OCI Kubernetes Engine": 0,
             "Database Migration": 1,
-            "Database Services": 2,
-            "Autonomous Database": 3,
-            "Logging": 4,
-            "Monitoring": 5,
-            "Identity and Access Management": 6,
-            "Load Balancer": 7,
-            "Object Storage": 8,
-            "Virtual Cloud Network": 9,
+            "Load Balancer": 2,
+            "Container Registry": 3,
+            "Database Services": 4,
+            "Autonomous Database": 5,
+            "Logging": 6,
+            "Monitoring": 7,
+            "Identity and Access Management": 8,
+            "Vault": 9,
+            "Object Storage": 10,
+            "Virtual Cloud Network": 11,
+            "Cloud Guard": 12,
+            "Audit": 13,
         }
+        priority = priority_by_intent.get(intent or "", default_priority)
         return tuple(
             sorted(
                 mapped_services,
@@ -503,9 +550,11 @@ class OciKnowledgeRetriever:
     def _intent_critical_services(self, intent: str | None) -> tuple[str, ...]:
         services_by_intent = {
             "architecture": ("Load Balancer", "Database Services", "Object Storage", "Logging", "Monitoring"),
+            "migration": ("OCI Kubernetes Engine", "Container Registry", "Load Balancer", "Database Migration", "Logging", "Monitoring"),
             "dr": ("Database Services", "Logging", "Monitoring", "Object Storage"),
             "cost": ("Compute", "Object Storage", "Cost Management", "Monitoring"),
             "observability": ("Logging", "Monitoring", "Database Services"),
+            "security": ("Identity and Access Management", "Virtual Cloud Network", "Vault", "Cloud Guard", "Audit", "Logging", "Monitoring"),
             "ai_ml": ("Compute", "Object Storage", "Logging", "Monitoring"),
             "saas_platform": ("Load Balancer", "Database Services", "Object Storage", "Logging", "Monitoring"),
             "analytics": ("Object Storage", "Database Services", "Logging", "Monitoring"),

@@ -150,8 +150,9 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | TASK-047 | Done | Add explainability UI for service selection, rejected alternatives, retrieval influence, governance influence, release-awareness influence, and confidence scoring. | Enabled retrieval debug traces for UI review requests; added Explainability panel with influence cards, service-selection rationale, rejected alternatives, mapped services, domain signals, and selected evidence labels. Frontend lint/build, local browser smoke, staging browser smoke, direct VM smoke, API Gateway smoke, and retrieval health passed. |
 | TASK-048 | Done | Improve release-context visibility in the advisory UI. | Added Release Context summary cards and detail panels for release matches, affected services, recommendation-affecting services, impact/change categories, snapshot timing, temporal boundary, and release notes. Passed frontend lint/build, backend full suite, local retrieval regression, local deployment smoke, staging direct/API Gateway smoke, retrieval health, env/snapshot hash guardrails, and browser smoke with a release-aware prompt. |
 | TASK-049 | Done | Add lightweight architecture visualization for service relationships, topology summaries, HA/DR posture, and migration phases. | Added Architecture Map summary cards, lane-based service map, relationship evidence board, implementation path, and operational notes using the existing `architecture_topology` contract. Passed frontend lint/build, focused topology/API tests, backend full suite, local retrieval regression, local deployment smoke, staging direct/API Gateway smoke, retrieval health, env/snapshot hash guardrails, and browser smoke with a representative topology prompt. |
-| TASK-050 | Next | Add saved review history and prompt/session history after storage and security design are agreed. | Storage/security review, backend tests, frontend tests/build, local and staging smoke. |
-| TASK-051 | Future | Improve section-level citation presentation for recommendation traceability. | Advisory eval subset, citation coverage check, frontend build, browser smoke. |
+| TASK-050 | Done | Improve OCI architecture service accuracy and promote the 60-source architecture corpus to active Oracle vector retrieval. | Added Architecture Center-style reference sources for secure landing zones, EKS-to-OKE migration, database DR, analytics data lake, and enterprise observability; added landing-zone, EKS-to-OKE, and database DR evals; corrected ECR to Container Registry mapping; protected explicit service evidence selection for security prompts. Passed corpus health, 18/18 retrieval regression, 7/7 architecture-realism retrieval/evals, 18/18 golden evals, backend full suite, frontend lint/build, VM focused tests, direct/API Gateway smoke, live landing-zone evidence check, and env/release/knowledge hash guardrails. Staging Oracle AI Vector Search is active with 60 chunks and fallback inactive. |
+| TASK-051 | Next | Add saved review history and prompt/session history after storage and security design are agreed. | Storage/security review, backend tests, frontend tests/build, local and staging smoke. |
+| TASK-052 | Future | Improve section-level citation presentation for recommendation traceability. | Advisory eval subset, citation coverage check, frontend build, browser smoke. |
 
 ## Phase Gates
 
@@ -199,9 +200,9 @@ Run the appropriate subset after each increment; run the full matrix before a ne
 
 ## Next Actionable Increment
 
-Current task: `TASK-050`.
+Current task: `TASK-051`.
 
-Next logical increment after architecture visualization:
+Next logical increment after architecture accuracy promotion:
 
 1. Add saved review history and prompt/session history with an OCI-safe storage and security design.
 2. Keep active staging retrieval on `oracle_ai_vector_search` with Object Storage fallback enabled.

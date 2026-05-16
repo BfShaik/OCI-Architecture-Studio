@@ -29,7 +29,7 @@ def test_aws_to_oci_service_mapping_detects_expanded_domains() -> None:
     assert "Identity and Access Management" in mapping.mapped_services
     assert "Vault" in mapping.mapped_services
     assert "Load Balancer" in mapping.mapped_services
-    assert "OCI Registry" in mapping.mapped_services
+    assert "Container Registry" in mapping.mapped_services
     assert "OCI Functions" in mapping.mapped_services
     assert "OCI Data Integration" in mapping.mapped_services
     assert "OCI Data Science" in mapping.mapped_services

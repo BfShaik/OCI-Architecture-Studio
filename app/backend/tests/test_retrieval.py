@@ -250,6 +250,8 @@ def test_mapped_service_selection_prioritizes_operational_coverage(tmp_path) -> 
             "Virtual Cloud Network",
             "OCI Kubernetes Engine",
             "Database Migration",
+            "Load Balancer",
+            "Container Registry",
             "Database Services",
             "Autonomous Database",
             "Logging",
@@ -261,11 +263,51 @@ def test_mapped_service_selection_prioritizes_operational_coverage(tmp_path) -> 
     assert ordered[:6] == (
         "OCI Kubernetes Engine",
         "Database Migration",
+        "Load Balancer",
+        "Container Registry",
         "Database Services",
         "Autonomous Database",
-        "Logging",
-        "Monitoring",
     )
+
+
+def test_security_service_selection_prioritizes_landing_zone_controls(tmp_path) -> None:
+    retriever = OciKnowledgeRetriever(index_path=tmp_path / "missing.json", top_k=6)
+    reranked = [
+        (_chunk("fsdr::1", "Full Stack Disaster Recovery", "resilience"), 0.96),
+        (_chunk("db::1", "Database Services", "database"), 0.95),
+        (_chunk("iam::1", "Identity and Access Management", "security"), 0.74),
+        (_chunk("vcn::1", "Virtual Cloud Network", "networking"), 0.73),
+        (_chunk("vault::1", "Vault", "security"), 0.72),
+        (_chunk("cloud-guard::1", "Cloud Guard", "security"), 0.71),
+        (_chunk("audit::1", "Audit", "security"), 0.7),
+        (_chunk("logging::1", "Logging", "observability"), 0.69),
+        (_chunk("monitoring::1", "Monitoring", "observability"), 0.68),
+    ]
+
+    selected = retriever._select_final_chunks(  # noqa: SLF001 - regression for landing-zone service accuracy.
+        reranked,
+        mapped_services=(
+            "Audit",
+            "Cloud Guard",
+            "Logging",
+            "Monitoring",
+            "Vault",
+            "Virtual Cloud Network",
+            "Identity and Access Management",
+        ),
+        pattern_services=(),
+        intent="security",
+    )
+
+    selected_services = [chunk.metadata["service"] for chunk, _score in selected]
+    assert selected_services == [
+        "Identity and Access Management",
+        "Virtual Cloud Network",
+        "Vault",
+        "Cloud Guard",
+        "Audit",
+        "Logging",
+    ]
 
 
 def test_final_chunk_selection_adds_intent_diversity(tmp_path) -> None:

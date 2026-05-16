@@ -458,6 +458,10 @@ class IntentClassifier:
             )
         ):
             return Intent.RELEASE_AWARENESS
+        if "landing zone" in normalized and any(
+            token in normalized for token in ("secure", "security", "compartment", "guardrail", "iam")
+        ):
+            return Intent.SECURITY
         if any(token in normalized for token in ("migrate", "migration")) or re.search(r"\b(eks|rds|aws)\b", normalized):
             return Intent.MIGRATION
         if any(token in normalized for token in ("ai/ml", "ai inference", "model", "inference", "ml platform", "machine learning")):
