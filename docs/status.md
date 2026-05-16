@@ -42,6 +42,16 @@ Last updated: 2026-05-16
 - Operational readiness passed with known warnings limited to inactive OCI DevOps metadata and remaining infrastructure rebuildability gaps.
 - Active retrieval remains `oci_object_storage`; Oracle AI Vector Search remains shadow-only until refreshed vector sync and parity pass.
 
+## Latest Oracle Vector Refresh Sync
+
+- `TASK-031` completed as an Oracle AI Vector Search shadow refresh sync.
+- Copied the promoted authoritative snapshots to the staging backend VM and rebuilt the Oracle shadow index from `knowledge/snapshots/oci-rag-index.json`.
+- Rebuild upserted 47 chunks into `OCI_ARCHITECTURE_CHUNKS`.
+- Oracle vector health passed with valid schema, vector index `OCI_ARCH_CHUNKS_VEC_IDX`, 47 chunks, 44 services, 14 service domains, and no missing config.
+- Vector validation passed 26 cases with average local latency `2.07 ms`, average Oracle vector latency `193.24 ms`, and average top-chunk overlap `0.977`.
+- Temporary wallet and vector env material used for the rebuild were removed from the staging VM after validation.
+- Active retrieval remains `oci_object_storage`; Oracle AI Vector Search remains shadow-only.
+
 ## Latest Operational Promotion
 
 - `TASK-022` completed on staging: API Gateway runtime metadata was added to the running VM environment and the backend was redeployed from the current repository code without replacing the VM.

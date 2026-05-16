@@ -100,8 +100,8 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | TASK-028 | Done | Refresh Pipeline Preflight. | Passed local Function handler smoke with `no_fetch=true`, `quick_gates=true`, `upload=false`; passed direct `refresh_policy.py --mode release-watch --no-fetch --quick-gates`; fixed selective-refresh embedding validation argument propagation; passed forced temp-snapshot quick gates with retrieval health and 26-case retrieval regression; authoritative snapshot SHA-256 hashes remained unchanged; passed backend refresh/status tests and `git diff --check`. |
 | TASK-029 | Done | Refresh Candidate Quality Gate. | Added candidate-only refresh mode and candidate snapshot validator; controlled forced `release-watch` candidate run passed without promotion or upload: 47 chunks, 5 releases, candidate metadata/release integrity validation, retrieval health, 26-case retrieval regression, 18/18 golden evals, and 5/5 advisory-quality evals. Authoritative snapshot SHA-256 hashes remained unchanged. |
 | TASK-030 | Done | Object Storage Refresh Promotion. | Promoted a validated controlled `release-watch` candidate with 47 chunks and 5 releases; uploaded refreshed `oci-rag-index.json` and `oci-release-snapshot.json` to OCI Object Storage bucket `oci-architecture-studio-staging-knowledge-snapshots`; Object Storage retrieval health passed, 26-case retrieval regression passed, Gateway smoke passed, and operational readiness passed with known OCI DevOps/rebuildability warnings only. |
-| TASK-031 | Next | Oracle Vector Refresh Sync. | Rebuild Oracle AI Vector Search shadow index from the promoted Object Storage snapshot; validate table/index health, chunk count parity, service/domain counts, and vector parity. |
-| TASK-032 | Pending | OCI Function Image Packaging. | Build `infra/functions/knowledge-refresh`, push immutable OCIR image tag, and validate packaged Function invocation before scheduler enablement. |
+| TASK-031 | Done | Oracle Vector Refresh Sync. | Rebuilt Oracle AI Vector Search shadow index from the promoted snapshot on the staging backend VM; upserted 47 chunks; table/index health passed with 47 chunks, 44 services, 14 service domains, valid schema, and no missing config; vector validation passed 26 cases with 0.977 average top-chunk overlap. Active retrieval remains `oci_object_storage`. |
+| TASK-032 | Next | OCI Function Image Packaging. | Build `infra/functions/knowledge-refresh`, push immutable OCIR image tag, and validate packaged Function invocation before scheduler enablement. |
 | TASK-033 | Pending | OCI Resource Scheduler Enablement. | Enable Terraform scheduler variables, review plan, apply only expected Functions, Resource Scheduler, dynamic group, policy, and output changes; diagnostics expose Function and schedule OCIDs. |
 | TASK-034 | Pending | Scheduled Refresh Dry Run. | Trigger scheduler/Function path in safe mode with `no_fetch=true`, `quick_gates=true`, `upload=false`; confirm logs, reports, and readiness show the scheduler path works. |
 | TASK-035 | Pending | Scheduled Release Refresh Activation. | Enable release-watch refresh with upload and gate-controlled promotion; keep stable-docs refresh less frequent; document failure, rollback, stale warning, Object Storage sync, and Oracle vector shadow sync operations. |
@@ -153,14 +153,14 @@ Run the appropriate subset after each increment; run the full matrix before a ne
 
 ## Next Actionable Increment
 
-Current task: `TASK-031`.
+Current task: `TASK-032`.
 
-Run Oracle Vector refresh sync:
+Package the OCI knowledge refresh Function image:
 
-1. Keep `RETRIEVAL_PROVIDER=oci_object_storage` as the active runtime default.
-2. Rebuild Oracle AI Vector Search shadow index from the promoted authoritative snapshot.
-3. Validate table/index health, chunk count parity, service/domain counts, and vector retrieval parity.
-4. Keep Oracle AI Vector Search shadow-only; do not promote active retrieval yet.
+1. Keep Resource Scheduler disabled.
+2. Build `infra/functions/knowledge-refresh` as an OCI Functions-compatible image.
+3. Push the image to OCIR with an immutable tag, not `latest`.
+4. Validate a controlled packaged invocation before scheduler enablement.
 
 ## Operating Rules
 
