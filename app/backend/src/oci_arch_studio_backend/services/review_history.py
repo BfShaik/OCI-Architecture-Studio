@@ -12,7 +12,9 @@ from oci_arch_studio_backend.models.architecture import (
     ArchitectureReviewRequest,
     ArchitectureReviewResponse,
     ReviewHistoryDetail,
+    ReviewHistoryExportResponse,
     ReviewHistoryListResponse,
+    ReviewHistoryPolicy,
     ReviewHistorySummary,
 )
 
@@ -49,6 +51,11 @@ class ReviewHistoryStore:
         sanitized_response.review_id = review_id
         sanitized_response.retrieval_debug = None
         sanitized_response.synthesis_debug = None
+        sanitized_response_payload = _redact_payload(
+            sanitized_response.model_dump(mode="json"),
+        )
+        if not isinstance(sanitized_response_payload, dict):
+            raise ValueError("Review history response payload must be an object.")
 
         record = {
             "review_id": review_id,
@@ -56,7 +63,7 @@ class ReviewHistoryStore:
             "updated_at": now,
             "question": redacted_question,
             "workload_context": redacted_context,
-            "response": sanitized_response.model_dump(mode="json"),
+            "response": sanitized_response_payload,
         }
         record["response"]["review_id"] = review_id
 
@@ -77,6 +84,18 @@ class ReviewHistoryStore:
         return ReviewHistoryListResponse(
             items=[self._to_summary(record) for record in records],
             retention_limit=self.retention_limit,
+            policy=self.policy(),
+        )
+
+    def policy(self) -> ReviewHistoryPolicy:
+        return ReviewHistoryPolicy(retention_limit=self.retention_limit)
+
+    def export(self) -> ReviewHistoryExportResponse:
+        with self._lock:
+            records = self._read_records()
+        return ReviewHistoryExportResponse(
+            policy=self.policy(),
+            items=[self._to_detail(record) for record in records],
         )
 
     def get(self, review_id: str) -> ReviewHistoryDetail | None:
@@ -94,6 +113,13 @@ class ReviewHistoryStore:
                 return False
             self._write_records(kept)
         return True
+
+    def delete_all(self) -> int:
+        with self._lock:
+            records = self._read_records()
+            if records:
+                self._write_records([])
+        return len(records)
 
     def _read_records(self) -> list[dict[str, object]]:
         if not self.path.exists():
@@ -154,6 +180,16 @@ def redact_sensitive_text(value: str | None) -> str | None:
     for pattern in SECRET_PATTERNS:
         redacted = pattern.sub(lambda match: _redact_match(match), redacted)
     return redacted
+
+
+def _redact_payload(value: object) -> object:
+    if isinstance(value, str):
+        return redact_sensitive_text(value)
+    if isinstance(value, list):
+        return [_redact_payload(item) for item in value]
+    if isinstance(value, dict):
+        return {key: _redact_payload(item) for key, item in value.items()}
+    return value
 
 
 def _redact_match(match: re.Match[str]) -> str:

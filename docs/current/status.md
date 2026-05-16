@@ -2,6 +2,32 @@
 
 Last updated: 2026-05-16
 
+## Latest Review History Operator Controls
+
+- `TASK-053` completed as the review-history retention/export policy increment.
+- Added backend policy metadata for saved-review history: retention limit, backend-file storage scope, `0600` file mode, redaction enabled, debug-trace storage disabled, redacted export scope, and saved-history delete scope.
+- Added redacted review-history export and delete-all controls without adding new environment variables or changing runtime secret handling.
+- Hardened saved-history persistence so all stored response payload strings are recursively redacted, preventing generated answers from echoing sensitive prompt values into history exports.
+- Added left-rail operator controls for export, clear-all, and retention/security policy visibility.
+- Staging promotion completed with no runtime env, retrieval-provider, vector DB, wallet, Object Storage, or infrastructure changes.
+- Validation passed:
+  - `py_compile` for changed backend modules
+  - focused API tests: 11 passed
+  - backend full suite: 132 passed
+  - frontend lint
+  - frontend production build
+  - local API smoke for policy/export/delete-all and `0600` file mode
+  - local browser smoke for policy/export/clear controls
+  - VM focused API tests: 11 passed
+  - direct VM smoke
+  - API Gateway smoke
+  - Gateway policy endpoint check
+  - Gateway redaction/export smoke with cleanup of the temporary review
+  - staging browser smoke for policy/export/clear controls with cleanup of the temporary review
+  - Gateway retrieval health remained `oracle_ai_vector_search`, 60 chunks, fallback inactive
+  - env hash remained unchanged
+  - `git diff --check`
+
 ## Latest Section Citation Traceability
 
 - `TASK-052` completed as a recommendation traceability increment.

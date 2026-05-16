@@ -5,7 +5,9 @@ from oci_arch_studio_backend.models.architecture import (
     ArchitectureReviewResponse,
     HealthResponse,
     ReviewHistoryDetail,
+    ReviewHistoryExportResponse,
     ReviewHistoryListResponse,
+    ReviewHistoryPolicy,
 )
 from oci_arch_studio_backend.core.config import get_settings
 from oci_arch_studio_backend.services.advisory_metrics import advisory_quality_metrics
@@ -67,6 +69,28 @@ async def review_history() -> ReviewHistoryListResponse:
     return ReviewHistoryStore(settings.review_history_path).list()
 
 
+@router.get("/review-history/policy", response_model=ReviewHistoryPolicy)
+async def review_history_policy() -> ReviewHistoryPolicy:
+    settings = get_settings()
+    return ReviewHistoryStore(settings.review_history_path).policy()
+
+
+@router.get("/review-history/export", response_model=ReviewHistoryExportResponse)
+async def export_review_history() -> ReviewHistoryExportResponse:
+    settings = get_settings()
+    return ReviewHistoryStore(settings.review_history_path).export()
+
+
+@router.delete("/review-history", status_code=204)
+async def delete_review_history() -> Response:
+    return _delete_review_history()
+
+
+@router.post("/review-history/delete-all", status_code=204)
+async def post_delete_review_history() -> Response:
+    return _delete_review_history()
+
+
 @router.get("/review-history/{review_id}", response_model=ReviewHistoryDetail)
 async def review_history_detail(review_id: str) -> ReviewHistoryDetail:
     settings = get_settings()
@@ -91,6 +115,12 @@ def _delete_review_history_item(review_id: str) -> Response:
     deleted = ReviewHistoryStore(settings.review_history_path).delete(review_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Review history item not found.")
+    return Response(status_code=204)
+
+
+def _delete_review_history() -> Response:
+    settings = get_settings()
+    ReviewHistoryStore(settings.review_history_path).delete_all()
     return Response(status_code=204)
 
 

@@ -490,7 +490,23 @@ export type ReviewHistoryDetail = ReviewHistorySummary & {
   response: ArchitectureReviewResponse;
 };
 
+export type ReviewHistoryPolicy = {
+  retention_limit: number;
+  storage_scope: string;
+  file_mode: string;
+  redaction_enabled: boolean;
+  stores_debug_traces: boolean;
+  export_scope: string;
+  delete_scope: string;
+};
+
 export type ReviewHistoryListResponse = {
   items: ReviewHistorySummary[];
   retention_limit: number;
+  policy: ReviewHistoryPolicy;
+};
+
+export type ReviewHistoryExportResponse = {
+  policy: ReviewHistoryPolicy;
+  items: ReviewHistoryDetail[];
 };

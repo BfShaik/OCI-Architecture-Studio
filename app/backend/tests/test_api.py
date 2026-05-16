@@ -87,10 +87,25 @@ def test_review_history_persists_redacted_reviews(tmp_path) -> None:
 
         history = client.get("/review-history")
         assert history.status_code == 200
+        assert history.json()["policy"]["file_mode"] == "0600"
+        assert history.json()["policy"]["stores_debug_traces"] is False
         items = history.json()["items"]
         assert items[0]["review_id"] == review_id
         assert "[redacted]" in items[0]["question_preview"]
         assert "Sup3rSecret" not in items[0]["question_preview"]
+
+        policy = client.get("/review-history/policy")
+        assert policy.status_code == 200
+        assert policy.json()["retention_limit"] == history.json()["retention_limit"]
+        assert policy.json()["redaction_enabled"] is True
+
+        exported = client.get("/review-history/export")
+        assert exported.status_code == 200
+        exported_body = exported.json()
+        assert exported_body["policy"]["export_scope"] == "redacted_saved_reviews"
+        assert exported_body["items"][0]["question"] == "Design a secure OCI landing zone. " + "password" + "=[redacted]"
+        assert "Sup3rSecret" not in str(exported_body)
+        assert exported_body["items"][0]["response"]["retrieval_debug"] is None
 
         detail = client.get(f"/review-history/{review_id}")
         assert detail.status_code == 200
@@ -99,6 +114,8 @@ def test_review_history_persists_redacted_reviews(tmp_path) -> None:
         assert body["workload_context"] == "token=[redacted] keep regulated audit evidence"
         assert body["response"]["review_id"] == review_id
         assert body["response"]["retrieval_debug"] is None
+        assert "Sup3rSecret" not in str(body)
+        assert "abc123" not in str(body)
 
         deleted = client.delete(f"/review-history/{review_id}")
         assert deleted.status_code == 204
@@ -112,6 +129,16 @@ def test_review_history_persists_redacted_reviews(tmp_path) -> None:
         post_deleted = client.post(f"/review-history/{second_id}/delete")
         assert post_deleted.status_code == 204
         assert client.get(f"/review-history/{second_id}").status_code == 404
+
+        third = client.post(
+            "/architecture-review",
+            json={"question": "Design a secure OCI landing zone with audit evidence."},
+        )
+        third_id = third.json()["review_id"]
+        assert client.get(f"/review-history/{third_id}").status_code == 200
+        delete_all = client.post("/review-history/delete-all")
+        assert delete_all.status_code == 204
+        assert client.get("/review-history").json()["items"] == []
     finally:
         settings.review_history_path = original_path
 

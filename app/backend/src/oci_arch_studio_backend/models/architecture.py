@@ -489,6 +489,22 @@ class ReviewHistoryDetail(ReviewHistorySummary):
     response: ArchitectureReviewResponse
 
 
+class ReviewHistoryPolicy(BaseModel):
+    retention_limit: int
+    storage_scope: str = "backend_file"
+    file_mode: str = "0600"
+    redaction_enabled: bool = True
+    stores_debug_traces: bool = False
+    export_scope: str = "redacted_saved_reviews"
+    delete_scope: str = "saved_review_history"
+
+
 class ReviewHistoryListResponse(BaseModel):
     items: list[ReviewHistorySummary] = Field(default_factory=list)
     retention_limit: int
+    policy: ReviewHistoryPolicy
+
+
+class ReviewHistoryExportResponse(BaseModel):
+    policy: ReviewHistoryPolicy
+    items: list[ReviewHistoryDetail] = Field(default_factory=list)

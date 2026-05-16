@@ -1,19 +1,22 @@
 import { FormEvent, useEffect, useState } from "react";
-import { Clock, RotateCcw, Send, Trash2 } from "lucide-react";
+import { Clock, Download, RotateCcw, Send, ShieldCheck, Trash2 } from "lucide-react";
 import { KnowledgeRefreshPanel } from "./components/KnowledgeRefreshPanel";
 import { RetrievalProviderPanel } from "./components/RetrievalProviderPanel";
 import { ReviewResult } from "./components/ReviewResult";
 import {
+  deleteReviewHistory,
   requestArchitectureReview,
   deleteReviewHistoryItem,
   requestKnowledgeRefreshStatus,
   requestReviewHistory,
   requestReviewHistoryDetail,
+  requestReviewHistoryExport,
   requestRetrievalHealth,
 } from "./lib/api";
 import type {
   ArchitectureReviewResponse,
   KnowledgeRefreshStatus,
+  ReviewHistoryPolicy,
   ReviewHistorySummary,
   RetrievalHealth,
 } from "./types";
@@ -44,8 +47,11 @@ export function App() {
   const [retrievalError, setRetrievalError] = useState<string | null>(null);
   const [isRetrievalLoading, setIsRetrievalLoading] = useState(false);
   const [historyItems, setHistoryItems] = useState<ReviewHistorySummary[]>([]);
+  const [historyPolicy, setHistoryPolicy] =
+    useState<ReviewHistoryPolicy | null>(null);
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [isHistoryExporting, setIsHistoryExporting] = useState(false);
   const [activeReviewId, setActiveReviewId] = useState<string | null>(null);
 
   async function loadRefreshStatus() {
@@ -91,6 +97,7 @@ export function App() {
     try {
       const response = await requestReviewHistory();
       setHistoryItems(response.items);
+      setHistoryPolicy(response.policy);
       if (activeId !== undefined) {
         setActiveReviewId(activeId);
       }
@@ -174,6 +181,57 @@ export function App() {
     }
   }
 
+  async function handleExportHistory() {
+    setHistoryError(null);
+    setIsHistoryExporting(true);
+
+    try {
+      const payload = await requestReviewHistoryExport();
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {
+        type: "application/json",
+      });
+      const exportUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = exportUrl;
+      link.download = `oci-architecture-review-history-${new Date()
+        .toISOString()
+        .slice(0, 10)}.json`;
+      link.click();
+      URL.revokeObjectURL(exportUrl);
+    } catch (caught) {
+      const message =
+        caught instanceof Error
+          ? caught.message
+          : "Unable to export review history.";
+      setHistoryError(message);
+    } finally {
+      setIsHistoryExporting(false);
+    }
+  }
+
+  async function handleDeleteAllHistory() {
+    setHistoryError(null);
+
+    if (
+      historyItems.length > 0 &&
+      !window.confirm("Delete all saved architecture reviews?")
+    ) {
+      return;
+    }
+
+    try {
+      await deleteReviewHistory();
+      setHistoryItems([]);
+      setActiveReviewId(null);
+    } catch (caught) {
+      const message =
+        caught instanceof Error
+          ? caught.message
+          : "Unable to delete review history.";
+      setHistoryError(message);
+    }
+  }
+
   return (
     <main className="app-shell">
       <aside className="sidebar">
@@ -215,6 +273,45 @@ export function App() {
               title="Refresh saved reviews"
             >
               <RotateCcw size={16} aria-hidden="true" />
+            </button>
+          </div>
+
+          {historyPolicy ? (
+            <div className="history-policy" aria-label="Review history policy">
+              <span>
+                <ShieldCheck size={13} aria-hidden="true" />
+                {historyPolicy.retention_limit} retained
+              </span>
+              <span>{historyPolicy.redaction_enabled ? "Redacted" : "Raw"}</span>
+              <span>
+                {historyPolicy.stores_debug_traces ? "Debug traces" : "No debug traces"}
+              </span>
+              <span>Mode {historyPolicy.file_mode}</span>
+            </div>
+          ) : null}
+
+          <div className="history-actions">
+            <button
+              type="button"
+              className="history-action"
+              onClick={() => void handleExportHistory()}
+              disabled={isHistoryExporting || historyItems.length === 0}
+              aria-label="Export saved reviews"
+              title="Export saved reviews"
+            >
+              <Download size={14} aria-hidden="true" />
+              Export
+            </button>
+            <button
+              type="button"
+              className="history-action history-action-danger"
+              onClick={() => void handleDeleteAllHistory()}
+              disabled={historyItems.length === 0}
+              aria-label="Delete all saved reviews"
+              title="Delete all saved reviews"
+            >
+              <Trash2 size={14} aria-hidden="true" />
+              Clear
             </button>
           </div>
 

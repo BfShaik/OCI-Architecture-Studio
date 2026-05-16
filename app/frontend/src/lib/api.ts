@@ -3,6 +3,7 @@ import type {
   ArchitectureReviewResponse,
   KnowledgeRefreshStatus,
   ReviewHistoryDetail,
+  ReviewHistoryExportResponse,
   ReviewHistoryListResponse,
   RetrievalHealth,
 } from "../types";
@@ -74,6 +75,16 @@ export async function requestReviewHistoryDetail(
   return response.json();
 }
 
+export async function requestReviewHistoryExport(): Promise<ReviewHistoryExportResponse> {
+  const response = await fetch(`${API_BASE_URL}/review-history/export`);
+
+  if (!response.ok) {
+    throw new Error(`Review history export failed: ${response.status}`);
+  }
+
+  return response.json();
+}
+
 export async function deleteReviewHistoryItem(reviewId: string): Promise<void> {
   const response = await fetch(
     `${API_BASE_URL}/review-history/${reviewId}/delete`,
@@ -84,5 +95,15 @@ export async function deleteReviewHistoryItem(reviewId: string): Promise<void> {
 
   if (!response.ok) {
     throw new Error(`Delete history item failed: ${response.status}`);
+  }
+}
+
+export async function deleteReviewHistory(): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/review-history/delete-all`, {
+    method: "POST",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Delete history failed: ${response.status}`);
   }
 }
