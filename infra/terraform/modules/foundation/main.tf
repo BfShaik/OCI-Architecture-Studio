@@ -407,6 +407,17 @@ resource "oci_identity_policy" "backend_access" {
   ]
 }
 
+resource "oci_identity_policy" "backend_genai_tenancy_access" {
+  compartment_id = var.tenancy_ocid
+  name           = "${local.name_prefix}-backend-genai-tenancy-access"
+  description    = "Tenancy-level OCI Generative AI access for pretrained model catalog and inference visibility."
+  freeform_tags  = local.common_tags
+
+  statements = [
+    "Allow dynamic-group ${oci_identity_dynamic_group.backend_instances.name} to use generative-ai-family in tenancy",
+  ]
+}
+
 resource "oci_monitoring_alarm" "backend_cpu" {
   compartment_id        = oci_identity_compartment.project.id
   display_name          = "${local.name_prefix}-backend-cpu-high"

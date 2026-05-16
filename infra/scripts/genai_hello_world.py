@@ -19,6 +19,7 @@ import oci
 EXIT_AUTH_FAILED = 1
 EXIT_MODEL_VISIBILITY_FAILED = 2
 EXIT_CHAT_FAILED = 3
+CHAT_LIKE_CAPABILITIES = {"CHAT", "TEXT_TO_TEXT", "IMAGE_TEXT_TO_TEXT"}
 
 
 def main() -> int:
@@ -166,11 +167,13 @@ def list_active_models_with_chat_capability(management_client: Any, compartment_
         lifecycle_state="ACTIVE",
     )
     all_items = list(getattr(response.data, "items", []) or [])
-    return [
-        model
-        for model in all_items
-        if "CHAT" in {str(capability) for capability in (getattr(model, "capabilities", None) or [])}
-    ]
+    print(f"active model count before local chat filter={len(all_items)}")
+    return [model for model in all_items if is_chat_capable(model)]
+
+
+def is_chat_capable(model: Any) -> bool:
+    capabilities = {str(capability) for capability in (getattr(model, "capabilities", None) or [])}
+    return bool(capabilities & CHAT_LIKE_CAPABILITIES)
 
 
 def chat_hello_world(client: Any, args: argparse.Namespace) -> str:
