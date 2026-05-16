@@ -289,6 +289,7 @@ export type OptimizationPlanSummary = {
 };
 
 export type ReleaseImpactSummary = {
+  snapshot_path?: string | null;
   snapshot_generated_at?: string | null;
   matched_release_count: number;
   architecture_affecting_services: string[];

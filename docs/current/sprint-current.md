@@ -40,6 +40,7 @@ In scope:
 - Oracle AI Vector Search active-read staging promotion and rollback validation
 - executive and architecture-review advisory response layout refinement
 - explainability UI for retrieval, governance, release-awareness, service selection, rejected alternatives, and confidence scoring
+- release-context advisory UI with release matches, affected services, snapshot timing, temporal boundary, and maturity notes
 - evidence-linked recommendations and confidence scoring
 - advisory-quality eval suite
 
@@ -76,6 +77,7 @@ Latest validation/current posture:
 - Oracle AI Vector Search: active on staging with 47 chunks, fallback enabled but inactive; parity, regression, smoke, operational readiness, and rollback drill passed
 - advisory UI: Decision Snapshot, priority cards, implementation exit criteria, comparison evidence, recommendation-confidence cards, and tradeoff cards are deployed to staging
 - explainability UI: dedicated influence cards, service-selection rationale, rejected alternatives, mapped services, domain signals, and selected evidence labels are deployed to staging
+- release-context UI: polished advisory panel is deployed to staging and passed local lint/build, backend tests, retrieval regression, local smoke, staging direct/API Gateway smoke, retrieval health, hash guardrails, and browser smoke
 - OCI GenAI synthesis: implemented and configurable, not default
 - OCI GenAI embeddings: `cohere.embed-v4.0` shadow candidate validated at 256 dimensions, not default
 

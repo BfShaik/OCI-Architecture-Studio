@@ -199,6 +199,48 @@ h1 {
   padding: 22px;
 }
 
+.advisory-overview {
+  border-top: 4px solid #36506f;
+}
+
+.advisory-heading {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.review-eyebrow {
+  margin-bottom: 6px;
+  color: #64748b;
+}
+
+.review-score {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  min-width: 104px;
+  border: 1px solid #d8dee8;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #f8fafc;
+}
+
+.review-score span {
+  color: #111827;
+  font-size: 1.1rem;
+  font-weight: 850;
+  line-height: 1.1;
+}
+
+.review-score small {
+  color: #52606d;
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
 .answer-block h2,
 .result-section h3,
 .refresh-panel h2,
@@ -378,6 +420,7 @@ h1 {
 }
 
 .executive-brief,
+.release-context-panel,
 .decision-snapshot,
 .explainability-dashboard,
 .sequence-panel,
@@ -390,6 +433,8 @@ h1 {
 }
 
 .snapshot-grid,
+.release-summary-grid,
+.release-detail-grid,
 .influence-grid,
 .service-selection-list,
 .retrieval-trace,
@@ -404,11 +449,21 @@ h1 {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.release-summary-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.release-detail-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .snapshot-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .snapshot-grid article,
+.release-summary-grid article,
+.release-detail-grid article,
 .influence-grid article,
 .service-selection-list article,
 .retrieval-trace article,
@@ -423,6 +478,7 @@ h1 {
 }
 
 .influence-grid article,
+.release-summary-grid article,
 .snapshot-grid article {
   display: grid;
   gap: 7px;
@@ -430,11 +486,14 @@ h1 {
 }
 
 .influence-grid svg,
+.release-summary-grid svg,
 .snapshot-grid svg {
   color: #36506f;
 }
 
 .influence-grid strong,
+.release-summary-grid strong,
+.release-detail-grid strong,
 .snapshot-grid strong {
   color: #111827;
   font-size: 1rem;
@@ -442,6 +501,7 @@ h1 {
 }
 
 .influence-grid span,
+.release-summary-grid span,
 .snapshot-grid span,
 .priority-strip span,
 .recommendation-confidence-list span {
@@ -453,6 +513,7 @@ h1 {
 }
 
 .influence-grid p,
+.release-detail-grid p,
 .snapshot-grid p,
 .service-selection-list p,
 .service-selection-list small,
@@ -464,6 +525,21 @@ h1 {
 .tradeoff-list small {
   margin: 0;
   color: #52606d;
+  line-height: 1.45;
+}
+
+.release-notes {
+  display: grid;
+  gap: 8px;
+}
+
+.release-notes span {
+  border-left: 3px solid #36506f;
+  padding: 8px 10px;
+  color: #334155;
+  background: #f8fafc;
+  font-size: 0.84rem;
+  font-weight: 650;
   line-height: 1.45;
 }
 
@@ -1016,6 +1092,8 @@ button:disabled {
   .confidence-grid,
   .decision-grid,
   .snapshot-grid,
+  .release-summary-grid,
+  .release-detail-grid,
   .influence-grid,
   .service-selection-list,
   .retrieval-trace,
@@ -1032,9 +1110,15 @@ button:disabled {
   }
 
   .section-heading-row,
+  .advisory-heading,
   .comparison-list article > div {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .review-score {
+    justify-items: start;
+    width: 100%;
   }
 
   .sidebar {

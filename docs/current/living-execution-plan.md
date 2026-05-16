@@ -12,8 +12,8 @@ The plan favors OCI-native services, Terraform-managed infrastructure, determini
 
 | Area | Current position | Baseline decision |
 |---|---|---|
-| Git baseline | `main` is the active branch. Current pushed closeout commit is `0a40470` with the Knowledge Refresh Status panel documented and deployed to staging. | Treat the latest pushed `main` commit and existing version tags as recovery points; do not move existing tags. |
-| Retrieval | Staging uses `oci_object_storage` with `local_json` fallback. Oracle AI Vector Search is live, schema-loaded, and shadow-validated, but active DB-backed retrieval is not promoted. | Keep Object Storage active until refresh stability and refreshed vector parity pass. |
+| Git baseline | `main` is the active branch. The latest closeout commit documents and deploys the Release Context advisory UI to staging. | Treat the latest pushed `main` commit and existing version tags as recovery points; do not move existing tags. |
+| Retrieval | Staging uses `oracle_ai_vector_search` as the active provider with fallback enabled. Object Storage remains the immediate config-only rollback provider; `local_json` remains the deterministic local fallback. | Keep Oracle vector active only while health, smoke, regression, and rollback evidence stay current. |
 | Synthesis | Deterministic synthesis is default. OCI GenAI synthesis exists behind configuration and fails closed to deterministic fallback. | Keep deterministic default until live GenAI parity passes. |
 | Embeddings | Deterministic local embeddings are the stable path. OCI GenAI embeddings are configurable but not the default. | Activate in shadow/parity mode before promotion. |
 | Runtime | OCI VM staging is active behind OCI API Gateway, with direct VM rollback preserved. OKE profile examples exist. Knowledge refresh scheduling runs as a conservative cron job on the OCI backend VM. OCI DevOps metadata is scaffolded but not active. | Keep Gateway active and run refresh scheduling from the VM cron path. |
@@ -28,8 +28,8 @@ The current working baseline includes:
 
 - React/FastAPI advisory app deployed locally and in OCI staging.
 - OCI API Gateway staging ingress with direct OCI VM rollback preserved.
-- Active staging retrieval from OCI Object Storage using the validated `oci-rag-index.json` snapshot.
-- Local JSON retrieval as deterministic rollback.
+- Active staging retrieval from Oracle AI Vector Search using the validated 47-chunk snapshot.
+- OCI Object Storage retrieval as the immediate staging rollback path and local JSON retrieval as deterministic local fallback.
 - Curated OCI corpus with 47 knowledge chunks/sources.
 - Release-watch refresh on the OCI backend VM cron path with live fetch, quick gates, gated promotion, Object Storage upload, rollback support, and status visibility.
 - Oracle AI Vector Search shadow infrastructure, table/index, and refreshed 47-chunk shadow sync.
@@ -57,8 +57,8 @@ Keep these items in the active work queue until each has validation evidence and
 | WIP-010 | Future | Improve the broader advisor UX shell after the near-term visibility and readability work lands, including navigation polish, review workflow affordances, and demo-readiness cleanup. | Frontend tests/build, UX smoke, browser smoke. |
 | WIP-011 | Planned | Refine the main advisory response layout for stronger executive and architecture-review readability. Group executive summary, recommended-now items, recommended-later items, risks, evidence, and rollout guidance into clearer scan-friendly sections. | Frontend lint/build, browser smoke with representative architecture, migration, cost, and release-aware prompts. |
 | WIP-012 | Planned | Improve explainability UI so users can see why services were selected, why alternatives were not selected, and how retrieval, governance, release-awareness, and confidence influenced the recommendation. | Frontend lint/build, backend response-contract check, browser smoke, advisory eval subset. |
-| WIP-013 | Planned | Improve release-context visibility in the UI, including whether an answer used release-aware knowledge, whether sources are stale, and which release items influenced the response. | Frontend lint/build, release-aware prompt smoke, `/knowledge/refresh/status` and advisory response smoke. |
-| WIP-014 | Future | Add lightweight architecture visualization for OCI service relationships, topology summaries, HA/DR posture, and migration phases without introducing a heavy diagram engine. | Frontend tests/build, browser smoke, representative topology output review. |
+| WIP-013 | Done | Improved release-context visibility in the UI, including release match counts, affected services, recommendation-affecting services, impact/change categories, snapshot timestamp, temporal boundary, and maturity notes. | Passed frontend lint/build, backend tests, local retrieval regression, local deployment smoke, staging direct/API Gateway smoke, retrieval health, env/snapshot hash guardrails, and browser smoke with a release-aware prompt. |
+| WIP-014 | Ready | Add lightweight architecture visualization for OCI service relationships, topology summaries, HA/DR posture, and migration phases without introducing a heavy diagram engine. | Frontend tests/build, browser smoke, representative topology output review. |
 | WIP-015 | Future | Add saved review history and prompt/session history with a storage and security design that fits the OCI-native runtime direction. | Storage/security review, backend tests, frontend tests/build, local and staging smoke. |
 | WIP-016 | Future | Improve section-level citation presentation so recommendations and rationale can be traced more directly to retrieved sources. | Advisory eval subset, citation coverage check, frontend build, browser smoke. |
 
@@ -148,8 +148,8 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | TASK-045 | Done | Run Oracle AI Vector Search active-read promotion gate. | Fixed Run Command IAM, ADB TCPS `1522` security-list access, stale runtime wallet, and secret-safe runtime vector env configuration. Added Oracle DB connection pooling for active reads. Promoted staging to `RETRIEVAL_PROVIDER=oracle_ai_vector_search` with fallback enabled and local embeddings retained. Passed backend full suite, frontend lint/build, local regression/golden/edge evals, VM targeted tests, Oracle vector validation, 26/26 parity, 18/18 Oracle-vector regression, Gateway/direct smoke, operational readiness, Terraform no-change plan, and rollback drill back to Object Storage and forward to Oracle vector. |
 | TASK-046 | Done | Refine the advisory response layout for executive and architecture-review readability. | Added Decision Snapshot, recommendation priority cards, implementation exit criteria, comparison evidence chips, recommendation-confidence cards, and tradeoff cards. Fixed the promoted Oracle vector status label. Frontend lint/build, local browser smoke with a representative architecture prompt, staging frontend smoke, direct VM smoke, API Gateway smoke, retrieval health, and `git diff --check` passed. |
 | TASK-047 | Done | Add explainability UI for service selection, rejected alternatives, retrieval influence, governance influence, release-awareness influence, and confidence scoring. | Enabled retrieval debug traces for UI review requests; added Explainability panel with influence cards, service-selection rationale, rejected alternatives, mapped services, domain signals, and selected evidence labels. Frontend lint/build, local browser smoke, staging browser smoke, direct VM smoke, API Gateway smoke, and retrieval health passed. |
-| TASK-048 | Planned | Improve release-context visibility in the advisory UI. | Frontend lint/build, release-aware prompt smoke, `/knowledge/refresh/status` and advisory response smoke. |
-| TASK-049 | Future | Add lightweight architecture visualization for service relationships, topology summaries, HA/DR posture, and migration phases. | Frontend tests/build, browser smoke, representative topology output review. |
+| TASK-048 | Done | Improve release-context visibility in the advisory UI. | Added Release Context summary cards and detail panels for release matches, affected services, recommendation-affecting services, impact/change categories, snapshot timing, temporal boundary, and release notes. Passed frontend lint/build, backend full suite, local retrieval regression, local deployment smoke, staging direct/API Gateway smoke, retrieval health, env/snapshot hash guardrails, and browser smoke with a release-aware prompt. |
+| TASK-049 | Next | Add lightweight architecture visualization for service relationships, topology summaries, HA/DR posture, and migration phases. | Frontend tests/build, browser smoke, representative topology output review. |
 | TASK-050 | Future | Add saved review history and prompt/session history after storage and security design are agreed. | Storage/security review, backend tests, frontend tests/build, local and staging smoke. |
 | TASK-051 | Future | Improve section-level citation presentation for recommendation traceability. | Advisory eval subset, citation coverage check, frontend build, browser smoke. |
 
@@ -199,14 +199,14 @@ Run the appropriate subset after each increment; run the full matrix before a ne
 
 ## Next Actionable Increment
 
-Current task: `TASK-048`.
+Current task: `TASK-049`.
 
-Next logical increment after explainability UI:
+Next logical increment after release-context UI:
 
-1. Improve release-context visibility in the advisory UI.
+1. Add lightweight architecture visualization for service relationships, topology summaries, HA/DR posture, and migration phases.
 2. Keep active staging retrieval on `oracle_ai_vector_search` with Object Storage fallback enabled.
 3. Preserve the rollback path by keeping `RETRIEVAL_PROVIDER=oci_object_storage` validated as the immediate config-only rollback.
-4. Run frontend lint/build, release-aware browser smoke, backend response-contract checks, and the advisory eval subset before any staging UI promotion.
+4. Run frontend lint/build, browser smoke, backend response-contract checks, and the advisory eval subset before any staging UI promotion.
 
 ## Operating Rules
 

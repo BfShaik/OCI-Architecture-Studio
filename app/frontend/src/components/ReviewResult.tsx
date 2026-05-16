@@ -1,9 +1,13 @@
 import {
   AlertTriangle,
+  Activity,
+  CalendarClock,
+  ClipboardCheck,
   Download,
   Gauge,
   GitBranch,
   History,
+  Layers,
   Route,
   Scale,
   Search,
@@ -63,6 +67,26 @@ function sourceLabelById(result: ArchitectureReviewResponse, chunkId: string) {
   return source?.service || source?.title || chunkId;
 }
 
+function displayList(values: string[], fallback = "None reported") {
+  return values.length ? values.map(readable).join(", ") : fallback;
+}
+
+function displayTimestamp(value?: string | null) {
+  if (!value) {
+    return "Snapshot date not reported";
+  }
+
+  const timestamp = Date.parse(value);
+  if (Number.isNaN(timestamp)) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(timestamp);
+}
+
 export function ReviewResult({ result }: ReviewResultProps) {
   const citationCount = result.citations.length;
   const confidence = result.confidence;
@@ -82,8 +106,17 @@ export function ReviewResult({ result }: ReviewResultProps) {
 
   return (
     <div className="review-result">
-      <section className="answer-block">
-        <h2>Architecture Review</h2>
+      <section className="answer-block advisory-overview">
+        <div className="advisory-heading">
+          <div>
+            <p className="eyebrow review-eyebrow">AI Architecture Review</p>
+            <h2>Architecture Review</h2>
+          </div>
+          <div className="review-score">
+            <span>{confidence ? percent(confidence.overall) : "Pending"}</span>
+            <small>{confidence ? `${confidence.level} confidence` : "confidence"}</small>
+          </div>
+        </div>
         <div className="intent-row">
           <span className="intent-badge">{labelForIntent(result.intent)}</span>
           <span>{citationCount} sources</span>
@@ -112,6 +145,62 @@ export function ReviewResult({ result }: ReviewResultProps) {
           <div className="quality-warnings" aria-label="Quality warnings">
             {[...result.quality_warnings, ...result.synthesis_warnings, ...result.orchestration_warnings].map((warning, index) => (
               <span key={`warning-${index}-${warning}`}>{warning}</span>
+            ))}
+          </div>
+        ) : null}
+      </section>
+
+      <section className="result-section release-context-panel">
+        <div className="section-heading-row">
+          <div>
+            <h3>Release Context</h3>
+            <p>Snapshot posture, release matches, affected services, and current-versus-historical guidance boundaries.</p>
+          </div>
+        </div>
+        <div className="release-summary-grid">
+          <article>
+            <Activity size={18} aria-hidden="true" />
+            <strong>{releaseContext?.matched_release_count ?? 0}</strong>
+            <span>matched release item{releaseContext?.matched_release_count === 1 ? "" : "s"}</span>
+          </article>
+          <article>
+            <Layers size={18} aria-hidden="true" />
+            <strong>{releaseContext?.architecture_affecting_services.length ?? 0}</strong>
+            <span>architecture-affecting service{releaseContext?.architecture_affecting_services.length === 1 ? "" : "s"}</span>
+          </article>
+          <article>
+            <ClipboardCheck size={18} aria-hidden="true" />
+            <strong>{releaseContext?.recommendation_affecting_services.length ?? 0}</strong>
+            <span>recommendation-affecting service{releaseContext?.recommendation_affecting_services.length === 1 ? "" : "s"}</span>
+          </article>
+          <article>
+            <CalendarClock size={18} aria-hidden="true" />
+            <strong>{temporalContext ? readable(temporalContext.knowledge_mode) : "Current snapshot"}</strong>
+            <span>{displayTimestamp(releaseContext?.snapshot_generated_at ?? temporalContext?.current_knowledge_as_of)}</span>
+          </article>
+        </div>
+        <div className="release-detail-grid">
+          <article>
+            <strong>Affected Services</strong>
+            <p>{displayList(releaseContext?.architecture_affecting_services ?? [])}</p>
+          </article>
+          <article>
+            <strong>Impact Categories</strong>
+            <p>{displayList(releaseContext?.impact_categories ?? [])}</p>
+          </article>
+          <article>
+            <strong>Change Categories</strong>
+            <p>{displayList(releaseContext?.change_categories ?? [])}</p>
+          </article>
+          <article>
+            <strong>Temporal Boundary</strong>
+            <p>{temporalContext?.notes[0] ?? "Current retrieval uses the active OCI knowledge snapshot."}</p>
+          </article>
+        </div>
+        {(releaseContext?.maturity_notes.length || temporalContext?.notes.length) ? (
+          <div className="release-notes">
+            {[...(releaseContext?.maturity_notes ?? []), ...(temporalContext?.notes.slice(1, 3) ?? [])].map((note, index) => (
+              <span key={`release-note-${index}`}>{note}</span>
             ))}
           </div>
         ) : null}

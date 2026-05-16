@@ -739,12 +739,13 @@ Last validation run: 2026-05-15
 - OCI API Gateway staging apply: passed for gateway and deployment; Gateway endpoint `https://pkgmvyyi3itxklv6knh4xfm6ca.apigateway.us-ashburn-1.oci.customer-oci.com/` smoke and operational readiness passed, direct backend VM rollback path remains healthy, and post-apply Terraform plan reports no changes
 - Presentation-friendly architecture diagrams: added in `docs/architecture/architecture-diagrams.md`
 - Documentation refresh: README, PRD, roadmap, vision, sprint docs, runbooks, demo readiness, architecture docs, promotion report, GenAI hardening notes, and supervised orchestration notes now reflect the current promoted staging state
+- Release Context advisory UI: added an executive-grade release visibility panel with release match counts, affected services, recommendation-affecting services, impact/change categories, snapshot timing, temporal boundary, and release maturity notes. Validation passed frontend lint/build, backend full suite, 18/18 retrieval regression, local deployment smoke, staging direct/API Gateway smoke, Oracle vector retrieval health, env/snapshot hash guardrails, and browser smoke with a release-aware prompt.
 
 ## Pending
 
 - Replace deterministic local hash embeddings with a production embedding provider when model/provider decisions are finalized.
 - Run OCI Generative AI embedding ingestion against the approved staging compartment and upload the vector manifest to Object Storage.
-- Build the Oracle AI Vector Search table/index in a configured database and run live query parity before staging active-read promotion.
+- Keep Oracle AI Vector Search active-read health current with periodic smoke, regression, parity, and rollback validation.
 - Expand OCI source coverage for:
   - Budgets-specific documentation
   - Data Guard-specific documentation
@@ -797,7 +798,7 @@ Last validation run: 2026-05-15
   - Object Storage manifest retrieval is the active staging provider
   - `local_json` remains the validated rollback provider
   - Oracle AI Vector Search provider code, schema/upsert/search tooling, fallback safety, Autonomous Database infrastructure, table/index, and shadow validation exist
-  - Oracle AI Vector Search is not the active staging read path until refreshed active-provider parity, smoke, regression, operational readiness, and rollback checks pass
+- Oracle AI Vector Search is the active staging read path after refreshed active-provider parity, smoke, regression, operational readiness, and rollback checks passed
   - post-migration readiness report is captured in `docs/reports/post-migration-readiness-report.md`
   - dual-provider parity report is captured in `docs/reports/retrieval-parity-validation-report.md`
   - promotion report is captured in `docs/reports/retrieval-provider-promotion-report.md`
@@ -824,7 +825,7 @@ Last validation run: 2026-05-15
 - The local RAG index is a curated 47-chunk corpus, not a complete OCI documentation corpus.
 - Embeddings are deterministic local hash embeddings, useful for workflow validation but not production semantic retrieval.
 - Reranking improves ordering and traceability but still depends on the curated corpus and local hash embeddings.
-- Oracle AI Vector Search code, tooling, live DB connection, table/index, and shadow validation are implemented, but active staging reads are not promoted.
+- Oracle AI Vector Search code, tooling, live DB connection, table/index, and active staging reads are implemented and promoted with Object Storage as the immediate rollback provider.
 - Release awareness has scheduled VM-cron snapshot refresh, deterministic impact analysis, candidate validation, historical snapshot retention, Object Storage upload, and status visibility; it does not yet perform full current-vs-historical answer comparison or full bi-temporal retrieval.
 - OCI GenAI synthesis adapter exists, but deterministic synthesis remains the rollback-safe default unless enabled by environment configuration.
 - Deterministic architecture patterns improve fallback usefulness but are still heuristic and bounded by the retrieved corpus.
