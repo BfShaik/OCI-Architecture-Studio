@@ -1,12 +1,18 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Send } from "lucide-react";
 import { KnowledgeRefreshPanel } from "./components/KnowledgeRefreshPanel";
+import { RetrievalProviderPanel } from "./components/RetrievalProviderPanel";
 import { ReviewResult } from "./components/ReviewResult";
 import {
   requestArchitectureReview,
   requestKnowledgeRefreshStatus,
+  requestRetrievalHealth,
 } from "./lib/api";
-import type { ArchitectureReviewResponse, KnowledgeRefreshStatus } from "./types";
+import type {
+  ArchitectureReviewResponse,
+  KnowledgeRefreshStatus,
+  RetrievalHealth,
+} from "./types";
 
 const starterQuestion =
   "How should I design a highly available customer portal on OCI?";
@@ -29,6 +35,10 @@ export function App() {
     useState<KnowledgeRefreshStatus | null>(null);
   const [refreshError, setRefreshError] = useState<string | null>(null);
   const [isRefreshLoading, setIsRefreshLoading] = useState(false);
+  const [retrievalHealth, setRetrievalHealth] =
+    useState<RetrievalHealth | null>(null);
+  const [retrievalError, setRetrievalError] = useState<string | null>(null);
+  const [isRetrievalLoading, setIsRetrievalLoading] = useState(false);
 
   async function loadRefreshStatus() {
     setRefreshError(null);
@@ -48,8 +58,27 @@ export function App() {
     }
   }
 
+  async function loadRetrievalHealth() {
+    setRetrievalError(null);
+    setIsRetrievalLoading(true);
+
+    try {
+      const response = await requestRetrievalHealth();
+      setRetrievalHealth(response);
+    } catch (caught) {
+      const message =
+        caught instanceof Error
+          ? caught.message
+          : "Unable to load retrieval provider status.";
+      setRetrievalError(message);
+    } finally {
+      setIsRetrievalLoading(false);
+    }
+  }
+
   useEffect(() => {
     void loadRefreshStatus();
+    void loadRetrievalHealth();
   }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -61,6 +90,7 @@ export function App() {
       const response = await requestArchitectureReview({
         question,
         workload_context: workloadContext || undefined,
+        retrieval_debug: true,
       });
       setResult(response);
     } catch (caught) {
@@ -103,12 +133,20 @@ export function App() {
 
       <section className="workspace">
         <div className="conversation">
-          <KnowledgeRefreshPanel
-            status={refreshStatus}
-            error={refreshError}
-            isLoading={isRefreshLoading}
-            onRefresh={() => void loadRefreshStatus()}
-          />
+          <div className="ops-panel-grid">
+            <KnowledgeRefreshPanel
+              status={refreshStatus}
+              error={refreshError}
+              isLoading={isRefreshLoading}
+              onRefresh={() => void loadRefreshStatus()}
+            />
+            <RetrievalProviderPanel
+              health={retrievalHealth}
+              error={retrievalError}
+              isLoading={isRetrievalLoading}
+              onRefresh={() => void loadRetrievalHealth()}
+            />
+          </div>
 
           <div className="message message-system">
             <span>System</span>

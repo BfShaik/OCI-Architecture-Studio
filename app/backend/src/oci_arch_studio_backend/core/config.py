@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     retrieval_provider: str = Field(default="local_json", alias="RETRIEVAL_PROVIDER")
     retrieval_fallback_enabled: bool = Field(default=True, alias="RETRIEVAL_FALLBACK_ENABLED")
     retrieval_debug_enabled: bool = Field(default=False, alias="RETRIEVAL_DEBUG_ENABLED")
-    retrieval_candidate_multiplier: int = Field(default=6, alias="RETRIEVAL_CANDIDATE_MULTIPLIER")
+    retrieval_candidate_multiplier: int = Field(default=8, alias="RETRIEVAL_CANDIDATE_MULTIPLIER")
     advisory_orchestration_mode: str = Field(
         default="multi_agent_pilot",
         alias="ADVISORY_ORCHESTRATION_MODE",

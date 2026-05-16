@@ -288,6 +288,27 @@ export type OptimizationPlanSummary = {
   recommendation_additions: string[];
 };
 
+export type ReleaseImpactSummary = {
+  snapshot_generated_at?: string | null;
+  matched_release_count: number;
+  architecture_affecting_services: string[];
+  impact_categories: string[];
+  change_categories: string[];
+  recommendation_affecting_services: string[];
+  maturity_notes: string[];
+};
+
+export type KnowledgeTemporalContext = {
+  knowledge_mode: string;
+  current_knowledge_snapshot?: string | null;
+  current_release_snapshot?: string | null;
+  current_knowledge_as_of?: string | null;
+  requested_time_context?: string | null;
+  historical_snapshots: string[];
+  historical_context_available: boolean;
+  notes: string[];
+};
+
 export type ArchitectureReviewRequest = {
   question: string;
   workload_context?: string;
@@ -353,6 +374,54 @@ export type KnowledgeRefreshStatus = {
   current_promoted_snapshot?: KnowledgeRefreshSnapshot | null;
 };
 
+export type RetrievalStoreHealth = {
+  provider?: string;
+  exists?: boolean;
+  chunk_count?: number;
+  service_count?: number;
+  service_domain_count?: number;
+  index_path?: string;
+  namespace?: string;
+  bucket?: string;
+  object_name?: string;
+  fallback_enabled?: boolean;
+  fallback_active?: boolean;
+  fallback_reason?: string | null;
+  primary?: RetrievalStoreHealth;
+  fallback?: RetrievalStoreHealth;
+  read_enabled?: boolean;
+  table_name?: string;
+  index_name?: string;
+  expected_dimensions?: number;
+  missing_config?: string[];
+  schema?: {
+    configured?: boolean;
+    valid?: boolean;
+  };
+  last_error?: string | null;
+};
+
+export type RetrievalHealth = {
+  provider?: string;
+  embedding_model?: string;
+  embedding_provider?: string;
+  store?: RetrievalStoreHealth;
+  metrics?: {
+    request_count?: number;
+    missing_index_count?: number;
+    no_result_count?: number;
+    average_latency_ms?: number;
+    average_embedding_latency_ms?: number;
+    last_latency_ms?: number | null;
+    last_embedding_latency_ms?: number | null;
+    last_result_count?: number;
+    last_provider?: string;
+    last_embedding_model?: string;
+    last_intent?: string | null;
+    warnings?: string[];
+  };
+};
+
 export type ArchitectureReviewResponse = {
   intent: string;
   prompt_template: string;
@@ -376,6 +445,8 @@ export type ArchitectureReviewResponse = {
   architecture_topology?: ArchitectureTopologySummary | null;
   executive_experience?: ExecutiveExperienceSummary | null;
   optimization_plan?: OptimizationPlanSummary | null;
+  release_context?: ReleaseImpactSummary | null;
+  knowledge_temporal_context?: KnowledgeTemporalContext | null;
   answer: string;
   recommendations: string[];
   assumptions: string[];

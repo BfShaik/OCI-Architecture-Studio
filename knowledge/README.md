@@ -62,6 +62,12 @@ Rollback latest promoted refresh:
 python3 knowledge/refresh/refresh_policy.py --rollback-latest
 ```
 
+## Operator Flow
+
+For a beginner-friendly explanation of how approved OCI docs become chunks, metadata, embeddings, the `oci-rag-index.json` manifest, active OCI Object Storage retrieval, and Oracle AI Vector Search shadow sync, see:
+
+- `docs/current/ingestion-to-retrieval-flow.md`
+
 ## Subdirectories
 
 - `ingestion/` - source loading and document normalization

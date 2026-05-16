@@ -2,6 +2,154 @@
 
 Last updated: 2026-05-16
 
+## Latest Explainability UI
+
+- `TASK-047` completed as a frontend-only explainability increment.
+- The architecture review UI now requests retrieval debug traces for submitted reviews.
+- Added a dedicated Explainability panel covering:
+  - retrieval influence
+  - governance influence
+  - release-awareness influence
+  - confidence scoring
+  - service selection rationale
+  - rejected alternatives
+  - mapped OCI services
+  - domain signals
+  - selected evidence labels
+- Added typed frontend support for release impact and knowledge temporal context fields returned by the backend.
+- No staging runtime environment variables, retrieval provider settings, wallet files, Terraform resources, or backend service process were changed.
+- Promoted the built frontend bundle and matching frontend source files to the staging VM.
+- Validation passed:
+  - frontend lint
+  - frontend production build
+  - local browser smoke against the staging API
+  - staging browser smoke through the direct VM URL
+  - direct VM backend/frontend smoke
+  - API Gateway backend smoke
+  - Gateway retrieval health remains `oracle_ai_vector_search`, 47 chunks, fallback inactive
+
+## Latest Advisory Response Layout Refinement
+
+- `TASK-046` completed as a frontend-only advisory readability increment.
+- Added a compact Decision Snapshot to the review result covering confidence, governance posture, next move, and risk watch.
+- Refined the Executive Brief with recommendation priority cards, clearer decision titles, and Markdown export iconography.
+- Added implementation exit criteria, comparison evidence chips, recommendation-confidence cards, and architecture tradeoff cards.
+- Fixed the Retrieval Provider Status panel so promoted Oracle AI Vector Search shows `Active read path` instead of the old shadow-only wording.
+- No staging runtime environment variables, retrieval provider settings, wallet files, Terraform resources, or backend service process were changed.
+- Promoted the built frontend bundle and matching frontend source files to the staging VM.
+- Validation passed:
+  - frontend lint
+  - frontend production build
+  - local browser smoke against staging API with a representative architecture prompt
+  - staging frontend smoke through the direct VM URL
+  - direct VM backend/frontend smoke
+  - API Gateway backend smoke
+  - Gateway retrieval health remains `oracle_ai_vector_search`, 47 chunks, fallback inactive
+  - `git diff --check`
+
+## Latest Oracle Vector Active-Read Promotion
+
+- `TASK-045` completed as the gated Oracle AI Vector Search active-read promotion.
+- Fixed the remaining staging blockers before promotion:
+  - added Terraform-managed Run Command IAM permissions for the backend dynamic group and verified a clean inline Run Command probe
+  - added explicit subnet security-list ingress for Autonomous Database TCPS `1522` from `10.20.10.0/24`
+  - replaced the stale VM runtime wallet after taking a timestamped backup
+  - added Oracle vector runtime env flags to `/etc/oci-architecture-studio.env` with a timestamped backup and mode `600`; secret values were fetched from OCI Vault in-process and were not printed
+- Added lazy Oracle DB connection pooling for the Oracle AI Vector Search provider. This removed per-query connection overhead and brought staging parity latency down to `77.32 ms` average Oracle vector latency.
+- Promoted staging to `RETRIEVAL_PROVIDER=oracle_ai_vector_search` while keeping `RETRIEVAL_FALLBACK_ENABLED=true` and `EMBEDDING_PROVIDER=local`.
+- Current Gateway/direct retrieval health: active provider `oracle_ai_vector_search`, 47 chunks, fallback enabled but inactive, no Oracle vector store error.
+- Rollback proof passed:
+  - switched staging back to `RETRIEVAL_PROVIDER=oci_object_storage`
+  - verified 47 chunks and fallback inactive
+  - switched staging forward again to `oracle_ai_vector_search`
+  - verified 47 chunks, fallback inactive, and service active
+- Validation passed:
+  - backend full suite: `129 passed`
+  - frontend lint and production build
+  - local retrieval regression: 18/18
+  - golden evals: 18/18
+  - edge evals: 8/8
+  - VM targeted backend tests: 33 passed
+  - VM Oracle vector validation: 18 cases, `1.0` average top-chunk overlap
+  - VM Oracle vector parity: 26/26
+  - VM Oracle vector retrieval regression: 18/18
+  - direct VM and API Gateway smoke
+  - post-promotion operational readiness passed with known warnings limited to inactive OCI DevOps metadata and one infrastructure rebuildability gap
+  - Terraform staging plan reports no changes
+
+## Latest Curated OCI Corpus Expansion
+
+- `TASK-043` completed as a candidate-only corpus expansion increment.
+- Added eight high-value official OCI source entries:
+  - OCI Network Firewall
+  - OCI Vulnerability Scanning
+  - OCI OS Management Hub
+  - OCI Container Instances
+  - OCI Queue
+  - OCI Health Checks
+  - OCI Database Management
+  - OCI Generative AI
+- Updated release-impact source hints so security, networking, observability, resilience, containers, database, and AI/ML release items can map to the new sources.
+- Tuned the SaaS reasoning profile to keep Logging in SaaS observability retrieval after the corpus expansion.
+- Offline candidate rebuild produced 55 chunks from 55 sources, 52 services, and 15 service domains.
+- No authoritative snapshot promotion, Object Storage upload, Oracle vector reload, or staging retrieval-provider change was performed.
+- Validation passed:
+  - source registry JSON validation
+  - `py_compile` for release intelligence and architecture reasoning code
+  - corpus health with `--min-chunks 55`
+  - retrieval regression: 18/18
+  - golden evals: 18/18
+  - advisory-quality evals: 5/5
+  - edge evals: 8/8
+  - targeted backend reasoning/retrieval tests: 16 passed
+  - `git diff --check`
+
+## Latest OCI GenAI Embeddings Shadow Activation
+
+- `TASK-044` completed as a shadow-only OCI GenAI embedding activation.
+- Selected `cohere.embed-v4.0` as the embedding model and used the project staging compartment from Terraform output.
+- Used 256 output dimensions to stay compatible with the current Oracle AI Vector Search shadow table/index dimension.
+- Upgraded the OCI Python SDK pin to `2.174.0` and wired the embedding adapter to send `outputDimensions` when `OCI_GENAI_EMBEDDING_DIMENSIONS` is configured.
+- Live embedding smoke passed with `cohere.embed-v4.0`, 256 dimensions, and non-empty vectors.
+- Built `/tmp/oci-rag-index-task044-genai.json` with 55 chunks from 55 sources, `embedding_provider=oci_genai`, and fallback disabled.
+- No authoritative snapshot promotion, Object Storage upload, Oracle vector table mutation, active embedding default change, or active retrieval-provider change was performed.
+- Validation passed:
+  - corpus health with `--min-chunks 55`
+  - refresh candidate validation
+  - retrieval regression: 18/18
+  - golden evals: 18/18
+  - advisory-quality evals: 5/5
+  - edge evals: 8/8
+  - Oracle vector local-index validation at 256 dimensions
+  - embedding visibility activation readiness
+  - backend embedding/retrieval/operational embedding tests: 6 passed
+  - deterministic local rollback baseline retrieval regression
+  - backend full test suite: 129 passed
+  - frontend production build
+  - frontend lint
+
+## Latest Retrieval Provider Status Panel
+
+- `TASK-042` completed as a read-only operational visibility increment.
+- Added typed frontend API support for `/retrieval/health`.
+- Added a Retrieval Provider Status panel beside the Knowledge Refresh Status panel.
+- The panel surfaces active provider, chunk count, fallback state, Object Storage source posture, embedding model, service/domain coverage, and Oracle AI Vector Search shadow posture.
+- No retrieval provider, refresh behavior, query-time refresh, or staging promotion setting changed.
+- Validation passed:
+  - frontend production build
+  - frontend lint
+  - backend `/retrieval/health` endpoint smoke
+  - browser smoke for panel rendering and text overflow
+  - `git diff --check`
+
+## Latest Ingestion-To-Retrieval Operator Doc
+
+- `TASK-041` completed as a docs-only operator/reviewer increment.
+- Added `docs/current/ingestion-to-retrieval-flow.md` to explain the path from approved OCI docs or fallback text through source registry, fetch/normalize, chunks, metadata enrichment, embeddings, `knowledge/snapshots/oci-rag-index.json`, OCI Object Storage active retrieval, and Oracle AI Vector Search shadow sync.
+- Linked the new guide from `knowledge/README.md`.
+- No runtime behavior, retrieval provider, refresh policy, or staging configuration changed.
+- Validation passed: `git diff --check`.
+
 ## Latest Knowledge Refresh Status Panel
 
 - `TASK-037` through `TASK-040` completed as the first low-risk operational visibility increment after the internal beta baseline.

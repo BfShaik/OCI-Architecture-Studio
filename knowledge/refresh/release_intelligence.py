@@ -36,15 +36,39 @@ DOMAIN_KEYWORDS: dict[str, tuple[str, ...]] = {
 }
 
 DOMAIN_TO_SOURCE_IDS: dict[str, tuple[str, ...]] = {
-    "security": ("oci-security-services-overview", "oci-iam-overview", "oci-vault-overview", "oci-cloud-guard-overview"),
+    "security": (
+        "oci-security-services-overview",
+        "oci-iam-overview",
+        "oci-vault-overview",
+        "oci-cloud-guard-overview",
+        "oci-network-firewall-overview",
+        "oci-vulnerability-scanning-overview",
+    ),
     "storage": ("oci-object-storage-overview", "oci-block-volume-overview", "oci-file-storage-overview"),
-    "networking": ("oci-vcn-overview", "oci-load-balancer-overview", "oci-dns-overview", "oci-fastconnect-overview"),
-    "database": ("oci-database-overview", "oci-autonomous-database-overview", "oci-mysql-heatwave-overview"),
-    "observability": ("oci-logging-overview", "oci-monitoring-overview", "oci-audit-overview", "oci-service-connector-hub-overview"),
-    "resilience": ("oci-full-stack-dr-overview", "oci-database-overview", "oci-object-storage-overview"),
+    "networking": (
+        "oci-vcn-overview",
+        "oci-load-balancer-overview",
+        "oci-dns-overview",
+        "oci-fastconnect-overview",
+        "oci-network-firewall-overview",
+    ),
+    "database": (
+        "oci-database-overview",
+        "oci-autonomous-database-overview",
+        "oci-mysql-heatwave-overview",
+        "oci-database-management-overview",
+    ),
+    "observability": (
+        "oci-logging-overview",
+        "oci-monitoring-overview",
+        "oci-audit-overview",
+        "oci-service-connector-hub-overview",
+        "oci-health-checks-overview",
+    ),
+    "resilience": ("oci-full-stack-dr-overview", "oci-database-overview", "oci-object-storage-overview", "oci-queue-overview"),
     "cost": ("oci-cost-management-overview", "oci-compute-overview", "oci-object-storage-overview"),
-    "containers": ("oci-kubernetes-engine-overview", "oci-container-registry-overview"),
-    "ai_ml": ("oci-data-science-overview", "oci-reference-ai-inference", "oci-compute-overview"),
+    "containers": ("oci-kubernetes-engine-overview", "oci-container-registry-overview", "oci-container-instances-overview"),
+    "ai_ml": ("oci-data-science-overview", "oci-generative-ai-overview", "oci-reference-ai-inference", "oci-compute-overview"),
     "analytics": ("oci-data-integration-overview", "oci-streaming-overview", "oci-goldengate-overview", "oci-object-storage-overview"),
 }
 
@@ -61,11 +85,17 @@ CHANGE_TO_IMPACT_TAG: dict[str, str] = {
 }
 
 CHANGE_TO_SOURCE_IDS: dict[str, tuple[str, ...]] = {
-    "observability-change": ("oci-logging-overview", "oci-monitoring-overview", "oci-audit-overview"),
-    "ha-dr-change": ("oci-full-stack-dr-overview", "oci-database-overview", "oci-dns-overview"),
+    "observability-change": ("oci-logging-overview", "oci-monitoring-overview", "oci-audit-overview", "oci-health-checks-overview"),
+    "ha-dr-change": ("oci-full-stack-dr-overview", "oci-database-overview", "oci-dns-overview", "oci-queue-overview"),
     "pricing-cost-change": ("oci-cost-management-overview",),
-    "security-change": ("oci-security-services-overview", "oci-iam-overview", "oci-vault-overview"),
-    "migration-relevance": ("oci-database-migration-overview", "oci-kubernetes-engine-overview"),
+    "security-change": (
+        "oci-security-services-overview",
+        "oci-iam-overview",
+        "oci-vault-overview",
+        "oci-network-firewall-overview",
+        "oci-vulnerability-scanning-overview",
+    ),
+    "migration-relevance": ("oci-database-migration-overview", "oci-kubernetes-engine-overview", "oci-container-instances-overview"),
     "compatibility-risk": ("oci-database-migration-overview", "oci-object-storage-overview"),
 }
 
@@ -78,21 +108,28 @@ SERVICE_TO_SOURCE_HINTS: dict[str, tuple[str, ...]] = {
     "Data Integration": ("oci-data-integration-overview",),
     "Data Safe": ("oci-data-safe-overview", "oci-security-services-overview"),
     "Database Migration": ("oci-database-migration-overview",),
+    "Database Management": ("oci-database-management-overview", "oci-database-overview"),
     "Database Services": ("oci-database-overview",),
     "DNS": ("oci-dns-overview",),
     "FastConnect": ("oci-fastconnect-overview",),
     "Full Stack Disaster Recovery": ("oci-full-stack-dr-overview",),
     "GoldenGate": ("oci-goldengate-overview",),
+    "Generative AI": ("oci-generative-ai-overview", "oci-reference-ai-inference"),
+    "Health Checks": ("oci-health-checks-overview", "oci-monitoring-overview"),
     "Load Balancer": ("oci-load-balancer-overview",),
     "Logging": ("oci-logging-overview",),
     "Monitoring": ("oci-monitoring-overview",),
     "MySQL HeatWave": ("oci-mysql-heatwave-overview",),
+    "Network Firewall": ("oci-network-firewall-overview",),
     "Network Security Groups": ("oci-network-security-groups-overview",),
     "Object Storage": ("oci-object-storage-overview",),
     "OCI Kubernetes Engine": ("oci-kubernetes-engine-overview",),
+    "OS Management Hub": ("oci-os-management-hub-overview",),
+    "Queue": ("oci-queue-overview",),
     "Secret Management": ("oci-vault-overview", "oci-security-services-overview"),
     "Vault": ("oci-vault-overview", "oci-security-services-overview"),
     "Virtual Cloud Network": ("oci-vcn-overview",),
+    "Vulnerability Scanning": ("oci-vulnerability-scanning-overview", "oci-security-services-overview"),
     "Web Application Firewall": ("oci-waf-overview",),
 }
 

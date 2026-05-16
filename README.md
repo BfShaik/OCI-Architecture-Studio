@@ -38,7 +38,7 @@ OCI Architecture Studio currently supports a validated advisory flow in local de
 7. The controlled orchestration layer selects deterministic specialist roles, shares the same retrieved evidence across them, and runs a validation critic over evidence support, citations, freshness, and unsupported-claim risk. These are in-process role boundaries, not autonomous agents.
 8. One final synthesis step generates the advisory response through the configured provider with deterministic rollback available. Deterministic synthesis now uses lightweight architecture pattern profiles, retrieved evidence, workload heuristics, and consistency checks rather than only profile boilerplate. OCI GenAI synthesis can be enabled through configuration and uses the same retrieved context through a dedicated grounding prompt builder.
 9. Release-awareness uses local release snapshots, deterministic release classification, impact analysis, release overlays on affected chunks, and refresh-policy automation. In staging, release-watch refresh now runs from the OCI backend VM cron path with live release fetch, quick gates, gated promotion, and Object Storage upload; stable-doc refresh remains safe/candidate-only. Refresh still never runs on user queries.
-10. The backend returns structured recommendations, concise decision reasoning metadata, consistency findings, confidence, evidence links, section citation metadata, deterministic enterprise-governance assessment metadata, lightweight architecture topology metadata, executive experience metadata, FinOps/migration optimization metadata, optional retrieval debug traces, release context, temporal knowledge context, and standard architecture response sections. The current UI renders the main advisory fields, executive brief, implementation sequence, topology/dependency summaries, comparison summaries, explainability highlights, migration/FinOps optimization summaries, exportable Markdown summary, citation cards, and a read-only Knowledge Refresh Status panel backed by `/knowledge/refresh/status`. Full section-level citation UI, live diagram rendering, and release-context UI are future work.
+10. The backend returns structured recommendations, concise decision reasoning metadata, consistency findings, confidence, evidence links, section citation metadata, deterministic enterprise-governance assessment metadata, lightweight architecture topology metadata, executive experience metadata, FinOps/migration optimization metadata, optional retrieval debug traces, release context, temporal knowledge context, and standard architecture response sections. The current UI renders the main advisory fields, executive brief, implementation sequence, topology/dependency summaries, comparison summaries, explainability highlights, migration/FinOps optimization summaries, exportable Markdown summary, citation cards, a read-only Knowledge Refresh Status panel backed by `/knowledge/refresh/status`, and a read-only Retrieval Provider Status panel backed by `/retrieval/health`. Full section-level citation UI, live diagram rendering, and release-context UI are future work.
 11. Operational diagnostics expose deployment profile, retrieval health, release refresh freshness, synthesis availability, OCI secret/config posture, API Gateway/OCI DevOps readiness metadata, infrastructure visibility, governance/risk counters, runtime readiness, and lightweight runtime analytics through additive endpoints. Live OCI connectivity checks are opt-in so local development stays offline-safe.
 
 LangGraph, advanced memory, and autonomous agent execution remain deferred. Oracle AI Vector Search provider code, Autonomous Database infrastructure, schema/index tooling, and shadow sync exist and have been validated against the refreshed 47-chunk snapshot, but staging active-read promotion remains deferred until refreshed parity, regression, smoke, and rollback gates pass without exception.
@@ -59,10 +59,10 @@ tests/                Backend and integration tests
 ## Current Capabilities
 
 - Local OCI source registry and ingestion pipeline
-- Curated local OCI architecture corpus with 47 chunks in the current branch
+- Curated local OCI architecture corpus with 55 chunks in the current branch after offline candidate rebuild
 - Scalable ingestion scaffolding for source groups, source categories, release tags, chunk lineage, section hierarchy, and source traceability
 - Deterministic local embeddings for development
-- Optional OCI Generative AI embeddings with provider switching, dimensional validation, failure diagnostics, and deterministic local fallback
+- Optional OCI Generative AI embeddings with provider switching, `cohere.embed-v4.0` shadow validation, dimensional validation, failure diagnostics, and deterministic local fallback
 - JSON vector index for local retrieval
 - Citation-friendly chunk metadata with service, service category, domain, workload, architecture pattern, trust, intent tags, migration mappings, and freshness score
 - Automatic chunk-level metadata enrichment for OCI service references, workload/domain labels, migration relevance, HA/DR relevance, cost relevance, security/compliance tags, and architecture pattern tags
@@ -98,6 +98,7 @@ tests/                Backend and integration tests
 - OCI-native release-watch refresh from the backend OCI Compute VM cron path with live release fetch, quick gates, gated promotion, and Object Storage upload; stable-doc refresh remains conservative/candidate-only
 - Continuous intelligence status endpoint at `/knowledge/refresh/status`
 - Read-only frontend Knowledge Refresh Status panel for VM cron run state, gate result, promotion/upload status, snapshot version, affected-source count, and rollback posture
+- Read-only frontend Retrieval Provider Status panel for active provider, chunk count, Object Storage source posture, fallback state, embedding model, and Oracle AI Vector Search shadow posture
 - OCI-native runtime profiles for `local_dev`, `oci_vm`, and `oke` under `infra/runtime-profiles/`
 - Additive operational diagnostics endpoints: `/operations/profile`, `/operations/health`, `/operations/readiness`, `/operations/infrastructure`, and `/operations/analytics`
 - Runtime readiness checks for startup paths, provider/dependency configuration, fallback paths, API Gateway readiness, OCI DevOps readiness, and runtime safeguards
@@ -168,7 +169,7 @@ Implemented today:
 
 Current limitations:
 
-- The active local corpus is still curated and incomplete, but has expanded to 47 chunks across 44 services and 14 service domains in the current branch.
+- The active local corpus is still curated and incomplete, but the current registry now rebuilds to 55 chunks across 52 services and 15 service domains in offline candidate validation. A shadow OCI GenAI embedding candidate using `cohere.embed-v4.0` at 256 dimensions passed local parity gates against the same 55-source corpus. Staging Object Storage remains on the last promoted 47-chunk snapshot until an operator promotion/upload is run.
 - OCI GenAI mode requires valid OCI SDK auth, compartment, model IDs, region/endpoint policy access, and parity validation before promotion.
 - Live GenAI comparison is skipped when required OCI GenAI environment variables are absent.
 - GenAI output is still constrained by retrieved evidence quality; deeper official OCI documentation coverage remains necessary before production-grade breadth.

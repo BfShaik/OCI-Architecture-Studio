@@ -2,6 +2,7 @@ import type {
   ArchitectureReviewRequest,
   ArchitectureReviewResponse,
   KnowledgeRefreshStatus,
+  RetrievalHealth,
 } from "../types";
 
 const API_BASE_URL =
@@ -34,6 +35,16 @@ export async function requestKnowledgeRefreshStatus(): Promise<KnowledgeRefreshS
 
   if (!response.ok) {
     throw new Error(`Knowledge refresh status failed: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function requestRetrievalHealth(): Promise<RetrievalHealth> {
+  const response = await fetch(`${API_BASE_URL}/retrieval/health`);
+
+  if (!response.ok) {
+    throw new Error(`Retrieval health failed: ${response.status}`);
   }
 
   return response.json();

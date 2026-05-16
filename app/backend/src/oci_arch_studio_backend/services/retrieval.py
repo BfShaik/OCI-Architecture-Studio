@@ -303,8 +303,7 @@ class OciKnowledgeRetriever:
     def _to_retrieved_source(self, chunk, score: float) -> RetrievedSource:
         metadata = chunk.metadata
         source_url = metadata.get("source_url") or chunk.url
-        freshness_score = metadata.get("freshness_score")
-        freshness_value = float(freshness_score) if isinstance(freshness_score, int | float) else None
+        freshness_value = _metadata_float(metadata.get("freshness_score"))
         fetched_timestamp = metadata.get("fetched_timestamp")
         fetched_value = str(fetched_timestamp) if fetched_timestamp else None
         return RetrievedSource(
@@ -662,3 +661,14 @@ def build_retriever(settings: Settings, top_k: int = 6) -> OciKnowledgeRetriever
 
 
 PlaceholderRetriever = OciKnowledgeRetriever
+
+
+def _metadata_float(value: object) -> float | None:
+    if value is None or isinstance(value, bool):
+        return None
+    if isinstance(value, int | float):
+        return float(value)
+    try:
+        return float(str(value))
+    except (TypeError, ValueError):
+        return None

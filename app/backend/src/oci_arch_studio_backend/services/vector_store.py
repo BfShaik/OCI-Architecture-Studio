@@ -1,4 +1,5 @@
 import json
+import threading
 from dataclasses import dataclass
 from pathlib import Path
 from time import perf_counter
@@ -374,6 +375,8 @@ class OracleAiVectorSearchStore:
         self.connection_factory = connection_factory
         self._last_error: str | None = None
         self._last_query: dict[str, object] = {}
+        self._pool: Any | None = None
+        self._pool_lock = threading.Lock()
 
     @property
     def exists(self) -> bool:
@@ -797,7 +800,18 @@ FETCH FIRST {limit} ROWS ONLY""".strip()
             connect_args["wallet_location"] = self.config.wallet_location
         if self.config.wallet_password:
             connect_args["wallet_password"] = self.config.wallet_password
-        return oracledb.connect(**connect_args)
+        create_pool = getattr(oracledb, "create_pool", None)
+        if create_pool is None:
+            return oracledb.connect(**connect_args)
+        with self._pool_lock:
+            if self._pool is None:
+                self._pool = create_pool(
+                    min=1,
+                    max=4,
+                    increment=1,
+                    **connect_args,
+                )
+        return self._pool.acquire()
 
     def _is_configured(self) -> bool:
         return not self._missing_config()

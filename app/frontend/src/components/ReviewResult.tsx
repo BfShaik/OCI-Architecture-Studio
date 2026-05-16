@@ -1,3 +1,14 @@
+import {
+  AlertTriangle,
+  Download,
+  Gauge,
+  GitBranch,
+  History,
+  Route,
+  Scale,
+  Search,
+  ShieldCheck,
+} from "lucide-react";
 import type { ArchitectureReviewResponse } from "../types";
 
 type ReviewResultProps = {
@@ -47,6 +58,11 @@ function downloadMarkdown(title: string, markdown: string) {
   URL.revokeObjectURL(url);
 }
 
+function sourceLabelById(result: ArchitectureReviewResponse, chunkId: string) {
+  const source = result.citations.find((citation) => citation.chunk_id === chunkId);
+  return source?.service || source?.title || chunkId;
+}
+
 export function ReviewResult({ result }: ReviewResultProps) {
   const citationCount = result.citations.length;
   const confidence = result.confidence;
@@ -54,6 +70,15 @@ export function ReviewResult({ result }: ReviewResultProps) {
   const visualization = experience?.architecture_visualization;
   const reviewArtifact = experience?.review_artifacts[0];
   const optimization = result.optimization_plan;
+  const governance = result.enterprise_governance;
+  const releaseContext = result.release_context;
+  const temporalContext = result.knowledge_temporal_context;
+  const retrievalDebug = result.retrieval_debug;
+  const firstDecision = experience?.decision_brief[0];
+  const firstRisk = result.risks[0] ?? "No material risk was flagged by the current review.";
+  const firstNextStep = result.next_steps[0] ?? "Confirm the architecture decision owner and implementation sequence.";
+  const firstConfidenceNote =
+    confidence?.notes[0] ?? "Confidence is based on retrieved OCI evidence and citation coverage.";
 
   return (
     <div className="review-result">
@@ -92,6 +117,130 @@ export function ReviewResult({ result }: ReviewResultProps) {
         ) : null}
       </section>
 
+      <section className="result-section decision-snapshot">
+        <h3>Decision Snapshot</h3>
+        <div className="snapshot-grid">
+          <article>
+            <Gauge size={18} aria-hidden="true" />
+            <strong>{confidence ? percent(confidence.overall) : "Pending"}</strong>
+            <span>{confidence ? `${confidence.level} confidence` : "confidence"}</span>
+            <p>{firstConfidenceNote}</p>
+          </article>
+          <article>
+            <ShieldCheck size={18} aria-hidden="true" />
+            <strong>{governance ? readable(governance.maturity_level) : "Governance"}</strong>
+            <span>{governance ? "review posture" : "not assessed"}</span>
+            <p>{governance?.executive_summary.risk_summary ?? firstRisk}</p>
+          </article>
+          <article>
+            <Route size={18} aria-hidden="true" />
+            <strong>{firstDecision ? readable(firstDecision.implementation_priority) : "Next move"}</strong>
+            <span>{firstDecision?.title ?? "implementation"}</span>
+            <p>{firstDecision?.summary ?? firstNextStep}</p>
+          </article>
+          <article>
+            <AlertTriangle size={18} aria-hidden="true" />
+            <strong>{result.risks.length} risk{result.risks.length === 1 ? "" : "s"}</strong>
+            <span>watch list</span>
+            <p>{firstRisk}</p>
+          </article>
+        </div>
+      </section>
+
+      <section className="result-section explainability-dashboard">
+        <div className="section-heading-row">
+          <div>
+            <h3>Explainability</h3>
+            <p>Service choices, rejected paths, retrieval signals, governance influence, and release context.</p>
+          </div>
+        </div>
+        <div className="influence-grid">
+          <article>
+            <Search size={18} aria-hidden="true" />
+            <strong>Retrieval Influence</strong>
+            <span>{confidence ? percent(confidence.retrieval) : "Not scored"}</span>
+            <p>
+              {retrievalDebug?.mapped_service_summary ||
+                `${citationCount} retrieved source${citationCount === 1 ? "" : "s"} shaped the recommendation set.`}
+            </p>
+          </article>
+          <article>
+            <ShieldCheck size={18} aria-hidden="true" />
+            <strong>Governance Influence</strong>
+            <span>{governance ? readable(governance.maturity_level) : "Not assessed"}</span>
+            <p>{governance?.executive_summary.governance_posture ?? "No governance constraints were elevated."}</p>
+          </article>
+          <article>
+            <History size={18} aria-hidden="true" />
+            <strong>Release Influence</strong>
+            <span>{confidence ? percent(confidence.release_awareness) : "Not scored"}</span>
+            <p>
+              {releaseContext?.maturity_notes[0] ||
+                temporalContext?.notes[0] ||
+                "Guidance uses the active knowledge snapshot and release overlay when relevant."}
+            </p>
+          </article>
+          <article>
+            <Gauge size={18} aria-hidden="true" />
+            <strong>Confidence Scoring</strong>
+            <span>{confidence ? `${confidence.level} · ${percent(confidence.overall)}` : "Not scored"}</span>
+            <p>{firstConfidenceNote}</p>
+          </article>
+        </div>
+
+        {result.decision_reasoning.length ? (
+          <div className="service-selection-list">
+            {result.decision_reasoning.slice(0, 4).map((reason, index) => (
+              <article key={`${reason.recommendation}-${reason.why_chosen}`}>
+                <div>
+                  <GitBranch size={18} aria-hidden="true" />
+                  <span>Decision {index + 1}</span>
+                </div>
+                <strong>{reason.service ?? "Architecture decision"}</strong>
+                <p>{reason.why_chosen}</p>
+                {reason.workload_signal ? <small>{reason.workload_signal}</small> : null}
+                <div className="explainability-tags">
+                  <span>confidence {percent(reason.confidence)}</span>
+                  {reason.source_chunk_ids.slice(0, 3).map((chunkId) => (
+                    <span key={`${reason.recommendation}-${chunkId}`}>
+                      {sourceLabelById(result, chunkId)}
+                    </span>
+                  ))}
+                </div>
+                {reason.alternatives_rejected.length ? (
+                  <div className="rejected-paths">
+                    <Scale size={16} aria-hidden="true" />
+                    <p>Rejected: {reason.alternatives_rejected.slice(0, 2).join("; ")}</p>
+                  </div>
+                ) : null}
+              </article>
+            ))}
+          </div>
+        ) : null}
+
+        {retrievalDebug ? (
+          <div className="retrieval-trace">
+            <article>
+              <strong>Mapped Services</strong>
+              <p>{retrievalDebug.mapped_oci_services.slice(0, 8).join(", ") || "None reported"}</p>
+            </article>
+            <article>
+              <strong>Domain Signals</strong>
+              <p>{retrievalDebug.domain_heuristics.slice(0, 8).map(readable).join(", ") || "None reported"}</p>
+            </article>
+            <article>
+              <strong>Selected Evidence</strong>
+              <p>
+                {retrievalDebug.selected_final_chunks
+                  .slice(0, 5)
+                  .map((chunkId) => sourceLabelById(result, chunkId))
+                  .join(", ") || "None reported"}
+              </p>
+            </article>
+          </div>
+        ) : null}
+      </section>
+
       {experience ? (
         <section className="result-section executive-brief">
           <div className="section-heading-row">
@@ -105,15 +254,28 @@ export function ReviewResult({ result }: ReviewResultProps) {
                 className="secondary-action"
                 onClick={() => downloadMarkdown(reviewArtifact.title, reviewArtifact.markdown_summary)}
               >
+                <Download size={16} aria-hidden="true" />
                 Export Markdown
               </button>
             ) : null}
           </div>
+          {governance?.recommendation_priorities.length ? (
+            <div className="priority-strip">
+              {governance.recommendation_priorities.slice(0, 4).map((item) => (
+                <article key={`${item.recommendation_index}-${item.priority}`}>
+                  <span>{readable(item.priority)}</span>
+                  <strong>{item.implementation_phase}</strong>
+                  <p>{item.rationale}</p>
+                </article>
+              ))}
+            </div>
+          ) : null}
           <div className="decision-grid">
             {experience.decision_brief.map((decision, index) => (
               <article key={`decision-${index}`}>
                 <span>{readable(decision.implementation_priority)}</span>
-                <h4>{decision.summary}</h4>
+                <h4>{decision.title}</h4>
+                <p>{decision.summary}</p>
                 <p>{decision.business_impact}</p>
                 <small>{decision.risk_visibility}</small>
               </article>
@@ -135,6 +297,13 @@ export function ReviewResult({ result }: ReviewResultProps) {
                     <li key={`${phase.phase}-action-${index}`}>{action}</li>
                   ))}
                 </ul>
+                {phase.exit_criteria.length ? (
+                  <div className="exit-criteria">
+                    {phase.exit_criteria.slice(0, 2).map((criterion, index) => (
+                      <span key={`${phase.phase}-exit-${index}`}>{criterion}</span>
+                    ))}
+                  </div>
+                ) : null}
               </article>
             ))}
           </div>
@@ -187,6 +356,12 @@ export function ReviewResult({ result }: ReviewResultProps) {
                 </div>
                 <p>{comparison.operational_complexity}</p>
                 <p>{comparison.cost_implications}</p>
+                {comparison.pros.length || comparison.cons.length ? (
+                  <div className="comparison-evidence">
+                    {comparison.pros[0] ? <span>{comparison.pros[0]}</span> : null}
+                    {comparison.cons[0] ? <span>{comparison.cons[0]}</span> : null}
+                  </div>
+                ) : null}
                 {comparison.governance_implications.length ? (
                   <small>{comparison.governance_implications.slice(0, 2).join(" ")}</small>
                 ) : null}
@@ -316,6 +491,20 @@ export function ReviewResult({ result }: ReviewResultProps) {
               ))}
             </ul>
           ) : null}
+          {result.recommendation_confidence.length ? (
+            <div className="recommendation-confidence-list">
+              {result.recommendation_confidence.slice(0, 4).map((item, index) => (
+                <article key={`${item.recommendation}-${index}`}>
+                  <div>
+                    <strong>{percent(item.score)}</strong>
+                    <span>{item.level}</span>
+                  </div>
+                  <p>{item.recommendation}</p>
+                  <small>{item.reasoning_basis}</small>
+                </article>
+              ))}
+            </div>
+          ) : null}
         </section>
       ) : null}
 
@@ -345,6 +534,17 @@ export function ReviewResult({ result }: ReviewResultProps) {
                   {reason.alternatives_rejected.length ? (
                     <small>Alternatives: {reason.alternatives_rejected.slice(0, 2).join("; ")}</small>
                   ) : null}
+                </article>
+              ))}
+            </div>
+          ) : null}
+          {result.architecture_tradeoffs.length ? (
+            <div className="tradeoff-list">
+              {result.architecture_tradeoffs.slice(0, 3).map((tradeoff) => (
+                <article key={`${tradeoff.dimension}-${tradeoff.decision}`}>
+                  <strong>{tradeoff.dimension}</strong>
+                  <p>{tradeoff.decision}</p>
+                  <small>{tradeoff.cost_or_risk}</small>
                 </article>
               ))}
             </div>

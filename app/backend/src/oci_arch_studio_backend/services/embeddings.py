@@ -88,6 +88,8 @@ class OciGenerativeAiEmbedder:
             inputs=[text],
             truncate="END",
         )
+        if self.config.expected_dimensions is not None:
+            details.output_dimensions = self.config.expected_dimensions
         response = client.embed_text(details)
         embeddings = getattr(response.data, "embeddings", None) or []
         if not embeddings:

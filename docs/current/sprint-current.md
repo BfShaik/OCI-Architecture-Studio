@@ -4,7 +4,7 @@
 
 Maintain the validated OCI Architecture Studio staging baseline while advancing enterprise-beta retrieval, knowledge refresh, and operational visibility safely.
 
-The current state uses `oci_object_storage` as the active staging retrieval provider after controlled config-only promotion. `local_json` remains the validated rollback provider. Oracle AI Vector Search is shadow-loaded and validated, but active reads remain gated until final parity, regression, smoke, operational readiness, and rollback checks pass.
+The current state uses `oracle_ai_vector_search` as the active staging retrieval provider after gated promotion. Object Storage remains the immediate config-only rollback provider, `local_json` remains the local fallback provider, and `RETRIEVAL_FALLBACK_ENABLED=true` is retained on staging.
 
 ## Timebox / Status
 
@@ -13,12 +13,8 @@ The original two-week sprint is complete and archived in `docs/archive/two-week-
 ## Current Priorities
 
 1. Keep the Knowledge Refresh Status panel and `/knowledge/refresh/status` aligned with the OCI VM cron path.
-2. Add a beginner-friendly ingestion-to-retrieval flow doc section.
-3. Add a read-only Retrieval Provider Status panel for active provider, chunk count, Object Storage source, fallback status, and Oracle vector shadow posture.
-4. Expand the curated official OCI corpus beyond 47 sources.
-5. Run OCI GenAI embeddings in shadow/parity mode before any embedding promotion.
-6. Promote Oracle AI Vector Search active reads only after refreshed parity and rollback gates pass.
-7. Add OCI Monitoring custom metrics for refresh/gate health.
+2. Keep Oracle AI Vector Search active reads healthy while preserving the Object Storage rollback path.
+3. Add OCI Monitoring custom metrics for refresh/gate health.
 
 ## Sprint Scope
 
@@ -39,12 +35,15 @@ In scope:
 - Object Storage retrieval promotion and rollback validation
 - backend OCI VM cron release-watch refresh with gated Object Storage upload
 - Knowledge Refresh Status UI panel
-- Oracle AI Vector Search shadow table/index and sync validation
+- Retrieval Provider Status UI panel
+- beginner-friendly ingestion-to-retrieval operator flow documentation
+- Oracle AI Vector Search active-read staging promotion and rollback validation
+- executive and architecture-review advisory response layout refinement
+- explainability UI for retrieval, governance, release-awareness, service selection, rejected alternatives, and confidence scoring
 - evidence-linked recommendations and confidence scoring
 - advisory-quality eval suite
 
 Out of scope:
-- Oracle AI Vector Search active-read cutover until promotion gates pass
 - LangGraph
 - advanced memory systems
 - external schedulers or GitHub Actions for operational orchestration
@@ -70,11 +69,15 @@ Latest validation/current posture:
 - frontend build: passed
 - Terraform validation: passed for `dev`, `test`, and `staging`
 - staging smoke passed through OCI API Gateway and direct VM rollback path
-- active staging retrieval: `oci_object_storage`
-- current corpus: 47 chunks/sources
+- active staging retrieval: `oracle_ai_vector_search`
+- current registry candidate corpus: 55 chunks/sources
+- active staging retrieval snapshot: 47 chunks until operator promotion/upload
 - latest promoted release-watch refresh: 12 live release items
-- Oracle AI Vector Search: shadow-loaded and validated, not active
-- OCI GenAI synthesis/embeddings: implemented and configurable, not default
+- Oracle AI Vector Search: active on staging with 47 chunks, fallback enabled but inactive; parity, regression, smoke, operational readiness, and rollback drill passed
+- advisory UI: Decision Snapshot, priority cards, implementation exit criteria, comparison evidence, recommendation-confidence cards, and tradeoff cards are deployed to staging
+- explainability UI: dedicated influence cards, service-selection rationale, rejected alternatives, mapped services, domain signals, and selected evidence labels are deployed to staging
+- OCI GenAI synthesis: implemented and configurable, not default
+- OCI GenAI embeddings: `cohere.embed-v4.0` shadow candidate validated at 256 dimensions, not default
 
 ## Two-Week Plan Archive
 

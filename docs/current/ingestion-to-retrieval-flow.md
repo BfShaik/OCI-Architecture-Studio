@@ -1,0 +1,125 @@
+# Ingestion To Retrieval Flow
+
+Last updated: 2026-05-16
+
+This guide explains how OCI Architecture Studio turns approved OCI documentation sources into grounded advisory retrieval. It is written for operators and reviewers who need to understand the path without reading the ingestion code first.
+
+## One-Line Flow
+
+```text
+Official OCI docs or fallback source text
+  -> source registry
+  -> fetched and normalized text
+  -> chunks
+  -> metadata enrichment
+  -> embeddings
+  -> knowledge/snapshots/oci-rag-index.json
+  -> OCI Object Storage active retrieval
+  -> Oracle AI Vector Search shadow sync
+```
+
+Refresh jobs follow the same basic shape, but they build candidate snapshots first and promote them only after quality gates pass.
+
+## Source Registry
+
+The approved architecture corpus starts in `knowledge/source_registry.json`. Each source record provides the stable source ID, title, official OCI documentation URL, source category, source group, and offline fallback text.
+
+The fallback text is intentional. It keeps local development and CI deterministic when network access is unavailable, and it gives operators a safe way to run `--no-fetch` smoke tests without changing the retrieval contract.
+
+## Fetch And Normalize
+
+`knowledge/ingestion/ingest.py` reads the registry and tries to fetch each official OCI documentation page unless `--no-fetch` is set. Fetched HTML is parsed into text, noisy page chrome is removed, and source-group defaults are merged into each source before chunking.
+
+Typical local build:
+
+```bash
+python3 knowledge/ingestion/ingest.py
+```
+
+Offline deterministic build:
+
+```bash
+python3 knowledge/ingestion/ingest.py --no-fetch
+```
+
+The release-aware path uses `knowledge/release_source_registry.json` and `knowledge/refresh/ingest_releases.py` to build `knowledge/snapshots/oci-release-snapshot.json`. Release refresh is separate from normal advisory ingestion so current release signals do not destabilize the architecture corpus.
+
+## Chunk And Enrich
+
+Normalized source text is split into reviewable chunks. Each chunk keeps enough lineage for traceability:
+
+- source ID, title, source URL, and source type
+- parent document and section context
+- chunk hash and fetch status
+- generated timestamp
+
+The ingestion pipeline then enriches each chunk with advisory metadata used by retrieval and evaluation:
+
+- OCI service and service domain
+- service category and source category
+- intent tags such as architecture, migration, cost, DR, security, and release awareness
+- workload, domain, and architecture-pattern tags
+- trust level, freshness score, and content hash
+
+This metadata is not decorative. It is used for retrieval filters, reranking, citation cards, corpus health checks, release impact overlays, and Oracle AI Vector Search materialization.
+
+## Embed
+
+Each chunk receives an embedding before it can be used for retrieval. The current stable path uses deterministic local embeddings so local development, CI, and rollback tests are repeatable.
+
+OCI Generative AI embeddings are implemented behind configuration, but they are not the default. They must pass shadow parity, dimension validation, retrieval regression, Object Storage parity, Oracle shadow reload, and rollback proof before promotion.
+
+## Snapshot
+
+The generated knowledge index is written to:
+
+```text
+knowledge/snapshots/oci-rag-index.json
+```
+
+That JSON snapshot is the portable retrieval manifest. It contains index metadata, embedding metadata, schema version, vector-readiness flags, and the chunk records with text, embeddings, and enriched metadata.
+
+Before promotion, operators validate the snapshot with corpus health, retrieval health, retrieval regression, and the relevant advisory eval subset. Refresh-policy runs write candidate snapshots under `knowledge/reports/runs/<run_id>/candidates` first; authoritative snapshots are updated only after gates pass.
+
+## Object Storage Active Retrieval
+
+In staging, `oci_object_storage` is the active retrieval provider. After a gated promotion, the validated `oci-rag-index.json` and `oci-release-snapshot.json` are uploaded to the staging Object Storage bucket.
+
+At query time, the backend loads the active Object Storage manifest, applies metadata-aware retrieval and reranking, and returns grounded chunks to the advisory orchestration layer. `local_json` remains the tested rollback provider and uses the same snapshot format.
+
+Refresh never runs on user queries. It is operator-triggered or scheduled through the OCI backend VM cron path, and it promotes only after candidate gates pass.
+
+## Oracle AI Vector Search Shadow Sync
+
+Oracle AI Vector Search is currently a shadow provider, not the active read path. The shadow index is rebuilt from the same promoted `oci-rag-index.json` snapshot used by Object Storage.
+
+The sync tool is:
+
+```bash
+python3 infra/scripts/oracle_vector_index.py rebuild \
+  --index-path knowledge/snapshots/oci-rag-index.json
+```
+
+The rebuild validates that chunks have embeddings, expected dimensions, and required service metadata before upserting them into the Autonomous Database table `OCI_ARCHITECTURE_CHUNKS`. The table stores chunk text, vector embeddings, metadata JSON, service/domain fields, source lineage, and citation-friendly fields.
+
+Oracle AI Vector Search active-provider promotion remains gated behind `TASK-045`. Until that gate passes, Object Storage stays active and Oracle vector validation is used only for parity, latency, and rollback confidence.
+
+## Operator Checklist
+
+For a normal local ingestion check:
+
+1. Build or rebuild the local snapshot with `knowledge/ingestion/ingest.py`.
+2. Run corpus health against `knowledge/snapshots/oci-rag-index.json`.
+3. Run retrieval regression before treating the snapshot as promotion-ready.
+4. Promote and upload only through the refresh policy or a reviewed operator flow.
+5. Rebuild Oracle AI Vector Search shadow from the promoted snapshot, not from an unvalidated candidate.
+6. Keep `RETRIEVAL_PROVIDER=oci_object_storage` until the Oracle active-read promotion gate passes.
+
+## Safe Defaults
+
+- Local development defaults to deterministic embeddings and `local_json`.
+- Staging active retrieval uses `oci_object_storage`.
+- Oracle AI Vector Search remains shadow-only.
+- Refresh candidates are validated before promotion.
+- Stable-doc refresh stays conservative until separately validated.
+- Rollback uses the prior promoted snapshot or `local_json`.

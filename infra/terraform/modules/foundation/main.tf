@@ -93,6 +93,16 @@ resource "oci_core_security_list" "public" {
     }
   }
 
+  ingress_security_rules {
+    protocol = "6"
+    source   = var.public_subnet_cidr
+
+    tcp_options {
+      min = 1522
+      max = 1522
+    }
+  }
+
   egress_security_rules {
     protocol    = "all"
     destination = "0.0.0.0/0"
@@ -391,6 +401,8 @@ resource "oci_identity_policy" "backend_access" {
     "Allow dynamic-group ${oci_identity_dynamic_group.backend_instances.name} to read secret-bundles in compartment ${oci_identity_compartment.project.name}",
     "Allow dynamic-group ${oci_identity_dynamic_group.backend_instances.name} to use keys in compartment ${oci_identity_compartment.project.name}",
     "Allow dynamic-group ${oci_identity_dynamic_group.backend_instances.name} to use metrics in compartment ${oci_identity_compartment.project.name}",
+    "Allow dynamic-group ${oci_identity_dynamic_group.backend_instances.name} to use instance-agent-command-family in compartment ${oci_identity_compartment.project.name}",
+    "Allow dynamic-group ${oci_identity_dynamic_group.backend_instances.name} to use instance-agent-command-execution-family in compartment ${oci_identity_compartment.project.name} where request.instance.id = target.instance.id",
   ]
 }
 
