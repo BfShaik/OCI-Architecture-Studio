@@ -740,6 +740,7 @@ Last validation run: 2026-05-15
 - Presentation-friendly architecture diagrams: added in `docs/architecture/architecture-diagrams.md`
 - Documentation refresh: README, PRD, roadmap, vision, sprint docs, runbooks, demo readiness, architecture docs, promotion report, GenAI hardening notes, and supervised orchestration notes now reflect the current promoted staging state
 - Release Context advisory UI: added an executive-grade release visibility panel with release match counts, affected services, recommendation-affecting services, impact/change categories, snapshot timing, temporal boundary, and release maturity notes. Validation passed frontend lint/build, backend full suite, 18/18 retrieval regression, local deployment smoke, staging direct/API Gateway smoke, Oracle vector retrieval health, env/snapshot hash guardrails, and browser smoke with a release-aware prompt.
+- Architecture Map advisory UI: added a lightweight visualization panel with topology/deployment/HA-DR summaries, lane-based OCI service map, service relationship evidence, implementation path, and operational notes. Validation passed frontend lint/build, focused topology/API tests, backend full suite, 18/18 retrieval regression, local deployment smoke, staging direct/API Gateway smoke, Oracle vector retrieval health, env/snapshot hash guardrails, and browser smoke with a representative topology prompt.
 
 ## Pending
 

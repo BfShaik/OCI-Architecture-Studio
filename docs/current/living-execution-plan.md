@@ -58,8 +58,8 @@ Keep these items in the active work queue until each has validation evidence and
 | WIP-011 | Planned | Refine the main advisory response layout for stronger executive and architecture-review readability. Group executive summary, recommended-now items, recommended-later items, risks, evidence, and rollout guidance into clearer scan-friendly sections. | Frontend lint/build, browser smoke with representative architecture, migration, cost, and release-aware prompts. |
 | WIP-012 | Planned | Improve explainability UI so users can see why services were selected, why alternatives were not selected, and how retrieval, governance, release-awareness, and confidence influenced the recommendation. | Frontend lint/build, backend response-contract check, browser smoke, advisory eval subset. |
 | WIP-013 | Done | Improved release-context visibility in the UI, including release match counts, affected services, recommendation-affecting services, impact/change categories, snapshot timestamp, temporal boundary, and maturity notes. | Passed frontend lint/build, backend tests, local retrieval regression, local deployment smoke, staging direct/API Gateway smoke, retrieval health, env/snapshot hash guardrails, and browser smoke with a release-aware prompt. |
-| WIP-014 | Ready | Add lightweight architecture visualization for OCI service relationships, topology summaries, HA/DR posture, and migration phases without introducing a heavy diagram engine. | Frontend tests/build, browser smoke, representative topology output review. |
-| WIP-015 | Future | Add saved review history and prompt/session history with a storage and security design that fits the OCI-native runtime direction. | Storage/security review, backend tests, frontend tests/build, local and staging smoke. |
+| WIP-014 | Done | Added lightweight architecture visualization for OCI service relationships, topology summaries, HA/DR posture, and migration phases without introducing a heavy diagram engine. | Passed frontend lint/build, focused topology/API tests, backend full suite, local retrieval regression, local deployment smoke, staging direct/API Gateway smoke, retrieval health, env/snapshot hash guardrails, and browser smoke with a representative topology prompt. |
+| WIP-015 | Ready | Add saved review history and prompt/session history with a storage and security design that fits the OCI-native runtime direction. | Storage/security review, backend tests, frontend tests/build, local and staging smoke. |
 | WIP-016 | Future | Improve section-level citation presentation so recommendations and rationale can be traced more directly to retrieved sources. | Advisory eval subset, citation coverage check, frontend build, browser smoke. |
 
 ## Priority Order
@@ -149,8 +149,8 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | TASK-046 | Done | Refine the advisory response layout for executive and architecture-review readability. | Added Decision Snapshot, recommendation priority cards, implementation exit criteria, comparison evidence chips, recommendation-confidence cards, and tradeoff cards. Fixed the promoted Oracle vector status label. Frontend lint/build, local browser smoke with a representative architecture prompt, staging frontend smoke, direct VM smoke, API Gateway smoke, retrieval health, and `git diff --check` passed. |
 | TASK-047 | Done | Add explainability UI for service selection, rejected alternatives, retrieval influence, governance influence, release-awareness influence, and confidence scoring. | Enabled retrieval debug traces for UI review requests; added Explainability panel with influence cards, service-selection rationale, rejected alternatives, mapped services, domain signals, and selected evidence labels. Frontend lint/build, local browser smoke, staging browser smoke, direct VM smoke, API Gateway smoke, and retrieval health passed. |
 | TASK-048 | Done | Improve release-context visibility in the advisory UI. | Added Release Context summary cards and detail panels for release matches, affected services, recommendation-affecting services, impact/change categories, snapshot timing, temporal boundary, and release notes. Passed frontend lint/build, backend full suite, local retrieval regression, local deployment smoke, staging direct/API Gateway smoke, retrieval health, env/snapshot hash guardrails, and browser smoke with a release-aware prompt. |
-| TASK-049 | Next | Add lightweight architecture visualization for service relationships, topology summaries, HA/DR posture, and migration phases. | Frontend tests/build, browser smoke, representative topology output review. |
-| TASK-050 | Future | Add saved review history and prompt/session history after storage and security design are agreed. | Storage/security review, backend tests, frontend tests/build, local and staging smoke. |
+| TASK-049 | Done | Add lightweight architecture visualization for service relationships, topology summaries, HA/DR posture, and migration phases. | Added Architecture Map summary cards, lane-based service map, relationship evidence board, implementation path, and operational notes using the existing `architecture_topology` contract. Passed frontend lint/build, focused topology/API tests, backend full suite, local retrieval regression, local deployment smoke, staging direct/API Gateway smoke, retrieval health, env/snapshot hash guardrails, and browser smoke with a representative topology prompt. |
+| TASK-050 | Next | Add saved review history and prompt/session history after storage and security design are agreed. | Storage/security review, backend tests, frontend tests/build, local and staging smoke. |
 | TASK-051 | Future | Improve section-level citation presentation for recommendation traceability. | Advisory eval subset, citation coverage check, frontend build, browser smoke. |
 
 ## Phase Gates
@@ -199,14 +199,14 @@ Run the appropriate subset after each increment; run the full matrix before a ne
 
 ## Next Actionable Increment
 
-Current task: `TASK-049`.
+Current task: `TASK-050`.
 
-Next logical increment after release-context UI:
+Next logical increment after architecture visualization:
 
-1. Add lightweight architecture visualization for service relationships, topology summaries, HA/DR posture, and migration phases.
+1. Add saved review history and prompt/session history with an OCI-safe storage and security design.
 2. Keep active staging retrieval on `oracle_ai_vector_search` with Object Storage fallback enabled.
 3. Preserve the rollback path by keeping `RETRIEVAL_PROVIDER=oci_object_storage` validated as the immediate config-only rollback.
-4. Run frontend lint/build, browser smoke, backend response-contract checks, and the advisory eval subset before any staging UI promotion.
+4. Run frontend lint/build, browser smoke, backend response-contract checks, and privacy/security review before any staging UI promotion.
 
 ## Operating Rules
 

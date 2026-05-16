@@ -1,19 +1,32 @@
 import {
   AlertTriangle,
   Activity,
+  ArrowRight,
+  Boxes,
   CalendarClock,
+  Cloud,
   ClipboardCheck,
+  Database,
   Download,
+  Eye,
   Gauge,
   GitBranch,
   History,
   Layers,
+  Network,
   Route,
   Scale,
   Search,
+  Server,
   ShieldCheck,
+  Workflow,
 } from "lucide-react";
-import type { ArchitectureReviewResponse } from "../types";
+import type {
+  ArchitectureReviewResponse,
+  ArchitectureTopologyNode,
+  ArchitectureTopologyRelationship,
+  MigrationPhasePlan,
+} from "../types";
 
 type ReviewResultProps = {
   result: ArchitectureReviewResponse;
@@ -87,13 +100,107 @@ function displayTimestamp(value?: string | null) {
   }).format(timestamp);
 }
 
+const topologyLanes = [
+  {
+    id: "access",
+    title: "Access",
+    roles: ["traffic-management", "edge-delivery", "edge-security", "ingress", "network"],
+  },
+  {
+    id: "runtime",
+    title: "Runtime",
+    roles: ["application-runtime", "serverless-runtime", "event-stream", "supporting-service"],
+  },
+  {
+    id: "data",
+    title: "Data",
+    roles: ["data", "storage", "data-pipeline"],
+  },
+  {
+    id: "control",
+    title: "Control",
+    roles: ["identity", "security", "audit", "migration", "dr-orchestration"],
+  },
+  {
+    id: "operations",
+    title: "Operations",
+    roles: ["observability", "operations"],
+  },
+];
+
+function laneForRole(role: string) {
+  return topologyLanes.find((lane) => lane.roles.includes(role)) ?? topologyLanes[1];
+}
+
+function topologyIcon(role: string) {
+  if (["data", "storage", "data-pipeline"].includes(role)) {
+    return <Database size={18} aria-hidden="true" />;
+  }
+  if (["identity", "security", "audit"].includes(role)) {
+    return <ShieldCheck size={18} aria-hidden="true" />;
+  }
+  if (["observability", "operations"].includes(role)) {
+    return <Eye size={18} aria-hidden="true" />;
+  }
+  if (["traffic-management", "edge-delivery", "edge-security", "ingress", "network"].includes(role)) {
+    return <Network size={18} aria-hidden="true" />;
+  }
+  if (["migration", "dr-orchestration"].includes(role)) {
+    return <Workflow size={18} aria-hidden="true" />;
+  }
+  if (["application-runtime", "serverless-runtime", "event-stream"].includes(role)) {
+    return <Server size={18} aria-hidden="true" />;
+  }
+  return <Cloud size={18} aria-hidden="true" />;
+}
+
+function groupTopologyNodes(nodes: ArchitectureTopologyNode[]) {
+  const groups = new Map(topologyLanes.map((lane) => [lane.id, [] as ArchitectureTopologyNode[]]));
+  nodes.forEach((node) => {
+    const lane = laneForRole(node.role);
+    groups.get(lane.id)?.push(node);
+  });
+  return topologyLanes
+    .map((lane) => ({
+      ...lane,
+      nodes: groups.get(lane.id) ?? [],
+    }))
+    .filter((lane) => lane.nodes.length);
+}
+
+function labelForNode(nodes: ArchitectureTopologyNode[], nodeId: string) {
+  return nodes.find((node) => node.node_id === nodeId)?.label ?? readable(nodeId);
+}
+
+function relationshipSummary(nodes: ArchitectureTopologyNode[], relationship: ArchitectureTopologyRelationship) {
+  return `${labelForNode(nodes, relationship.from_node)} to ${labelForNode(nodes, relationship.to_node)}`;
+}
+
+function migrationSteps(
+  migrationFlow: string[] | undefined,
+  phases: MigrationPhasePlan[] | undefined,
+) {
+  if (migrationFlow?.length) {
+    return migrationFlow;
+  }
+  return phases?.map((phase) => phase.phase) ?? [];
+}
+
+function topologyNotes(notes: string[] | undefined) {
+  return (notes ?? []).filter((note) => !note.toLowerCase().includes("not a rendered network diagram"));
+}
+
 export function ReviewResult({ result }: ReviewResultProps) {
   const citationCount = result.citations.length;
   const confidence = result.confidence;
   const experience = result.executive_experience;
   const visualization = experience?.architecture_visualization;
-  const reviewArtifact = experience?.review_artifacts[0];
+  const topology = result.architecture_topology;
   const optimization = result.optimization_plan;
+  const topologyNodeGroups = groupTopologyNodes(topology?.nodes ?? []);
+  const topologySteps = migrationSteps(visualization?.migration_flow, optimization?.migration_phases);
+  const displayedTopologyNotes = topologyNotes(topology?.operational_notes);
+  const reviewArtifact = experience?.review_artifacts[0];
   const governance = result.enterprise_governance;
   const releaseContext = result.release_context;
   const temporalContext = result.knowledge_temporal_context;
@@ -399,36 +506,93 @@ export function ReviewResult({ result }: ReviewResultProps) {
         </section>
       ) : null}
 
-      {visualization ? (
+      {visualization || topology ? (
         <section className="result-section topology-panel">
-          <h3>Architecture View</h3>
+          <div className="section-heading-row">
+            <div>
+              <h3>Architecture Map</h3>
+              <p>Service relationships, topology posture, HA/DR boundaries, and implementation flow.</p>
+            </div>
+          </div>
           <div className="topology-grid">
             <div>
               <h4>Topology</h4>
-              <p>{visualization.topology_summary}</p>
+              <p>{visualization?.topology_summary ?? topology?.topology_summary}</p>
             </div>
             <div>
               <h4>Deployment</h4>
-              <p>{visualization.deployment_view}</p>
+              <p>{visualization?.deployment_view ?? topology?.deployment_topology}</p>
             </div>
             <div>
               <h4>HA/DR</h4>
-              <p>{visualization.ha_dr_view}</p>
+              <p>{visualization?.ha_dr_view ?? topology?.ha_dr_topology}</p>
             </div>
           </div>
-          {visualization.dependency_summary.length ? (
+
+          {topologyNodeGroups.length ? (
+            <div className="topology-map" aria-label="Architecture service map">
+              {topologyNodeGroups.map((lane, laneIndex) => (
+                <article key={lane.id} className="topology-lane">
+                  <div className="topology-lane-heading">
+                    <span>{lane.title}</span>
+                    {laneIndex < topologyNodeGroups.length - 1 ? <ArrowRight size={15} aria-hidden="true" /> : null}
+                  </div>
+                  <div className="topology-node-stack">
+                    {lane.nodes.slice(0, 3).map((node) => (
+                      <div key={node.node_id} className="topology-node-card">
+                        {topologyIcon(node.role)}
+                        <div>
+                          <strong>{node.label}</strong>
+                          <span>{readable(node.role)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : null}
+
+          {topology?.service_dependencies.length ? (
+            <div className="relationship-board">
+              <div className="relationship-board-heading">
+                <Boxes size={18} aria-hidden="true" />
+                <strong>Service Relationships</strong>
+              </div>
+              <div className="relationship-list">
+                {topology.service_dependencies.slice(0, 6).map((relationship, index) => (
+                  <article key={`${relationship.from_node}-${relationship.to_node}-${index}`}>
+                    <span>{readable(relationship.relationship)}</span>
+                    <strong>{relationshipSummary(topology.nodes, relationship)}</strong>
+                    <p>{relationship.rationale}</p>
+                  </article>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {!topology?.service_dependencies.length && visualization?.dependency_summary.length ? (
             <div className="dependency-flow">
               {visualization.dependency_summary.slice(0, 6).map((dependency, index) => (
                 <span key={`dependency-${index}`}>{dependency}</span>
               ))}
             </div>
           ) : null}
-          {visualization.migration_flow.length ? (
+
+          {topologySteps.length ? (
             <ol className="migration-flow">
-              {visualization.migration_flow.map((step, index) => (
+              {topologySteps.slice(0, 4).map((step, index) => (
                 <li key={`flow-${index}-${step}`}>{step}</li>
               ))}
             </ol>
+          ) : null}
+
+          {displayedTopologyNotes.length ? (
+            <div className="topology-notes">
+              {displayedTopologyNotes.slice(0, 3).map((note, index) => (
+                <span key={`topology-note-${index}`}>{note}</span>
+              ))}
+            </div>
           ) : null}
         </section>
       ) : null}
