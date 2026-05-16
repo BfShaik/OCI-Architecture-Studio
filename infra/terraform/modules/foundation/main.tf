@@ -401,6 +401,7 @@ resource "oci_identity_policy" "backend_access" {
     "Allow dynamic-group ${oci_identity_dynamic_group.backend_instances.name} to read secret-bundles in compartment ${oci_identity_compartment.project.name}",
     "Allow dynamic-group ${oci_identity_dynamic_group.backend_instances.name} to use keys in compartment ${oci_identity_compartment.project.name}",
     "Allow dynamic-group ${oci_identity_dynamic_group.backend_instances.name} to use metrics in compartment ${oci_identity_compartment.project.name}",
+    "Allow dynamic-group ${oci_identity_dynamic_group.backend_instances.name} to use generative-ai-family in compartment ${oci_identity_compartment.project.name}",
     "Allow dynamic-group ${oci_identity_dynamic_group.backend_instances.name} to use instance-agent-command-family in compartment ${oci_identity_compartment.project.name}",
     "Allow dynamic-group ${oci_identity_dynamic_group.backend_instances.name} to use instance-agent-command-execution-family in compartment ${oci_identity_compartment.project.name} where request.instance.id = target.instance.id",
   ]
