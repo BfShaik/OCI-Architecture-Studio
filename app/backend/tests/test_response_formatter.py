@@ -12,6 +12,9 @@ def test_section_citations_track_chunk_document_and_category() -> None:
                 service="Logging",
                 service_domain="observability",
                 service_category="observability",
+                source_url="https://docs.oracle.com/logging",
+                relevance_score=0.88,
+                trust_level="official",
                 summary="OCI Logging captures service and application logs.",
             )
         ]
@@ -22,3 +25,8 @@ def test_section_citations_track_chunk_document_and_category() -> None:
     assert observability.sources[0].chunk_id == "logging::1"
     assert observability.sources[0].source_document == "OCI Logging Overview"
     assert observability.sources[0].oci_service_category == "observability"
+    assert observability.sources[0].source_url == "https://docs.oracle.com/logging"
+    assert observability.sources[0].relevance_score == 0.88
+    assert observability.sources[0].trust_level == "official"
+    assert observability.source_count == 1
+    assert "one directly matched OCI source" in observability.traceability_note

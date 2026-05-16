@@ -71,11 +71,16 @@ class SectionCitationSource(BaseModel):
     source_document: str
     oci_service_category: str | None = None
     service: str | None = None
+    source_url: str | None = None
+    relevance_score: float | None = None
+    trust_level: str | None = None
 
 
 class SectionCitation(BaseModel):
     section: str
     sources: list[SectionCitationSource] = Field(default_factory=list)
+    source_count: int = 0
+    traceability_note: str | None = None
 
 
 class RetrievalScoreTrace(BaseModel):

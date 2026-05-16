@@ -2,6 +2,32 @@
 
 Last updated: 2026-05-16
 
+## Latest Section Citation Traceability
+
+- `TASK-052` completed as a recommendation traceability increment.
+- Enriched section citation response metadata with source URLs, relevance scores, trust level, source counts, and traceability notes.
+- Added section-citation eval checks so citation-required cases must have linked section evidence and no orphaned section chunk IDs.
+- Added a Section Traceability panel to the advisory UI showing section-to-source mappings, S1/S2 source references, matched source counts, and direct OCI source links.
+- Improved Evidence Links so each recommendation displays its supporting S-numbered source labels.
+- Added S-number badges to the Sources list so section and recommendation evidence can be followed quickly by reviewers.
+- No staging runtime environment values, retrieval provider flags, Object Storage objects, or Oracle vector rows were changed.
+- Validation passed:
+  - backend full suite: `132 passed`
+  - focused response/API tests: 12 passed
+  - frontend lint
+  - frontend production build
+  - local retrieval regression: 18/18
+  - architecture-realism evals: 7/7
+  - golden evals: 18/18
+  - local browser smoke for Section Traceability rendering and S-numbered evidence links
+  - VM focused response/API tests: 12 passed
+  - direct VM and API Gateway smoke
+  - Gateway traceability API check: 10/10 linked sections
+  - staging browser smoke for Section Traceability rendering and S-numbered evidence links
+  - Gateway retrieval health remained `oracle_ai_vector_search`, 60 chunks, fallback inactive
+  - env hash remained unchanged
+  - `git diff --check`
+
 ## Latest Saved Review History
 
 - `TASK-051` completed as a secure saved review history increment.

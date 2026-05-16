@@ -152,8 +152,8 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | TASK-049 | Done | Add lightweight architecture visualization for service relationships, topology summaries, HA/DR posture, and migration phases. | Added Architecture Map summary cards, lane-based service map, relationship evidence board, implementation path, and operational notes using the existing `architecture_topology` contract. Passed frontend lint/build, focused topology/API tests, backend full suite, local retrieval regression, local deployment smoke, staging direct/API Gateway smoke, retrieval health, env/snapshot hash guardrails, and browser smoke with a representative topology prompt. |
 | TASK-050 | Done | Improve OCI architecture service accuracy and promote the 60-source architecture corpus to active Oracle vector retrieval. | Added Architecture Center-style reference sources for secure landing zones, EKS-to-OKE migration, database DR, analytics data lake, and enterprise observability; added landing-zone, EKS-to-OKE, and database DR evals; corrected ECR to Container Registry mapping; protected explicit service evidence selection for security prompts. Passed corpus health, 18/18 retrieval regression, 7/7 architecture-realism retrieval/evals, 18/18 golden evals, backend full suite, frontend lint/build, VM focused tests, direct/API Gateway smoke, live landing-zone evidence check, and env/release/knowledge hash guardrails. Staging Oracle AI Vector Search is active with 60 chunks and fallback inactive. |
 | TASK-051 | Done | Add saved review history and prompt/session history after storage and security design are agreed. | Added redacted file-backed review history with 50-record retention, mode `600` writes, list/detail/delete APIs, `review_id` response metadata, and a Saved Reviews UI for refresh, open, active-state, and delete. Persisted records exclude retrieval/synthesis debug traces and redact obvious secrets. Deployment/eval smoke paths opt out of persistence. Passed backend full suite, focused API tests, frontend lint/build, golden evals, local browser smoke, VM focused tests, direct/API Gateway smoke, Gateway history redaction/delete smoke, staging browser smoke, retrieval health, env hash guardrail, and `git diff --check`. |
-| TASK-052 | Next | Improve section-level citation presentation for recommendation traceability. | Advisory eval subset, citation coverage check, frontend build, browser smoke. |
-| TASK-053 | Future | Add operator controls for review history retention/export policy. | Security review, retention tests, frontend build, browser smoke. |
+| TASK-052 | Done | Improve section-level citation presentation for recommendation traceability. | Enriched section citation metadata with source URLs, relevance, trust level, source counts, and traceability notes; added eval checks for section citations; added UI section-to-source traceability cards, S-numbered recommendation evidence links, and S-number source badges. Passed backend full suite, focused response/API tests, frontend lint/build, retrieval regression, architecture-realism evals, golden evals, local browser smoke, and `git diff --check`. |
+| TASK-053 | Next | Add operator controls for review history retention/export policy. | Security review, retention tests, frontend build, browser smoke. |
 
 ## Phase Gates
 
@@ -201,14 +201,14 @@ Run the appropriate subset after each increment; run the full matrix before a ne
 
 ## Next Actionable Increment
 
-Current task: `TASK-052`.
+Current task: `TASK-053`.
 
-Next logical increment after saved review history:
+Next logical increment after section citation traceability:
 
-1. Improve section-level citation presentation so reviewers can trace each answer section to supporting OCI sources.
+1. Add operator-visible controls and policy documentation for review history retention/export.
 2. Keep active staging retrieval on `oracle_ai_vector_search` with Object Storage fallback enabled.
 3. Preserve saved review history redaction and avoid storing raw debug traces.
-4. Run frontend lint/build, browser smoke, backend response-contract checks, and citation coverage checks before any staging UI promotion.
+4. Run retention/security tests, frontend lint/build, and browser smoke before any staging UI promotion.
 
 ## Operating Rules
 

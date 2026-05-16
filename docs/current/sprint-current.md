@@ -44,6 +44,7 @@ In scope:
 - architecture map UI with topology summaries, lane-based service relationships, implementation path, and operational notes
 - OCI architecture accuracy corpus and retrieval tuning for landing zones, EKS-to-OKE migration, database DR, analytics platforms, and observability
 - secure saved review history and prompt/session recall
+- section-level citation traceability with source-indexed recommendation evidence
 - evidence-linked recommendations and confidence scoring
 - advisory-quality eval suite
 
@@ -84,6 +85,7 @@ Latest validation/current posture:
 - architecture map UI: deployed to staging and passed local lint/build, focused topology/API tests, backend full suite, retrieval regression, local smoke, staging direct/API Gateway smoke, retrieval health, hash guardrails, and browser smoke
 - OCI architecture accuracy: landing-zone, EKS-to-OKE, and database DR evals are in regression; live Gateway landing-zone evidence now prioritizes IAM, VCN, Vault, Cloud Guard, Audit, and Logging
 - saved review history: redacted file-backed history APIs and left-rail UI are deployed to staging; validation traffic opts out of persistence, and local/staging tests, direct/API Gateway smoke, Gateway history redaction/delete smoke, and staging browser smoke passed
+- section citation traceability: enriched section citation metadata and UI passed backend tests, frontend lint/build, retrieval regression, golden evals, architecture-realism evals, local browser smoke, staging focused tests, direct/gateway smoke, gateway traceability validation, and staging browser smoke
 - OCI GenAI synthesis: implemented and configurable, not default
 - OCI GenAI embeddings: `cohere.embed-v4.0` shadow candidate validated at 256 dimensions, not default
 

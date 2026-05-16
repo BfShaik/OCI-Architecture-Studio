@@ -209,11 +209,7 @@ def build_section_citations(sources: list[RetrievedSource]) -> list[SectionCitat
     citations: list[SectionCitation] = []
     for section in STANDARD_RESPONSE_SECTIONS:
         hints = set(section_hints.get(section, ()))
-        matched = [
-            source
-            for source in valid_sources
-            if not hints or source.service_domain in hints or source.service_category in hints or source.category in hints
-        ]
+        matched = _rank_section_sources(valid_sources, hints)
         citations.append(
             SectionCitation(
                 section=section,
@@ -223,9 +219,56 @@ def build_section_citations(sources: list[RetrievedSource]) -> list[SectionCitat
                         source_document=source.title,
                         oci_service_category=source.service_category or source.service_domain or source.category,
                         service=source.service,
+                        source_url=source.source_url or source.url,
+                        relevance_score=source.relevance_score,
+                        trust_level=source.trust_level,
                     )
                     for source in matched[:3]
                 ],
+                source_count=len(matched),
+                traceability_note=_section_traceability_note(section, len(matched)),
             )
         )
     return citations
+
+
+def _rank_section_sources(sources: list[RetrievedSource], hints: set[str]) -> list[RetrievedSource]:
+    if not hints:
+        return sorted(
+            sources,
+            key=lambda source: (
+                float(source.relevance_score or 0.0),
+                1 if source.trust_level == "official" else 0,
+                source.title,
+            ),
+            reverse=True,
+        )
+    scored: list[tuple[int, float, str, RetrievedSource]] = []
+    for source in sources:
+        fields = {
+            source.service_domain,
+            source.service_category,
+            source.category,
+            source.topic,
+            source.workload,
+            *source.intent_tags,
+            *source.architecture_patterns,
+            *source.domain_tags,
+            *source.workload_types,
+            *source.ha_dr_tags,
+            *source.cost_optimization_tags,
+        }
+        overlap = len(hints & {str(field) for field in fields if field})
+        if overlap <= 0:
+            continue
+        scored.append((overlap, float(source.relevance_score or 0.0), source.title, source))
+    scored.sort(key=lambda item: (item[0], item[1], item[2]), reverse=True)
+    return [source for _overlap, _relevance, _title, source in scored]
+
+
+def _section_traceability_note(section: str, source_count: int) -> str:
+    if source_count >= 2:
+        return f"{section} is traceable to {source_count} retrieved OCI source(s)."
+    if source_count == 1:
+        return f"{section} has one directly matched OCI source; validate specialized design details before approval."
+    return f"{section} has no direct section-specific source match; use the overall citation list as provisional evidence."

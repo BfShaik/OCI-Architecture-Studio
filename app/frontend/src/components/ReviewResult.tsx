@@ -26,6 +26,7 @@ import type {
   ArchitectureTopologyNode,
   ArchitectureTopologyRelationship,
   MigrationPhasePlan,
+  SectionCitationSource,
 } from "../types";
 
 type ReviewResultProps = {
@@ -78,6 +79,18 @@ function downloadMarkdown(title: string, markdown: string) {
 function sourceLabelById(result: ArchitectureReviewResponse, chunkId: string) {
   const source = result.citations.find((citation) => citation.chunk_id === chunkId);
   return source?.service || source?.title || chunkId;
+}
+
+function sourceIndexById(result: ArchitectureReviewResponse, chunkId?: string | null) {
+  if (!chunkId) {
+    return null;
+  }
+  const index = result.citations.findIndex((citation) => citation.chunk_id === chunkId);
+  return index >= 0 ? index + 1 : null;
+}
+
+function sourceCardKey(source: SectionCitationSource, index: number) {
+  return `${source.chunk_id ?? source.source_document}-${index}`;
 }
 
 function displayList(values: string[], fallback = "None reported") {
@@ -814,16 +827,86 @@ export function ReviewResult({ result }: ReviewResultProps) {
                 Recommendation {link.recommendation_index + 1}: {link.support_level}
               </strong>
               <p>{link.rationale}</p>
+              {link.source_chunk_ids.length || link.source_titles.length ? (
+                <div className="evidence-source-row">
+                  {link.source_chunk_ids.map((chunkId, index) => {
+                    const sourceIndex = sourceIndexById(result, chunkId);
+                    return (
+                      <span key={`${chunkId}-${index}`}>
+                        {sourceIndex ? `S${sourceIndex}` : "Source"} · {sourceLabelById(result, chunkId)}
+                      </span>
+                    );
+                  })}
+                  {!link.source_chunk_ids.length
+                    ? link.source_titles.map((title) => <span key={title}>{title}</span>)
+                    : null}
+                </div>
+              ) : null}
             </article>
           ))}
+        </section>
+      ) : null}
+
+      {result.section_citations.length ? (
+        <section className="result-section section-citation-panel">
+          <div className="section-heading-row">
+            <div>
+              <h3>Section Traceability</h3>
+              <p>Each answer section is mapped to the most relevant retrieved OCI evidence.</p>
+            </div>
+            <span className="traceability-summary">
+              {result.section_citations.filter((item) => item.sources.length).length}/
+              {result.section_citations.length} sections linked
+            </span>
+          </div>
+          <div className="section-citation-grid">
+            {result.section_citations.map((section) => (
+              <article key={section.section}>
+                <div>
+                  <strong>{section.section}</strong>
+                  <span>{section.source_count ?? section.sources.length} matched</span>
+                </div>
+                {section.traceability_note ? <p>{section.traceability_note}</p> : null}
+                {section.sources.length ? (
+                  <div className="section-source-list">
+                    {section.sources.map((source, index) => {
+                      const sourceIndex = sourceIndexById(result, source.chunk_id);
+                      return (
+                        <a
+                          key={sourceCardKey(source, index)}
+                          href={source.source_url ?? `#source-${sourceIndex ?? index + 1}`}
+                          target={source.source_url ? "_blank" : undefined}
+                          rel={source.source_url ? "noreferrer" : undefined}
+                        >
+                          <span>{sourceIndex ? `S${sourceIndex}` : "Source"}</span>
+                          <strong>{source.service ?? source.source_document}</strong>
+                          <small>
+                            {source.oci_service_category ?? "oci evidence"}
+                            {typeof source.relevance_score === "number"
+                              ? ` · ${source.relevance_score.toFixed(2)}`
+                              : ""}
+                          </small>
+                        </a>
+                      );
+                    })}
+                  </div>
+                ) : null}
+              </article>
+            ))}
+          </div>
         </section>
       ) : null}
 
       <section className="result-section citations">
         <h3>Sources</h3>
         {result.citations.map((source, index) => (
-          <article key={`${source.chunk_id ?? source.title}-${index}`} className="source-item">
+          <article
+            key={`${source.chunk_id ?? source.title}-${index}`}
+            id={`source-${index + 1}`}
+            className="source-item"
+          >
             <div>
+              <span className="source-index">S{index + 1}</span>
               <strong>{source.title}</strong>
               {source.service ? <span>{source.service}</span> : null}
               {source.service_domain ? <span>{source.service_domain}</span> : null}

@@ -323,6 +323,7 @@ def validate_structure(response: dict[str, Any]) -> EvalCheck:
         "assumptions": list,
         "risks": list,
         "citations": list,
+        "section_citations": list,
         "next_steps": list,
         "evidence_links": list,
         "quality_warnings": list,
@@ -524,6 +525,44 @@ def validate_evidence_links(case: dict[str, Any], response: dict[str, Any]) -> E
     return EvalCheck("evidence_links", passed, score, 10, details)
 
 
+def validate_section_citations(case: dict[str, Any], response: dict[str, Any]) -> EvalCheck:
+    if not case.get("citation_required", False):
+        return EvalCheck("section_citations", True, 10, 10, ["section citations not required"])
+
+    sections = response.get("section_citations", [])
+    details: list[str] = []
+    if len(sections) < 6:
+        details.append("fewer than six section citation groups")
+
+    linked_sections = [
+        section
+        for section in sections
+        if section.get("sources")
+        and section.get("source_count", 0) >= len(section.get("sources", []))
+        and section.get("traceability_note")
+    ]
+    if len(linked_sections) < 4:
+        details.append("fewer than four sections have traceable sources")
+
+    source_ids = {
+        citation.get("chunk_id")
+        for citation in response.get("citations", [])
+        if citation.get("chunk_id")
+    }
+    orphaned = [
+        source.get("chunk_id")
+        for section in linked_sections
+        for source in section.get("sources", [])
+        if source.get("chunk_id") and source.get("chunk_id") not in source_ids
+    ]
+    if orphaned:
+        details.append(f"section citation chunk ids missing from citations: {', '.join(orphaned[:3])}")
+
+    passed = not details
+    score = 10 if passed else max(0, 10 - (len(details) * 4))
+    return EvalCheck("section_citations", passed, score, 10, details)
+
+
 def validate_confidence(case: dict[str, Any], response: dict[str, Any]) -> EvalCheck:
     confidence = response.get("confidence")
     if not isinstance(confidence, dict):
@@ -707,6 +746,7 @@ def evaluate_case(client: TestClient, case: dict[str, Any]) -> dict[str, Any]:
         validate_grounding(case, response),
         validate_retrieval_support(case, response),
         validate_evidence_links(case, response),
+        validate_section_citations(case, response),
         validate_confidence(case, response),
         validate_reasoning_metadata(case, response),
         validate_consistency_metadata(case, response),

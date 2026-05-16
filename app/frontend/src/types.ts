@@ -40,11 +40,16 @@ export type SectionCitationSource = {
   source_document: string;
   oci_service_category?: string | null;
   service?: string | null;
+  source_url?: string | null;
+  relevance_score?: number | null;
+  trust_level?: string | null;
 };
 
 export type SectionCitation = {
   section: string;
   sources: SectionCitationSource[];
+  source_count?: number;
+  traceability_note?: string | null;
 };
 
 export type RetrievalScoreTrace = {
