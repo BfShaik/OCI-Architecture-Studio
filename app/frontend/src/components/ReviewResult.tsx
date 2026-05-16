@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   AlertTriangle,
   Activity,
@@ -33,6 +34,16 @@ import type {
 type ReviewResultProps = {
   result: ArchitectureReviewResponse;
 };
+
+type ResultTab = "overview" | "plan" | "architecture" | "evidence" | "diagnostics";
+
+const resultTabs: { id: ResultTab; label: string; description: string }[] = [
+  { id: "overview", label: "Overview", description: "Summary, decision posture, recommendations, risks, and next steps." },
+  { id: "plan", label: "Plan", description: "Executive priorities, implementation sequence, migration, and FinOps actions." },
+  { id: "architecture", label: "Architecture", description: "Topology, service relationships, and decision comparisons." },
+  { id: "evidence", label: "Evidence", description: "Why the recommendation was made, citations, traceability, and sources." },
+  { id: "diagnostics", label: "Diagnostics", description: "Release context, orchestration, and confidence internals." },
+];
 
 function Section({ title, items }: { title: string; items: string[] }) {
   if (!items.length) {
@@ -90,6 +101,17 @@ function answerSections(answer: string) {
     .map((section) => section.trim())
     .filter(Boolean);
   return sections.length > 1 ? sections : [answer];
+}
+
+function compactAnswer(answer: string) {
+  const section = answerSections(answer)[0] ?? answer;
+  const cleaned = section
+    .replace(/^\d+\.\s*/, "")
+    .replace(/^Executive Summary\s*/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const sentences = cleaned.match(/[^.!?]+[.!?]+/g) ?? [cleaned];
+  return sentences.slice(0, 2).join(" ").trim();
 }
 
 function downloadMarkdown(title: string, markdown: string) {
@@ -284,6 +306,7 @@ function topologyNotes(notes: string[] | undefined) {
 }
 
 export function ReviewResult({ result }: ReviewResultProps) {
+  const [activeTab, setActiveTab] = useState<ResultTab>("overview");
   const citationCount = result.citations.length;
   const confidence = result.confidence;
   const experience = result.executive_experience;
@@ -314,11 +337,12 @@ export function ReviewResult({ result }: ReviewResultProps) {
     (item) => item.recommendation,
   );
   const resultSections = [
-    { title: "Recommendations", items: uniqueByNormalized(result.recommendations, (item) => item) },
-    { title: "Assumptions", items: uniqueByNormalized(result.assumptions, (item) => item) },
-    { title: "Risks", items: uniqueByNormalized(result.risks, (item) => item) },
-    { title: "Next Steps", items: uniqueByNormalized(result.next_steps, (item) => item) },
+    { title: "Recommendations", items: uniqueByNormalized(result.recommendations, (item) => item).slice(0, 5) },
+    { title: "Risks", items: uniqueByNormalized(result.risks, (item) => item).slice(0, 3) },
+    { title: "Next Steps", items: uniqueByNormalized(result.next_steps, (item) => item).slice(0, 3) },
+    { title: "Assumptions", items: uniqueByNormalized(result.assumptions, (item) => item).slice(0, 3) },
   ];
+  const activeTabDescription = resultTabs.find((tab) => tab.id === activeTab)?.description;
 
   return (
     <div className="review-result">
@@ -351,9 +375,7 @@ export function ReviewResult({ result }: ReviewResultProps) {
         </div>
         {experience ? <p className="executive-summary">{experience.executive_summary}</p> : null}
         <div className="answer-sections">
-          {answerSections(result.answer).slice(0, 4).map((section, index) => (
-            <p key={`answer-${index}`}>{section}</p>
-          ))}
+          <p>{compactAnswer(result.answer)}</p>
         </div>
         {qualityWarningItems.length ? (
           <div className="quality-warnings" aria-label="Quality warnings">
@@ -364,6 +386,25 @@ export function ReviewResult({ result }: ReviewResultProps) {
         ) : null}
       </section>
 
+      <section className="result-nav-panel" aria-label="Review sections">
+        <div className="result-tabs" role="tablist" aria-label="Architecture review sections">
+          {resultTabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab.id}
+              className={activeTab === tab.id ? "active" : undefined}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        {activeTabDescription ? <p>{activeTabDescription}</p> : null}
+      </section>
+
+      {activeTab === "diagnostics" ? (
       <section className="result-section release-context-panel">
         <div className="section-heading-row">
           <div>
@@ -419,7 +460,9 @@ export function ReviewResult({ result }: ReviewResultProps) {
           </div>
         ) : null}
       </section>
+      ) : null}
 
+      {activeTab === "overview" ? (
       <section className="result-section decision-snapshot">
         <h3>Decision Snapshot</h3>
         <div className="snapshot-grid">
@@ -449,7 +492,9 @@ export function ReviewResult({ result }: ReviewResultProps) {
           </article>
         </div>
       </section>
+      ) : null}
 
+      {activeTab === "evidence" ? (
       <section className="result-section explainability-dashboard">
         <div className="section-heading-row">
           <div>
@@ -543,8 +588,9 @@ export function ReviewResult({ result }: ReviewResultProps) {
           </div>
         ) : null}
       </section>
+      ) : null}
 
-      {experience ? (
+      {activeTab === "plan" && experience ? (
         <section className="result-section executive-brief">
           <div className="section-heading-row">
             <div>
@@ -589,7 +635,7 @@ export function ReviewResult({ result }: ReviewResultProps) {
         </section>
       ) : null}
 
-      {experience?.implementation_sequence.length ? (
+      {activeTab === "plan" && experience?.implementation_sequence.length ? (
         <section className="result-section sequence-panel">
           <h3>Implementation Sequence</h3>
           <div className="sequence-list">
@@ -615,7 +661,7 @@ export function ReviewResult({ result }: ReviewResultProps) {
         </section>
       ) : null}
 
-      {visualization || topology ? (
+      {activeTab === "architecture" && (visualization || topology) ? (
         <section className="result-section topology-panel">
           <div className="section-heading-row">
             <div>
@@ -706,7 +752,7 @@ export function ReviewResult({ result }: ReviewResultProps) {
         </section>
       ) : null}
 
-      {experience?.comparison_summary.length ? (
+      {activeTab === "architecture" && experience?.comparison_summary.length ? (
         <section className="result-section comparison-panel">
           <h3>Decision Comparisons</h3>
           <div className="comparison-list">
@@ -733,7 +779,7 @@ export function ReviewResult({ result }: ReviewResultProps) {
         </section>
       ) : null}
 
-      {optimization ? (
+      {activeTab === "plan" && optimization ? (
         <section className="result-section optimization-panel">
           <div className="section-heading-row">
             <div>
@@ -800,7 +846,7 @@ export function ReviewResult({ result }: ReviewResultProps) {
         </section>
       ) : null}
 
-      {result.active_agents.length || result.critic_findings.length ? (
+      {activeTab === "diagnostics" && (result.active_agents.length || result.critic_findings.length) ? (
         <section className="result-section orchestration-panel">
           <h3>Controlled Orchestration</h3>
           {result.routing_decision ? <p>{result.routing_decision}</p> : null}
@@ -833,7 +879,7 @@ export function ReviewResult({ result }: ReviewResultProps) {
         </section>
       ) : null}
 
-      {confidence ? (
+      {activeTab === "diagnostics" && confidence ? (
         <section className="result-section confidence-panel">
           <h3>Confidence</h3>
           <div className="confidence-grid">
@@ -875,13 +921,15 @@ export function ReviewResult({ result }: ReviewResultProps) {
         </section>
       ) : null}
 
+      {activeTab === "overview" ? (
       <div className="result-grid">
         {resultSections.map((section) => (
           <Section key={section.title} title={section.title} items={section.items} />
         ))}
       </div>
+      ) : null}
 
-      {experience?.explainability_highlights.length || result.decision_reasoning.length ? (
+      {activeTab === "evidence" && (experience?.explainability_highlights.length || result.decision_reasoning.length) ? (
         <section className="result-section explainability-panel">
           <h3>Why This Recommendation</h3>
           {experience?.explainability_highlights.length ? (
@@ -905,7 +953,7 @@ export function ReviewResult({ result }: ReviewResultProps) {
         </section>
       ) : null}
 
-      {result.evidence_links.length ? (
+      {activeTab === "evidence" && result.evidence_links.length ? (
         <section className="result-section evidence-links">
           <h3>Evidence Links</h3>
           {result.evidence_links.map((link) => (
@@ -934,7 +982,7 @@ export function ReviewResult({ result }: ReviewResultProps) {
         </section>
       ) : null}
 
-      {result.section_citations.length ? (
+      {activeTab === "evidence" && result.section_citations.length ? (
         <section className="result-section section-citation-panel">
           <div className="section-heading-row">
             <div>
@@ -984,6 +1032,7 @@ export function ReviewResult({ result }: ReviewResultProps) {
         </section>
       ) : null}
 
+      {activeTab === "evidence" ? (
       <section className="result-section citations">
         <h3>Sources</h3>
         {result.citations.map((source, index) => (
@@ -1028,6 +1077,7 @@ export function ReviewResult({ result }: ReviewResultProps) {
           </article>
         ))}
       </section>
+      ) : null}
     </div>
   );
 }
