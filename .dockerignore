@@ -1,0 +1,14 @@
+.git
+.terraform
+**/.terraform
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/node_modules
+app/frontend/dist
+knowledge/reports
+evals/reports
+*.tfstate
+*.tfstate.backup
+*.tfplan
+.DS_Store

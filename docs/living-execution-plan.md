@@ -101,8 +101,8 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | TASK-029 | Done | Refresh Candidate Quality Gate. | Added candidate-only refresh mode and candidate snapshot validator; controlled forced `release-watch` candidate run passed without promotion or upload: 47 chunks, 5 releases, candidate metadata/release integrity validation, retrieval health, 26-case retrieval regression, 18/18 golden evals, and 5/5 advisory-quality evals. Authoritative snapshot SHA-256 hashes remained unchanged. |
 | TASK-030 | Done | Object Storage Refresh Promotion. | Promoted a validated controlled `release-watch` candidate with 47 chunks and 5 releases; uploaded refreshed `oci-rag-index.json` and `oci-release-snapshot.json` to OCI Object Storage bucket `oci-architecture-studio-staging-knowledge-snapshots`; Object Storage retrieval health passed, 26-case retrieval regression passed, Gateway smoke passed, and operational readiness passed with known OCI DevOps/rebuildability warnings only. |
 | TASK-031 | Done | Oracle Vector Refresh Sync. | Rebuilt Oracle AI Vector Search shadow index from the promoted snapshot on the staging backend VM; upserted 47 chunks; table/index health passed with 47 chunks, 44 services, 14 service domains, valid schema, and no missing config; vector validation passed 26 cases with 0.977 average top-chunk overlap. Active retrieval remains `oci_object_storage`. |
-| TASK-032 | Next | OCI Function Image Packaging. | Build `infra/functions/knowledge-refresh`, push immutable OCIR image tag, and validate packaged Function invocation before scheduler enablement. |
-| TASK-033 | Pending | OCI Resource Scheduler Enablement. | Enable Terraform scheduler variables, review plan, apply only expected Functions, Resource Scheduler, dynamic group, policy, and output changes; diagnostics expose Function and schedule OCIDs. |
+| TASK-032 | Done | OCI Function Image Packaging. | Built and pushed immutable OCIR image `iad.ocir.io/idsmrn7rvqb6/oci-architecture-studio/knowledge-refresh:20260516-d73fa2c-task032-r3` with digest `sha256:28b85ed1ee6cac61a335f92ee1d53c258a7aa47864ede02989282bf930c07fc9`; packaged forced candidate-only invocation passed candidate validation, retrieval health, and 26-case retrieval regression. |
+| TASK-033 | Next | OCI Resource Scheduler Enablement. | Enable Terraform scheduler variables, review plan, apply only expected Functions, Resource Scheduler, dynamic group, policy, and output changes; diagnostics expose Function and schedule OCIDs. |
 | TASK-034 | Pending | Scheduled Refresh Dry Run. | Trigger scheduler/Function path in safe mode with `no_fetch=true`, `quick_gates=true`, `upload=false`; confirm logs, reports, and readiness show the scheduler path works. |
 | TASK-035 | Pending | Scheduled Release Refresh Activation. | Enable release-watch refresh with upload and gate-controlled promotion; keep stable-docs refresh less frequent; document failure, rollback, stale warning, Object Storage sync, and Oracle vector shadow sync operations. |
 | TASK-036 | Pending | Return To Oracle Vector Promotion. | Resume active Oracle vector promotion only after refresh is stable; run Object Storage baseline, Oracle shadow parity, retrieval regression, and golden/edge evals. |
@@ -153,14 +153,14 @@ Run the appropriate subset after each increment; run the full matrix before a ne
 
 ## Next Actionable Increment
 
-Current task: `TASK-032`.
+Current task: `TASK-033`.
 
-Package the OCI knowledge refresh Function image:
+Enable OCI Resource Scheduler:
 
-1. Keep Resource Scheduler disabled.
-2. Build `infra/functions/knowledge-refresh` as an OCI Functions-compatible image.
-3. Push the image to OCIR with an immutable tag, not `latest`.
-4. Validate a controlled packaged invocation before scheduler enablement.
+1. Set `enable_knowledge_refresh_scheduler=true` and `knowledge_refresh_function_image` to the immutable OCIR tag.
+2. Run Terraform validate and review the staging plan before apply.
+3. Apply only expected OCI Functions, Resource Scheduler, dynamic group, policy, and output changes.
+4. Validate runtime diagnostics expose Function and schedule OCIDs.
 
 ## Operating Rules
 

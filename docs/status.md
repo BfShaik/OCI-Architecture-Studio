@@ -52,6 +52,17 @@ Last updated: 2026-05-16
 - Temporary wallet and vector env material used for the rebuild were removed from the staging VM after validation.
 - Active retrieval remains `oci_object_storage`; Oracle AI Vector Search remains shadow-only.
 
+## Latest Function Image Packaging
+
+- `TASK-032` completed for OCI Function image packaging.
+- Added `.dockerignore` coverage so Function image builds exclude git metadata, local virtualenvs, node modules, Terraform state, and generated report caches.
+- Updated the knowledge-refresh Dockerfile to install backend requirements and expose `/python` on `PYTHONPATH` so packaged subprocess gates can import backend diagnostics dependencies.
+- Built and pushed immutable OCIR image `iad.ocir.io/idsmrn7rvqb6/oci-architecture-studio/knowledge-refresh:20260516-d73fa2c-task032-r3`.
+- OCIR digest: `sha256:28b85ed1ee6cac61a335f92ee1d53c258a7aa47864ede02989282bf930c07fc9`.
+- Packaged forced candidate-only invocation passed inside Docker with candidate validation, retrieval health, and 26-case retrieval regression.
+- Replaced the generic OCI auth token named `test` with a purpose-named OCIR token because the user already had the maximum two auth tokens. The temporary local token file was removed after Docker login.
+- Resource Scheduler remains disabled until Terraform plan review and controlled scheduler dry run pass.
+
 ## Latest Operational Promotion
 
 - `TASK-022` completed on staging: API Gateway runtime metadata was added to the running VM environment and the backend was redeployed from the current repository code without replacing the VM.
