@@ -6,7 +6,7 @@ Current validated baseline: `d3292d6`
 
 Staging URL: `http://193.122.149.102:8000/`
 
-Current-state note: this report captured the pre-promotion migration readiness gate. Staging was later promoted to `oci_object_storage`, then to active `oracle_ai_vector_search` with Object Storage rollback. See `docs/current/status.md` and `docs/current/living-execution-plan.md` for the current active provider validation.
+Current-state note: this report captured a pre-promotion readiness gate. Staging was later promoted to active `oracle_ai_vector_search`, OCI GenAI synthesis, and OCI GenAI embeddings with Object Storage/local rollback paths. See `docs/current/status.md` and `docs/current/living-execution-plan.md` for the current runtime.
 
 ## Overall Health
 
@@ -166,13 +166,13 @@ Mitigation:
 
 - Corpus is still intentionally small.
 - Required service coverage is checked heuristically, not semantically.
-- OCI GenAI synthesis has a retrieval-grounded prompt path and deterministic fallback, but live GenAI activation still requires parity validation.
+- Historical note: at the time of this report, OCI GenAI synthesis still required parity validation. Current staging has since promoted OCI GenAI synthesis; see `docs/current/status.md`.
 
 Mitigation:
 
 - Expand official OCI sources.
 - Add retrieval diff reports between `local_json`, Object Storage manifest, and Oracle AI Vector Search.
-- Keep unsupported-claim suppression and GenAI parity checks in the promotion gate before enabling live GenAI by default.
+- Keep unsupported-claim suppression and GenAI parity checks before keeping or re-promoting live GenAI after material changes.
 
 ## Rollback Considerations
 

@@ -1,34 +1,22 @@
 # Infra
 
-Deployment and CI/CD assets live here.
+Deployment and OCI runtime assets live here.
 
 ## Current State
 
-- GitHub Actions CI exists under `.github/workflows/ci.yml` for validation only.
-- OCI deployment architecture is documented in `docs/architecture/oci-deployment-architecture.md`.
-- OCI landing-zone deployment workflow is documented in `docs/runbooks/oci-landing-zone-runbook.md`.
-- Command-by-command deployment execution is documented in `docs/runbooks/oci-deployment-execution.md`.
-- Starter Terraform lives under `infra/terraform/`.
-- Non-secret deployment config examples live under `infra/deploy/`.
-- Deployment smoke checks live under `infra/scripts/`.
-- OCI helper script dependencies live in `infra/requirements.txt`.
-- Deployment config examples and schema live under `infra/deploy/`.
+- Staging runs the React/FastAPI app on an OCI Compute VM.
+- OCI GenAI synthesis is active in staging through `ADVISORY_SYNTHESIS_PROVIDER=oci_genai`.
+- Oracle AI Vector Search is the active retrieval provider.
+- OCI GenAI embeddings use `cohere.embed-v4.0` at 1536 dimensions.
+- Object Storage and local JSON remain rollback paths.
+- GitHub Actions is validation-only; staging deploys use operator scripts.
 
-## Deployment Direction
+## Useful Paths
 
-Phase 1 keeps the MVP simple:
-
-- React frontend assets in Object Storage
-- FastAPI backend on a small Compute VM
-- generated knowledge/release snapshots in Object Storage
-- secrets in OCI Vault
-- logs in OCI Logging
-- alarms in OCI Monitoring
-- alerts in OCI Notifications
-- resource lifecycle notifications through OCI Events
-
-Phase 2 replaces local embeddings/vector index with OCI-native embeddings and vector search.
+- `infra/scripts/` - deploy, smoke, validation, GenAI, retrieval, and rollback helpers.
+- `infra/deploy/` - non-secret deployment examples and schema.
+- `infra/runtime-profiles/` - local, OCI VM, and OKE runtime examples.
+- `infra/terraform/` - OCI foundation resources.
 
 Operational orchestration stays inside OCI. Current staging scheduled knowledge
-refresh runs as cron on the backend OCI Compute VM. Staging deploys should use
-the local operator scripts or future OCI DevOps, not GitHub Actions.
+refresh runs as cron on the backend OCI Compute VM.

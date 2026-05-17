@@ -1,65 +1,51 @@
-# OCI Architecture Studio Documentation
+# Documentation
 
-Start here when you need the current project truth. The top-level README is the product overview; this index points to the docs that operators and contributors use most often.
+Start here for the current project truth. Older reports are point-in-time records and may describe past runtime states.
 
-## Quick Start Reading Path
+## Read First
 
-1. [Current status](current/status.md) - concise live staging posture, validation, rollback, and next tasks.
-2. [Architecture diagrams](architecture/architecture-diagrams.md) - current runtime, retrieval, embedding, orchestration, rollback, and refresh diagrams.
-3. [OCI-native retrieval runbook](runbooks/oci-native-retrieval-runbook.md) - provider promotion and rollback operations.
-4. [Operational runbook](runbooks/operational-runbook.md) - staging operations and troubleshooting.
-5. [Living execution plan](current/living-execution-plan.md) - task history and current execution plan.
-
-## Current State
-
-- [Status](current/status.md) - latest live staging posture, validations, rollback, and limitations.
-- [Living execution plan](current/living-execution-plan.md) - active WIP list and next tasks.
-- [Sprint current](current/sprint-current.md) - current sprint posture and priorities.
-- [Demo readiness](current/demo-readiness.md) - demo checklist and suggested prompts.
-- [Internal beta readiness summary](current/internal-beta-readiness-summary.md) - controlled internal beta assessment and gates.
+1. [Current status](current/status.md)
+2. [Demo readiness](current/demo-readiness.md)
+3. [Architecture diagrams](architecture/architecture-diagrams.md)
+4. [Operational runbook](runbooks/operational-runbook.md)
+5. [Retrieval runbook](runbooks/oci-native-retrieval-runbook.md)
 
 ## Product
 
-- [Vision](product/vision.md) - product direction and current maturity framing.
-- [PRD](product/PRD.md) - product requirements.
-- [Roadmap](product/roadmap.md) - phase-level roadmap.
+- [Vision](product/vision.md)
+- [Product requirements](product/PRD.md)
+- [Roadmap](product/roadmap.md)
+
+## Current Work
+
+- [Active execution plan](current/living-execution-plan.md)
+- [Sprint current](current/sprint-current.md)
+- [Internal beta readiness](current/internal-beta-readiness-summary.md)
 
 ## Architecture
 
-- [Architecture diagrams](architecture/architecture-diagrams.md) - high-level diagrams and flows.
-- [Phase 2 architecture](architecture/phase-2-architecture.md) - productionization architecture.
-- [OCI deployment architecture](architecture/oci-deployment-architecture.md) - OCI deployment design.
-- [OCI-native retrieval migration](architecture/oci-native-retrieval-migration.md) - retrieval migration architecture and phases.
-- [Advisory intelligence](architecture/advisory-intelligence.md) - evidence, confidence, governance, and advisory quality.
-- [GenAI advisory hardening](architecture/genai-advisory-hardening.md) - OCI GenAI activation and fallback design.
-- [Evaluation architecture](architecture/evaluation-architecture.md) - eval framework design.
-- [Supervised orchestration](architecture/supervised-orchestration.md) - deterministic orchestration design.
-- [Controlled multi-agent pilot](architecture/controlled-multi-agent-pilot.md) - bounded specialist role pilot.
+- [Architecture diagrams](architecture/architecture-diagrams.md)
+- [Advisory intelligence](architecture/advisory-intelligence.md)
+- [GenAI advisory hardening](architecture/genai-advisory-hardening.md)
+- [Evaluation architecture](architecture/evaluation-architecture.md)
 
 ## Runbooks
 
-- [Operational runbook](runbooks/operational-runbook.md) - staging operations and troubleshooting.
-- [OCI deployment execution](runbooks/oci-deployment-execution.md) - command-by-command deployment flow.
-- [OCI landing-zone runbook](runbooks/oci-landing-zone-runbook.md) - landing-zone deployment workflow.
-- [OCI-native retrieval runbook](runbooks/oci-native-retrieval-runbook.md) - retrieval provider gates and rollback.
-- [Knowledge refresh policy](runbooks/knowledge-refresh-policy.md) - refresh cadence, gates, promotion, rollback.
-- [Continuous intelligence operations](runbooks/continuous-intelligence-operations.md) - VM cron refresh operations.
+- [Operational runbook](runbooks/operational-runbook.md)
+- [OCI-native retrieval runbook](runbooks/oci-native-retrieval-runbook.md)
+- [OCI deployment execution](runbooks/oci-deployment-execution.md)
+- [Knowledge refresh policy](runbooks/knowledge-refresh-policy.md)
 
-## Reports
+## Historical Reports
 
-- [Pre-migration readiness report](reports/pre-migration-readiness-report.md)
-- [Post-migration readiness report](reports/post-migration-readiness-report.md)
-- [Retrieval parity validation report](reports/retrieval-parity-validation-report.md)
-- [Retrieval provider promotion report](reports/retrieval-provider-promotion-report.md)
-- [Terraform plan review](reports/terraform-plan-review.md)
+Use these for audit/history only. Use [Current status](current/status.md) for live runtime.
+
 - [OCI staging deployment report](reports/oci-staging-deployment-report.md)
+- [Retrieval provider promotion report](reports/retrieval-provider-promotion-report.md)
+- [Post-migration readiness report](reports/post-migration-readiness-report.md)
 - [Post-stabilization architecture review](reports/post-stabilization-architecture-review.md)
 
 ## Archive
 
 - [Baseline freeze](archive/baseline-freeze.md)
 - [Two-week plan archive](archive/two-week-plan.md)
-
-## ADRs
-
-- [Architecture decision records](adrs/README.md)

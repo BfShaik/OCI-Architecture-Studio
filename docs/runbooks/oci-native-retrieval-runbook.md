@@ -1,284 +1,122 @@
-# OCI-Native Retrieval Runbook
+# OCI Native Retrieval Runbook
 
-Date: 2026-05-16
+## Current State
 
-## Purpose
+Staging uses Oracle AI Vector Search with OCI GenAI embeddings.
 
-This runbook controls the Sprint 2 migration from the validated local retrieval baseline to OCI-native retrieval services while preserving the advisory workflow.
+| Area | Value |
+| --- | --- |
+| Retrieval | `RETRIEVAL_PROVIDER=oracle_ai_vector_search` |
+| Embeddings | `EMBEDDING_PROVIDER=oci_genai` |
+| Model | `cohere.embed-v4.0` |
+| Dimensions | `1536` |
+| Table | `OCI_ARCHITECTURE_CHUNKS_V4` |
+| Index | `OCI_ARCH_CHUNKS_V4_VEC_IDX` |
+| Rollback manifest | `oci-rag-index.local-hash.json` |
 
-Local development default remains:
+## Health Check
 
 ```bash
-EMBEDDING_PROVIDER=local
-RETRIEVAL_PROVIDER=local_json
+curl -fsS http://193.122.149.102:8000/retrieval/health
 ```
 
-Current staging default:
+Expected:
 
-```bash
-EMBEDDING_PROVIDER=oci_genai
-OCI_GENAI_EMBEDDING_MODEL_ID=cohere.embed-v4.0
-OCI_GENAI_EMBEDDING_DIMENSIONS=1536
-RETRIEVAL_PROVIDER=oracle_ai_vector_search
-OCI_OBJECT_STORAGE_NAMESPACE=idsmrn7rvqb6
-OCI_VECTOR_BUCKET=oci-architecture-studio-staging-knowledge-snapshots
-OCI_VECTOR_OBJECT_NAME=oci-rag-index.json
-OCI_VECTOR_TABLE_NAME=OCI_ARCHITECTURE_CHUNKS_V4
-OCI_VECTOR_INDEX_NAME=OCI_ARCH_CHUNKS_V4_VEC_IDX
-OCI_VECTOR_DIMENSIONS=1536
+```text
+provider=oracle_ai_vector_search
+embedding_provider=oci_genai
+index_dimensions=1536
+embedding_index_guardrail.ok=true
+fallback_active=false
 ```
 
-Object Storage remains the immediate config rollback provider; `local_json` remains the local development fallback.
+## Rebuild Index
 
-## Provider Modes
-
-### Local Development
-
-Use this for day-to-day development and CI:
+Use this only after source/corpus changes or an approved embedding migration.
 
 ```bash
-python3 knowledge/ingestion/ingest.py --no-fetch
-python3 infra/scripts/check_retrieval_health.py --provider local_json
-python3 infra/scripts/retrieval_regression_check.py \
-  --cases evals/golden-prompts.jsonl \
-  --cases evals/edge-cases.jsonl \
-  --output-dir evals/reports/retrieval
-```
-
-### OCI Object Storage Manifest
-
-Use this for migration-safe managed storage parity:
-
-```bash
-python3 knowledge/ingestion/ingest.py \
+python knowledge/ingestion/ingest.py \
   --embedding-provider oci_genai \
-  --oci-region "$OCI_REGION" \
-  --oci-profile "$OCI_PROFILE" \
-  --oci-genai-compartment-id "$OCI_GENAI_COMPARTMENT_ID" \
   --oci-genai-embedding-model-id "$OCI_GENAI_EMBEDDING_MODEL_ID" \
-  --oci-namespace "$OCI_OBJECT_STORAGE_NAMESPACE" \
-  --oci-upload-bucket "$OCI_VECTOR_BUCKET" \
-  --oci-upload-object "$OCI_VECTOR_OBJECT_NAME"
-```
-
-Then validate:
-
-```bash
-python3 infra/scripts/check_retrieval_health.py \
-  --provider oci_object_storage \
-  --embedding-provider oci_genai \
-  --oci-region "$OCI_REGION" \
-  --oci-profile "$OCI_PROFILE" \
-  --oci-namespace "$OCI_OBJECT_STORAGE_NAMESPACE" \
-  --oci-vector-bucket "$OCI_VECTOR_BUCKET" \
-  --oci-vector-object-name "$OCI_VECTOR_OBJECT_NAME" \
   --oci-genai-compartment-id "$OCI_GENAI_COMPARTMENT_ID" \
-  --oci-genai-embedding-model-id "$OCI_GENAI_EMBEDDING_MODEL_ID"
+  --oci-region us-ashburn-1
 ```
 
-### Oracle AI Vector Search
+Verify the manifest:
 
-Use this only after table/schema validation:
-
-```bash
-RETRIEVAL_PROVIDER=oracle_ai_vector_search
-OCI_VECTOR_DB_DSN=...
-OCI_VECTOR_DB_USER=...
-OCI_VECTOR_DB_PASSWORD=...
-OCI_VECTOR_WALLET_LOCATION=...
-OCI_VECTOR_WALLET_PASSWORD=...
-OCI_VECTOR_TABLE_NAME=OCI_ARCHITECTURE_CHUNKS
-OCI_VECTOR_DIMENSIONS=256
-OCI_VECTOR_DISTANCE_METRIC=COSINE
-RETRIEVAL_FALLBACK_ENABLED=true
+```text
+embedding_provider=oci_genai
+embedding_model=<approved model>
+dimensions=1536
+chunk_count=<expected source count>
 ```
 
-Current status: the provider code creates schema, upserts chunks, serves active reads, and reports health when Oracle DB settings and schema are valid. Staging uses `oracle_ai_vector_search` with the promoted 60-chunk `cohere.embed-v4.0` corpus in `OCI_ARCHITECTURE_CHUNKS_V4`; Object Storage remains the immediate rollback provider.
+Then sync through the existing approved Object Storage/vector sync flow. Do not flip runtime flags before the new index is available.
 
-Embedding migration note: the active staging table is now the 1536-dimension `cohere.embed-v4.0` index. Future embedding migrations must still build a separate Oracle vector table/index first, generate document embeddings with OCI GenAI `SEARCH_DOCUMENT`, use `SEARCH_QUERY` for runtime questions, and promote only after `/retrieval/health` shows matching provider, model, and dimensions with the guardrail passing.
+## Promote Runtime
 
-Local operational checks:
-
-```bash
-app/backend/.venv/bin/python infra/scripts/oracle_vector_index.py validate-local-index
-app/backend/.venv/bin/python infra/scripts/oracle_vector_index.py print-schema
-app/backend/.venv/bin/python infra/scripts/vector_retrieval_validation.py --allow-skip
-```
-
-Dual-read parity against the active Object Storage baseline can be run before Oracle AI Vector Search is configured. It should skip cleanly rather than silently falling back:
-
-```bash
-app/backend/.venv/bin/python infra/scripts/retrieval_parity_check.py \
-  --baseline-provider oci_object_storage \
-  --oci-native-provider oracle_ai_vector_search \
-  --allow-skip \
-  --oci-region "$OCI_REGION" \
-  --oci-profile "$OCI_PROFILE" \
-  --oci-namespace "$OCI_OBJECT_STORAGE_NAMESPACE" \
-  --oci-vector-bucket "$OCI_VECTOR_BUCKET" \
-  --oci-vector-object-name "$OCI_VECTOR_OBJECT_NAME" \
-  --output-dir evals/reports/retrieval-oracle-vector-parity
-```
-
-When Oracle DB settings exist, provide `OCI_VECTOR_DB_DSN`, `OCI_VECTOR_DB_USER`, and `OCI_VECTOR_DB_PASSWORD` through the matching CLI flags or environment wrapper and rerun the same parity gate. Do not promote `RETRIEVAL_PROVIDER=oracle_ai_vector_search` until parity passes without fallback.
-
-## Oracle AI Vector Search Active Promotion
-
-Current decision: **promoted in staging**. Oracle AI Vector Search active reads passed non-skipped parity, retrieval regression, staging smoke, and rollback validation. Use this section for future re-promotions, rebuilds, and rollback drills.
-
-Prerequisites for a future re-promotion:
-
-- Oracle DB DSN, user, and password are available through OCI Vault or approved runtime configuration.
-- `infra/scripts/oracle_vector_index.py validate-local-index` passes.
-- Oracle schema and vector index are created or verified.
-- `infra/scripts/retrieval_parity_check.py --baseline-provider oci_object_storage --oci-native-provider oracle_ai_vector_search` passes without fallback.
-- Golden, edge, retrieval regression, vector validation, and staging smoke checks pass.
-
-Configuration-only promotion:
+Apply through the reviewed runtime/Vault path:
 
 ```text
 RETRIEVAL_PROVIDER=oracle_ai_vector_search
-RETRIEVAL_FALLBACK_ENABLED=true
-OCI_VECTOR_DB_DSN=<vault/runtime value>
-OCI_VECTOR_DB_USER=<vault/runtime value>
-OCI_VECTOR_DB_PASSWORD=<vault/runtime value>
-OCI_VECTOR_WALLET_LOCATION=<runtime wallet directory>
-OCI_VECTOR_WALLET_PASSWORD=<vault/runtime value>
+EMBEDDING_PROVIDER=oci_genai
+OCI_GENAI_EMBEDDING_MODEL_ID=cohere.embed-v4.0
+OCI_GENAI_EMBEDDING_DIMENSIONS=1536
 OCI_VECTOR_TABLE_NAME=OCI_ARCHITECTURE_CHUNKS_V4
 OCI_VECTOR_INDEX_NAME=OCI_ARCH_CHUNKS_V4_VEC_IDX
 OCI_VECTOR_DIMENSIONS=1536
-OCI_VECTOR_DISTANCE_METRIC=COSINE
 ```
 
-Post-promotion checks:
+Restart backend and verify `/retrieval/health`.
 
-```bash
-app/backend/.venv/bin/python infra/scripts/check_retrieval_health.py \
-  --provider oracle_ai_vector_search \
-  --oci-vector-db-dsn "$OCI_VECTOR_DB_DSN" \
-  --oci-vector-db-user "$OCI_VECTOR_DB_USER" \
-  --oci-vector-db-password "$OCI_VECTOR_DB_PASSWORD" \
-  --oci-vector-wallet-location "$OCI_VECTOR_WALLET_LOCATION" \
-  --oci-vector-wallet-password "$OCI_VECTOR_WALLET_PASSWORD"
-
-app/backend/.venv/bin/python infra/scripts/retrieval_regression_check.py \
-  --provider oracle_ai_vector_search \
-  --output-dir evals/reports/retrieval-oracle-active
-
-app/backend/.venv/bin/python infra/scripts/vector_retrieval_validation.py \
-  --output-dir evals/reports/vector-retrieval
-```
-
-Rollback:
+## Rollback To Object Storage
 
 ```text
 RETRIEVAL_PROVIDER=oci_object_storage
 ```
 
-## Embedding Rollback
+Restart backend and verify `/retrieval/health`.
 
-The local-hash rollback assets are intentionally retained:
-
-- Object Storage rollback manifest: `oci-rag-index.local-hash.json`
-- Oracle vector rollback table: `OCI_ARCHITECTURE_CHUNKS`
-- Oracle vector rollback index: `OCI_ARCH_CHUNKS_VEC_IDX`
-- Rollback dimensions: `256`
-
-To roll back from OCI GenAI embeddings to local-hash embeddings through the reviewed runtime path:
+## Rollback To Local Hash Embeddings
 
 ```text
 EMBEDDING_PROVIDER=local
-OCI_GENAI_EMBEDDING_MODEL_ID=
-OCI_GENAI_EMBEDDING_DIMENSIONS=
 OCI_VECTOR_OBJECT_NAME=oci-rag-index.local-hash.json
 OCI_VECTOR_TABLE_NAME=OCI_ARCHITECTURE_CHUNKS
 OCI_VECTOR_INDEX_NAME=OCI_ARCH_CHUNKS_VEC_IDX
 OCI_VECTOR_DIMENSIONS=256
 ```
 
-Restart the backend, then verify `/retrieval/health` reports `embedding_provider=local`, `index_dimensions=256`, `embedding_index_guardrail.ok=true`, and no active fallback. Do not leave `EMBEDDING_PROVIDER=oci_genai` pointed at the hash manifest or the 256-dimension table.
-
-Emergency local rollback:
+Restart backend and verify:
 
 ```text
-RETRIEVAL_PROVIDER=local_json
+embedding_provider=local
+index_dimensions=256
+embedding_index_guardrail.ok=true
 ```
 
-After rollback, rerun `/retrieval/health`, retrieval regression, and staging smoke. Record whether fallback was active, what failed, and which provider is now authoritative.
-
-## Migration Gates
-
-Do not switch or re-promote a staging provider until all are true:
-
-- backend tests pass
-- golden evals pass
-- edge-case evals pass
-- retrieval regression report passes
-- `/retrieval/health` shows the expected provider and nonzero chunk count
-- top retrieved chunks preserve source URLs and chunk IDs
-- required services remain covered in retrieved evidence
-- release-awareness prompts still produce freshness cautions
-
-## Dual-Provider Parity Gate
-
-Before staging uses a new provider as the active retrieval provider, sync the latest local snapshots to the staging knowledge bucket:
+## Required Validation
 
 ```bash
-OCI_CLI_PROFILE=DEFAULT infra/scripts/sync_snapshots_to_object_storage.sh \
-  idsmrn7rvqb6 \
-  oci-architecture-studio-staging-knowledge-snapshots
+python3 infra/scripts/smoke_oci_deployment.py \
+  --api-base-url http://193.122.149.102:8000 \
+  --frontend-url http://193.122.149.102:8000/
+
+PYTHONPATH=app/backend/src app/backend/.venv/bin/python infra/scripts/retrieval_regression_check.py \
+  --output-dir evals/reports/retrieval
+
+PYTHONPATH=app/backend/src app/backend/.venv/bin/python evals/run_golden.py \
+  --cases evals/golden-prompts.jsonl \
+  --output-dir evals/reports/golden
+
+PYTHONPATH=app/backend/src app/backend/.venv/bin/python evals/run_golden.py \
+  --cases evals/edge-cases.jsonl \
+  --output-dir evals/reports/edge-cases
 ```
 
-Then compare local and OCI-native retrieval:
+## Important Rules
 
-```bash
-app/backend/.venv/bin/python infra/scripts/retrieval_parity_check.py \
-  --oci-region us-ashburn-1 \
-  --oci-profile DEFAULT \
-  --oci-namespace idsmrn7rvqb6 \
-  --oci-vector-bucket oci-architecture-studio-staging-knowledge-snapshots \
-  --oci-vector-object-name oci-rag-index.json \
-  --output-dir evals/reports/retrieval-parity
-```
-
-Provider promotion requires:
-
-- `14/14` parity cases passing
-- average top chunk overlap at or above `0.8`
-- no citation URL regressions
-- no stale citation regressions
-- no required service evidence regressions
-- golden and edge evals passing for both providers
-- rollback to `local_json` remaining config-only
-
-## Rollback
-
-Rollback is configuration-only:
-
-```bash
-EMBEDDING_PROVIDER=local
-RETRIEVAL_PROVIDER=local_json
-KNOWLEDGE_INDEX_PATH=knowledge/snapshots/oci-rag-index.json
-```
-
-Then rerun:
-
-```bash
-python3 knowledge/ingestion/ingest.py --no-fetch
-python3 infra/scripts/check_retrieval_health.py --provider local_json
-python3 infra/scripts/retrieval_regression_check.py --output-dir evals/reports/retrieval
-cd app/backend && PYTHONPATH=src .venv/bin/pytest -q
-```
-
-## Troubleshooting
-
-- Missing or zero chunks: rerun ingestion and check `KNOWLEDGE_INDEX_PATH` or Object Storage bucket/object inputs.
-- OCI embedding failure: verify `OCI_GENAI_COMPARTMENT_ID`, `OCI_GENAI_EMBEDDING_MODEL_ID`, region, auth mode, and policy access.
-- Object Storage retrieval failure: verify namespace, bucket, object name, instance principal or OCI profile permissions.
-- Vector Search selected accidentally: set `RETRIEVAL_PROVIDER=local_json` or `oci_object_storage`, or keep `RETRIEVAL_FALLBACK_ENABLED=true` while Oracle DB config is incomplete.
-- Generic answers: inspect retrieval regression report for missing services or missing citations.
-- Stale guidance: rerun release ingestion and check citation freshness fields.
-
-## Next Operational Milestone
-
-Keep Object Storage rollback snapshots aligned with the active Oracle AI Vector Search index, then run OCI GenAI synthesis parity without changing retrieval provider settings.
+- Do not mix a 1536-dimension OCI GenAI embedder with a 256-dimension local hash index.
+- Do not change embedding model, dimensions, table, or manifest independently.
+- Keep rollback manifest `oci-rag-index.local-hash.json`.
+- Do not print secrets, wallet passwords, or OCIDs in public docs.

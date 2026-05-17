@@ -1,225 +1,93 @@
-# OCI Architecture Studio — GenAI Advisory Hardening
+# GenAI Advisory Hardening
 
-Date: 2026-05-15
+## Current State
 
-## Goal
-
-Harden the advisory intelligence layer so GenAI-powered responses remain grounded, citation-aware, confidence-aware, and safe for enterprise review.
-
-The implementation is intentionally incremental:
-
-- one codebase
-- config-selected synthesis provider
-- deterministic fallback
-- no multi-agent orchestration
-- no architecture rewrite
-- eval compatibility preserved
-
-## Active Flow
-
-```text
-prompt
--> intent classifier
--> retrieval provider
--> release snapshot check
--> synthesis provider
--> citation/evidence enforcement
--> confidence scoring
--> structured API response
--> UI confidence and evidence panels
-```
-
-## Synthesis Providers
-
-Rollback-safe local mode:
-
-```text
-ADVISORY_SYNTHESIS_PROVIDER=deterministic
-```
-
-OCI GenAI synthesis mode:
+OCI GenAI synthesis is active in staging.
 
 ```text
 ADVISORY_SYNTHESIS_PROVIDER=oci_genai
-OCI_GENAI_COMPARTMENT_ID=<compartment ocid>
-OCI_GENAI_CHAT_MODEL_ID=<chat model id>
-OCI_GENAI_ENDPOINT=<optional endpoint>
-OCI_GENAI_MAX_TOKENS=1200
-OCI_GENAI_TEMPERATURE=0.1
+OCI_GENAI_CHAT_MODEL_ID=<approved chat model>
+OCI_GENAI_COMPARTMENT_ID=<approved compartment>
 ```
 
-If OCI GenAI fails, the system fails closed to deterministic synthesis and records a synthesis warning. This preserves rollback and avoids serving incomplete model output.
+Current staging chat model:
 
-Current staging uses `ADVISORY_SYNTHESIS_PROVIDER=oci_genai`. Deterministic synthesis remains the rollback path for incidents, local development, and parity comparison.
+```text
+xai.grok-4.3
+```
 
-## Prompt Construction
+Do not print secret or tenancy-specific runtime values in docs or logs.
+
+## Why Hardening Exists
+
+GenAI output must stay:
+
+- grounded in retrieved OCI evidence
+- valid for the frontend schema
+- clear about uncertainty
+- free of invented OCI services
+- citation-aware
+- rollback-safe
+
+## Prompt Inputs
 
 The GenAI prompt includes:
 
 - user question
-- optional workload context
 - classified intent
-- prompt template path
-- intent focus
-- retrieval context note
-- retrieved citation chunks with IDs, titles, service metadata, stale flag, URL, and summaries
+- mapped source/target services
+- workload/domain hints
+- architecture pattern hints
+- retrieved OCI chunks
+- required response sections
 
-The system instruction requires:
+## Fallback
 
-- JSON-only output
-- evidence-grounded recommendations
-- no invented OCI services
-- explicit uncertainty when evidence is insufficient
-- no current-release impact claims without release evidence
+If OCI GenAI fails, the backend falls back to deterministic synthesis.
 
-## Citation Enforcement
-
-After synthesis, every recommendation is passed through the advisory-quality analyzer.
-
-The analyzer creates `evidence_links` with:
-
-- recommendation index
-- support level: `strong`, `partial`, or `unsupported`
-- source chunk IDs
-- source titles
-- rationale
-
-Unsupported recommendations are marked provisional. Unsupported requested service names such as `OCI Quantum Database`, `OCI Infinite DR`, `OCI AutoPilot Architect`, and `OCI Magic Migration` are flagged and suppressed from being treated as valid OCI service choices.
-
-## Confidence Scoring
-
-The response includes:
-
-- retrieval confidence
-- evidence confidence
-- freshness confidence
-- release-awareness confidence
-- recommendation confidence
-- overall confidence
-- confidence level: `high`, `medium`, or `low`
-
-Low-context prompts are capped to low confidence even when generic citations exist. This keeps the system from sounding certain when the user has not provided enough architecture context.
-
-## Uncertainty Handling
-
-The API response includes:
-
-- `not_enough_evidence`
-- `low_confidence`
-- `quality_warnings`
-- `unsupported_claims`
-- `synthesis_warnings`
-- `synthesis_fallback_used`
-
-When evidence is weak, the response remains advisory and asks for missing workload or release context rather than presenting a final design.
-
-## Observability
-
-Use:
-
-```text
-GET /advisory/quality
-```
-
-Tracked fields include:
-
-- low-confidence response count
-- not-enough-evidence count
-- unsupported-claim count
-- stale-evidence count
-- synthesis fallback count
-- active/latest synthesis provider
-- citation coverage
-- evidence support
-- recent warnings
-
-## Evaluation Strategy
-
-The eval runner now checks:
-
-- synthesis response structure
-- citation quality
-- retrieval support
-- evidence links
-- confidence object shape and score bounds
-- low-confidence behavior
-- not-enough-evidence behavior
-- unsupported service claims
-- stale or unverified release guidance
-
-Run:
-
-```bash
-app/backend/.venv/bin/python evals/run_golden.py --output-dir evals/reports/golden
-app/backend/.venv/bin/python evals/run_golden.py --cases evals/edge-cases.jsonl --output-dir evals/reports/edge-cases
-app/backend/.venv/bin/python evals/run_golden.py --cases evals/advisory-quality.jsonl --output-dir evals/reports/advisory-quality
-```
-
-## Rollback
-
-Fast rollback to deterministic synthesis:
+Rollback switch:
 
 ```text
 ADVISORY_SYNTHESIS_PROVIDER=deterministic
 ```
 
-No code fork, prompt fork, or retrieval change is required.
+After rollback, restart the backend and run a smoke test.
 
-## Embedding Activation Readiness
+## Validation
 
-Local deterministic embeddings remain available for offline development and rollback validation:
+Run parity/eval checks after model, prompt, corpus, or runtime changes:
 
-```text
-EMBEDDING_PROVIDER=local
+```bash
+PYTHONPATH=app/backend/src app/backend/.venv/bin/python infra/scripts/genai_synthesis_parity_check.py \
+  --cases evals/golden-prompts.jsonl \
+  --cases evals/edge-cases.jsonl \
+  --output-dir evals/reports/genai-parity
 ```
 
-OCI GenAI embeddings are active in staging and can be evaluated/rebuilt through the controlled path:
+Check:
+
+- no fallback on healthy GenAI requests
+- valid JSON/schema
+- citation coverage preserved
+- no unsupported OCI claims
+- latency and cost acceptable
+
+## Embeddings
+
+Staging uses OCI GenAI embeddings:
 
 ```text
 EMBEDDING_PROVIDER=oci_genai
-OCI_GENAI_COMPARTMENT_ID=<compartment ocid>
-OCI_GENAI_EMBEDDING_MODEL_ID=<embedding model id>
-OCI_GENAI_EMBEDDING_DIMENSIONS=<expected dimensions>
-EMBEDDING_FALLBACK_ENABLED=true
+OCI_GENAI_EMBEDDING_MODEL_ID=cohere.embed-v4.0
+OCI_GENAI_EMBEDDING_DIMENSIONS=1536
 ```
-
-Promotion gates:
-
-1. `/operations/infrastructure` reports `providers.embeddings.activation_ready=true`.
-2. `/retrieval/health` shows the expected embedding provider/fallback state.
-3. `OCI_GENAI_EMBEDDING_DIMENSIONS` matches the generated vector length and `OCI_VECTOR_DIMENSIONS`.
-4. Retrieval regression does not degrade against the local embedding baseline.
-5. Oracle AI Vector Search parity is run before any active semantic retrieval promotion.
 
 Rollback:
 
 ```text
 EMBEDDING_PROVIDER=local
+OCI_VECTOR_OBJECT_NAME=oci-rag-index.local-hash.json
+OCI_VECTOR_DIMENSIONS=256
 ```
 
-Keep `EMBEDDING_FALLBACK_ENABLED=true` during validation windows so retrieval remains available if OCI GenAI embedding calls fail.
-
-## Troubleshooting
-
-If GenAI output is too generic:
-
-1. Check retrieved citations and evidence links.
-2. Add or improve source chunks for the missing OCI domain.
-3. Add a failing advisory-quality eval.
-4. Tighten the intent profile or synthesis instruction.
-
-If GenAI output includes unsupported services:
-
-1. Check `unsupported_claims`.
-2. Confirm `quality_warnings` mention unsupported requested capabilities.
-3. Add the pattern to the unsupported-service guardrail if it is recurring.
-
-If release guidance overclaims:
-
-1. Check release snapshot matches.
-2. Require a release note URL or service/date.
-3. Rerun release ingestion and release-aware evals.
-
-## Next Milestone
-
-Continue post-promotion stabilization: monitor live OCI GenAI synthesis quality, latency, cost, fallback behavior, and unsupported-claim checks while keeping deterministic rollback ready.
+Always verify `/retrieval/health` after embedding changes.

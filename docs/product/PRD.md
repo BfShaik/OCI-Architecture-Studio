@@ -1,222 +1,139 @@
-# OCI Architecture Studio — Product Requirements Document
+# Product Requirements
 
-## Product Vision
+## Purpose
 
-OCI Architecture Studio is an AI-powered OCI architecture intelligence platform that provides grounded architecture guidance, migration advisory, cost optimization, and continuous OCI knowledge refresh.
+OCI Architecture Studio is an AI-powered OCI architecture review assistant. It helps teams produce grounded, structured, citation-backed recommendations for OCI architecture, migration, resilience, security, observability, AI/ML, analytics, SaaS, and cost questions.
 
-## Current Product Capabilities
+## Current Runtime Contract
 
-- Architecture Advisor
-- Migration Advisor
-- Cost Advisor
-- Disaster Recovery Advisor
-- Security Advisor
-- Observability-oriented advisory
-- AI/ML inference advisory
-- SaaS-platform advisory
-- Analytics-platform advisory
-- Release-Aware Advisory
-- AWS-to-OCI service mapping before retrieval
-- Metadata-aware retrieval reranking and optional retrieval debug traces
-- Section citation metadata in the backend response and section traceability in the frontend
-- Curated 60-chunk OCI knowledge corpus active in staging
-- Ingestion scaffolding for source groups, source categorization, document hierarchy, chunk lineage, release tags, metadata enrichment, and source traceability
-- Corpus health validation for metadata completeness, duplicates, orphaned chunks, service tags, embeddings, and retrieval coverage gaps
-- Oracle AI Vector Search provider path with schema/index tooling, vector upsert, metadata-aware similarity search, health checks, and local fallback
-- OCI GenAI embedding provider path with deterministic fallback and validation diagnostics
-- OCI GenAI synthesis provider path with fail-closed deterministic fallback
-- Dedicated retrieval-grounded prompt builder for GenAI synthesis
-- Optional synthesis debug metadata for provider, prompt sections, retrieved chunks, token estimates, and fallback reasons
-- Deterministic architecture pattern profiles for common OCI advisory scenarios
-- Deterministic architecture reasoning profiles for HA/DR, migration, SaaS, fintech, AI/ML inference, analytics/data, observability, and cost-optimized workloads
-- Lightweight synthesis quality scoring
-- Deterministic evaluation intelligence for architecture realism, OCI specificity, hallucination risk, recommendation explainability, tradeoff quality, and regression gating
-- Concise architecture decision reasoning metadata for major recommendations
-- Explicit architecture tradeoff analysis and per-recommendation confidence indicators
-- Lightweight architecture consistency findings before final response return
-- Deterministic enterprise governance assessment metadata with executive summary, policy annotations, OCI security posture checks, risk classification, recommendation prioritization, comparison reasoning, enterprise review findings, and auditability trace
-- Lightweight architecture topology metadata with service nodes, dependency relationships, deployment topology, HA/DR topology, operational notes, and Mermaid flow text for future UI visualization
-- Executive experience metadata with review-ready summary, decision brief, implementation sequence, topology visualization summary, comparison summary, explainability highlights, and Markdown export artifact
-- Deterministic migration and FinOps optimization metadata with phased migration sequencing, modernization options, FinOps levers, workload optimization signals, optimization comparisons, and implementation readiness checks
-- Confidence sub-signals for service relevance, workload alignment, migration mapping certainty, and citation coverage
-- Release snapshot and temporal knowledge schemas for current-vs-historical scaffolding
-- Deterministic release intelligence for release normalization, change-category classification, impacted service/source/chunk analysis, targeted eval impact detection, and refresh action recommendations
-- OCI-native operational diagnostics for deployment profiles, retrieval/vector health, release freshness, synthesis provider availability, secret/config posture, observability configuration, infrastructure visibility, rebuildability gaps, and runtime analytics
-- Runtime profile examples for local development, OCI VM, and OKE
-- Retrieval regression and parity validation
-- OCI staging deployment
+| Area | Local/default | Staging/current |
+| --- | --- | --- |
+| Synthesis | `deterministic` | `oci_genai` |
+| Retrieval | `local_json` | `oracle_ai_vector_search` |
+| Embeddings | `local` | `oci_genai` |
+| Chat model | unset | `xai.grok-4.3` |
+| Embedding model | local hash | `cohere.embed-v4.0` |
+| Dimensions | 256 | 1536 |
+| Vector table | local/Object Storage manifest | `OCI_ARCHITECTURE_CHUNKS_V4` |
 
-## Current Working Flow
+Staging overrides are applied through the reviewed runtime/Vault path. Local defaults stay simple so contributors can run the app without OCI credentials.
 
-The current implementation supports a validated API/UI advisory workflow with intent classification, source-service mapping, metadata-aware retrieval, reranking, live OCI GenAI-assisted synthesis in staging, deterministic fallback synthesis, snapshot-based release awareness, and OCI staging deployment.
+## Primary User Flow
 
-User flow:
-1. A user asks an OCI architecture, migration, DR, cost, observability, AI/ML, security, modernization, SaaS, analytics, or release-awareness question.
-2. The system classifies the prompt intent.
-3. The system maps known source services to OCI service candidates when migration/source-cloud services are mentioned.
-4. The system detects architecture-domain heuristics such as ecommerce, fintech, SaaS, AI/ML inference, observability, or analytics.
-5. The system selects a deterministic reasoning profile and uses its retrieval terms, service priorities, architecture patterns, workload hints, and risk emphasis to bias retrieval while preserving the same retrieval provider interface.
-6. The system retrieves OCI knowledge chunks through a config-selected retrieval provider and reranks candidates using semantic score, intent match, service relevance, metadata overlap, architecture pattern match, workload/domain relevance, topic match, migration mappings, reasoning-profile hints, and intent-critical service coverage.
-7. The system uses deterministic in-process orchestration metadata and a single synthesis step to produce a structured advisory response. The deterministic path applies lightweight architecture pattern profiles, reasoning profiles, retrieved services, workload/domain heuristics, citation metadata, tradeoff analysis, and consistency validation. The OCI GenAI path injects a retrieval-grounded prompt with intent, mappings, workload/domain profile, pattern hints, reasoning profile, and retrieved chunks.
-8. Release-aware prompts are checked against point-in-time release snapshots, freshness metadata, release change categories, and release impact summaries. Current release awareness is snapshot-based and deterministic; it is not live request-time reconciliation with OCI release feeds.
-9. The backend returns recommendations, assumptions, risks, citations, evidence links, confidence, reasoning trace metadata, tradeoff analysis, per-recommendation confidence, decision reasoning metadata, consistency findings, deterministic enterprise-governance metadata, architecture topology metadata, executive experience metadata, migration/FinOps optimization metadata, section citation metadata, release context, temporal knowledge context, and optional retrieval debug traces.
-10. The UI displays the main advisory fields, executive brief, implementation sequence, lightweight topology/dependency summaries, decision comparisons, explainability highlights, migration/FinOps optimization summaries, release context, section traceability, citation/source cards, saved-review history, review-history retention/export/delete controls, and a Markdown export action. Live diagram rendering is not implemented yet.
+1. User enters an OCI architecture question in the frontend.
+2. Frontend calls `POST /architecture-review`.
+3. Backend classifies intent and maps source services to OCI services when relevant.
+4. Backend retrieves evidence from the configured retrieval provider.
+5. Backend synthesizes a structured answer with the configured synthesis provider.
+6. Backend returns recommendations, assumptions, risks, citations, confidence, topology, governance, migration/FinOps, release context, and optional debug metadata.
+7. Frontend displays the answer in review-friendly sections with visible links and actions.
 
-Operational flow:
+## Required Capabilities
 
-- Runtime mode is selected by `DEPLOYMENT_PROFILE=local_dev|oci_vm|oke`.
-- Local development keeps deterministic local retrieval/synthesis and does not require OCI connectivity.
-- OCI VM and OKE profiles prefer OCI IAM-based runtime identity, OCI Vault for sensitive configuration, OCI Object Storage or Oracle AI Vector Search for retrieval, and OCI Logging/Monitoring/Notifications for operations.
-- The current staging scheduled refresh path runs from backend OCI Compute VM cron. Release-watch uses live fetch, quick gates, gated promotion, and Object Storage upload; stable-doc refresh remains safe/candidate-only.
-- `/operations/profile`, `/operations/health`, `/operations/readiness`, `/operations/infrastructure`, and `/operations/analytics` expose additive diagnostics without changing the architecture-review API.
-- Operational analytics include deterministic governance policy-trigger and risk-trend counters from generated advisory metadata.
-- Runtime readiness diagnostics check startup paths, dependency configuration, API Gateway readiness, OCI DevOps readiness, runtime safeguards, fallback paths, and release-refresh state.
-- Infrastructure visibility diagnostics report the configured OCI runtime topology, API exposure mode, retrieval/synthesis/embedding providers, Object Storage snapshot posture, Vault/IAM posture, observability posture, scheduler/deployment workflow posture, and configuration-derived rebuildability gaps. This endpoint is read-only and does not prove live OCI resource reachability unless connectivity checks are enabled.
-- The internal beta readiness gate validates deployed endpoints, retrieval health, operational diagnostics, governance/executive/topology metadata, migration/FinOps optimization metadata, release/temporal metadata, citations, and accepted staging warnings.
-- Live OCI SDK connectivity checks are disabled by default and should be enabled only after IAM policies and Vault access are ready.
+- Support architecture, migration, DR, cost, observability, AI/ML, security, modernization, SaaS, analytics, release-awareness, and general prompts.
+- Use retrieved OCI evidence before synthesis.
+- Return a stable API schema for the frontend.
+- Show citations and source links.
+- Surface `synthesis_provider` and `synthesis_fallback_used`.
+- Expose retrieval health and embedding/index guardrail state.
+- Keep rollback paths config-only.
+- Keep local development independent of live OCI connectivity.
 
-Evaluation flow:
+## Current Implemented Capabilities
 
-- Golden, edge-case, advisory-quality, orchestration-quality, architecture-realism, evaluation-intelligence, enterprise-governance, enterprise-platform-maturity, and runtime-production-readiness datasets can be run locally through the deterministic eval runner.
-- Enterprise-governance and enterprise-platform-maturity evals measure governance annotations, auditability, risk classification, topology/explainability, migration governance, security realism, operational realism, runtime degradation handling, executive usability, and FinOps signals.
-- Executive-experience evals measure executive-summary quality, presentation-oriented sequencing, comparison usefulness, visualization usefulness, operational-readiness clarity, and export-friendly report content.
-- FinOps-migration optimization evals measure phased sequencing, coexistence/rollback realism, modernization guidance, rightsizing/autoscaling/storage lifecycle recommendations, workload-specific optimization signals, cost-performance tradeoffs, and implementation readiness.
-- The evaluation-intelligence layer scores generated responses across OCI specificity, completeness, workload alignment, migration realism, HA/DR, cost, operations, security, observability, explainability, tradeoff quality, and consistency.
-- Hallucination heuristics flag invented OCI services, unsupported certainty claims, stale release claims, contradictory recommendations, and unsupported migration claims.
-- Provider comparison tooling can compare deterministic synthesis with OCI GenAI synthesis when live OCI GenAI configuration is available; without those settings it runs in skip-safe readiness mode.
-- The scoring layer is a regression guardrail, not an autonomous judge, fine-tuning loop, or substitute for OCI expert review.
+- React/Vite frontend and FastAPI backend.
+- OCI GenAI synthesis in staging with deterministic fail-closed fallback.
+- Oracle AI Vector Search retrieval in staging.
+- OCI GenAI embeddings in staging with `cohere.embed-v4.0` at 1536 dimensions.
+- Local JSON retrieval and local hash embeddings for development and rollback.
+- Object Storage vector manifest rollback.
+- Controlled in-process orchestration with supervisor, bounded specialists, final synthesis, and validation critic.
+- Section-level citations, evidence links, confidence signals, topology metadata, governance metadata, migration/FinOps metadata, and release context.
+- Saved review history with retention/export/delete controls.
+- Release-watch refresh path through backend VM cron.
+- Golden, edge, retrieval, and quality evals.
+- Health, retrieval health, orchestration health, operations health/readiness/infrastructure/analytics endpoints.
 
-Current active staging retrieval:
+## Important API/Config Contract
 
-- `oracle_ai_vector_search`
+Main API:
 
-Validated rollback provider:
+- `GET /health`
+- `POST /architecture-review`
+- `GET /retrieval/health`
+- `GET /orchestration/health`
+- `GET /operations/health`
+- `GET /operations/readiness`
+- `GET /operations/infrastructure`
+- `GET /operations/analytics`
 
-- `oci_object_storage`
-- `local_json`
-- rollback and restore are config-only
+Main runtime flags:
 
-Local development default:
+- `ADVISORY_SYNTHESIS_PROVIDER=deterministic|oci_genai`
+- `RETRIEVAL_PROVIDER=local_json|oci_object_storage|oracle_ai_vector_search`
+- `EMBEDDING_PROVIDER=local|oci_genai`
+- `OCI_GENAI_COMPARTMENT_ID`
+- `OCI_GENAI_CHAT_MODEL_ID`
+- `OCI_GENAI_EMBEDDING_MODEL_ID`
+- `OCI_GENAI_EMBEDDING_DIMENSIONS`
+- `OCI_VECTOR_TABLE_NAME`
+- `OCI_VECTOR_INDEX_NAME`
+- `OCI_VECTOR_DIMENSIONS`
 
-- `local_json`
+## Rollback Requirements
 
-Supported intents:
-- product overview
-- architecture
-- migration
-- disaster recovery
-- cost
-- observability
-- AI/ML
-- security
-- modernization
-- SaaS platform
-- analytics
-- release awareness
-- general
+Synthesis rollback:
 
-Synthesis behavior:
+```text
+ADVISORY_SYNTHESIS_PROVIDER=deterministic
+```
 
-- OCI GenAI synthesis is active in staging when `ADVISORY_SYNTHESIS_PROVIDER=oci_genai` is configured.
-- Deterministic synthesis is implemented as the rollback-safe provider when `ADVISORY_SYNTHESIS_PROVIDER=deterministic` is configured or OCI GenAI synthesis fails closed.
-- The GenAI prompt builder explicitly includes retrieved chunks, mapped services, workload/domain heuristics, architecture pattern hints, and response section requirements.
-- Optional synthesis debug output exposes provider, model, grounding prompt sections, selected chunks, token estimates, token usage when available, and fallback reason.
-- Deterministic synthesis uses reusable architecture profiles for HA web apps, Kubernetes modernization, fintech DR, AI inference, analytics/data lake, and multi-region SaaS.
-- Deterministic reasoning profiles add profile-specific retrieval hints, service priorities, risk emphasis, tradeoff dimensions, and recommendation guidance before final synthesis.
-- The response includes additive synthesis quality signals for grounding, OCI specificity, workload alignment, migration accuracy, recommendation diversity, and citation coverage.
-- Live GenAI use requires environment configuration, parity validation, and ongoing quality/latency/cost monitoring.
-- If OCI GenAI synthesis fails, the system fails closed to deterministic synthesis.
+Retrieval rollback:
 
-Embedding behavior:
+```text
+RETRIEVAL_PROVIDER=oci_object_storage
+```
 
-- Local hashing embeddings remain the default for deterministic offline mode.
-- OCI GenAI embeddings can be selected with `EMBEDDING_PROVIDER=oci_genai`.
-- Embedding fallback is enabled by default through `EMBEDDING_FALLBACK_ENABLED=true`.
-- The embedding path validates missing provider configuration, generation failures, and optional dimensional consistency.
+Emergency local retrieval:
 
-Vector retrieval behavior:
+```text
+RETRIEVAL_PROVIDER=local_json
+```
 
-- `local_json` remains the local development default.
-- `oci_object_storage` remains the immediate staging rollback provider.
-- `oracle_ai_vector_search` is the active staging provider and requires Oracle Database vector search configuration.
-- Oracle vector retrieval supports vector similarity search, chunk upsert, metadata filtering over service/domain/pattern/workload/tag fields, and retrieval health diagnostics.
-- `RETRIEVAL_FALLBACK_ENABLED=true` allows local JSON fallback if the Oracle vector provider is unavailable.
-- Oracle vector infrastructure, schema/index, sync, active reads, and rollback validation are implemented and validated against the promoted 60-chunk architecture corpus.
+Embedding rollback:
 
-Corpus and ingestion behavior:
+```text
+EMBEDDING_PROVIDER=local
+OCI_VECTOR_OBJECT_NAME=oci-rag-index.local-hash.json
+OCI_VECTOR_TABLE_NAME=OCI_ARCHITECTURE_CHUNKS
+OCI_VECTOR_INDEX_NAME=OCI_ARCH_CHUNKS_VEC_IDX
+OCI_VECTOR_DIMENSIONS=256
+```
 
-- The current local corpus is curated, not a complete OCI documentation mirror.
-- The current staging corpus contains 60 chunks across architecture, networking, compute, containers, database, storage, edge, security, observability, cost, resilience, AI/ML, analytics, DevOps, landing-zone, migration, and DR-oriented domains.
-- Ingestion supports source-group defaults, source categories, source freshness metadata, release tags, context-preserving chunking, section paths, previous/next chunk lineage, chunk content hashes, and automatic metadata enrichment.
-- Corpus health checks are lightweight validation utilities; they are not autonomous crawlers or production refresh automation.
+After any rollback, restart the backend and verify `/health`, `/retrieval/health`, and a representative `/architecture-review` request.
 
-Release intelligence behavior:
+## Evaluation Requirements
 
-- Release ingestion writes a separate release snapshot from `knowledge/release_source_registry.json`.
-- Release items are normalized into deterministic change categories such as security, HA/DR, observability, cost, migration, deprecation, enhancement, and compatibility risk.
-- Impact analysis maps releases to affected services, source IDs, chunk IDs, eval cases, refresh actions, and unresolved risks.
-- Selective refresh can retag affected chunks with release overlay metadata and refresh embeddings/reindexing only for impacted sources.
-- Historical snapshots are retained on promotion for audit/context. Retrieval remains current-first; full bi-temporal retrieval and automatic current-vs-historical answer comparison are not implemented.
+Before promotion or after material changes, run:
 
-Orchestration behavior:
+- backend tests
+- frontend lint/build
+- retrieval regression
+- golden prompts
+- edge cases
+- staging smoke
+- `/retrieval/health`
 
-- The current orchestration layer is deterministic and in-process.
-- It exposes supervisor, specialist, and critic metadata for visibility.
-- It also adds lightweight reasoning profile metadata, tradeoff analysis, per-recommendation confidence indicators, consistency findings, and decision reasoning metadata.
-- Reasoning profiles are explainable heuristics, not hidden chain-of-thought or autonomous planner state.
-- It does not perform autonomous planning, external tool use, persistent agent memory, raw chain-of-thought exposure, or independent agent execution.
+Current missing eval input:
 
-FinOps and migration optimization behavior:
+- `evals/team-real-prompts.jsonl` should be restored or recreated for team-real prompt validation.
 
-- The optimization layer is deterministic and additive. It builds `optimization_plan` metadata after synthesis and before final advisory quality scoring.
-- Migration and modernization prompts can receive phased migration plans, coexistence/pilot guidance, rollback considerations, dependency sequencing, and modernization options such as lift-and-shift, replatforming to managed OCI services, and selective refactoring.
-- Cost-oriented prompts can receive rightsizing, autoscaling, environment sizing, storage lifecycle, GPU/inference, and DR cost-tiering guidance.
-- Workload optimization signals are heuristic and currently cover ecommerce, fintech, SaaS, analytics, AI/ML inference, and observability patterns.
-- OCI Budgets and Cost Analysis are referenced as recommended OCI-native operating controls. The current implementation does not call live OCI Cost Analysis APIs or calculate tenancy spend from billing data.
+## Non-Goals
 
-## Acceptance Criteria
-
-- The backend exposes `GET /health`.
-- The backend exposes `POST /architecture-review`.
-- The backend exposes `GET /retrieval/health`.
-- The architecture review response is structured and typed.
-- The frontend can submit a question and render the response.
-- Retrieval, intent classification, and orchestration are separated behind service modules.
-- Retrieval reranking is modular and test-covered.
-- Optional retrieval debug trace is available without changing the default response behavior.
-- Optional synthesis debug trace is available without changing the default response behavior.
-- Backend citation metadata can associate response sections with chunk IDs, source documents, and OCI service categories.
-- Decision reasoning metadata can associate major recommendations with concise rationale, tradeoffs, rejected alternatives, source chunk IDs, and confidence.
-- Reasoning trace metadata can show the selected reasoning profile, triggered heuristics, pattern hints, retrieval terms, service priorities, risk emphasis, and synthesis provider.
-- Architecture tradeoff metadata can show explicit decision guidance for cost/resilience, performance/complexity, managed/self-managed, latency/resilience, simplicity/scalability, and flexibility/overhead dimensions.
-- Consistency validation can flag conflicting requirements, migration mapping coverage gaps, HA/DR alignment gaps, observability gaps, and security coverage gaps.
-- Enterprise governance assessment can classify recommendation risks, annotate policy/control implications, prioritize recommendations, provide comparison reasoning, and preserve an auditability trace from retrieval sources through synthesis provider and confidence signals.
-- Architecture topology metadata can summarize service relationships, deployment topology, HA/DR posture, and operational dependencies for future diagram rendering.
-- Executive experience metadata can package advisory output into decision briefs, phased implementation guidance, topology summaries, comparison summaries, explainability highlights, and Markdown review artifacts.
-- Architecture quality scoring can report deterministic dimension scores, benchmark expectation matches, hallucination findings, response-quality analytics, and configurable advisory quality-gate failures.
-- Prompt templates and golden eval prompts exist in source control.
-- Golden prompts route to expected intents.
-- Golden evals, edge-case evals, retrieval regression, and dual-provider parity can be run locally.
-- Local-vs-Oracle vector retrieval comparison cases exist for migration, SaaS, AI inference, observability, fintech DR, and analytics retrieval scenarios.
-- OCI staging smoke tests validate backend, frontend, retrieval, and OCI SDK access.
-- Operational readiness checks validate health endpoints, retrieval availability, deployment profile, operational diagnostics, and analytics visibility.
-- Runtime readiness checks validate operational safeguards and provider configuration without requiring live OCI checks in local development.
-
-## Current Non-Goals / Deferred Work
-
-- No LangGraph implementation yet.
-- No advanced memory or bi-temporal storage implementation yet.
-- No autonomous multi-agent execution yet.
-- No architecture reasoning engine based on hidden chain-of-thought, self-planning, or autonomous tool use.
-- No automated policy enforcement, approval workflow, or external governance platform integration in the enterprise governance layer; it is deterministic advisory metadata for human review.
-- No complex diagram engine or frontend Mermaid renderer yet; current visualization support is backend topology metadata, dependency summaries, and lightweight frontend cards.
-- No LLM-as-judge scoring, model fine-tuning, or autonomous evaluation agent in the current evaluation intelligence layer.
-- No production promotion of live LLM synthesis without parity, operational validation, and rollback proof.
-- No removal of deterministic rollback while OCI GenAI remains the staging synthesis provider.
-- No request-time live release intelligence beyond scheduled snapshot refresh, deterministic impact analysis, and gated promotion.
-- No external scheduler or operational workflow platform; current scheduled refresh uses cron on the OCI backend VM.
-- No mandatory live OCI connectivity checks in local development.
-- No autonomous documentation crawling or full OCI documentation corpus yet.
-- No full bi-temporal retrieval; current-vs-historical support currently consists of schemas, retained historical snapshots, temporal response metadata, and current-first retrieval with release context terms.
-- Oracle AI Vector Search staging active reads are promoted and validated; Object Storage remains the immediate rollback provider.
-- HTTPS ingress and production HA are deferred beyond the current staging slice.
+- No autonomous agent execution.
+- No LangGraph runtime.
+- No persistent agent memory.
+- No production HA claim yet.
+- No live request-time release reconciliation.
+- No full OCI documentation mirror.
+- No removal of deterministic/local rollback paths.

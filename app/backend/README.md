@@ -2,6 +2,16 @@
 
 FastAPI backend for OCI Architecture Studio.
 
+The backend is config-driven:
+
+| Setting | Local default | Staging value |
+| --- | --- | --- |
+| `ADVISORY_SYNTHESIS_PROVIDER` | `deterministic` | `oci_genai` |
+| `RETRIEVAL_PROVIDER` | `local_json` | `oracle_ai_vector_search` |
+| `EMBEDDING_PROVIDER` | `local` | `oci_genai` |
+
+The code reads these values in `src/oci_arch_studio_backend/core/config.py`.
+
 ## Run
 
 ```bash
@@ -17,7 +27,11 @@ Build the local RAG index from the repository root before starting the API:
 python3 knowledge/ingestion/ingest.py
 ```
 
-## Endpoints
+## Main Endpoints
 
 - `GET /health`
+- `GET /retrieval/health`
+- `GET /operations/health`
+- `GET /operations/readiness`
 - `POST /architecture-review`
+- `GET /review-history`

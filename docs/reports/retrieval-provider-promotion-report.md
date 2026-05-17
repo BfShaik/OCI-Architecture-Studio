@@ -2,7 +2,7 @@
 
 Date: 2026-05-15
 
-Current-state note: this report records the Object Storage promotion milestone. Staging retrieval was later promoted to active `oracle_ai_vector_search` with Object Storage as rollback; see `docs/current/status.md` and `docs/current/living-execution-plan.md` for the current active provider.
+Current-state note: this report records the Object Storage promotion milestone. Staging was later promoted to active `oracle_ai_vector_search`, OCI GenAI synthesis, and OCI GenAI embeddings with Object Storage/local rollback paths; see `docs/current/status.md` and `docs/current/living-execution-plan.md` for the current runtime.
 
 ## Decision
 
@@ -123,8 +123,7 @@ Rollback remains instant and config-only.
 ## Remaining Risks
 
 - The corpus is still intentionally small.
-- Embeddings are still deterministic local hashing embeddings, not production semantic embeddings.
-- Oracle AI Vector Search is not active yet.
+- Historical note: at the time of this report, embeddings were still deterministic local hashing and Oracle AI Vector Search was not active yet. Current staging has since promoted OCI GenAI embeddings and Oracle AI Vector Search; see `docs/current/status.md`.
 - Object Storage manifest retrieval is reliable for staging, but it is not the final low-latency vector search architecture.
 - Backend staging traffic is still served over public HTTP until HTTPS ingress is added.
 - Release-awareness is point-in-time snapshot based, not a continuous watcher with impact analysis.

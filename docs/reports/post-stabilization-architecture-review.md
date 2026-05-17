@@ -2,7 +2,7 @@
 
 Date: 2026-05-15
 
-Current-state note: this report was written before the Oracle AI Vector Search active-read and 60-source architecture-corpus promotions. Current staging retrieval is `oracle_ai_vector_search` with Object Storage rollback; see `docs/current/status.md` and `docs/architecture/architecture-diagrams.md` for the latest architecture.
+Current-state note: this historical report was written before the current OCI-native staging runtime. Staging now uses `oracle_ai_vector_search`, OCI GenAI synthesis, and OCI GenAI embeddings with Object Storage/local rollback paths; see `docs/current/status.md` and `docs/architecture/architecture-diagrams.md` for the latest architecture.
 
 ## Executive Summary
 
@@ -56,11 +56,11 @@ Implemented:
 - GenAI parity checker for deterministic-vs-OCI GenAI comparison.
 - CI/deployment readiness hook with `--allow-skip`.
 
-Not active yet:
+Historical note:
 
-- Staging synthesis still uses `deterministic`.
-- Live OCI GenAI parity requires `OCI_GENAI_COMPARTMENT_ID` and `OCI_GENAI_CHAT_MODEL_ID`.
-- OCI GenAI should not become the staging default until parity passes without fallback.
+- At the time of this report, staging synthesis still used `deterministic`.
+- Current staging has since promoted OCI GenAI synthesis after live validation.
+- See `docs/current/status.md` for the current synthesis provider.
 
 ## Knowledge Corpus Expansion
 
