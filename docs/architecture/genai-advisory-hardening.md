@@ -31,7 +31,7 @@ prompt
 
 ## Synthesis Providers
 
-Local and rollback-safe default:
+Rollback-safe local mode:
 
 ```text
 ADVISORY_SYNTHESIS_PROVIDER=deterministic
@@ -49,6 +49,8 @@ OCI_GENAI_TEMPERATURE=0.1
 ```
 
 If OCI GenAI fails, the system fails closed to deterministic synthesis and records a synthesis warning. This preserves rollback and avoids serving incomplete model output.
+
+Current staging uses `ADVISORY_SYNTHESIS_PROVIDER=oci_genai`. Deterministic synthesis remains the rollback path for incidents, local development, and parity comparison.
 
 ## Prompt Construction
 
@@ -165,13 +167,13 @@ No code fork, prompt fork, or retrieval change is required.
 
 ## Embedding Activation Readiness
 
-Local deterministic embeddings remain the default:
+Local deterministic embeddings remain available for offline development and rollback validation:
 
 ```text
 EMBEDDING_PROVIDER=local
 ```
 
-OCI GenAI embeddings can be evaluated in a controlled path:
+OCI GenAI embeddings are active in staging and can be evaluated/rebuilt through the controlled path:
 
 ```text
 EMBEDDING_PROVIDER=oci_genai
@@ -195,7 +197,7 @@ Rollback:
 EMBEDDING_PROVIDER=local
 ```
 
-Keep `EMBEDDING_FALLBACK_ENABLED=true` during shadow validation so retrieval remains available if OCI GenAI embedding calls fail.
+Keep `EMBEDDING_FALLBACK_ENABLED=true` during validation windows so retrieval remains available if OCI GenAI embedding calls fail.
 
 ## Troubleshooting
 
@@ -220,4 +222,4 @@ If release guidance overclaims:
 
 ## Next Milestone
 
-Enable OCI GenAI synthesis in staging through configuration, run side-by-side validation against deterministic synthesis, and track quality metrics for the demo scenarios before making it the default demo path.
+Continue post-promotion stabilization: monitor live OCI GenAI synthesis quality, latency, cost, fallback behavior, and unsupported-claim checks while keeping deterministic rollback ready.

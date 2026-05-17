@@ -2,7 +2,7 @@
 
 Date: 2026-05-16
 
-Validated baseline: current `main` after TASK-053
+Validated baseline: current `main` after TASK-055 and UI closeout v1.0.4
 
 ## Readiness Position
 
@@ -15,7 +15,7 @@ This milestone is an internal beta baseline, not a production HA certification. 
 | Area | Current State | Internal Beta Decision |
 |---|---|---|
 | Retrieval | `oracle_ai_vector_search` is active in staging with 60 chunks. `oci_object_storage` remains the immediate rollback provider and `local_json` remains the local fallback. | Accept for beta. Keep Object Storage snapshots aligned with the active Oracle vector index. |
-| Advisory synthesis | Deterministic synthesis is default. OCI GenAI chat path exists with fail-closed deterministic fallback. | Accept for beta. Enable live OCI GenAI only after parity checks pass with approved model config. |
+| Advisory synthesis | OCI GenAI synthesis is active in staging through `ADVISORY_SYNTHESIS_PROVIDER=oci_genai`; deterministic synthesis remains the config-only rollback path. | Accept for beta. Continue monitoring quality, fallback, latency, and cost before production promotion. |
 | Governance | Deterministic governance annotations, risk classification, security posture checks, prioritization, comparisons, and auditability trace exist. | Accept for beta as human-review metadata, not policy enforcement. |
 | Migration and FinOps | `optimization_plan` adds phased migration, modernization options, FinOps levers, workload optimization, comparisons, and implementation readiness. | Accept for beta. It is heuristic advisory guidance and does not call live OCI billing APIs. |
 | Release intelligence | Release ingestion, normalization, impact analysis, overlays, historical snapshot retention, release-aware response metadata, and VM-cron release-watch refresh with gated Object Storage upload exist. | Accept for beta. Full current-vs-historical answer comparison and full bi-temporal retrieval remain future work. |
@@ -40,7 +40,7 @@ This milestone is an internal beta baseline, not a production HA certification. 
 - OCI API Gateway is active for staging ingress, but the direct backend VM endpoint remains available as a rollback path.
 - OCI DevOps is not configured for active staging deployment; local operator scripts remain the current deployment mechanism.
 - Oracle AI Vector Search active reads are implemented and validated in staging; Object Storage remains the immediate rollback path.
-- OCI GenAI synthesis and OCI GenAI embeddings are implemented but not active by default.
+- OCI GenAI synthesis and OCI GenAI embeddings are active in staging; deterministic synthesis, Object Storage retrieval, and local-hash embeddings remain rollback/development paths.
 - The corpus is curated and intentionally small; it is not a complete OCI documentation mirror.
 - Cost guidance is deterministic FinOps advisory logic. It does not inspect live tenancy spend or call OCI Cost Analysis APIs.
 - Release awareness uses snapshots and deterministic impact logic. It does not yet provide full current-vs-historical answer comparison.
@@ -157,7 +157,7 @@ The `v1.0.1` validation on 2026-05-15 passed:
 - Local retrieval regression: 18 of 18 passed against the latest architecture-accuracy corpus.
 - Object Storage retrieval parity: passed against the refreshed staging snapshot before Oracle vector promotion.
 - Oracle AI Vector Search active-read promotion: passed parity, retrieval regression, staging smoke, rollback drill, and later 60-chunk architecture corpus validation.
-- OCI GenAI synthesis parity: skipped safely because OCI GenAI model and compartment settings are not configured.
+- OCI GenAI synthesis parity and go-live validation passed for staging; public `/architecture-review` returns `synthesis_provider=oci_genai` with fallback disabled.
 - Terraform validation: dev, test, and staging validated after backend-disabled init.
 - Deployment config validation: passed for staging tfvars.
 - Terraform remote-state readiness: passed in non-mutating `--skip-oci` mode with expected warnings that remote state is not yet enabled.

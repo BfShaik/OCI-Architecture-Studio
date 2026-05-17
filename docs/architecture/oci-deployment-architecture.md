@@ -386,4 +386,4 @@ watch release sources -> classify update -> map affected services -> mark stale 
 
 ## Recommended Next Step
 
-Keep Oracle AI Vector Search and Object Storage rollback snapshots aligned, then run OCI GenAI synthesis parity in shadow/evaluation mode before any synthesis-provider promotion.
+Keep Oracle AI Vector Search and Object Storage rollback snapshots aligned, monitor live OCI GenAI synthesis in staging, and re-run synthesis parity after any model, prompt, corpus, or runtime change before keeping/re-promoting the GenAI provider.

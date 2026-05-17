@@ -42,9 +42,9 @@ Synthesis is config-selected:
 ADVISORY_SYNTHESIS_PROVIDER=deterministic|oci_genai
 ```
 
-The deterministic provider remains the rollback path. The OCI GenAI provider fails closed to deterministic synthesis if the model call fails or returns invalid JSON.
+Staging currently uses the OCI GenAI provider. The deterministic provider remains the rollback path. The OCI GenAI provider fails closed to deterministic synthesis if the model call fails or returns invalid JSON.
 
-Before enabling `ADVISORY_SYNTHESIS_PROVIDER=oci_genai` in staging, run the parity checker:
+Before enabling or re-promoting `ADVISORY_SYNTHESIS_PROVIDER=oci_genai` in staging after model, prompt, corpus, or runtime changes, run the parity checker:
 
 ```bash
 app/backend/.venv/bin/python infra/scripts/genai_synthesis_parity_check.py \
@@ -364,8 +364,8 @@ When a response is weak:
 - Confidence scores are practical guardrails, not statistical probabilities.
 - Reasoning profiles and tradeoff analysis are heuristic and bounded by retrieved corpus quality.
 - The corpus is still small.
-- Local hashing embeddings are still active for deterministic parity.
-- OCI GenAI synthesis is adapter-backed and config-gated; deterministic synthesis remains the rollback-safe default.
+- OCI GenAI embeddings are active in staging; local hashing embeddings remain for deterministic local development and rollback validation.
+- OCI GenAI synthesis is active in staging; deterministic synthesis remains the rollback-safe provider.
 - The multi-agent pilot is a bounded control layer, not autonomous multi-step planning.
 - Oracle AI Vector Search active reads are promoted in staging; Object Storage remains the immediate rollback provider.
 - Evaluation intelligence scores are deterministic guardrails, not objective architecture truth.

@@ -343,9 +343,9 @@ Common issues:
 
 ## Next Operational Milestone
 
-Keep Oracle AI Vector Search active reads aligned with Object Storage rollback snapshots, then run OCI GenAI synthesis parity:
+Keep Oracle AI Vector Search active reads aligned with Object Storage rollback snapshots, then re-run OCI GenAI synthesis parity after model, prompt, corpus, or runtime changes:
 
 - run deterministic synthesis for the demo/eval prompts
 - run OCI GenAI synthesis with the same retrieved evidence
 - compare unsupported claims, citation coverage, quality warnings, latency, and fallback behavior
-- keep deterministic synthesis as the default until parity passes
+- keep or re-promote `ADVISORY_SYNTHESIS_PROVIDER=oci_genai` only while parity passes and deterministic rollback remains proven

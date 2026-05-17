@@ -218,12 +218,13 @@ Terraform:
 - Object Storage snapshot bucket contains the knowledge and release snapshots.
 - OCI Object Storage retrieval passed dual-provider parity against `local_json` and remains the immediate rollback provider.
 - Staging now uses `RETRIEVAL_PROVIDER=oracle_ai_vector_search` through reviewed runtime configuration.
+- Staging now uses `ADVISORY_SYNTHESIS_PROVIDER=oci_genai`; deterministic synthesis remains the rollback provider.
 - `local_json` remains the tested local fallback provider.
 
 ## Next Implementation Steps
 
 1. Keep Oracle AI Vector Search active reads and Object Storage rollback snapshots aligned.
-2. Run OCI GenAI synthesis parity before any synthesis-provider promotion.
+2. Re-run OCI GenAI synthesis parity after model, prompt, corpus, or runtime changes before keeping/re-promoting the GenAI provider.
 3. Add production HTTPS/domain hardening beyond the active API Gateway staging ingress.
 4. Move Terraform state to OCI Object Storage before broader team usage.
 5. Tighten IAM policies after access patterns stabilize.

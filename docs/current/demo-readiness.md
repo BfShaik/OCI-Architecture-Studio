@@ -13,7 +13,7 @@ Last updated: 2026-05-16
 | Release awareness | Ready for foundation demo | Release-watch refresh is active on the backend OCI VM cron path with live release fetch, quick gates, gated promotion, and Object Storage upload. Release-aware prompts still separate current release context from historical/local guidance. |
 | Evals | Ready | Golden and edge-case evals pass. |
 | Tests/build | Ready | Backend tests, frontend lint, and frontend build pass. |
-| Known caveat | Accepted | OCI GenAI synthesis and OCI GenAI embeddings are optional rather than default; full current-vs-historical answer comparison remains deferred. |
+| Known caveat | Accepted | OCI GenAI synthesis and OCI GenAI embeddings are active in staging; deterministic/local rollback paths remain available. Full current-vs-historical answer comparison remains deferred. |
 
 ## Recommended Demo Prompts
 
@@ -191,13 +191,13 @@ OCI staging smoke tests: passed
 
 ## Top Risks
 
-- Some recommendations may still sound template-driven while deterministic synthesis remains the default.
-- Retrieval quality will degrade as the corpus grows without production embeddings.
+- Some recommendations may still need team review for nuance even with OCI GenAI synthesis active.
+- Retrieval quality must be monitored as the corpus grows, even with OCI GenAI embeddings and Oracle AI Vector Search active.
 - Release-awareness can still be misread as live intelligence unless the UI clearly marks snapshot-based context.
 - OCI source coverage gaps can cause incomplete advice for security, observability, and DR scenarios.
 
 ## Next Highest-Value Build Block
 
-The next highest-value block is **OCI GenAI synthesis parity**, run in shadow/evaluation mode without changing the deterministic default.
+The next highest-value block is **post-promotion GenAI stabilization**: collect team feedback on live staging answers, monitor latency/cost/fallback behavior, and expand the prompt/eval set.
 
-That moves answer quality forward while preserving the validated advisory workflow and rollback-safe deterministic synthesis path.
+That improves answer quality while preserving the rollback-safe deterministic synthesis path.

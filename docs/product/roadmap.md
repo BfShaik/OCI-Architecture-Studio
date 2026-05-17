@@ -153,11 +153,11 @@ Deliverables:
 - 60-source architecture-accuracy corpus promotion to Oracle AI Vector Search — Done
 
 ## Phase 6 — OCI GenAI Synthesis Parity
-Status: Next
+Status: Complete In Staging
 
 Deliverables:
-- deterministic-vs-OCI GenAI synthesis parity with approved model config — Next
-- unsupported-claim and citation-coverage comparison — Next
-- latency/fallback report — Next
-- deterministic rollback proof — Next
-- config-only synthesis promotion decision — Future
+- deterministic-vs-OCI GenAI synthesis parity with approved model config — Done
+- unsupported-claim and citation-coverage comparison — Done
+- latency/fallback report — Done
+- deterministic rollback proof — Done
+- config-only synthesis promotion to staging through `ADVISORY_SYNTHESIS_PROVIDER=oci_genai` — Done

@@ -48,7 +48,7 @@ OCI Architecture Studio is an AI-powered OCI architecture intelligence platform 
 
 ## Current Working Flow
 
-The current implementation supports a validated API/UI advisory workflow with intent classification, source-service mapping, metadata-aware retrieval, reranking, deterministic fallback synthesis, optional OCI GenAI-assisted synthesis, snapshot-based release awareness, and OCI staging deployment.
+The current implementation supports a validated API/UI advisory workflow with intent classification, source-service mapping, metadata-aware retrieval, reranking, live OCI GenAI-assisted synthesis in staging, deterministic fallback synthesis, snapshot-based release awareness, and OCI staging deployment.
 
 User flow:
 1. A user asks an OCI architecture, migration, DR, cost, observability, AI/ML, security, modernization, SaaS, analytics, or release-awareness question.
@@ -117,14 +117,14 @@ Supported intents:
 
 Synthesis behavior:
 
-- Deterministic synthesis is implemented and remains the fallback-safe default unless `ADVISORY_SYNTHESIS_PROVIDER=oci_genai` is configured.
-- OCI GenAI synthesis is implemented as a configurable path with deterministic fail-closed fallback.
+- OCI GenAI synthesis is active in staging when `ADVISORY_SYNTHESIS_PROVIDER=oci_genai` is configured.
+- Deterministic synthesis is implemented as the rollback-safe provider when `ADVISORY_SYNTHESIS_PROVIDER=deterministic` is configured or OCI GenAI synthesis fails closed.
 - The GenAI prompt builder explicitly includes retrieved chunks, mapped services, workload/domain heuristics, architecture pattern hints, and response section requirements.
 - Optional synthesis debug output exposes provider, model, grounding prompt sections, selected chunks, token estimates, token usage when available, and fallback reason.
 - Deterministic synthesis uses reusable architecture profiles for HA web apps, Kubernetes modernization, fintech DR, AI inference, analytics/data lake, and multi-region SaaS.
 - Deterministic reasoning profiles add profile-specific retrieval hints, service priorities, risk emphasis, tradeoff dimensions, and recommendation guidance before final synthesis.
 - The response includes additive synthesis quality signals for grounding, OCI specificity, workload alignment, migration accuracy, recommendation diversity, and citation coverage.
-- Live GenAI use requires environment configuration and parity validation.
+- Live GenAI use requires environment configuration, parity validation, and ongoing quality/latency/cost monitoring.
 - If OCI GenAI synthesis fails, the system fails closed to deterministic synthesis.
 
 Embedding behavior:
@@ -211,8 +211,8 @@ FinOps and migration optimization behavior:
 - No automated policy enforcement, approval workflow, or external governance platform integration in the enterprise governance layer; it is deterministic advisory metadata for human review.
 - No complex diagram engine or frontend Mermaid renderer yet; current visualization support is backend topology metadata, dependency summaries, and lightweight frontend cards.
 - No LLM-as-judge scoring, model fine-tuning, or autonomous evaluation agent in the current evaluation intelligence layer.
-- No always-on live LLM synthesis by default.
-- No promotion of OCI GenAI mode without parity and operational validation.
+- No production promotion of live LLM synthesis without parity, operational validation, and rollback proof.
+- No removal of deterministic rollback while OCI GenAI remains the staging synthesis provider.
 - No request-time live release intelligence beyond scheduled snapshot refresh, deterministic impact analysis, and gated promotion.
 - No external scheduler or operational workflow platform; current scheduled refresh uses cron on the OCI backend VM.
 - No mandatory live OCI connectivity checks in local development.

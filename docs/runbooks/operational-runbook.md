@@ -459,7 +459,7 @@ If GenAI synthesis needs rollback:
 - rerun `/advisory/quality` and baseline smoke tests
 - inspect `synthesis_warnings` and `synthesis_fallback_used` in API responses
 
-Before enabling OCI GenAI synthesis, run:
+To revalidate OCI GenAI synthesis after model, prompt, corpus, or runtime changes, run:
 
 ```bash
 app/backend/.venv/bin/python infra/scripts/genai_synthesis_parity_check.py \
@@ -468,7 +468,7 @@ app/backend/.venv/bin/python infra/scripts/genai_synthesis_parity_check.py \
   --output-dir evals/reports/genai-parity
 ```
 
-The parity gate must pass without GenAI fallback before staging is switched from deterministic synthesis.
+The parity gate must pass without GenAI fallback before keeping or re-promoting staging on `ADVISORY_SYNTHESIS_PROVIDER=oci_genai`. If it fails, roll back to `ADVISORY_SYNTHESIS_PROVIDER=deterministic`.
 
 If active Oracle AI Vector Search retrieval fails:
 

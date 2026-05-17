@@ -35,13 +35,13 @@ OCI Architecture Studio now has a validated working foundation:
 - FinOps/migration optimization evals for phased sequencing, coexistence/rollback realism, modernization planning, cost-performance guidance, workload optimization, and implementation readiness
 - Terraform-based OCI staging slice with Object Storage, Vault, Logging, Monitoring, Events, and Notifications
 
-The next platform milestone is OCI GenAI synthesis parity in shadow/evaluation mode, while keeping deterministic synthesis as the default until citation coverage, unsupported-claim behavior, latency, fallback, and rollback gates pass.
+OCI GenAI synthesis is active in staging after parity/go-live validation. The deterministic synthesis path remains available as the rollback-safe provider while quality, latency, cost, fallback, and unsupported-claim behavior continue to be monitored.
 
 The current orchestration layer is deterministic and in-process. Autonomous agent planning, persistent agent memory, and independent tool-using agents are future research and productization items, not current runtime behavior.
 
-OCI GenAI embeddings and synthesis are available as configurable paths with deterministic fallback. Deterministic synthesis remains the safe default unless live GenAI configuration and parity validation are provided.
+OCI GenAI embeddings and synthesis are active in staging as configurable paths with deterministic/local rollback. Local development can still run without OCI connectivity by using deterministic synthesis and local retrieval.
 
-The current deterministic synthesis and reasoning layer is heuristic. It improves structure, workload specificity, tradeoff visibility, grounding fidelity, and recommendation explainability, but it is not a substitute for a full OCI design review or live GenAI reasoning.
+The deterministic synthesis and reasoning layer remains the rollback and local-development path. It improves structure, workload specificity, tradeoff visibility, grounding fidelity, and recommendation explainability, but staging now uses OCI GenAI for the final synthesis step.
 
 The enterprise governance layer is also heuristic and deterministic. It makes recommendations more reviewable by adding control annotations, risk signals, priority guidance, comparison reasoning, and audit trace metadata, but it does not enforce policies or replace human architecture/security approval.
 
@@ -59,7 +59,7 @@ Operational hardening is intentionally OCI-centric. The current implementation e
 
 Internal beta readiness is improving through runtime readiness diagnostics, active API Gateway staging ingress, OCI DevOps scaffolding, and stronger operational runbooks. Staging still preserves the direct backend VM endpoint as a rollback path.
 
-The corpus remains curated rather than comprehensive. Current quality work should be read as a controlled transition from deterministic OCI advisory scaffolding toward retrieval-grounded OCI GenAI-assisted synthesis, not as a claim of full OCI documentation coverage or autonomous documentation crawling.
+The corpus remains curated rather than comprehensive. Current quality work should be read as retrieval-grounded OCI GenAI-assisted synthesis with deterministic rollback, not as a claim of full OCI documentation coverage or autonomous documentation crawling.
 
 ## Product Pillars
 

@@ -50,7 +50,7 @@ Keep these items in the active work queue until each has validation evidence and
 | WIP-003 | Done | Expanded the curated OCI corpus beyond 47 sources with high-value official OCI docs. | Offline candidate rebuild produced 55 chunks from 55 sources; corpus health, retrieval regression, golden evals, advisory-quality evals, edge evals, and targeted backend tests passed. No Object Storage upload was performed. |
 | WIP-004 | Done | Ran OCI GenAI embeddings in shadow mode and compared against local deterministic embeddings. | Live `cohere.embed-v4.0` shadow candidate built with the project staging compartment at 256 dimensions; corpus health, candidate validation, retrieval regression, golden/advisory/edge evals, Oracle local-index validation, embedding visibility, and rollback baseline checks passed. No Object Storage upload or active promotion was performed. |
 | WIP-005 | Done | Promote Oracle AI Vector Search from shadow to active retrieval only after refreshed parity passes. | Completed through TASK-045 and TASK-050; active staging retrieval is `oracle_ai_vector_search` with 60 chunks and Object Storage fallback retained. |
-| WIP-006 | Done | Run OCI GenAI synthesis live parity and decide whether to promote from deterministic default. | Completed through TASK-054; staging now uses OCI GenAI synthesis with fallback disabled in smoke/eval checks. |
+| WIP-006 | Done | Run OCI GenAI synthesis live parity and decide whether to promote from the deterministic baseline. | Completed through TASK-054; staging now uses OCI GenAI synthesis with fallback disabled in smoke/eval checks. |
 | WIP-007 | Ready | Add OCI Monitoring custom metrics for refresh latency, gate failures, candidate promotion count, rollback count, and retrieval regression failures. | Operational readiness, OCI metric visibility, safe local fallback. |
 | WIP-008 | Future | Move deployment automation from operator scripts toward OCI DevOps while preserving the current script-based rollback path. | OCI DevOps pipeline smoke, artifact parity with operator scripts, staging rollback validation. |
 | WIP-009 | Future | Add full current-vs-historical release comparison and richer bi-temporal retrieval. | Release-aware evals, temporal snapshot tests, advisory regression. |
@@ -109,7 +109,7 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 | TASK-002 | Done | Document manual remote state migration workflow and rollback checklist. | Terraform README/runbook updated; migration remains operator-run and non-automated. |
 | TASK-003 | Done | Add API Gateway readiness validation for configured endpoint and OCIDs. | Passed `tests/test_operational_hardening.py`, `tests/test_api.py`, `py_compile` for operational readiness script, and `git diff --check`. |
 | TASK-004 | Done | Prepare API Gateway staging cutover checklist and rollback path. | Terraform validate and Gateway smoke commands documented; default-off behavior preserved. |
-| TASK-005 | Done | Run OCI GenAI synthesis readiness/parity in skip-safe mode, then live mode when config exists. | Skip-safe parity run wrote `evals/reports/genai-synthesis-parity`; status skipped because `OCI_GENAI_COMPARTMENT_ID` and `OCI_GENAI_CHAT_MODEL_ID` are absent; deterministic default preserved. |
+| TASK-005 | Done | Run OCI GenAI synthesis readiness/parity in skip-safe mode, then live mode when config exists. | Early skip-safe parity wrote `evals/reports/genai-synthesis-parity`; later TASK-054 completed live validation and promoted staging to `ADVISORY_SYNTHESIS_PROVIDER=oci_genai`. |
 | TASK-006 | Done | Add OCI GenAI embedding activation checklist and diagnostics expectations. | Passed `tests/test_operational_hardening.py`, `tests/test_api.py`, and `git diff --check`; activation gates documented. |
 | TASK-007 | Done | Validate Oracle AI Vector Search schema/index prerequisites without active-provider promotion. | Earlier local index validation passed; later TASK-027/TASK-031 loaded and validated the live shadow table/index with 47 chunks. |
 | TASK-008 | Done | Add Oracle AI Vector Search dual-read parity workflow against Object Storage retrieval. | `retrieval_parity_check.py` supports `--oci-native-provider oracle_ai_vector_search`; later shadow vector validation passed against the refreshed Object Storage baseline. |
@@ -163,8 +163,8 @@ Execute one task at a time. A task can move to `Done` only after its validation 
 |---|---|---|---|
 | Remote Terraform state readiness | Not Started | Readiness checker passes without mutating state; runbook updated. | Continue local Terraform state. |
 | API Gateway promotion | Done | Terraform validate, API Gateway endpoint smoke, backend direct path retained until cutover verified. | Disable `enable_api_gateway`; use direct VM backend endpoint. |
-| OCI GenAI shadow activation | Not Started | Parity report shows no unsupported claims increase, no fallback-only result, acceptable latency, citation coverage preserved. | `SYNTHESIS_PROVIDER=deterministic`; deterministic fallback remains enabled. |
-| OCI GenAI embeddings shadow activation | Done | Embedding dimension validation passes; retrieval regression does not degrade; fallback diagnostics clean. | `EMBEDDING_PROVIDER=local`; retain existing vector manifest. |
+| OCI GenAI synthesis post-promotion monitoring | Active | Public `/architecture-review` reports `synthesis_provider=oci_genai`, no fallback, acceptable latency/cost, citation coverage preserved, and unsupported claims controlled. | `ADVISORY_SYNTHESIS_PROVIDER=oci_genai`; deterministic fallback remains available. |
+| OCI GenAI embeddings post-promotion monitoring | Active | Embedding/index guardrail passes, retrieval regression does not degrade, fallback diagnostics stay clean. | `EMBEDDING_PROVIDER=oci_genai`; retain local-hash rollback manifest. |
 | Oracle AI Vector Search active mode | Done | Schema/index validation passes; active-read parity acceptable across golden, edge, retrieval regression, smoke, and rollback cases. | Keep `RETRIEVAL_PROVIDER=oci_object_storage` as rollback. |
 | Semantic retrieval active promotion | Done | Active-provider staging smoke, retrieval health, vector validation, eval suites, and rollback drill passed. | Restore `RETRIEVAL_PROVIDER=oci_object_storage` or `local_json`. |
 | Scheduled refresh activation | VM Cron Release-Watch Active | Backend VM cron now runs live release-watch with gated promotion/upload; stable-docs remains safe-mode. | Set release-watch cron back to `VM_REFRESH_CANDIDATE_ONLY=true VM_REFRESH_UPLOAD=false`; continue operator-triggered refresh. |
@@ -212,7 +212,7 @@ Next logical increment:
 3. Decide whether query embedding caching is needed.
 4. Keep rollback assets until the v4 path has enough real usage history.
 4. Keep active retrieval on `oracle_ai_vector_search`; do not change vector DB, wallet, or runtime secret settings.
-5. Promote OCI GenAI synthesis only after parity passes and deterministic rollback remains proven.
+5. Keep OCI GenAI synthesis active only while parity, smoke, latency/cost, and deterministic rollback evidence remain current.
 
 ## Operating Rules
 
