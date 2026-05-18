@@ -27,6 +27,7 @@ from oci_arch_studio_backend.services.evaluation_intelligence import (  # noqa: 
 SUPPORTED_OCI_TERMS = {
     "autonomous database",
     "architecture center",
+    "api gateway",
     "base database service",
     "budgets",
     "cdn",
@@ -67,6 +68,7 @@ SUPPORTED_OCI_TERMS = {
     "virtual cloud network",
     "vcn",
     "waf",
+    "web application firewall",
     "well-architected",
 }
 
@@ -104,6 +106,7 @@ TERM_ALIASES = {
     "eks": ["eks", "kubernetes"],
     "load balancing": ["load balancer", "load balancing"],
     "object storage": ["object storage", "storage"],
+    "api gateway": ["api gateway", "managed api front door"],
     "oci database": ["oci database", "database", "autonomous database", "base database", "mysql heatwave"],
     "oci kubernetes engine": ["oci kubernetes engine", "oke", "kubernetes engine"],
     "oke": ["oke", "kubernetes engine"],
@@ -111,6 +114,7 @@ TERM_ALIASES = {
     "right-sized compute": ["right-sized compute", "compute", "right-sized"],
     "rto/rpo": ["rto", "rpo", "recovery"],
     "vault": ["vault", "key management", "secrets"],
+    "web application firewall": ["web application firewall", "waf"],
 }
 
 

@@ -100,10 +100,10 @@ INTENT_RETRIEVAL_HINTS: dict[str, dict[str, tuple[str, ...]]] = {
     },
     "saas_platform": {
         "service_domains": ("networking", "containers", "compute", "database", "storage", "edge", "security", "observability", "cost"),
-        "architecture_patterns": ("high-availability", "network-isolation", "tagging", "operational-visibility"),
+        "architecture_patterns": ("compartment-strategy", "landing-zone", "network-isolation", "public-ingress", "least-privilege", "high-availability", "tagging", "operational-visibility"),
         "workload_types": ("saas-platform", "webapp", "enterprise-app"),
         "domain_tags": ("SaaS", "enterprise"),
-        "topics": ("architecture", "disaster-recovery", "cost-optimization", "observability"),
+        "topics": ("architecture", "security", "disaster-recovery", "cost-optimization", "observability"),
     },
     "analytics": {
         "service_domains": ("database", "storage", "observability", "security", "cost"),
@@ -125,9 +125,9 @@ SERVICE_QUERY_TERMS: dict[str, tuple[str, ...]] = {
     "Logging": ("logging", "logs", "audit"),
     "Monitoring": ("monitoring", "metrics", "alarms"),
     "Vault": ("vault", "secrets", "keys"),
-    "Virtual Cloud Network": ("vcn", "virtual cloud network", "network segmentation"),
+    "Virtual Cloud Network": ("vcn", "virtual cloud network", "network", "networking", "network topology", "network segmentation"),
     "Web Application Firewall": ("waf", "web application firewall"),
-    "Identity and Access Management": ("iam", "identity", "policies"),
+    "Identity and Access Management": ("iam", "identity", "policies", "compartment", "compartments", "compartment topology"),
     "Autonomous Database": ("autonomous database", "adb"),
     "Network Security Groups": ("network security group", "network security groups", "nsg"),
 }
@@ -218,7 +218,7 @@ class OciKnowledgeRetriever:
             sources=[],
         ) if intent_profile else None
         pattern_services = (
-            self._critical_pattern_services(pattern.name, intent)
+            self._critical_pattern_services(pattern.name, intent, question)
             if pattern and self._pattern_triggered(pattern.triggers, combined_text)
             else ()
         )
@@ -588,6 +588,23 @@ class OciKnowledgeRetriever:
                 "Database Services": 6,
                 "Object Storage": 7,
             },
+            "saas_platform": {
+                "Identity and Access Management": 0,
+                "Virtual Cloud Network": 1,
+                "Network Security Groups": 2,
+                "Web Application Firewall": 3,
+                "API Gateway": 4,
+                "Load Balancer": 5,
+                "OCI Kubernetes Engine": 6,
+                "Database Services": 7,
+                "Autonomous Database": 8,
+                "Object Storage": 9,
+                "Vault": 10,
+                "Cloud Guard": 11,
+                "Logging": 12,
+                "Monitoring": 13,
+                "Cost Management": 14,
+            },
         }
         default_priority = {
             "OCI Kubernetes Engine": 0,
@@ -622,7 +639,7 @@ class OciKnowledgeRetriever:
             "observability": ("observability", "security", "compute", "database", "containers"),
             "security": ("security", "networking", "observability", "database", "architecture"),
             "ai_ml": ("compute", "containers", "storage", "observability", "security", "cost"),
-            "saas_platform": ("networking", "containers", "database", "observability", "security", "cost"),
+            "saas_platform": ("networking", "security", "containers", "database", "observability", "cost"),
             "analytics": ("storage", "database", "observability", "security", "cost"),
         }
         return domains_by_intent.get(intent or "", ("architecture", "observability", "security", "cost"))
@@ -636,7 +653,20 @@ class OciKnowledgeRetriever:
             "observability": ("Logging", "Monitoring", "Database Services"),
             "security": ("Identity and Access Management", "Virtual Cloud Network", "Vault", "Cloud Guard", "Audit", "Logging", "Monitoring"),
             "ai_ml": ("Compute", "Object Storage", "Logging", "Monitoring"),
-            "saas_platform": ("Load Balancer", "Database Services", "Object Storage", "Logging", "Monitoring"),
+            "saas_platform": (
+                "Identity and Access Management",
+                "Virtual Cloud Network",
+                "Network Security Groups",
+                "Web Application Firewall",
+                "API Gateway",
+                "Load Balancer",
+                "Database Services",
+                "Object Storage",
+                "Vault",
+                "Cloud Guard",
+                "Logging",
+                "Monitoring",
+            ),
             "analytics": ("Object Storage", "Database Services", "Logging", "Monitoring"),
         }
         return services_by_intent.get(intent or "", ())
@@ -645,16 +675,42 @@ class OciKnowledgeRetriever:
         normalized = text.lower()
         return any(trigger.lower() in normalized for trigger in triggers)
 
-    def _critical_pattern_services(self, pattern_name: str, intent: str | None) -> tuple[str, ...]:
+    def _critical_pattern_services(self, pattern_name: str, intent: str | None, context: str = "") -> tuple[str, ...]:
         if intent == "cost":
             return ()
+        normalized_context = context.lower()
+        if pattern_name == "saas_multi_region_platform" and any(
+            term in normalized_context
+            for term in (
+                "isv",
+                "independent software vendor",
+                "software vendor",
+                "hosted software",
+                "hosted application",
+                "compartment",
+                "networking",
+                "subnet",
+            )
+        ):
+            return (
+                "Identity and Access Management",
+                "Virtual Cloud Network",
+                "Network Security Groups",
+                "Web Application Firewall",
+                "API Gateway",
+                "Load Balancer",
+                "Database Services",
+                "Vault",
+                "Logging",
+                "Monitoring",
+            )
         critical = {
             "highly_available_web_application": ("Load Balancer", "Database Services", "Object Storage", "CDN"),
             "kubernetes_modernization_platform": ("OCI Kubernetes Engine", "Load Balancer", "Logging", "Monitoring"),
             "fintech_disaster_recovery_platform": ("Full Stack Disaster Recovery", "Database Services", "Vault", "Logging", "Monitoring"),
             "ai_inference_platform": ("Compute", "Object Storage", "Logging", "Monitoring"),
             "analytics_data_lake_platform": ("Object Storage", "Database Services", "Logging", "Monitoring"),
-            "saas_multi_region_platform": ("Load Balancer", "Database Services", "Object Storage", "Logging", "Monitoring"),
+            "saas_multi_region_platform": ("Load Balancer", "Database Services", "Object Storage", "Logging", "Monitoring", "Identity and Access Management"),
         }
         return critical.get(pattern_name, ())
 

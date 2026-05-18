@@ -16,6 +16,7 @@ from oci_arch_studio_backend.services.intents import Intent, IntentClassifier
         ("secure private application on OCI", Intent.SECURITY),
         ("modernize a legacy web app onto managed OCI services", Intent.MODERNIZATION),
         ("multi-region SaaS platform with tenant isolation", Intent.SAAS_PLATFORM),
+        ("design an ISV solution in OCI for hosting their software", Intent.SAAS_PLATFORM),
         ("analytics data platform on OCI", Intent.ANALYTICS),
         ("secure OCI landing zone with compartments, IAM, and migration guardrails", Intent.SECURITY),
         ("multi-region SaaS platform with failover readiness", Intent.SAAS_PLATFORM),

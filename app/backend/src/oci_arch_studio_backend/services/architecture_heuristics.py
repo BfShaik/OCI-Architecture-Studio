@@ -42,14 +42,35 @@ DOMAIN_HEURISTICS: dict[str, ArchitectureDomainHeuristics] = {
     ),
     "saas": ArchitectureDomainHeuristics(
         domains=("SaaS",),
-        retrieval_terms=("tenant isolation", "multi tenant", "shared services", "cost allocation", "multi region"),
+        retrieval_terms=(
+            "ISV",
+            "hosted software",
+            "tenant isolation",
+            "multi tenant",
+            "shared services",
+            "compartment strategy",
+            "network topology",
+            "VCN",
+            "network security groups",
+            "cost allocation",
+            "multi region",
+        ),
         service_domains=("networking", "containers", "compute", "database", "security", "observability", "cost", "edge"),
-        architecture_patterns=("network-isolation", "high-availability", "tagging", "operational-visibility", "compartment-strategy"),
+        architecture_patterns=(
+            "network-isolation",
+            "public-ingress",
+            "least-privilege",
+            "high-availability",
+            "tagging",
+            "operational-visibility",
+            "compartment-strategy",
+            "landing-zone",
+        ),
         workload_types=("saas-platform", "webapp"),
         domain_tags=("SaaS",),
         topics=("architecture", "disaster-recovery", "cost-optimization", "observability"),
         recommendations=(
-            "For SaaS, call out tenant isolation, shared-service boundaries, data residency, noisy-neighbor risk, and cost allocation.",
+            "For SaaS or ISV hosting, call out tenant isolation, compartment boundaries, network topology, shared-service boundaries, data residency, noisy-neighbor risk, and cost allocation.",
         ),
     ),
     "ai_ml": ArchitectureDomainHeuristics(
@@ -99,7 +120,22 @@ class ArchitectureHeuristicClassifier:
             selected.append(DOMAIN_HEURISTICS["ecommerce"])
         if any(token in normalized for token in ("fintech", "payment", "regulated", "pci", "audit", "rto", "rpo")):
             selected.append(DOMAIN_HEURISTICS["fintech"])
-        if any(token in normalized for token in ("saas", "tenant", "multi-tenant", "multi tenant", "shared services")):
+        if any(
+            token in normalized
+            for token in (
+                "saas",
+                "isv",
+                "independent software vendor",
+                "software vendor",
+                "hosted software",
+                "hosted application",
+                "customer tenant",
+                "tenant",
+                "multi-tenant",
+                "multi tenant",
+                "shared services",
+            )
+        ):
             selected.append(DOMAIN_HEURISTICS["saas"])
         if any(token in normalized for token in ("ai/ml", "ai inference", "inference", "model artifact", "sagemaker", "gpu")):
             selected.append(DOMAIN_HEURISTICS["ai_ml"])

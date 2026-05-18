@@ -38,6 +38,19 @@ def test_pattern_selector_prefers_saas_multi_region() -> None:
     assert any("tenant isolation" in move.lower() for move in pattern.design_moves)
 
 
+def test_pattern_selector_treats_isv_hosting_as_saas_platform() -> None:
+    pattern = ArchitecturePatternSelector().select(
+        question="Design an ISV solution in OCI for hosting their software with networking and compartment topology.",
+        workload_context=None,
+        profile=get_intent_profile(Intent.SAAS_PLATFORM),
+        sources=[],
+    )
+
+    assert pattern.name == "saas_multi_region_platform"
+    assert "Identity and Access Management" in pattern.service_priorities
+    assert "Virtual Cloud Network" in pattern.service_priorities
+
+
 def test_pattern_selector_supports_secure_landing_zone() -> None:
     pattern = ArchitecturePatternSelector().select(
         question="Design a secure enterprise landing zone with compartments and guardrails.",

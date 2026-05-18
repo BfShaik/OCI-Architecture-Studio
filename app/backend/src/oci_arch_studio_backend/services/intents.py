@@ -470,7 +470,23 @@ class IntentClassifier:
             return Intent.MIGRATION
         if any(token in normalized for token in ("ai/ml", "ai inference", "model", "inference", "ml platform", "machine learning")):
             return Intent.AI_ML
-        if any(token in normalized for token in ("saas", "tenant", "multi-tenant", "multi tenant", "multi-region", "multi region")):
+        if any(
+            token in normalized
+            for token in (
+                "saas",
+                "isv",
+                "independent software vendor",
+                "software vendor",
+                "hosted software",
+                "hosted application",
+                "customer tenant",
+                "tenant",
+                "multi-tenant",
+                "multi tenant",
+                "multi-region",
+                "multi region",
+            )
+        ):
             return Intent.SAAS_PLATFORM
         if any(token in normalized for token in ("disaster recovery", "rto", "rpo", "failover", "fintech")) or re.search(r"\bdr\b", normalized):
             return Intent.DR

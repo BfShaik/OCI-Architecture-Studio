@@ -44,3 +44,18 @@ def test_reasoning_engine_pre_retrieval_terms_bias_migration() -> None:
     assert "migration waves" in terms
     assert "OKE" in terms
     assert "rollback" in terms
+
+
+def test_reasoning_engine_treats_isv_hosting_as_saas_topology() -> None:
+    result = ArchitectureReasoningEngine().analyze(
+        question="design an ISV solution in OCI for hosting their software in OCI give topology for networking and compartment",
+        workload_context=None,
+        profile=get_intent_profile(Intent.SAAS_PLATFORM),
+        sources=[],
+        recommendations=["Define IAM compartments, VCN subnets, NSGs, and shared services for the ISV platform."],
+        synthesis_provider="deterministic",
+    )
+
+    assert result.profile.name == "saas_platform"
+    assert "Virtual Cloud Network" in result.service_priorities
+    assert "compartment strategy" in result.retrieval_terms
